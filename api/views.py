@@ -9,6 +9,7 @@ enforce job ownership via find_owned_job().
 """
 import math
 import os
+import secrets
 import uuid
 
 import pandas as pd
@@ -30,11 +31,14 @@ from api.mongo import (
     get_analysis_job_ids,
     get_cleaning_job_ids,
     delete_jobs,
+    update_job_share_token,
+    get_job_by_share_token,
 )
 from api.permissions import find_owned_job
 from api.serializers import CleanRequestSerializer, JobDeleteSerializer
 from services.analysis_service import compute_row_outliers, to_native
 from tasks.csv_tasks import analyze_csv_task, clean_csv_task
+from users.models import User
 
 
 def _sanitize_for_json(obj):
@@ -477,6 +481,18 @@ class JobsView(APIView):
         jobs = get_jobs_for_user(user_id, is_admin=is_admin)
         job_ids = [j['_id'] for j in jobs]
 
+        user_map = {}
+        if is_admin:
+            user_ids = {j.get('user_id') for j in jobs if j.get('user_id')}
+            uuid_ids = []
+            for uid in user_ids:
+                try:
+                    uuid_ids.append(uuid.UUID(uid))
+                except ValueError:
+                    continue
+            users = User.objects.filter(id__in=uuid_ids).only('id', 'email', 'username')
+            user_map = {str(u.id): u for u in users}
+
         # Batch-check which jobs have analysis/cleaning results
         analysis_set = get_analysis_job_ids(job_ids) if job_ids else set()
         cleaning_set = get_cleaning_job_ids(job_ids) if job_ids else set()
@@ -490,6 +506,22 @@ class JobsView(APIView):
                 'created_at': j.get('created_at'),
                 'has_analysis': j['_id'] in analysis_set,
                 'has_cleaning': j['_id'] in cleaning_set,
+                **(
+                    {
+                        'owner_email': (
+                            user_map.get(j.get('user_id')).email
+                            if user_map.get(j.get('user_id'))
+                            else None
+                        ),
+                        'owner_username': (
+                            user_map.get(j.get('user_id')).username
+                            if user_map.get(j.get('user_id'))
+                            else None
+                        ),
+                    }
+                    if is_admin
+                    else {}
+                ),
             }
             for j in jobs
         ]
@@ -539,3 +571,83 @@ class JobsView(APIView):
             audit_log(jid, 'JOB_DELETED', {'deleted_by': user_id})
 
         return Response({'deleted': len(owned_ids), 'job_ids': owned_ids})
+
+
+# ──────────────────────────────────────────────
+# Power BI Integration
+# ──────────────────────────────────────────────
+
+class ShareableView(APIView):
+    """
+    GET /api/share/<sharedToken> — download cleaned CSV file without authentication.
+    """
+    permission_classes = []  # Public endpoint
+
+    def get(self, request, sharedToken):
+        job = get_job_by_share_token(sharedToken)
+        if not job or not job.get('cleaned_file_path'):
+            return Response(
+                {'error': 'Invalid token or file not found'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        cleaned_path = job['cleaned_file_path']
+        if not os.path.exists(cleaned_path):
+            return Response(
+                {'error': 'File missing on disk'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return FileResponse(
+            open(cleaned_path, 'rb'),
+            content_type='text/csv',
+            as_attachment=True,
+            filename=f"{job['_id']}-cleaned.csv",
+        )
+
+
+class PowerBIConfigView(APIView):
+    """
+    GET /api/powerbi-config/<jobId> — get .pbids file content.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, jobId):
+        job = find_owned_job(jobId, request.user)
+        if not job or not job.get('cleaned_file_path'):
+            return Response(
+                {'error': 'Cleaned file not found'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Generate or reuse share token
+        share_token = job.get('share_token')
+        if not share_token:
+            share_token = secrets.token_urlsafe(32)
+            update_job_share_token(jobId, share_token)
+
+        # Construct protocol and host
+        # Power BI typically needs an absolute URL
+        protocol = 'https' if request.is_secure() else 'http'
+        host = request.get_host()
+        share_url = f"{protocol}://{host}/api/share/{share_token}"
+
+        pbids_content = {
+            "version": "0.1",
+            "connections": [
+                {
+                    "details": {
+                        "protocol": "web",
+                        "address": {
+                            "url": share_url
+                        },
+                        "authentication": None,
+                        "query": None
+                    },
+                    "options": {},
+                    "mode": "Import"
+                }
+            ]
+        }
+
+        return Response(pbids_content)

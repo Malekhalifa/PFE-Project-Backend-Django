@@ -33,4 +33,8 @@ urlpatterns = [
 
     # Jobs (History) — GET and DELETE on the same /api/jobs path
     path('jobs', views.JobsView.as_view(), name='jobs'),
+
+    # Power BI Integration
+    path('share/<str:sharedToken>', views.ShareableView.as_view(), name='share'),
+    path('powerbi-config/<str:jobId>', views.PowerBIConfigView.as_view(), name='powerbi-config'),
 ]

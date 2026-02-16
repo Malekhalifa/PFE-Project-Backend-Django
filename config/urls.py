@@ -38,4 +38,7 @@ urlpatterns = [
 
     # Bonus: Passwordless login
     path('auth/passwordless/', include('drfpasswordless.urls')),
+
+    # Allauth (required for socialaccount signup flow)
+    path('accounts/', include('allauth.urls')),
 ]

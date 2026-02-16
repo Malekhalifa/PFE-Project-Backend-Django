@@ -82,7 +82,14 @@ def get_jobs_for_user(user_id: str, is_admin: bool = False) -> list[dict]:
     return list(
         db.jobs.find(
             query,
-            {'_id': 1, 'file_name': 1, 'status': 1, 'mode': 1, 'created_at': 1},
+            {
+                '_id': 1,
+                'file_name': 1,
+                'status': 1,
+                'mode': 1,
+                'created_at': 1,
+                'user_id': 1,
+            },
         ).sort('created_at', -1)
     )
 
@@ -106,6 +113,24 @@ def update_job_cleaned_path(job_id: str, cleaned_file_path: str) -> None:
             'updated_at': _now(),
         }},
     )
+
+
+def update_job_share_token(job_id: str, share_token: str | None) -> None:
+    """Set or clear the share token for a job."""
+    db = get_db()
+    db.jobs.update_one(
+        {'_id': job_id},
+        {'$set': {
+            'share_token': share_token,
+            'updated_at': _now(),
+        }},
+    )
+
+
+def get_job_by_share_token(share_token: str) -> dict | None:
+    """Find a job by its share token."""
+    db = get_db()
+    return db.jobs.find_one({'share_token': share_token})
 
 
 def delete_jobs(job_ids: list[str], user_id: str = None, is_admin: bool = False) -> list[dict]:

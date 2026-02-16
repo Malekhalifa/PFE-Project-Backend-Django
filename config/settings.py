@@ -38,11 +38,19 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
 
     # Third-party
     'rest_framework',
     'corsheaders',
     'rest_framework_simplejwt',
+    'dj_rest_auth',
+    'dj_rest_auth.registration',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.github',
 
     # Bonus auth
     'oauth2_provider',
@@ -66,6 +74,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -125,6 +134,8 @@ AUTH_PASSWORD_VALIDATORS = [
 AUTHENTICATION_BACKENDS = [
     # Social OAuth2
     'drf_social_oauth2.backends.DjangoOAuth2',
+    # Allauth
+    'allauth.account.auth_backends.AuthenticationBackend',
     # Default Django
     'django.contrib.auth.backends.ModelBackend',
 ]
@@ -165,6 +176,25 @@ JWT_COOKIE_HTTPONLY = True
 JWT_COOKIE_SAMESITE = 'Lax'
 JWT_COOKIE_SECURE = PRODUCTION
 JWT_COOKIE_PATH = '/'
+
+# dj-rest-auth settings — keep cookie-based JWT
+REST_AUTH = {
+    'USE_JWT': True,
+    'JWT_AUTH_COOKIE': JWT_COOKIE_NAME,
+    'JWT_AUTH_REFRESH_COOKIE': None,
+    'JWT_AUTH_SAMESITE': JWT_COOKIE_SAMESITE,
+    'JWT_AUTH_SECURE': JWT_COOKIE_SECURE,
+    'JWT_AUTH_HTTPONLY': JWT_COOKIE_HTTPONLY,
+    'TOKEN_MODEL': None,
+}
+
+REST_AUTH_SERIALIZERS = {
+    'USER_DETAILS_SERIALIZER': 'users.dj_rest_auth_serializers.CustomUserDetailsSerializer',
+}
+
+REST_AUTH_REGISTER_SERIALIZERS = {
+    'REGISTER_SERIALIZER': 'users.dj_rest_auth_serializers.CustomRegisterSerializer',
+}
 
 # ──────────────────────────────────────────────
 # CORS — match Node.js CORS settings
@@ -237,6 +267,33 @@ SOCIAL_AUTH_GITHUB_SECRET = env('GITHUB_SECRET', default='')
 FRONTEND_URL = env('FRONTEND_URL', default='http://localhost:3000')
 GITHUB_CALLBACK_URL = env('GITHUB_CALLBACK_URL', default='http://localhost:8000/api/github/callback')
 
+# django-allauth
+SITE_ID = 1
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': ['profile', 'email'],
+        'APP': {
+            'client_id': SOCIAL_AUTH_GOOGLE_OAUTH2_KEY,
+            'secret': SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET,
+            'key': '',
+        },
+    },
+    'github': {
+        'SCOPE': ['user:email'],
+        'APP': {
+            'client_id': SOCIAL_AUTH_GITHUB_KEY,
+            'secret': SOCIAL_AUTH_GITHUB_SECRET,
+            'key': '',
+        },
+    },
+}
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_ADAPTER = 'users.allauth_adapter.SocialAccountAdapter'
+
 # ──────────────────────────────────────────────
 # Internationalization & Static
 # ──────────────────────────────────────────────
@@ -249,3 +306,6 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Email (password reset) — console backend until SMTP is configured
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
