@@ -190,6 +190,7 @@ REST_AUTH = {
 
 REST_AUTH_SERIALIZERS = {
     'USER_DETAILS_SERIALIZER': 'users.dj_rest_auth_serializers.CustomUserDetailsSerializer',
+    'REGISTER_SERIALIZER': 'users.dj_rest_auth_serializers.CustomRegisterSerializer',
 }
 
 REST_AUTH_REGISTER_SERIALIZERS = {

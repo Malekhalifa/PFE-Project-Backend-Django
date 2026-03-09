@@ -18,12 +18,22 @@ from dj_rest_auth.registration.views import RegisterView, SocialLoginView
 from dj_rest_auth.views import LoginView, LogoutView, UserDetailsView
 
 from .serializers import UserSerializer
-from .dj_rest_auth_serializers import TokenSocialLoginSerializer
+from .dj_rest_auth_serializers import CustomRegisterSerializer, TokenSocialLoginSerializer
 
 
 class CustomRegisterView(RegisterView):
-    """POST /api/register — create account, set JWT cookie."""
+    """POST /api/register — create account, set JWT cookie.
+    GET redirects to frontend login so opening the API URL in a browser is friendly."""
+    serializer_class = CustomRegisterSerializer
     permission_classes = [AllowAny]
+    authentication_classes = []  # No auth required; avoid 401 when no cookie is sent
+
+    def get_permissions(self):
+        return [AllowAny()]
+
+    def get(self, request, *args, **kwargs):
+        """Redirect GET to frontend login; registration is POST-only."""
+        return redirect(f'{settings.FRONTEND_URL}/#/login')
 
     def get_response_data(self, user):
         return {'user': UserSerializer(user).data}
@@ -32,6 +42,7 @@ class CustomRegisterView(RegisterView):
 class CustomLoginView(LoginView):
     """POST /api/login — verify credentials, set JWT cookie."""
     permission_classes = [AllowAny]
+    authentication_classes = []  # Allow unauthenticated requests (no cookie yet)
 
     def get_response(self):
         response = super().get_response()
