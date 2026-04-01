@@ -11,6 +11,7 @@ import math
 import os
 import secrets
 import uuid
+import requests as http_requests
 
 import pandas as pd
 from django.conf import settings
@@ -30,6 +31,9 @@ from api.mongo import (
     get_cleaning_result,
     get_analysis_job_ids,
     get_cleaning_job_ids,
+    get_chat_job_ids,
+    get_chat_messages,
+    save_chat_message,
     delete_jobs,
     update_job_share_token,
     get_job_by_share_token,
@@ -37,7 +41,13 @@ from api.mongo import (
 from api.permissions import find_owned_job
 from api.serializers import CleanRequestSerializer, JobDeleteSerializer
 from services.analysis_service import compute_row_outliers, to_native
+from services.postgres_connection import (
+    looks_like_postgres_dsn,
+    redact_postgres_dsn,
+    test_postgres_connection,
+)
 from tasks.csv_tasks import analyze_csv_task, clean_csv_task
+from tasks.postgres_tasks import analyze_postgres_task
 from users.models import User
 
 
@@ -139,6 +149,115 @@ class AnalyzeView(APIView):
         return Response({'message': 'analysis started'})
 
 
+class TestPostgresConnectionView(APIView):
+    """
+    POST /api/test-postgres — test connectivity to a PostgreSQL database.
+    Body: { "connection_string": "..." }
+    Returns: { "success": true, "database": "...", "host": "..." }
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        conn_str = request.data.get('connection_string', '').strip()
+        if not conn_str:
+            return Response({'error': 'connection_string is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not looks_like_postgres_dsn(conn_str):
+            return Response(
+                {'error': 'Invalid connection string format. Expected: postgresql://user:password@host:port/database'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            test_postgres_connection(conn_str, timeout_s=3)
+        except Exception as exc:
+            return Response(
+                {
+                    'error': 'Could not connect to PostgreSQL.',
+                    'detail': str(exc),
+                    'target': redact_postgres_dsn(conn_str),
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        from services.postgres_connection import parse_postgres_dsn_info
+        info = parse_postgres_dsn_info(conn_str)
+        return Response({
+            'success': True,
+            'database': info.database,
+            'host': info.host,
+            'port': info.port,
+        })
+
+class AnalyzePostgresView(APIView):
+    """
+    POST /api/analyze-postgres — start agentic analysis on a PostgreSQL database.
+    Body: { "connection_string": "...", "domain_rules": [...] }
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        conn_str = request.data.get('connection_string')
+        domain_rules = request.data.get('domain_rules', [])
+        
+        if not conn_str:
+            return Response({'error': 'connection_string is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 1) Quick format check (pattern) to fail fast on obvious mistakes.
+        if not looks_like_postgres_dsn(conn_str):
+            return Response(
+                {
+                    'error': (
+                        "Invalid connection_string format. Expected: "
+                        "postgresql://user:password@host:port/database"
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 2) Preflight connectivity check so we don’t enqueue a job that can’t run.
+        try:
+            test_postgres_connection(conn_str, timeout_s=3)
+        except RuntimeError as exc:
+            return Response(
+                {
+                    'error': 'Could not connect to PostgreSQL (check host/port/credentials).',
+                    'detail': str(exc),
+                    'target': redact_postgres_dsn(conn_str),
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except Exception as exc:
+            # ValueError => bad DSN; RuntimeError => connectivity; keep it safe.
+            return Response(
+                {
+                    'error': 'PostgreSQL connection check failed.',
+                    'detail': str(exc),
+                    'target': redact_postgres_dsn(conn_str),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user_id = str(request.user.id)
+        
+        # Create a job tracking entry
+        job_id = create_job(
+            user_id=user_id,
+            file_name="PostgreSQL Connection",
+            file_path="postgres://<hidden>",
+            mode="agentic_postgres",
+        )
+
+        analyze_postgres_task.delay(
+            job_id=job_id,
+            connection_string=conn_str,
+            domain_rules=domain_rules,
+        )
+
+        audit_log(job_id, 'DB_ANALYSIS_ENQUEUED', {})
+        return Response({'job_id': job_id, 'message': 'Postgres analysis started'})
+
+
 class StatusView(APIView):
     """
     GET /api/status/<jobId> — get job status.
@@ -169,19 +288,53 @@ class ResultsView(APIView):
             return Response({'detail': 'Results not found'}, status=status.HTTP_404_NOT_FOUND)
 
         result = analysis['result']
-        quality_report = _sanitize_for_json(result.get('quality_report', {}))
 
-        # Filter out empty numeric_stats entries (non-numeric columns return {})
-        # — the frontend calls .toFixed() on min/mean/max and crashes on empty objects
-        if 'numeric_stats' in quality_report:
-            quality_report['numeric_stats'] = {
-                k: v for k, v in quality_report['numeric_stats'].items() if v
-            }
+        # If it's already the new CSV format natively (has dataset_summary)
+        # OR if it's an agentic postgres format (has schema_analysis)
+        if 'dataset_summary' in result or 'schema_analysis' in result:
+            return Response(_sanitize_for_json(result))
 
-        return Response({
-            'cleaned_data': result.get('cleaned_data'),
-            'quality_report': quality_report,
-        })
+        # Otherwise, map the legacy CSV format to the new format
+        meta = result.get('meta', {})
+        qr = _sanitize_for_json(result.get('quality_report', {}))
+        cleaned = result.get('cleaned_data', {})
+
+        response_data = {
+            'meta': {
+                'job_id': jobId,
+                'file_path': meta.get('file_path'),
+                'file_size_bytes': meta.get('file_size_bytes'),
+                'mode': meta.get('mode', 'normal'),
+                'analysis_type': meta.get('analysis_type', 'in-memory'),
+                'started_at': meta.get('started_at'),
+                'completed_at': meta.get('completed_at'),
+                'duration_ms': meta.get('duration_ms'),
+                'version': '1.0',
+            },
+            'dataset_summary': {
+                'rows': cleaned.get('rows', 0),
+                'columns': cleaned.get('columns', 0),
+            },
+            'quality_overview': {
+                'missing_rate': qr.get('missing_rate'),
+                'duplicate_rate': qr.get('duplicate_rate'),
+                'error_rate': qr.get('outlier_rate'),
+            },
+            'column_analysis': qr.get('column_analysis', {}),
+            'limitations': {
+                'approximate_metrics': False,
+                'skipped_checks': [],
+            },
+        }
+
+        if 'schema_analysis' in result:
+            response_data['schema_analysis'] = result['schema_analysis']
+        if 'cross_row_analysis' in result:
+            response_data['cross_row_analysis'] = result['cross_row_analysis']
+        if 'row_level_analysis' in result:
+            response_data['row_level_analysis'] = result['row_level_analysis']
+
+        return Response(response_data)
 
 
 class ResultsExportView(APIView):
@@ -493,9 +646,10 @@ class JobsView(APIView):
             users = User.objects.filter(id__in=uuid_ids).only('id', 'email', 'username')
             user_map = {str(u.id): u for u in users}
 
-        # Batch-check which jobs have analysis/cleaning results
+        # Batch-check which jobs have analysis/cleaning/chat results
         analysis_set = get_analysis_job_ids(job_ids) if job_ids else set()
         cleaning_set = get_cleaning_job_ids(job_ids) if job_ids else set()
+        chat_set = get_chat_job_ids(job_ids) if job_ids else set()
 
         result = [
             {
@@ -506,6 +660,7 @@ class JobsView(APIView):
                 'created_at': j.get('created_at'),
                 'has_analysis': j['_id'] in analysis_set,
                 'has_cleaning': j['_id'] in cleaning_set,
+                'has_chat': j['_id'] in chat_set,
                 **(
                     {
                         'owner_email': (
@@ -651,3 +806,139 @@ class PowerBIConfigView(APIView):
         }
 
         return Response(pbids_content)
+
+
+# ──────────────────────────────────────────────
+# AgentOS Chat Proxy
+# ──────────────────────────────────────────────
+
+AGENT_OS_BASE_URL = os.environ.get('AGENT_OS_URL', 'http://localhost:7777')
+AGENT_OS_TEAM_ID  = 'qualitylab-validation-team'
+
+
+class AgentChatProxyView(APIView):
+    """
+    POST /api/agent-chat
+
+    Proxies a chat message from the Angular frontend to the AgentOS team
+    running on port 7777.  Keeps CORS clean and adds JWT auth protection.
+
+    Body: { "message": str, "session_id": str, "job_id"?: str }
+    Returns: { "content": str }
+
+    When job_id is provided, the analysis results are fetched from MongoDB
+    and injected as context so the agent can answer follow-up questions
+    about the completed analysis.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        message    = request.data.get('message', '').strip()
+        session_id = request.data.get('session_id', '')
+        job_id     = request.data.get('job_id', '')
+
+        if not message:
+            return Response({'error': 'message is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Build the message with analysis context if a job_id is provided
+        enriched_message = message
+        if job_id:
+            try:
+                analysis = get_analysis_result(job_id)
+                if analysis and 'result' in analysis:
+                    result = analysis['result']
+                    context_parts = []
+                    if result.get('schema_analysis', {}).get('report'):
+                        context_parts.append(f"## Schema Analysis Report\n{result['schema_analysis']['report']}")
+                    if result.get('cross_row_analysis', {}).get('report'):
+                        context_parts.append(f"## Cross-Row Analysis Report\n{result['cross_row_analysis']['report']}")
+                    if result.get('row_level_analysis', {}).get('report'):
+                        context_parts.append(f"## Row-Level Analysis Report\n{result['row_level_analysis']['report']}")
+                    if context_parts:
+                        context = '\n\n---\n\n'.join(context_parts)
+                        enriched_message = (
+                            f"[CONTEXT: The following analysis was already completed for this database. "
+                            f"Use it to answer the user's question. Do NOT ask for a connection string again.]\n\n"
+                            f"{context}\n\n"
+                            f"---\n\n"
+                            f"[USER QUESTION]: {message}"
+                        )
+            except Exception:
+                pass  # Fall back to raw message if context fetch fails
+
+        url = f'{AGENT_OS_BASE_URL}/teams/{AGENT_OS_TEAM_ID}/runs'
+
+        try:
+            resp = http_requests.post(
+                url,
+                data={
+                    'message':    enriched_message,
+                    'session_id': session_id,
+                    'user_id':    str(request.user.id),
+                    'stream':     'False',
+                },
+                timeout=120,   # agents can be slow
+            )
+            resp.raise_for_status()
+
+            data    = resp.json()
+            content = data.get('content') or data.get('output') or str(data)
+
+            # Persist both messages to MongoDB
+            if job_id:
+                user_id = str(request.user.id)
+                save_chat_message(job_id, user_id, 'user', message)
+                save_chat_message(job_id, user_id, 'agent', content)
+
+            return Response({'content': content})
+
+        except http_requests.exceptions.ConnectionError:
+            return Response(
+                {'error': 'AgentOS server is not running. Start it with: python agents/agent_os.py'},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except http_requests.exceptions.Timeout:
+            return Response(
+                {'error': 'Agent timed out. The database query may be too complex.'},
+                status=status.HTTP_504_GATEWAY_TIMEOUT,
+            )
+        except Exception as exc:
+            return Response(
+                {'error': f'Agent error: {exc}'},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+
+class ChatHistoryView(APIView):
+    """
+    GET /api/chat-history/<jobId> — return all chat messages for a job.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, jobId):
+        job = get_job(jobId)
+        if not job:
+            return Response({'error': 'Job not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Ownership check (admins can see all)
+        if request.user.role != 'admin' and job.get('user_id') != str(request.user.id):
+            return Response({'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
+        messages = get_chat_messages(jobId)
+        # Serialize datetimes
+        for m in messages:
+            if 'created_at' in m:
+                m['created_at'] = m['created_at'].isoformat()
+
+        return Response({'messages': messages})
+
+    def post(self, request, jobId):
+        """Save a single chat message (used by frontend to persist analysis summary)."""
+        role = request.data.get('role', '').strip()
+        content = request.data.get('content', '').strip()
+
+        if not role or not content:
+            return Response({'error': 'role and content are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        save_chat_message(jobId, str(request.user.id), role, content)
+        return Response({'ok': True})

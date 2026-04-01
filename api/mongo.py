@@ -239,3 +239,46 @@ def get_cleaning_job_ids(job_ids: list[str]) -> set[str]:
         {'job_id': 1},
     )
     return {d['job_id'] for d in docs}
+
+
+# ──────────────────────────────────────────────
+# Chat messages collection
+# ──────────────────────────────────────────────
+
+def save_chat_message(
+    job_id: str,
+    user_id: str,
+    role: str,
+    content: str,
+) -> None:
+    """Append a single chat message (user or agent) for a job."""
+    db = get_db()
+    db.chat_messages.insert_one({
+        'job_id': job_id,
+        'user_id': user_id,
+        'role': role,
+        'content': content,
+        'created_at': _now(),
+    })
+
+
+def get_chat_messages(job_id: str) -> list[dict]:
+    """Return all chat messages for a job, sorted by timestamp."""
+    db = get_db()
+    return list(
+        db.chat_messages.find(
+            {'job_id': job_id},
+            {'_id': 0, 'role': 1, 'content': 1, 'created_at': 1},
+        ).sort('created_at', 1)
+    )
+
+
+def get_chat_job_ids(job_ids: list[str]) -> set[str]:
+    """Return set of job_ids that have chat messages."""
+    db = get_db()
+    pipeline = [
+        {'$match': {'job_id': {'$in': job_ids}}},
+        {'$group': {'_id': '$job_id'}},
+    ]
+    return {d['_id'] for d in db.chat_messages.aggregate(pipeline)}
+

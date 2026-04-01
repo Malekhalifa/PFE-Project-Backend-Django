@@ -14,6 +14,12 @@ class CookieJWTAuthentication(JWTAuthentication):
     """
 
     def authenticate(self, request):
+        # 1) Keep default SimpleJWT behavior for Authorization: Bearer <token>
+        header_auth = super().authenticate(request)
+        if header_auth is not None:
+            return header_auth
+
+        # 2) Fallback to httpOnly cookie auth used by the frontend
         raw_token = request.COOKIES.get('token')
         if raw_token is None:
             return None

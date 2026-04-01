@@ -19,6 +19,8 @@ urlpatterns = [
 
     # Analysis
     path('analyze/<str:jobId>', views.AnalyzeView.as_view(), name='analyze'),
+    path('test-postgres', views.TestPostgresConnectionView.as_view(), name='test-postgres'),
+    path('analyze-postgres', views.AnalyzePostgresView.as_view(), name='analyze-postgres'),
     path('status/<str:jobId>', views.StatusView.as_view(), name='status'),
     path('results/<str:jobId>', views.ResultsView.as_view(), name='results'),
     path('results/<str:jobId>/export', views.ResultsExportView.as_view(), name='results-export'),
@@ -37,4 +39,8 @@ urlpatterns = [
     # Power BI Integration
     path('share/<str:sharedToken>', views.ShareableView.as_view(), name='share'),
     path('powerbi-config/<str:jobId>', views.PowerBIConfigView.as_view(), name='powerbi-config'),
+
+    # AgentOS chat proxy — forwards messages to the AgentOS team on port 7777
+    path('agent-chat', views.AgentChatProxyView.as_view(), name='agent-chat'),
+    path('chat-history/<str:jobId>', views.ChatHistoryView.as_view(), name='chat-history'),
 ]
