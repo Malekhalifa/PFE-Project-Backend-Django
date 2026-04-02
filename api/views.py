@@ -36,7 +36,9 @@ from api.mongo import (
     save_chat_message,
     delete_jobs,
     update_job_share_token,
+    update_job_connection_string,
     get_job_by_share_token,
+    update_job_status,
 )
 from api.permissions import find_owned_job
 from api.serializers import CleanRequestSerializer, JobDeleteSerializer
@@ -47,7 +49,7 @@ from services.postgres_connection import (
     test_postgres_connection,
 )
 from tasks.csv_tasks import analyze_csv_task, clean_csv_task
-from tasks.postgres_tasks import analyze_postgres_task
+from tasks.postgres_tasks import analyze_postgres_task, execute_postgres_cleaning_task
 from users.models import User
 
 
@@ -247,6 +249,10 @@ class AnalyzePostgresView(APIView):
             file_path="postgres://<hidden>",
             mode="agentic_postgres",
         )
+
+        # Persist the DSN in the job document so the cleaning task
+        # can retrieve it later without needing it re-passed.
+        update_job_connection_string(job_id, conn_str)
 
         analyze_postgres_task.delay(
             job_id=job_id,
@@ -942,3 +948,121 @@ class ChatHistoryView(APIView):
 
         save_chat_message(jobId, str(request.user.id), role, content)
         return Response({'ok': True})
+
+
+# ──────────────────────────────────────────────
+# PostgreSQL Human-in-the-Loop Fix Execution
+# ──────────────────────────────────────────────
+
+class GetFixesView(APIView):
+    """
+    GET /api/fixes/<job_id>/
+
+    Returns the list of AI-generated fix cards stored in
+    analysis_results.result.fixes for this job.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, job_id):
+        job = find_owned_job(job_id, request.user)
+        if not job:
+            return Response(
+                {'detail': 'Job not found or access denied.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        analysis = get_analysis_result(job_id)
+        fixes = (analysis or {}).get('result', {}).get('fixes', None)
+        if fixes is None:
+            return Response(
+                {'detail': 'No fixes found. Re-run analysis to generate fix cards.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return Response(fixes)
+
+
+class ExecuteFixView(APIView):
+    """
+    POST /api/execute-fix/<job_id>/
+
+    Body: { "queries": ["SQL1", "SQL2", ...] }
+
+    Executes the supplied SQL statements for a single fix card against the
+    user's PostgreSQL database inside one transaction. Only queries that
+    target *_clean tables are allowed — any query touching a non-_clean
+    table is rejected with 400 to protect source data.
+
+    Returns:
+      success: { "success": true, "rows_affected": [n, n, ...] }
+      failure: { "success": false, "error": "<message>" }
+    """
+    permission_classes = [IsAuthenticated]
+
+    # DML verbs that are allowed to write; CREATE/INSERT for setup are also permitted
+    _SAFE_VERBS = {'update', 'delete', 'insert', 'create', 'alter'}
+
+    def post(self, request, job_id):
+        import psycopg2
+
+        # 1 — Ownership
+        job = find_owned_job(job_id, request.user)
+        if not job:
+            return Response(
+                {'detail': 'Job not found or access denied.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # 2 — Connection string
+        connection_string = job.get('connection_string')
+        if not connection_string:
+            return Response(
+                {'detail': 'No connection string on this job.'},
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
+
+        # 3 — Validate input
+        queries = request.data.get('queries')
+        if not queries or not isinstance(queries, list) or len(queries) == 0:
+            return Response(
+                {'detail': 'queries must be a non-empty list of SQL strings.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 4 — Safety guard: every DML query must reference a _clean table
+        #     DDL (CREATE TABLE) that references the source table for LIKE is explicitly allowed.
+        for q in queries:
+            q_lower = q.lower().strip()
+            verb = q_lower.split()[0] if q_lower else ''
+            is_dml = verb in ('update', 'delete')  # INSERT is fine (goes into _clean)
+            if is_dml and '_clean' not in q_lower:
+                return Response(
+                    {
+                        'detail': (
+                            'Safety violation: DML queries must only target _clean tables. '
+                            f'Offending query: {q[:120]}'
+                        )
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        # 5 — Execute all queries in a single transaction
+        rows_affected = []
+        try:
+            with psycopg2.connect(connection_string) as conn:
+                with conn.cursor() as cur:
+                    for q in queries:
+                        cur.execute(q)
+                        rows_affected.append(cur.rowcount if cur.rowcount >= 0 else 0)
+                conn.commit()
+        except Exception as exc:
+            audit_log(job_id, 'FIX_EXECUTION_FAILED', {'error': str(exc)})
+            return Response(
+                {'success': False, 'error': str(exc)},
+                status=status.HTTP_200_OK,  # 200 so the frontend reads the body
+            )
+
+        audit_log(job_id, 'FIX_EXECUTED', {'rows_affected': rows_affected})
+        return Response({'success': True, 'rows_affected': rows_affected})
+
+

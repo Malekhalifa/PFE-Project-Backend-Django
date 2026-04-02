@@ -133,6 +133,23 @@ def get_job_by_share_token(share_token: str) -> dict | None:
     return db.jobs.find_one({'share_token': share_token})
 
 
+def update_job_connection_string(job_id: str, connection_string: str) -> None:
+    """Persist the user's PostgreSQL DSN in the job document.
+
+    Called immediately after job creation for postgres jobs so that the
+    cleaning task can retrieve it later via get_job() without requiring the
+    DSN to be re-passed through Celery task arguments.
+    """
+    db = get_db()
+    db.jobs.update_one(
+        {'_id': job_id},
+        {'$set': {
+            'connection_string': connection_string,
+            'updated_at': _now(),
+        }},
+    )
+
+
 def delete_jobs(job_ids: list[str], user_id: str = None, is_admin: bool = False) -> list[dict]:
     """
     Delete jobs by IDs, enforcing ownership.

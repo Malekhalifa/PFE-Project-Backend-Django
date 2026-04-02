@@ -168,63 +168,74 @@ def orchestrator_workflow(connection_string: str, domain_rules: str, job_id: str
     logger.info("Row Logic Validator finished.")
 
     # ------------------------------------------------------------------
-    # AGENT 4 — Data Cleaning Planner
+    # AGENT 4 — Fix Planner (human-in-the-loop)
     # ------------------------------------------------------------------
-    logger.info("Starting Data Cleaning Planner (Agno / %s)...", _GEMINI_MODEL_ID)
+    logger.info("Starting Fix Planner (Agno / %s)...", _GEMINI_MODEL_ID)
     _emit('running_cleaning_plan')
 
-    cleaning_agent = Agent(
-        name="Data Cleaning Planner",
+    fix_planner = Agent(
+        name="Fix Planner",
         model=_make_model(),
-        description="Generates a deterministic JSON cleaning plan based on validation reports.",
+        description=(
+            "You are a PostgreSQL data quality fix planner. "
+            "You read validation reports and produce a structured list of "
+            "human-reviewable fix cards that a data engineer can Accept or Reject one by one."
+        ),
         instructions=[
-            "You are a data cleaning planner.",
-            "Your job is to convert validation findings into a structured cleaning plan.",
-            "STRICT RULES:",
-            "- Output ONLY valid JSON",
-            "- No markdown, no explanations, no extra text",
-            "- Do NOT execute SQL",
-            "- Do NOT suggest — decide deterministically",
-            "FORMAT:",
+            # ── Output contract ────────────────────────────────────────
+            "Output ONLY valid JSON — no markdown fences, no prose, no comments.",
+            "The JSON must match this schema exactly:",
             """
-            {
-              \"tables\": [
-                {
-                  \"table\": \"string\",
-                  \"target_table\": \"string\",
-                  \"actions\": [
-                    {
-                      \"type\": \"cast | fill_null | drop_duplicates | drop_column\",
-                      \"column\": \"string | null\",
-                      \"params\": {}
-                    }
-                  ]
-                }
-              ]
-            }
-            """,
-            "CRITICAL RULES:",
-            "- ALWAYS use shadow tables: target_table = table + '_clean'",
-            "- Generate plan for ALL tables found in schema",
-            "- If decision is ambiguous → add: \"requires_user_input\": true inside params",
-            "CLEANING RULES:",
-            "- Mixed types → cast, invalid → NULL",
-            "- Numeric nulls → median",
-            "- Categorical nulls → mode",
-            "- Duplicate rows → remove using best candidate columns",
-            "- If null ratio > 0.6 → drop_column",
-            "ORDER:",
-            "1. cast",
-            "2. fill_null",
-            "3. drop_duplicates",
-            "4. drop_column",
+{
+  "fixes": [
+    {
+      "id": "fix_001",
+      "table": "<source table name>",
+      "target_table": "<source table name>_clean",
+      "problem": "<concise plain-English description of the data quality issue>",
+      "fix": "<one-line title of the proposed fix>",
+      "queries": [
+        "<SQL statement 1>",
+        "<SQL statement 2>"
+      ],
+      "explanation": "<plain-English explanation of why these queries fix the problem>"
+    }
+  ]
+}
+""",
+            # ── Safety rules (CRITICAL) ────────────────────────────────
+            "SAFETY — NEVER modify source tables. Every DML query (UPDATE, DELETE, INSERT) "
+            "MUST target only <table>_clean tables. Violating this is a critical error.",
+            # ── Setup pattern ─────────────────────────────────────────
+            "The first two queries of EVERY fix card must always be:",
+            "  1. CREATE TABLE IF NOT EXISTS <table>_clean (LIKE <table> INCLUDING ALL);",
+            "  2. INSERT INTO <table>_clean SELECT * FROM <table> ON CONFLICT DO NOTHING;",
+            "These ensure the clean shadow table exists and is populated before the fix is applied.",
+            # ── Fix generation rules ───────────────────────────────────
+            "Only generate fix cards for REAL issues found in the validation reports.",
+            "Do NOT generate fix cards for tables that have no reported problems.",
+            "One fix card = one distinct, specific problem.",
+            "If fixing a problem requires multiple SQL statements, include all of them in 'queries'.",
+            "Use concrete column names and table names from the reports — never placeholders.",
+            # ── SQL rules ─────────────────────────────────────────────
+            "NULL filling — categorical columns: use mode (most frequent non-null value).",
+            "NULL filling — numeric columns: use median (percentile_cont(0.5)).",
+            "Duplicate removal: use DELETE … WHERE ctid NOT IN (SELECT MIN(ctid) …).",
+            "Type cast: use ALTER TABLE <table>_clean ALTER COLUMN … TYPE … USING …::type.",
+            "Invalid value correction: use UPDATE <table>_clean SET … WHERE <condition>.",
+            # ── Content rules ──────────────────────────────────────────
+            "The 'problem' field must be plain English — no SQL, no jargon.",
+            "The 'fix' field is a short action title, e.g. 'Fill NULL emails with mode'.",
+            "The 'explanation' field must explain WHY this fix is appropriate for non-technical readers.",
+            # ── ID format ─────────────────────────────────────────────
+            "Assign sequential IDs: fix_001, fix_002, fix_003 …",
         ],
-        tools=[],  # No SQL access — planner only
+        tools=[],   # planner only — no DB access
         markdown=False,
     )
 
-    cleaning_prompt = (
-        "Generate a full cleaning plan.\n\n"
+    fix_prompt = (
+        "Generate a list of human-reviewable fix cards for all data quality issues found below.\n\n"
         "--- Schema Findings ---\n"
         + schema_report
         + "\n\n--- Cross-Row Findings ---\n"
@@ -233,19 +244,28 @@ def orchestrator_workflow(connection_string: str, domain_rules: str, job_id: str
         + row_report
     )
 
-    cleaning_plan_raw = _run_agent(cleaning_agent, cleaning_prompt)
-    logger.info("Data Cleaning Planner finished.")
+    fixes_raw = _run_agent(fix_planner, fix_prompt)
+    logger.info("Fix Planner finished.")
+
+    # Strip markdown code fences if the model added them despite instructions
+    fixes_raw_stripped = fixes_raw.strip()
+    if fixes_raw_stripped.startswith("```"):
+        fixes_raw_stripped = fixes_raw_stripped.split("\n", 1)[-1]
+        fixes_raw_stripped = fixes_raw_stripped.rsplit("```", 1)[0]
 
     try:
-        cleaning_plan = json.loads(cleaning_plan_raw)
+        fixes_parsed = json.loads(fixes_raw_stripped)
     except Exception:
-        logger.error("Invalid JSON from cleaning agent:\n%s", cleaning_plan_raw)
-        # Wrap raw text so the pipeline never crashes
-        cleaning_plan = {"error": "Cleaning plan could not be parsed", "raw": cleaning_plan_raw}
+        logger.error("Invalid JSON from Fix Planner:\n%s", fixes_raw)
+        fixes_parsed = {
+            "error": "Fix plan could not be parsed — JSON was invalid",
+            "raw": fixes_raw,
+        }
 
     return {
-        "schema_issues": schema_report,
-        "cross_row_issues": cross_report,
-        "row_issues": row_report,
-        "cleaning_plan": cleaning_plan,
+        "schema_analysis":   {"report": schema_report},
+        "cross_row_analysis": {"report": cross_report},
+        "row_level_analysis": {"report": row_report},
+        "fixes": fixes_parsed,
     }
+

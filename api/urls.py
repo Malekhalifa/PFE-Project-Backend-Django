@@ -43,4 +43,8 @@ urlpatterns = [
     # AgentOS chat proxy — forwards messages to the AgentOS team on port 7777
     path('agent-chat', views.AgentChatProxyView.as_view(), name='agent-chat'),
     path('chat-history/<str:jobId>', views.ChatHistoryView.as_view(), name='chat-history'),
+
+    # PostgreSQL Human-in-the-Loop Fix Execution
+    path('fixes/<str:job_id>/', views.GetFixesView.as_view(), name='get-fixes'),
+    path('execute-fix/<str:job_id>/', views.ExecuteFixView.as_view(), name='execute-fix'),
 ]

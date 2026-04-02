@@ -1,9 +1,13 @@
+import logging
 import time
 from datetime import datetime, timezone
 
 from config.celery import app
 from services.postgres_service import analyze_postgres_database
 from api.mongo import (
+    get_db,
+    get_job,
+    get_analysis_result,
     update_job_status,
     save_analysis_result,
 )
@@ -59,3 +63,96 @@ def analyze_postgres_task(self, job_id: str, connection_string: str, domain_rule
         update_job_status(job_id, 'failed')
         audit_log(job_id, 'DB_ANALYSIS_FAILED', {'error': str(e)})
         raise
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PostgreSQL Cleaning Plan Executor
+# ─────────────────────────────────────────────────────────────────────────────
+
+from services.postgres_cleaning_service import run_cleaning_plan
+
+_cleaning_logger = logging.getLogger('qualitylab.cleaning')
+
+
+@app.task(bind=True, max_retries=0, time_limit=1800)
+def execute_postgres_cleaning_task(self, job_id: str):
+    """
+    Execute the AI-generated cleaning plan against the user's PostgreSQL database.
+
+    Triggered by POST /api/clean-postgres/<job_id>.
+
+    Lifecycle
+    ---------
+    1. Fetch the job from MongoDB (connection_string + cleaning_plan live there).
+    2. Set job status to "cleaning".
+    3. Call run_cleaning_plan() from postgres_cleaning_service.
+    4. Persist the execution report under job["cleaning_report"] in MongoDB.
+    5. Set final status to "cleaning_completed" (all/partial success)
+       or "cleaning_failed" (all tables failed).
+    """
+    _cleaning_logger.info("execute_postgres_cleaning_task started for job %s", job_id)
+    update_job_status(job_id, 'cleaning')
+    audit_log(job_id, 'POSTGRES_CLEANING_STARTED', {})
+
+    try:
+        # 1 – Retrieve the job document
+        job = get_job(job_id)
+        if not job:
+            raise ValueError(f"Job {job_id!r} not found in MongoDB.")
+
+        connection_string = job.get('connection_string')
+        if not connection_string:
+            raise ValueError(
+                f"Job {job_id!r} has no connection_string. "
+                "Was the job created with AnalyzePostgresView?"
+            )
+
+        # 2 – Retrieve the cleaning plan from the analysis result
+        analysis = get_analysis_result(job_id)
+        if not analysis or not analysis.get('result', {}).get('cleaning_plan'):
+            raise ValueError(f"Job {job_id!r} has no cleaning_plan in analysis result.")
+
+        plan = analysis['result']['cleaning_plan']
+
+        # 3 – Execute
+        report = run_cleaning_plan(connection_string, plan)
+
+        # 4 – Persist the report in the job document
+        now = datetime.now(timezone.utc)
+        get_db().jobs.update_one(
+            {'_id': job_id},
+            {'$set': {
+                'cleaning_report': report,
+                'updated_at': now,
+            }},
+        )
+
+        # 5 – Final status
+        final_status = (
+            'cleaning_failed'
+            if report.get('status') == 'failed'
+            else 'cleaning_completed'
+        )
+        update_job_status(job_id, final_status)
+        audit_log(job_id, 'POSTGRES_CLEANING_COMPLETED', {
+            'overall_status': report.get('status'),
+            'tables_processed': len(report.get('tables', [])),
+        })
+        _cleaning_logger.info(
+            "execute_postgres_cleaning_task finished for job %s — %s",
+            job_id,
+            final_status,
+        )
+
+    except Exception as exc:
+        _cleaning_logger.error(
+            "execute_postgres_cleaning_task failed for job %s: %s",
+            job_id,
+            exc,
+            exc_info=True,
+        )
+        update_job_status(job_id, 'cleaning_failed')
+        audit_log(job_id, 'POSTGRES_CLEANING_FAILED', {'error': str(exc)})
+        # Do NOT re-raise — Celery max_retries=0 means a raise would permanently
+        # fail the task and obscure the real error from the audit log.
+

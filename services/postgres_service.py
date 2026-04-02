@@ -39,19 +39,13 @@ def analyze_postgres_database(connection_string: str, custom_rules: List[Dict[st
         # 2. Block and run the LLMs
         agent_reports = orchestrator_workflow(connection_string, domain_rules_text, job_id=job_id)
         
-        # 3. Map the reports into the standardized dictionary the frontend expects
+        # 3. Return the standardised dict — keys now come directly from the new agent output
         return {
             "status": "success",
-            "schema_analysis": {
-                "report": agent_reports.get("schema_issues", "No report generated.")
-            },
-            "cross_row_analysis": {
-                "report": agent_reports.get("cross_row_issues", "No report generated.")
-            },
-            "row_level_analysis": {
-                "report": agent_reports.get("row_issues", "No report generated.")
-            },
-            "cleaning_plan": agent_reports.get("cleaning_plan", {}),
+            "schema_analysis":    agent_reports.get("schema_analysis",    {"report": "No report generated."}),
+            "cross_row_analysis": agent_reports.get("cross_row_analysis", {"report": "No report generated."}),
+            "row_level_analysis": agent_reports.get("row_level_analysis", {"report": "No report generated."}),
+            "fixes": agent_reports.get("fixes", []),
         }
         
     except Exception as e:
