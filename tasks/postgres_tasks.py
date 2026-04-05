@@ -77,13 +77,15 @@ _cleaning_logger = logging.getLogger('qualitylab.cleaning')
 @app.task(bind=True, max_retries=0, time_limit=1800)
 def execute_postgres_cleaning_task(self, job_id: str):
     """
-    Execute the AI-generated cleaning plan against the user's PostgreSQL database.
+    Execute a legacy structured cleaning plan against the user's PostgreSQL database.
 
-    Triggered by POST /api/clean-postgres/<job_id>.
+    Note: the current agent pipeline produces human-reviewed `fixes`, not a
+    top-level `cleaning_plan`. This task is retained only for compatibility
+    with older analysis results that still contain a structured plan.
 
     Lifecycle
     ---------
-    1. Fetch the job from MongoDB (connection_string + cleaning_plan live there).
+    1. Fetch the job from MongoDB (connection_string lives there).
     2. Set job status to "cleaning".
     3. Call run_cleaning_plan() from postgres_cleaning_service.
     4. Persist the execution report under job["cleaning_report"] in MongoDB.
@@ -107,12 +109,17 @@ def execute_postgres_cleaning_task(self, job_id: str):
                 "Was the job created with AnalyzePostgresView?"
             )
 
-        # 2 – Retrieve the cleaning plan from the analysis result
+        # 2 – Retrieve the legacy cleaning plan from the analysis result
         analysis = get_analysis_result(job_id)
-        if not analysis or not analysis.get('result', {}).get('cleaning_plan'):
+        result = (analysis or {}).get('result', {})
+        plan = result.get('cleaning_plan')
+        if not plan:
+            if result.get('fixes'):
+                raise ValueError(
+                    f"Job {job_id!r} contains human-reviewed fix cards, not a legacy "
+                    "cleaning_plan. Apply them via /api/execute-fix/<job_id>/."
+                )
             raise ValueError(f"Job {job_id!r} has no cleaning_plan in analysis result.")
-
-        plan = analysis['result']['cleaning_plan']
 
         # 3 – Execute
         report = run_cleaning_plan(connection_string, plan)
@@ -155,4 +162,3 @@ def execute_postgres_cleaning_task(self, job_id: str):
         audit_log(job_id, 'POSTGRES_CLEANING_FAILED', {'error': str(exc)})
         # Do NOT re-raise — Celery max_retries=0 means a raise would permanently
         # fail the task and obscure the real error from the audit log.
-

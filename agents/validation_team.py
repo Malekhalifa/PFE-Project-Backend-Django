@@ -171,7 +171,7 @@ def orchestrator_workflow(connection_string: str, domain_rules: str, job_id: str
     # AGENT 4 — Fix Planner (human-in-the-loop)
     # ------------------------------------------------------------------
     logger.info("Starting Fix Planner (Agno / %s)...", _GEMINI_MODEL_ID)
-    _emit('running_cleaning_plan')
+    _emit('running_fix_planner')
 
     fix_planner = Agent(
         name="Fix Planner",
@@ -268,4 +268,3 @@ def orchestrator_workflow(connection_string: str, domain_rules: str, job_id: str
         "row_level_analysis": {"report": row_report},
         "fixes": fixes_parsed,
     }
-

@@ -40,6 +40,7 @@ from api.mongo import (
     get_job_by_share_token,
     update_job_status,
 )
+from api.fix_safety import validate_fix_queries
 from api.permissions import find_owned_job
 from api.serializers import CleanRequestSerializer, JobDeleteSerializer
 from services.analysis_service import compute_row_outliers, to_native
@@ -49,7 +50,7 @@ from services.postgres_connection import (
     test_postgres_connection,
 )
 from tasks.csv_tasks import analyze_csv_task, clean_csv_task
-from tasks.postgres_tasks import analyze_postgres_task, execute_postgres_cleaning_task
+from tasks.postgres_tasks import analyze_postgres_task
 from users.models import User
 
 
@@ -999,9 +1000,6 @@ class ExecuteFixView(APIView):
     """
     permission_classes = [IsAuthenticated]
 
-    # DML verbs that are allowed to write; CREATE/INSERT for setup are also permitted
-    _SAFE_VERBS = {'update', 'delete', 'insert', 'create', 'alter'}
-
     def post(self, request, job_id):
         import psycopg2
 
@@ -1029,22 +1027,14 @@ class ExecuteFixView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # 4 — Safety guard: every DML query must reference a _clean table
-        #     DDL (CREATE TABLE) that references the source table for LIKE is explicitly allowed.
-        for q in queries:
-            q_lower = q.lower().strip()
-            verb = q_lower.split()[0] if q_lower else ''
-            is_dml = verb in ('update', 'delete')  # INSERT is fine (goes into _clean)
-            if is_dml and '_clean' not in q_lower:
-                return Response(
-                    {
-                        'detail': (
-                            'Safety violation: DML queries must only target _clean tables. '
-                            f'Offending query: {q[:120]}'
-                        )
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+        # 4 — Safety guard: every write query must target a single *_clean table.
+        try:
+            validate_fix_queries(queries)
+        except ValueError as exc:
+            return Response(
+                {'detail': str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # 5 — Execute all queries in a single transaction
         rows_affected = []
@@ -1064,5 +1054,4 @@ class ExecuteFixView(APIView):
 
         audit_log(job_id, 'FIX_EXECUTED', {'rows_affected': rows_affected})
         return Response({'success': True, 'rows_affected': rows_affected})
-
 
