@@ -18,6 +18,12 @@ The master agent will coordinate the three specialist sub-agents:
   3. Row-Level Logic Validator   — per-row business rule failures
 
 All agents share the same SqliteDb session so they have full conversation memory.
+
+NOTE: The AgentOS playground uses the Team coordinate mode where the master
+delegates autonomously. The GuidelineGeneratorAgent is integrated into the
+Celery pipeline only (validation_team.py). In the playground, agents use the
+cleaned-up, database-agnostic base instructions and discover the schema
+organically through their own tool calls.
 """
 
 import os
@@ -80,7 +86,10 @@ _TOOLS = [connect_to_database, execute_pg_query]
 schema_agent = Agent(
     id="schema-validator",
     name="Schema Integrity Validator",
-    role="Analyses the database structure: missing PKs, unlinked FKs, suspicious nullability, naming issues.",
+    role=(
+        "Analyses the database structure: missing PKs, unlinked FKs, "
+        "suspicious nullability, naming issues. Works on any PostgreSQL database."
+    ),
     model=_model(),
     description=SCHEMA_DESCRIPTION,
     instructions=[_CONNECT_RULE] + SCHEMA_INSTRUCTIONS,
@@ -98,7 +107,10 @@ schema_agent = Agent(
 cross_row_agent = Agent(
     id="cross-row-validator",
     name="Cross-Row Validator",
-    role="Detects aggregate violations: quota math, duplicate msisdns, orphaned FKs, SMSC self-loops.",
+    role=(
+        "Detects aggregate violations: orphaned FKs, duplicate unique values, "
+        "cross-table consistency problems. Works on any PostgreSQL database."
+    ),
     model=_model(),
     description=CROSS_ROW_DESCRIPTION,
     instructions=[_CONNECT_RULE] + CROSS_ROW_INSTRUCTIONS,
@@ -116,7 +128,10 @@ cross_row_agent = Agent(
 row_agent = Agent(
     id="row-level-validator",
     name="Row-Level Logic Validator",
-    role="Validates individual rows for impossible dates, blank fields, bad formats, and domain rule violations.",
+    role=(
+        "Validates individual rows for impossible dates, blank required fields, "
+        "bad formats, and domain rule violations. Works on any PostgreSQL database."
+    ),
     model=_model(),
     description=ROW_LEVEL_DESCRIPTION,
     instructions=[_CONNECT_RULE] + ROW_LEVEL_INSTRUCTIONS,
@@ -143,7 +158,7 @@ validation_team = Team(
     model=_model(),
     members=[schema_agent, cross_row_agent, row_agent],
     description=(
-        "An AI-powered data-quality team for EasyBulk's PostgreSQL database. "
+        "An AI-powered data-quality team for any PostgreSQL database. "
         "Give me a connection string and I will coordinate three specialist agents "
         "to validate schema structure, cross-row integrity, and row-level business rules, "
         "then deliver a unified report."
@@ -156,7 +171,9 @@ validation_team = Team(
         "  3. Pass both findings to the Row-Level Logic Validator to check per-row rules.",
         "Finally, synthesise all three reports into a single, well-structured markdown document "
         "with three sections: ## Schema Issues, ## Cross-Row Issues, ## Row-Level Issues.",
-        "If the user asks about only one aspect (e.g. 'check only the schema'), delegate only the relevant agent.",
+        "If the user asks about only one aspect (e.g. 'check only the schema'), "
+        "delegate only the relevant agent.",
+        "You are database-agnostic — discover the schema first before running any checks.",
     ],
     tools=_TOOLS,              # team leader also has direct tool access if needed
     db=_SESSION_DB,            # shared memory with sub-agents
@@ -171,7 +188,7 @@ validation_team = Team(
 # ---------------------------------------------------------------------------
 agent_os = AgentOS(
     name="QualityLab Validation Agents",
-    description="AI-powered PostgreSQL data-quality validation suite.",
+    description="AI-powered PostgreSQL data-quality validation suite — works with any PostgreSQL database.",
     teams=[validation_team],
 )
 

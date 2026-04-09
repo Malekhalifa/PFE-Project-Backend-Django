@@ -5,7 +5,7 @@ Matches the Node.js findOwnedJob() pattern:
   - Admins can access any job
   - Regular users can only access their own jobs
 """
-from api.mongo import get_job
+from api.db import get_job
 
 
 def find_owned_job(job_id: str, user) -> dict | None:

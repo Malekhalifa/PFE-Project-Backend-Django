@@ -23,7 +23,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.models import audit_log
-from api.mongo import (
+from api.db import (
     create_job,
     get_job,
     get_jobs_for_user,
@@ -39,6 +39,7 @@ from api.mongo import (
     update_job_connection_string,
     get_job_by_share_token,
     update_job_status,
+    get_job_guidelines,
 )
 from api.fix_safety import validate_fix_queries
 from api.permissions import find_owned_job
@@ -1054,4 +1055,66 @@ class ExecuteFixView(APIView):
 
         audit_log(job_id, 'FIX_EXECUTED', {'rows_affected': rows_affected})
         return Response({'success': True, 'rows_affected': rows_affected})
+
+
+# ──────────────────────────────────────────────
+# AI-Generated Guidelines
+# ──────────────────────────────────────────────
+
+class GuidelinesView(APIView):
+    """
+    GET /api/guidelines/<jobId>
+
+    Returns the AI-generated guideline text produced by the GuidelineGenerator
+    for each pipeline phase, stored during the analysis run.
+
+    Lookup order:
+      1. MongoDB `job_guidelines` collection  (per-run, precise)
+      2. File-based GuidelinesStore           (latest version for the database —
+         fallback for jobs analysed before per-run persistence was added)
+
+    Response shape:
+      {
+        "schema_integrity_validator": "...",
+        "cross_row_validator":        "...",
+        "row_level_validator":        "...",
+        "data_fix_planner":           "..."
+      }
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, jobId):
+        job = find_owned_job(jobId, request.user)
+        if not job:
+            return Response(
+                {'detail': 'Job not found or access denied.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # ── 1. Primary: per-run MongoDB entry ──────────────────────────
+        guidelines = get_job_guidelines(jobId)
+        if guidelines:
+            return Response(guidelines)
+
+        # ── 2. Fallback: file-based GuidelinesStore ─────────────────────
+        # Works for jobs that were analysed before per-run persistence was
+        # added — the store holds the latest version for that database.
+        connection_string = job.get('connection_string')
+        if connection_string:
+            try:
+                from agents.guidelines_store import GuidelinesStore
+                store = GuidelinesStore(connection_string)
+                latest = store.load_latest()
+                if latest:
+                    # Strip internal metadata keys (_version, _created_at, _schema_snapshot)
+                    public = {k: v for k, v in latest.items() if not k.startswith('_')}
+                    if public:
+                        return Response(public)
+            except Exception:
+                pass  # never let the fallback crash the endpoint
+
+        return Response(
+            {'detail': 'No guidelines found for this job yet.'},
+            status=status.HTTP_404_NOT_FOUND,
+        )
 

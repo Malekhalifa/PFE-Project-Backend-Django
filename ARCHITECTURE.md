@@ -90,9 +90,11 @@ All results are stored in MongoDB. Users can review the full report and engage i
    │                                                │
    │   ┌───────────────────────────────────────┐   │
    │   │  Master Agent (Team leader)           │   │
+   │   │    ├── Guideline Agent (Agent 0)      │   │
    │   │    ├── Schema Integrity Validator     │   │
-   │   │    ├── Cross-Row Validator            │   │
+   │   │    ├── Column Validator               │   │
    │   │    ├── Row-Level Logic Validator      │   │
+   │   │    ├── Cross-Row Validator            │   │
    │   │    └── Data Cleaning Planner          │   │
    │   └───────────────────────────────────────┘   │
    └───────────────────────────────────────────────┘
@@ -398,21 +400,31 @@ The project uses **two databases**, each chosen for a different purpose:
    → calls postgres_service.analyze_postgres_database()
    → calls validation_team.orchestrator_workflow()
 
-3. Agent 1 (Schema Integrity Validator) runs
+3. Agent 0 (Guideline Agent) runs
+   → generates rules and orchestrates downstream validation behavior
+
+4. Agent 1 (Schema Integrity Validator) runs
    → queries information_schema via execute_pg_query tool
    → returns markdown schema report
 
-4. Agent 2 (Cross-Row Validator) receives Agent 1's report + context
-   → runs GROUP BY / HAVING / JOIN SQL queries
-   → returns markdown cross-row violations report
+5. Agent 2 (Column Validator) receives Agent 1's report + context
+   → runs data type, format, and statistical outlier queries
+   → returns markdown column constraints violations report
 
-5. Agent 3 (Row-Level Logic Validator) receives both previous reports
+6. Agent 3 (Row-Level Logic Validator) receives previous reports
    → runs targeted WHERE-clause queries for each business rule
    → returns markdown row-level violations report
 
-6. postgres_service formats results into standard dict, including the cleaning plan
-7. postgres_tasks saves to MongoDB, sets status "completed"
-8. Angular detects "completed" and enables the AI Chat and "Download Plan" features
+7. Agent 4 (Cross-Row Validator) receives previous reports
+   → runs aggregate GROUP BY / HAVING / JOIN SQL queries
+   → returns markdown cross-row violations report
+
+8. Agent 5 (Data Cleaning Planner) receives all preceding cascading reports
+   → generates the deterministic JSON fix card list
+
+9. postgres_service formats results into standard dict, including the cleaning plan
+10. postgres_tasks saves to MongoDB, sets status "completed"
+11. Angular detects "completed" and enables the AI Chat and "Download Plan" features
 
 ### 9.3 Persistent AI Chat Flow (Human-in-the-Loop)
 

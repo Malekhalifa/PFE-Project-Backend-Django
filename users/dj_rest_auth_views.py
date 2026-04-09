@@ -18,7 +18,7 @@ from dj_rest_auth.registration.views import RegisterView, SocialLoginView
 from dj_rest_auth.views import LoginView, LogoutView, UserDetailsView
 
 from .serializers import UserSerializer
-from .dj_rest_auth_serializers import CustomRegisterSerializer, TokenSocialLoginSerializer
+from .dj_rest_auth_serializers import CustomRegisterSerializer, TokenSocialLoginSerializer, CustomUserDetailsSerializer
 
 
 class CustomRegisterView(RegisterView):
@@ -63,6 +63,7 @@ class CustomLogoutView(LogoutView):
 class CustomUserDetailsView(UserDetailsView):
     """GET/PUT/PATCH /api/me — return or update current user."""
     permission_classes = [IsAuthenticated]
+    serializer_class = CustomUserDetailsSerializer  # explicitly override so REST_AUTH_SERIALIZERS is not needed
 
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)

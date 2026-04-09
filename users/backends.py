@@ -26,7 +26,8 @@ class CookieJWTAuthentication(JWTAuthentication):
 
         try:
             validated_token = self.get_validated_token(raw_token)
+            return self.get_user(validated_token), validated_token
         except (InvalidToken, AuthenticationFailed):
+            # Token is invalid, expired, or references a deleted/recreated user.
+            # Return None so DRF treats the request as anonymous (not a hard 401).
             return None
-
-        return self.get_user(validated_token), validated_token

@@ -60,12 +60,14 @@ class CustomRegisterSerializer(RegisterSerializer):
 
 
 class CustomUserDetailsSerializer(UserDetailsSerializer):
-    """Expose id/email/role for frontend user details."""
+    """Expose id/email/role/first_name/last_name for frontend user details."""
     role = serializers.CharField(read_only=True)
+    first_name = serializers.CharField(required=False, allow_blank=True, max_length=150)
+    last_name = serializers.CharField(required=False, allow_blank=True, max_length=150)
 
     class Meta(UserDetailsSerializer.Meta):
         model = User
-        fields = ('id', 'email', 'role')
+        fields = ('id', 'email', 'role', 'first_name', 'last_name')
 
 
 class TokenSocialLoginSerializer(SocialLoginSerializer):

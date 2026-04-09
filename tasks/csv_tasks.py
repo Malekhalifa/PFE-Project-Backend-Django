@@ -16,6 +16,7 @@ import os
 import time
 from datetime import datetime, timezone
 
+from django.db import close_old_connections
 from config.celery import app
 from services.analysis_service import (
     analyze_csv,
@@ -23,7 +24,7 @@ from services.analysis_service import (
     to_native,
 )
 from services.cleaning_service import clean_csv
-from api.mongo import (
+from api.db import (
     get_job,
     update_job_status,
     update_job_cleaned_path,
@@ -47,6 +48,10 @@ def analyze_csv_task(self, job_id, file_path, mode, options=None):
       3. Store result in MongoDB
       4. Set job status to 'completed' or 'failed'
     """
+    # Reset DB connections inherited from the parent process after fork.
+    # Without this, Django ORM calls silently do nothing in Celery fork workers.
+    close_old_connections()
+
     update_job_status(job_id, 'running')
     audit_log(job_id, 'ANALYSIS_STARTED', {})
 
@@ -116,6 +121,9 @@ def clean_csv_task(self, job_id, file_path, mode='auto', rules=None, options=Non
       4. Update job with cleaned file path
       5. Set job status to 'cleaned' or 'failed'
     """
+    # Reset DB connections inherited from the parent process after fork.
+    close_old_connections()
+
     update_job_status(job_id, 'cleaning')
     audit_log(job_id, 'CLEANING_STARTED', {'mode': mode})
 

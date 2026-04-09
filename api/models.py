@@ -1,10 +1,166 @@
 """
 PostgreSQL models for the api app.
 
-AuditLog — mirrors the current Node.js/PostgreSQL audit_log table.
-"""
-from django.db import models
+Replaces MongoDB collections entirely.  Each model corresponds to one of
+the former MongoDB collections:
 
+  Job              ← jobs
+  AnalysisResult   ← analysis_results
+  CleaningResult   ← cleaning_results
+  ChatMessage      ← chat_messages
+  JobGuideline     ← job_guidelines
+  AuditLog         ← audit_log  (was already here, unchanged)
+"""
+import uuid
+from django.db import models
+from django.conf import settings
+
+
+# ──────────────────────────────────────────────
+# Jobs
+# ──────────────────────────────────────────────
+
+class Job(models.Model):
+    """
+    Tracks a single analysis/cleaning job.
+    Uses a UUID string as primary key to match the previous MongoDB _id pattern
+    so all existing views/tasks that do job['_id'] keep working via _to_dict().
+    """
+    id = models.CharField(primary_key=True, max_length=36, default='')
+
+    # Ownership
+    user_id = models.CharField(max_length=36, db_index=True)
+
+    # File / connection metadata
+    file_name = models.CharField(max_length=500, blank=True, default='')
+    file_path = models.TextField(blank=True, default='')
+    cleaned_file_path = models.TextField(null=True, blank=True)
+    connection_string = models.TextField(null=True, blank=True)
+
+    # Job lifecycle
+    status = models.CharField(max_length=64, default='starting', db_index=True)
+    mode = models.CharField(max_length=64, default='normal')
+
+    # Power BI share
+    share_token = models.CharField(max_length=128, null=True, blank=True, db_index=True)
+
+    # Audit (matches MongoDB created_at / updated_at)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    # Cleaning report (legacy — stored directly on job)
+    cleaning_report = models.JSONField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'jobs'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'Job({self.id}) — {self.file_name} [{self.status}]'
+
+
+# ──────────────────────────────────────────────
+# Analysis results
+# ──────────────────────────────────────────────
+
+class AnalysisResult(models.Model):
+    """Stores the full AI/statistical analysis output for a job."""
+    job = models.OneToOneField(
+        Job, on_delete=models.CASCADE, related_name='analysis_result',
+        db_column='job_id',
+    )
+    result = models.JSONField(default=dict)
+    analysis_type = models.CharField(max_length=64, default='in-memory')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'analysis_results'
+
+    def __str__(self):
+        return f'AnalysisResult({self.job_id})'
+
+
+# ──────────────────────────────────────────────
+# Cleaning results
+# ──────────────────────────────────────────────
+
+class CleaningResult(models.Model):
+    """Stores the cleaning summary and applied rules for a job."""
+    job = models.OneToOneField(
+        Job, on_delete=models.CASCADE, related_name='cleaning_result',
+        db_column='job_id',
+    )
+    mode = models.CharField(max_length=64, default='auto')
+    rules_applied = models.JSONField(default=list)
+    summary = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'cleaning_results'
+
+    def __str__(self):
+        return f'CleaningResult({self.job_id})'
+
+
+# ──────────────────────────────────────────────
+# Chat messages
+# ──────────────────────────────────────────────
+
+class ChatMessage(models.Model):
+    """Append-only log of user/agent chat messages for a job."""
+    job = models.ForeignKey(
+        Job, on_delete=models.CASCADE, related_name='chat_messages',
+        db_column='job_id', db_index=True,
+    )
+    user_id = models.CharField(max_length=36)
+    role = models.CharField(max_length=16)   # 'user' | 'agent'
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        db_table = 'chat_messages'
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f'ChatMessage({self.job_id}, {self.role})'
+
+
+# ──────────────────────────────────────────────
+# Job guidelines
+# ──────────────────────────────────────────────
+
+class JobGuideline(models.Model):
+    """
+    Per-run AI-generated guideline text for each pipeline phase.
+
+    guidelines shape:
+      {
+        "schema_integrity_validator": "...",
+        "cross_row_validator":        "...",
+        "row_level_validator":        "...",
+        "data_fix_planner":           "..."
+      }
+    """
+    job = models.OneToOneField(
+        Job, on_delete=models.CASCADE, related_name='guideline',
+        db_column='job_id',
+    )
+    guidelines = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'job_guidelines'
+
+    def __str__(self):
+        return f'JobGuideline({self.job_id})'
+
+
+# ──────────────────────────────────────────────
+# Audit log  (unchanged)
+# ──────────────────────────────────────────────
 
 class AuditLog(models.Model):
     """

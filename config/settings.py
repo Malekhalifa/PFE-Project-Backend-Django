@@ -105,7 +105,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Databases
 # ──────────────────────────────────────────────
 
-# PostgreSQL (Django ORM) — users, audit logs
+# PostgreSQL (Django ORM) — all data: users, jobs, results, chat, guidelines
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -116,9 +116,6 @@ DATABASES = {
         'PORT': env('PG_PORT', default='5432'),
     }
 }
-
-# MongoDB (pymongo) — jobs, analysis results, cleaning results
-MONGO_URI = env('MONGO_URI', default='mongodb://localhost:27017/qualitylab')
 
 # ──────────────────────────────────────────────
 # Auth

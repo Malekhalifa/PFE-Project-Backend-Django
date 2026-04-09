@@ -2,14 +2,15 @@ import logging
 import time
 from datetime import datetime, timezone
 
+from django.db import close_old_connections
 from config.celery import app
 from services.postgres_service import analyze_postgres_database
-from api.mongo import (
-    get_db,
+from api.db import (
     get_job,
     get_analysis_result,
     update_job_status,
     save_analysis_result,
+    update_job_cleaning_report,
 )
 from api.models import audit_log
 
@@ -24,6 +25,9 @@ def analyze_postgres_task(self, job_id: str, connection_string: str, domain_rule
       3. Store result in MongoDB
       4. Set job status to 'completed' or 'failed'
     """
+    # Reset stale DB connections inherited from the parent after fork
+    close_old_connections()
+
     update_job_status(job_id, 'running')
     audit_log(job_id, 'DB_ANALYSIS_STARTED', {"target": "PostgreSQL Agentic Workflow"})
 
@@ -93,6 +97,9 @@ def execute_postgres_cleaning_task(self, job_id: str):
        or "cleaning_failed" (all tables failed).
     """
     _cleaning_logger.info("execute_postgres_cleaning_task started for job %s", job_id)
+    # Reset stale DB connections inherited from the parent after fork
+    close_old_connections()
+
     update_job_status(job_id, 'cleaning')
     audit_log(job_id, 'POSTGRES_CLEANING_STARTED', {})
 
@@ -124,15 +131,8 @@ def execute_postgres_cleaning_task(self, job_id: str):
         # 3 – Execute
         report = run_cleaning_plan(connection_string, plan)
 
-        # 4 – Persist the report in the job document
-        now = datetime.now(timezone.utc)
-        get_db().jobs.update_one(
-            {'_id': job_id},
-            {'$set': {
-                'cleaning_report': report,
-                'updated_at': now,
-            }},
-        )
+        # 4 – Persist the report in the job row
+        update_job_cleaning_report(job_id, report)
 
         # 5 – Final status
         final_status = (
