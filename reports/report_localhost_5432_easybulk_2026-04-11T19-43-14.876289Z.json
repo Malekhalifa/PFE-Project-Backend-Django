@@ -1,0 +1,3491 @@
+{
+  "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+  "database_id": "localhost_5432_easybulk",
+  "run_timestamp": "2026-04-11T19:43:14.876289Z",
+  "summary": {
+    "confidence_score": 89,
+    "data_quality_score": 97
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-11T19:37:20.523153Z",
+      "agent": "SchemaIntegrityValidator",
+      "summary": {
+        "total_items_analyzed": 10,
+        "items_passed": 4,
+        "items_flagged": 6,
+        "critical_issues": 0,
+        "high_issues": 3,
+        "medium_issues": 1,
+        "low_issues": 2,
+        "overall_quality_score": 92.4,
+        "overall_confidence": 0.72,
+        "flagged_tables": [
+          "campagne_contacts",
+          "groupe",
+          "prm_status",
+          "sent_sms",
+          "user_contact_tags"
+        ]
+      },
+      "metrics": {
+        "total_tables": 91,
+        "total_columns": 683,
+        "tables_with_no_primary_key": 4,
+        "missing_foreign_keys": 2,
+        "constraint_violations": 1,
+        "type_mismatches": 2,
+        "nullable_violations": 1
+      },
+      "findings": [
+        {
+          "issue_id": "SI-001",
+          "table": "campagne_contacts",
+          "column": "N/A",
+          "severity": "high",
+          "category": "Missing Primary Key",
+          "description": "Mapping tables 'campagne_contacts', 'campagne_tags', and 'expediteur_groupe' lack formal primary keys, risking duplicate entries and performance issues.",
+          "suggestion": "Implement composite primary keys on (campagne_id, contact_id), (campagne_id, tag_name), and (groupe_id, expediteur_id) respectively."
+        },
+        {
+          "issue_id": "SI-002",
+          "table": "campagne_contacts",
+          "column": "contact_id",
+          "severity": "high",
+          "category": "Type Mismatch",
+          "description": "Type discrepancy between 'campagne_contacts.contact_id' (bigint) and 'contacts.msisdn' (varchar). 10+ orphaned records found in 'campagne_contacts' that do not exist in 'contacts'.",
+          "suggestion": "Align column types to 'character varying' to support non-numeric MSISDNs and enforce a foreign key constraint."
+        },
+        {
+          "issue_id": "SI-003",
+          "table": "sent_sms",
+          "column": "smsc_id",
+          "severity": "high",
+          "category": "Type Mismatch",
+          "description": "Transactional table 'sent_sms' uses 'character varying' for 'smsc_id', but the master table 'smsc.id' is 'integer'. Non-numeric values ('Orange', 'simulator') were detected in 'sent_sms'.",
+          "suggestion": "Cleanse 'sent_sms.smsc_id' to ensure only numeric IDs are stored, or update the master 'smsc' table to support string identifiers."
+        },
+        {
+          "issue_id": "SI-004",
+          "table": "user_contact_tags",
+          "column": "tag_id",
+          "severity": "medium",
+          "category": "Missing Index",
+          "description": "The mapping table 'user_contact_tags' has a unique index on (user_contact_id, tag_id) but lacks a secondary index on 'tag_id' alone, which is necessary for efficient reverse lookups and deletions by tag.",
+          "suggestion": "Add a B-tree index on 'user_contact_tags(tag_id)'."
+        },
+        {
+          "issue_id": "SI-005",
+          "table": "prm_status",
+          "column": "code",
+          "severity": "low",
+          "category": "Redundant Constraint",
+          "description": "Redundant unique constraint 'ukblxl9et72bx7m3pcwq2nxy9mg' on (code, type) exists while 'code' is already globally unique via 'uk_e8pxw4kf260uh50pnilbj8nbw'.",
+          "suggestion": "Drop the composite unique constraint (code, type) to simplify the schema."
+        },
+        {
+          "issue_id": "SI-006",
+          "table": "groupe",
+          "column": "admin_id",
+          "severity": "low",
+          "category": "Nullable Violation",
+          "description": "8 records in the 'groupe' table have a NULL 'admin_id', which may lead to orphaned groups without management.",
+          "suggestion": "Verify if system-level groups are allowed to be admin-less; otherwise, assign a default administrator."
+        }
+      ],
+      "prior_reports": []
+    },
+    "column_validator": {
+      "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-11T19:38:33.474446Z",
+      "agent": "ColumnValidatorAgent",
+      "summary": {
+        "total_items_analyzed": 22,
+        "items_passed": 16,
+        "items_flagged": 6,
+        "critical_issues": 0,
+        "high_issues": 1,
+        "medium_issues": 3,
+        "low_issues": 2,
+        "overall_quality_score": 97.45,
+        "overall_confidence": 0.9409,
+        "flagged_tables": [
+          "campagne",
+          "campaign_spool_state",
+          "campaign_type_permission",
+          "prm_status",
+          "sent_sms"
+        ]
+      },
+      "metrics": {
+        "total_columns_analyzed": 22,
+        "duplicate_columns_found": 0,
+        "constant_columns_found": 3,
+        "high_null_ratio_columns": 0,
+        "low_cardinality_anomalies": 3,
+        "high_cardinality_anomalies": 0,
+        "semantic_mismatches": 1,
+        "domain_violations": 0,
+        "distribution_anomalies": 0,
+        "avg_column_quality_score": 91.2,
+        "avg_column_confidence": 0.98
+      },
+      "findings": [
+        {
+          "table": "sent_sms",
+          "column": "smsc_id",
+          "quality_score": 45,
+          "confidence": 1.0,
+          "status": "flagged",
+          "issues": [
+            {
+              "severity": "high",
+              "type": "semantic_mismatch",
+              "description": "Column contains non-numeric string identifiers (e.g., 'Orange', 'simulator') while the master table 'smsc.id' is an integer. This will cause casting failures during joins."
+            }
+          ],
+          "metrics": {
+            "null_ratio": 0.0,
+            "distinct_ratio": 0.08,
+            "non_numeric_ratio": 1.0,
+            "inferred_type": "string"
+          }
+        },
+        {
+          "table": "campagne",
+          "column": "me_only",
+          "quality_score": 70,
+          "confidence": 1.0,
+          "status": "flagged",
+          "issues": [
+            {
+              "severity": "medium",
+              "type": "constant_column",
+              "description": "Column has zero variance (cardinality = 1) across 9 rows. This may indicate hardcoded logic or an abandoned feature."
+            }
+          ],
+          "metrics": {
+            "null_ratio": 0.0,
+            "distinct_count": 1,
+            "dominant_value_ratio": 1.0
+          }
+        },
+        {
+          "table": "campagne",
+          "column": "deactivated_by_group",
+          "quality_score": 70,
+          "confidence": 1.0,
+          "status": "flagged",
+          "issues": [
+            {
+              "severity": "medium",
+              "type": "constant_column",
+              "description": "Column has zero variance (cardinality = 1) across 9 rows."
+            }
+          ],
+          "metrics": {
+            "null_ratio": 0.0,
+            "distinct_count": 1,
+            "dominant_value_ratio": 1.0
+          }
+        },
+        {
+          "table": "campaign_type_permission",
+          "column": "enabled",
+          "quality_score": 70,
+          "confidence": 1.0,
+          "status": "flagged",
+          "issues": [
+            {
+              "severity": "medium",
+              "type": "constant_column",
+              "description": "Column has zero variance (cardinality = 1) across 18 rows."
+            }
+          ],
+          "metrics": {
+            "null_ratio": 0.0,
+            "distinct_count": 1,
+            "dominant_value_ratio": 1.0
+          }
+        },
+        {
+          "table": "prm_status",
+          "column": "code",
+          "quality_score": 95,
+          "confidence": 1.0,
+          "status": "flagged",
+          "issues": [
+            {
+              "severity": "low",
+              "type": "redundant_constraint",
+              "description": "The column is globally unique (25/25 rows), making the composite unique constraint (code, type) redundant."
+            }
+          ],
+          "metrics": {
+            "null_ratio": 0.0,
+            "distinct_ratio": 1.0
+          }
+        },
+        {
+          "table": "contacts",
+          "column": "msisdn",
+          "quality_score": 100,
+          "confidence": 1.0,
+          "status": "passed",
+          "issues": [],
+          "metrics": {
+            "null_ratio": 0.0,
+            "invalid_length_ratio": 0.0,
+            "non_numeric_ratio": 0.0,
+            "min_length": 7,
+            "max_length": 15
+          }
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "last_updated_date",
+          "quality_score": 0,
+          "confidence": 0.0,
+          "status": "insufficient_data",
+          "issues": [
+            {
+              "severity": "low",
+              "type": "access_denied",
+              "description": "Query to monitor spooler liveness was blocked by safety filters."
+            }
+          ],
+          "metrics": {}
+        }
+      ],
+      "prior_reports": [
+        {
+          "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-11T19:37:20.523153Z",
+          "agent": "SchemaIntegrityValidator",
+          "summary": {
+            "total_items_analyzed": 10,
+            "items_passed": 4,
+            "items_flagged": 6,
+            "critical_issues": 0,
+            "high_issues": 3,
+            "medium_issues": 1,
+            "low_issues": 2,
+            "overall_quality_score": 92.4,
+            "overall_confidence": 0.72,
+            "flagged_tables": [
+              "campagne_contacts",
+              "groupe",
+              "prm_status",
+              "sent_sms",
+              "user_contact_tags"
+            ]
+          },
+          "metrics": {
+            "total_tables": 91,
+            "total_columns": 683,
+            "tables_with_no_primary_key": 4,
+            "missing_foreign_keys": 2,
+            "constraint_violations": 1,
+            "type_mismatches": 2,
+            "nullable_violations": 1
+          },
+          "findings": [
+            {
+              "issue_id": "SI-001",
+              "table": "campagne_contacts",
+              "column": "N/A",
+              "severity": "high",
+              "category": "Missing Primary Key",
+              "description": "Mapping tables 'campagne_contacts', 'campagne_tags', and 'expediteur_groupe' lack formal primary keys, risking duplicate entries and performance issues.",
+              "suggestion": "Implement composite primary keys on (campagne_id, contact_id), (campagne_id, tag_name), and (groupe_id, expediteur_id) respectively."
+            },
+            {
+              "issue_id": "SI-002",
+              "table": "campagne_contacts",
+              "column": "contact_id",
+              "severity": "high",
+              "category": "Type Mismatch",
+              "description": "Type discrepancy between 'campagne_contacts.contact_id' (bigint) and 'contacts.msisdn' (varchar). 10+ orphaned records found in 'campagne_contacts' that do not exist in 'contacts'.",
+              "suggestion": "Align column types to 'character varying' to support non-numeric MSISDNs and enforce a foreign key constraint."
+            },
+            {
+              "issue_id": "SI-003",
+              "table": "sent_sms",
+              "column": "smsc_id",
+              "severity": "high",
+              "category": "Type Mismatch",
+              "description": "Transactional table 'sent_sms' uses 'character varying' for 'smsc_id', but the master table 'smsc.id' is 'integer'. Non-numeric values ('Orange', 'simulator') were detected in 'sent_sms'.",
+              "suggestion": "Cleanse 'sent_sms.smsc_id' to ensure only numeric IDs are stored, or update the master 'smsc' table to support string identifiers."
+            },
+            {
+              "issue_id": "SI-004",
+              "table": "user_contact_tags",
+              "column": "tag_id",
+              "severity": "medium",
+              "category": "Missing Index",
+              "description": "The mapping table 'user_contact_tags' has a unique index on (user_contact_id, tag_id) but lacks a secondary index on 'tag_id' alone, which is necessary for efficient reverse lookups and deletions by tag.",
+              "suggestion": "Add a B-tree index on 'user_contact_tags(tag_id)'."
+            },
+            {
+              "issue_id": "SI-005",
+              "table": "prm_status",
+              "column": "code",
+              "severity": "low",
+              "category": "Redundant Constraint",
+              "description": "Redundant unique constraint 'ukblxl9et72bx7m3pcwq2nxy9mg' on (code, type) exists while 'code' is already globally unique via 'uk_e8pxw4kf260uh50pnilbj8nbw'.",
+              "suggestion": "Drop the composite unique constraint (code, type) to simplify the schema."
+            },
+            {
+              "issue_id": "SI-006",
+              "table": "groupe",
+              "column": "admin_id",
+              "severity": "low",
+              "category": "Nullable Violation",
+              "description": "8 records in the 'groupe' table have a NULL 'admin_id', which may lead to orphaned groups without management.",
+              "suggestion": "Verify if system-level groups are allowed to be admin-less; otherwise, assign a default administrator."
+            }
+          ],
+          "prior_reports": []
+        }
+      ]
+    },
+    "row_level_validator": {
+      "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-11T19:40:12.866465Z",
+      "agent": "RowLevelValidator",
+      "summary": {
+        "total_items_analyzed": 10266,
+        "items_passed": 10262,
+        "items_flagged": 4,
+        "critical_issues": 0,
+        "high_issues": 2,
+        "medium_issues": 2,
+        "low_issues": 0,
+        "overall_quality_score": 99.99,
+        "overall_confidence": 0.95,
+        "flagged_tables": [
+          "audit_log",
+          "campagne_contacts",
+          "sent_sms",
+          "users_legacy"
+        ]
+      },
+      "metrics": {
+        "total_rows_analyzed": 10266,
+        "rows_with_issues": 185,
+        "rows_with_issues_ratio": 0.018,
+        "format_violations": 12,
+        "encoding_issues": 0,
+        "hidden_null_count": 0,
+        "outlier_rows": 0,
+        "avg_row_quality_score": 98.2,
+        "avg_row_confidence": 0.95
+      },
+      "findings": [
+        {
+          "table": "sent_sms",
+          "row_id": "Multiple (12 rows)",
+          "field_values": {
+            "smsc_id": "Orange, simulator"
+          },
+          "rule_broken": "Gateway Identifier Sanitization: smsc_id must be numeric to join with smsc.id.",
+          "severity": "high"
+        },
+        {
+          "table": "campagne_contacts",
+          "row_id": "Multiple (31 rows)",
+          "field_values": {
+            "contact_id": "10000, 9999, 9998, 9997, 20049, etc."
+          },
+          "rule_broken": "Mapping Table Referencing: contact_id does not exist in the contacts table (orphaned records).",
+          "severity": "high"
+        },
+        {
+          "table": "audit_log",
+          "row_id": "Multiple (135 rows)",
+          "field_values": {
+            "job_id": "84f3722c-d1e7-418e-b4bf-6aad8f6a8e2e, etc."
+          },
+          "rule_broken": "Orphaned Audit Logs: job_id does not correspond to a valid record in the jobs table.",
+          "severity": "medium"
+        },
+        {
+          "table": "users_legacy",
+          "row_id": "Multiple (7 rows)",
+          "field_values": {
+            "email": "ebs@yopmail.com, agentebs@yopmail.com, etc."
+          },
+          "rule_broken": "Legacy User Synchronization: User email not found in the modern users table.",
+          "severity": "medium"
+        }
+      ],
+      "prior_reports": [
+        {
+          "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-11T19:37:20.523153Z",
+          "agent": "SchemaIntegrityValidator",
+          "summary": {
+            "total_items_analyzed": 10,
+            "items_passed": 4,
+            "items_flagged": 6,
+            "critical_issues": 0,
+            "high_issues": 3,
+            "medium_issues": 1,
+            "low_issues": 2,
+            "overall_quality_score": 92.4,
+            "overall_confidence": 0.72,
+            "flagged_tables": [
+              "campagne_contacts",
+              "groupe",
+              "prm_status",
+              "sent_sms",
+              "user_contact_tags"
+            ]
+          },
+          "metrics": {
+            "total_tables": 91,
+            "total_columns": 683,
+            "tables_with_no_primary_key": 4,
+            "missing_foreign_keys": 2,
+            "constraint_violations": 1,
+            "type_mismatches": 2,
+            "nullable_violations": 1
+          },
+          "findings": [
+            {
+              "issue_id": "SI-001",
+              "table": "campagne_contacts",
+              "column": "N/A",
+              "severity": "high",
+              "category": "Missing Primary Key",
+              "description": "Mapping tables 'campagne_contacts', 'campagne_tags', and 'expediteur_groupe' lack formal primary keys, risking duplicate entries and performance issues.",
+              "suggestion": "Implement composite primary keys on (campagne_id, contact_id), (campagne_id, tag_name), and (groupe_id, expediteur_id) respectively."
+            },
+            {
+              "issue_id": "SI-002",
+              "table": "campagne_contacts",
+              "column": "contact_id",
+              "severity": "high",
+              "category": "Type Mismatch",
+              "description": "Type discrepancy between 'campagne_contacts.contact_id' (bigint) and 'contacts.msisdn' (varchar). 10+ orphaned records found in 'campagne_contacts' that do not exist in 'contacts'.",
+              "suggestion": "Align column types to 'character varying' to support non-numeric MSISDNs and enforce a foreign key constraint."
+            },
+            {
+              "issue_id": "SI-003",
+              "table": "sent_sms",
+              "column": "smsc_id",
+              "severity": "high",
+              "category": "Type Mismatch",
+              "description": "Transactional table 'sent_sms' uses 'character varying' for 'smsc_id', but the master table 'smsc.id' is 'integer'. Non-numeric values ('Orange', 'simulator') were detected in 'sent_sms'.",
+              "suggestion": "Cleanse 'sent_sms.smsc_id' to ensure only numeric IDs are stored, or update the master 'smsc' table to support string identifiers."
+            },
+            {
+              "issue_id": "SI-004",
+              "table": "user_contact_tags",
+              "column": "tag_id",
+              "severity": "medium",
+              "category": "Missing Index",
+              "description": "The mapping table 'user_contact_tags' has a unique index on (user_contact_id, tag_id) but lacks a secondary index on 'tag_id' alone, which is necessary for efficient reverse lookups and deletions by tag.",
+              "suggestion": "Add a B-tree index on 'user_contact_tags(tag_id)'."
+            },
+            {
+              "issue_id": "SI-005",
+              "table": "prm_status",
+              "column": "code",
+              "severity": "low",
+              "category": "Redundant Constraint",
+              "description": "Redundant unique constraint 'ukblxl9et72bx7m3pcwq2nxy9mg' on (code, type) exists while 'code' is already globally unique via 'uk_e8pxw4kf260uh50pnilbj8nbw'.",
+              "suggestion": "Drop the composite unique constraint (code, type) to simplify the schema."
+            },
+            {
+              "issue_id": "SI-006",
+              "table": "groupe",
+              "column": "admin_id",
+              "severity": "low",
+              "category": "Nullable Violation",
+              "description": "8 records in the 'groupe' table have a NULL 'admin_id', which may lead to orphaned groups without management.",
+              "suggestion": "Verify if system-level groups are allowed to be admin-less; otherwise, assign a default administrator."
+            }
+          ],
+          "prior_reports": []
+        },
+        {
+          "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-11T19:38:33.474446Z",
+          "agent": "ColumnValidatorAgent",
+          "summary": {
+            "total_items_analyzed": 22,
+            "items_passed": 16,
+            "items_flagged": 6,
+            "critical_issues": 0,
+            "high_issues": 1,
+            "medium_issues": 3,
+            "low_issues": 2,
+            "overall_quality_score": 97.45,
+            "overall_confidence": 0.9409,
+            "flagged_tables": [
+              "campagne",
+              "campaign_spool_state",
+              "campaign_type_permission",
+              "prm_status",
+              "sent_sms"
+            ]
+          },
+          "metrics": {
+            "total_columns_analyzed": 22,
+            "duplicate_columns_found": 0,
+            "constant_columns_found": 3,
+            "high_null_ratio_columns": 0,
+            "low_cardinality_anomalies": 3,
+            "high_cardinality_anomalies": 0,
+            "semantic_mismatches": 1,
+            "domain_violations": 0,
+            "distribution_anomalies": 0,
+            "avg_column_quality_score": 91.2,
+            "avg_column_confidence": 0.98
+          },
+          "findings": [
+            {
+              "table": "sent_sms",
+              "column": "smsc_id",
+              "quality_score": 45,
+              "confidence": 1.0,
+              "status": "flagged",
+              "issues": [
+                {
+                  "severity": "high",
+                  "type": "semantic_mismatch",
+                  "description": "Column contains non-numeric string identifiers (e.g., 'Orange', 'simulator') while the master table 'smsc.id' is an integer. This will cause casting failures during joins."
+                }
+              ],
+              "metrics": {
+                "null_ratio": 0.0,
+                "distinct_ratio": 0.08,
+                "non_numeric_ratio": 1.0,
+                "inferred_type": "string"
+              }
+            },
+            {
+              "table": "campagne",
+              "column": "me_only",
+              "quality_score": 70,
+              "confidence": 1.0,
+              "status": "flagged",
+              "issues": [
+                {
+                  "severity": "medium",
+                  "type": "constant_column",
+                  "description": "Column has zero variance (cardinality = 1) across 9 rows. This may indicate hardcoded logic or an abandoned feature."
+                }
+              ],
+              "metrics": {
+                "null_ratio": 0.0,
+                "distinct_count": 1,
+                "dominant_value_ratio": 1.0
+              }
+            },
+            {
+              "table": "campagne",
+              "column": "deactivated_by_group",
+              "quality_score": 70,
+              "confidence": 1.0,
+              "status": "flagged",
+              "issues": [
+                {
+                  "severity": "medium",
+                  "type": "constant_column",
+                  "description": "Column has zero variance (cardinality = 1) across 9 rows."
+                }
+              ],
+              "metrics": {
+                "null_ratio": 0.0,
+                "distinct_count": 1,
+                "dominant_value_ratio": 1.0
+              }
+            },
+            {
+              "table": "campaign_type_permission",
+              "column": "enabled",
+              "quality_score": 70,
+              "confidence": 1.0,
+              "status": "flagged",
+              "issues": [
+                {
+                  "severity": "medium",
+                  "type": "constant_column",
+                  "description": "Column has zero variance (cardinality = 1) across 18 rows."
+                }
+              ],
+              "metrics": {
+                "null_ratio": 0.0,
+                "distinct_count": 1,
+                "dominant_value_ratio": 1.0
+              }
+            },
+            {
+              "table": "prm_status",
+              "column": "code",
+              "quality_score": 95,
+              "confidence": 1.0,
+              "status": "flagged",
+              "issues": [
+                {
+                  "severity": "low",
+                  "type": "redundant_constraint",
+                  "description": "The column is globally unique (25/25 rows), making the composite unique constraint (code, type) redundant."
+                }
+              ],
+              "metrics": {
+                "null_ratio": 0.0,
+                "distinct_ratio": 1.0
+              }
+            },
+            {
+              "table": "contacts",
+              "column": "msisdn",
+              "quality_score": 100,
+              "confidence": 1.0,
+              "status": "passed",
+              "issues": [],
+              "metrics": {
+                "null_ratio": 0.0,
+                "invalid_length_ratio": 0.0,
+                "non_numeric_ratio": 0.0,
+                "min_length": 7,
+                "max_length": 15
+              }
+            },
+            {
+              "table": "campaign_spool_state",
+              "column": "last_updated_date",
+              "quality_score": 0,
+              "confidence": 0.0,
+              "status": "insufficient_data",
+              "issues": [
+                {
+                  "severity": "low",
+                  "type": "access_denied",
+                  "description": "Query to monitor spooler liveness was blocked by safety filters."
+                }
+              ],
+              "metrics": {}
+            }
+          ],
+          "prior_reports": [
+            {
+              "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+              "database_id": "localhost_5432_easybulk",
+              "run_timestamp": "2026-04-11T19:37:20.523153Z",
+              "agent": "SchemaIntegrityValidator",
+              "summary": {
+                "total_items_analyzed": 10,
+                "items_passed": 4,
+                "items_flagged": 6,
+                "critical_issues": 0,
+                "high_issues": 3,
+                "medium_issues": 1,
+                "low_issues": 2,
+                "overall_quality_score": 92.4,
+                "overall_confidence": 0.72,
+                "flagged_tables": [
+                  "campagne_contacts",
+                  "groupe",
+                  "prm_status",
+                  "sent_sms",
+                  "user_contact_tags"
+                ]
+              },
+              "metrics": {
+                "total_tables": 91,
+                "total_columns": 683,
+                "tables_with_no_primary_key": 4,
+                "missing_foreign_keys": 2,
+                "constraint_violations": 1,
+                "type_mismatches": 2,
+                "nullable_violations": 1
+              },
+              "findings": [
+                {
+                  "issue_id": "SI-001",
+                  "table": "campagne_contacts",
+                  "column": "N/A",
+                  "severity": "high",
+                  "category": "Missing Primary Key",
+                  "description": "Mapping tables 'campagne_contacts', 'campagne_tags', and 'expediteur_groupe' lack formal primary keys, risking duplicate entries and performance issues.",
+                  "suggestion": "Implement composite primary keys on (campagne_id, contact_id), (campagne_id, tag_name), and (groupe_id, expediteur_id) respectively."
+                },
+                {
+                  "issue_id": "SI-002",
+                  "table": "campagne_contacts",
+                  "column": "contact_id",
+                  "severity": "high",
+                  "category": "Type Mismatch",
+                  "description": "Type discrepancy between 'campagne_contacts.contact_id' (bigint) and 'contacts.msisdn' (varchar). 10+ orphaned records found in 'campagne_contacts' that do not exist in 'contacts'.",
+                  "suggestion": "Align column types to 'character varying' to support non-numeric MSISDNs and enforce a foreign key constraint."
+                },
+                {
+                  "issue_id": "SI-003",
+                  "table": "sent_sms",
+                  "column": "smsc_id",
+                  "severity": "high",
+                  "category": "Type Mismatch",
+                  "description": "Transactional table 'sent_sms' uses 'character varying' for 'smsc_id', but the master table 'smsc.id' is 'integer'. Non-numeric values ('Orange', 'simulator') were detected in 'sent_sms'.",
+                  "suggestion": "Cleanse 'sent_sms.smsc_id' to ensure only numeric IDs are stored, or update the master 'smsc' table to support string identifiers."
+                },
+                {
+                  "issue_id": "SI-004",
+                  "table": "user_contact_tags",
+                  "column": "tag_id",
+                  "severity": "medium",
+                  "category": "Missing Index",
+                  "description": "The mapping table 'user_contact_tags' has a unique index on (user_contact_id, tag_id) but lacks a secondary index on 'tag_id' alone, which is necessary for efficient reverse lookups and deletions by tag.",
+                  "suggestion": "Add a B-tree index on 'user_contact_tags(tag_id)'."
+                },
+                {
+                  "issue_id": "SI-005",
+                  "table": "prm_status",
+                  "column": "code",
+                  "severity": "low",
+                  "category": "Redundant Constraint",
+                  "description": "Redundant unique constraint 'ukblxl9et72bx7m3pcwq2nxy9mg' on (code, type) exists while 'code' is already globally unique via 'uk_e8pxw4kf260uh50pnilbj8nbw'.",
+                  "suggestion": "Drop the composite unique constraint (code, type) to simplify the schema."
+                },
+                {
+                  "issue_id": "SI-006",
+                  "table": "groupe",
+                  "column": "admin_id",
+                  "severity": "low",
+                  "category": "Nullable Violation",
+                  "description": "8 records in the 'groupe' table have a NULL 'admin_id', which may lead to orphaned groups without management.",
+                  "suggestion": "Verify if system-level groups are allowed to be admin-less; otherwise, assign a default administrator."
+                }
+              ],
+              "prior_reports": []
+            }
+          ]
+        }
+      ]
+    },
+    "cross_row_validator": {
+      "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-11T19:41:54.103603Z",
+      "agent": "CrossRowValidator",
+      "summary": {
+        "total_items_analyzed": 28400,
+        "items_passed": 28394,
+        "items_flagged": 6,
+        "critical_issues": 0,
+        "high_issues": 4,
+        "medium_issues": 2,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 0.95,
+        "flagged_tables": [
+          "audit_log",
+          "campagne_contacts",
+          "campaign_spool_state",
+          "sent_sms",
+          "smsc_routing_rule",
+          "users_legacy"
+        ]
+      },
+      "metrics": {
+        "total_row_pairs_analyzed": 28400,
+        "temporal_anomalies": 1,
+        "sequential_breaks": 0,
+        "cross_column_violations": 0,
+        "row_pattern_anomalies": 0,
+        "tables_with_cross_row_issues": 6,
+        "avg_relationship_confidence": 0.95
+      },
+      "findings": [
+        {
+          "issue_id": "CRV-001",
+          "table": "smsc_routing_rule",
+          "severity": "high",
+          "category": "Routing Rule Defaults",
+          "description": "Duplicate default routing rules detected for Organization ID 2. Four rules exist where both 'expediteur_id' and 'groupe_id' are NULL, creating ambiguity in the SMS routing logic.",
+          "suggestion": "Ensure each organization has exactly one default routing rule by removing redundant NULL-scoped entries."
+        },
+        {
+          "issue_id": "CRV-002",
+          "table": "sent_sms",
+          "severity": "high",
+          "category": "Gateway Mapping Integrity",
+          "description": "Transactional records in 'sent_sms' reference non-numeric 'smsc_id' values ('Orange', 'simulator') that do not exist in the master 'smsc' table. This breaks referential integrity and prevents successful joins.",
+          "suggestion": "Cleanse 'sent_sms.smsc_id' to use numeric identifiers or update the 'smsc' master table to include these string-based gateways."
+        },
+        {
+          "issue_id": "CRV-003",
+          "table": "campagne_contacts",
+          "severity": "high",
+          "category": "Cross-Type Referential Integrity",
+          "description": "31 orphaned records found in 'campagne_contacts' where 'contact_id' (bigint) does not have a corresponding 'msisdn' (varchar) in the 'contacts' table.",
+          "suggestion": "Investigate the source of these orphaned mappings and implement a foreign key constraint after aligning data types."
+        },
+        {
+          "issue_id": "CRV-004",
+          "table": "campaign_spool_state",
+          "severity": "high",
+          "category": "Temporal Health",
+          "description": "The campaign spooler appears to be stuck. The 'last_updated_date' (2025-03-06) is over a year behind the current system time (2026).",
+          "suggestion": "Restart the spooler service and monitor the 'last_updated_date' for active increments."
+        },
+        {
+          "issue_id": "CRV-005",
+          "table": "audit_log",
+          "severity": "medium",
+          "category": "Job Result Integrity",
+          "description": "135 audit log entries reference 'job_id' values that do not exist in the 'jobs' table, indicating incomplete cleanup or failed job persistence.",
+          "suggestion": "Verify job deletion policies and ensure audit logs are either archived or deleted alongside their parent jobs."
+        },
+        {
+          "issue_id": "CRV-006",
+          "table": "users_legacy",
+          "severity": "medium",
+          "category": "Legacy User Synchronization",
+          "description": "7 legacy user records fail to synchronize with the modern 'users' table. Specifically, their Keycloak IDs and emails are missing from the primary user store.",
+          "suggestion": "Re-run the migration script for these 7 users to ensure identity provider consistency."
+        }
+      ],
+      "prior_reports": [
+        {
+          "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-11T19:37:20.523153Z",
+          "agent": "SchemaIntegrityValidator",
+          "summary": {
+            "total_items_analyzed": 10,
+            "items_passed": 4,
+            "items_flagged": 6,
+            "critical_issues": 0,
+            "high_issues": 3,
+            "medium_issues": 1,
+            "low_issues": 2,
+            "overall_quality_score": 92.4,
+            "overall_confidence": 0.72,
+            "flagged_tables": [
+              "campagne_contacts",
+              "groupe",
+              "prm_status",
+              "sent_sms",
+              "user_contact_tags"
+            ]
+          },
+          "metrics": {
+            "total_tables": 91,
+            "total_columns": 683,
+            "tables_with_no_primary_key": 4,
+            "missing_foreign_keys": 2,
+            "constraint_violations": 1,
+            "type_mismatches": 2,
+            "nullable_violations": 1
+          },
+          "findings": [
+            {
+              "issue_id": "SI-001",
+              "table": "campagne_contacts",
+              "column": "N/A",
+              "severity": "high",
+              "category": "Missing Primary Key",
+              "description": "Mapping tables 'campagne_contacts', 'campagne_tags', and 'expediteur_groupe' lack formal primary keys, risking duplicate entries and performance issues.",
+              "suggestion": "Implement composite primary keys on (campagne_id, contact_id), (campagne_id, tag_name), and (groupe_id, expediteur_id) respectively."
+            },
+            {
+              "issue_id": "SI-002",
+              "table": "campagne_contacts",
+              "column": "contact_id",
+              "severity": "high",
+              "category": "Type Mismatch",
+              "description": "Type discrepancy between 'campagne_contacts.contact_id' (bigint) and 'contacts.msisdn' (varchar). 10+ orphaned records found in 'campagne_contacts' that do not exist in 'contacts'.",
+              "suggestion": "Align column types to 'character varying' to support non-numeric MSISDNs and enforce a foreign key constraint."
+            },
+            {
+              "issue_id": "SI-003",
+              "table": "sent_sms",
+              "column": "smsc_id",
+              "severity": "high",
+              "category": "Type Mismatch",
+              "description": "Transactional table 'sent_sms' uses 'character varying' for 'smsc_id', but the master table 'smsc.id' is 'integer'. Non-numeric values ('Orange', 'simulator') were detected in 'sent_sms'.",
+              "suggestion": "Cleanse 'sent_sms.smsc_id' to ensure only numeric IDs are stored, or update the master 'smsc' table to support string identifiers."
+            },
+            {
+              "issue_id": "SI-004",
+              "table": "user_contact_tags",
+              "column": "tag_id",
+              "severity": "medium",
+              "category": "Missing Index",
+              "description": "The mapping table 'user_contact_tags' has a unique index on (user_contact_id, tag_id) but lacks a secondary index on 'tag_id' alone, which is necessary for efficient reverse lookups and deletions by tag.",
+              "suggestion": "Add a B-tree index on 'user_contact_tags(tag_id)'."
+            },
+            {
+              "issue_id": "SI-005",
+              "table": "prm_status",
+              "column": "code",
+              "severity": "low",
+              "category": "Redundant Constraint",
+              "description": "Redundant unique constraint 'ukblxl9et72bx7m3pcwq2nxy9mg' on (code, type) exists while 'code' is already globally unique via 'uk_e8pxw4kf260uh50pnilbj8nbw'.",
+              "suggestion": "Drop the composite unique constraint (code, type) to simplify the schema."
+            },
+            {
+              "issue_id": "SI-006",
+              "table": "groupe",
+              "column": "admin_id",
+              "severity": "low",
+              "category": "Nullable Violation",
+              "description": "8 records in the 'groupe' table have a NULL 'admin_id', which may lead to orphaned groups without management.",
+              "suggestion": "Verify if system-level groups are allowed to be admin-less; otherwise, assign a default administrator."
+            }
+          ],
+          "prior_reports": []
+        },
+        {
+          "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-11T19:38:33.474446Z",
+          "agent": "ColumnValidatorAgent",
+          "summary": {
+            "total_items_analyzed": 22,
+            "items_passed": 16,
+            "items_flagged": 6,
+            "critical_issues": 0,
+            "high_issues": 1,
+            "medium_issues": 3,
+            "low_issues": 2,
+            "overall_quality_score": 97.45,
+            "overall_confidence": 0.9409,
+            "flagged_tables": [
+              "campagne",
+              "campaign_spool_state",
+              "campaign_type_permission",
+              "prm_status",
+              "sent_sms"
+            ]
+          },
+          "metrics": {
+            "total_columns_analyzed": 22,
+            "duplicate_columns_found": 0,
+            "constant_columns_found": 3,
+            "high_null_ratio_columns": 0,
+            "low_cardinality_anomalies": 3,
+            "high_cardinality_anomalies": 0,
+            "semantic_mismatches": 1,
+            "domain_violations": 0,
+            "distribution_anomalies": 0,
+            "avg_column_quality_score": 91.2,
+            "avg_column_confidence": 0.98
+          },
+          "findings": [
+            {
+              "table": "sent_sms",
+              "column": "smsc_id",
+              "quality_score": 45,
+              "confidence": 1.0,
+              "status": "flagged",
+              "issues": [
+                {
+                  "severity": "high",
+                  "type": "semantic_mismatch",
+                  "description": "Column contains non-numeric string identifiers (e.g., 'Orange', 'simulator') while the master table 'smsc.id' is an integer. This will cause casting failures during joins."
+                }
+              ],
+              "metrics": {
+                "null_ratio": 0.0,
+                "distinct_ratio": 0.08,
+                "non_numeric_ratio": 1.0,
+                "inferred_type": "string"
+              }
+            },
+            {
+              "table": "campagne",
+              "column": "me_only",
+              "quality_score": 70,
+              "confidence": 1.0,
+              "status": "flagged",
+              "issues": [
+                {
+                  "severity": "medium",
+                  "type": "constant_column",
+                  "description": "Column has zero variance (cardinality = 1) across 9 rows. This may indicate hardcoded logic or an abandoned feature."
+                }
+              ],
+              "metrics": {
+                "null_ratio": 0.0,
+                "distinct_count": 1,
+                "dominant_value_ratio": 1.0
+              }
+            },
+            {
+              "table": "campagne",
+              "column": "deactivated_by_group",
+              "quality_score": 70,
+              "confidence": 1.0,
+              "status": "flagged",
+              "issues": [
+                {
+                  "severity": "medium",
+                  "type": "constant_column",
+                  "description": "Column has zero variance (cardinality = 1) across 9 rows."
+                }
+              ],
+              "metrics": {
+                "null_ratio": 0.0,
+                "distinct_count": 1,
+                "dominant_value_ratio": 1.0
+              }
+            },
+            {
+              "table": "campaign_type_permission",
+              "column": "enabled",
+              "quality_score": 70,
+              "confidence": 1.0,
+              "status": "flagged",
+              "issues": [
+                {
+                  "severity": "medium",
+                  "type": "constant_column",
+                  "description": "Column has zero variance (cardinality = 1) across 18 rows."
+                }
+              ],
+              "metrics": {
+                "null_ratio": 0.0,
+                "distinct_count": 1,
+                "dominant_value_ratio": 1.0
+              }
+            },
+            {
+              "table": "prm_status",
+              "column": "code",
+              "quality_score": 95,
+              "confidence": 1.0,
+              "status": "flagged",
+              "issues": [
+                {
+                  "severity": "low",
+                  "type": "redundant_constraint",
+                  "description": "The column is globally unique (25/25 rows), making the composite unique constraint (code, type) redundant."
+                }
+              ],
+              "metrics": {
+                "null_ratio": 0.0,
+                "distinct_ratio": 1.0
+              }
+            },
+            {
+              "table": "contacts",
+              "column": "msisdn",
+              "quality_score": 100,
+              "confidence": 1.0,
+              "status": "passed",
+              "issues": [],
+              "metrics": {
+                "null_ratio": 0.0,
+                "invalid_length_ratio": 0.0,
+                "non_numeric_ratio": 0.0,
+                "min_length": 7,
+                "max_length": 15
+              }
+            },
+            {
+              "table": "campaign_spool_state",
+              "column": "last_updated_date",
+              "quality_score": 0,
+              "confidence": 0.0,
+              "status": "insufficient_data",
+              "issues": [
+                {
+                  "severity": "low",
+                  "type": "access_denied",
+                  "description": "Query to monitor spooler liveness was blocked by safety filters."
+                }
+              ],
+              "metrics": {}
+            }
+          ],
+          "prior_reports": [
+            {
+              "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+              "database_id": "localhost_5432_easybulk",
+              "run_timestamp": "2026-04-11T19:37:20.523153Z",
+              "agent": "SchemaIntegrityValidator",
+              "summary": {
+                "total_items_analyzed": 10,
+                "items_passed": 4,
+                "items_flagged": 6,
+                "critical_issues": 0,
+                "high_issues": 3,
+                "medium_issues": 1,
+                "low_issues": 2,
+                "overall_quality_score": 92.4,
+                "overall_confidence": 0.72,
+                "flagged_tables": [
+                  "campagne_contacts",
+                  "groupe",
+                  "prm_status",
+                  "sent_sms",
+                  "user_contact_tags"
+                ]
+              },
+              "metrics": {
+                "total_tables": 91,
+                "total_columns": 683,
+                "tables_with_no_primary_key": 4,
+                "missing_foreign_keys": 2,
+                "constraint_violations": 1,
+                "type_mismatches": 2,
+                "nullable_violations": 1
+              },
+              "findings": [
+                {
+                  "issue_id": "SI-001",
+                  "table": "campagne_contacts",
+                  "column": "N/A",
+                  "severity": "high",
+                  "category": "Missing Primary Key",
+                  "description": "Mapping tables 'campagne_contacts', 'campagne_tags', and 'expediteur_groupe' lack formal primary keys, risking duplicate entries and performance issues.",
+                  "suggestion": "Implement composite primary keys on (campagne_id, contact_id), (campagne_id, tag_name), and (groupe_id, expediteur_id) respectively."
+                },
+                {
+                  "issue_id": "SI-002",
+                  "table": "campagne_contacts",
+                  "column": "contact_id",
+                  "severity": "high",
+                  "category": "Type Mismatch",
+                  "description": "Type discrepancy between 'campagne_contacts.contact_id' (bigint) and 'contacts.msisdn' (varchar). 10+ orphaned records found in 'campagne_contacts' that do not exist in 'contacts'.",
+                  "suggestion": "Align column types to 'character varying' to support non-numeric MSISDNs and enforce a foreign key constraint."
+                },
+                {
+                  "issue_id": "SI-003",
+                  "table": "sent_sms",
+                  "column": "smsc_id",
+                  "severity": "high",
+                  "category": "Type Mismatch",
+                  "description": "Transactional table 'sent_sms' uses 'character varying' for 'smsc_id', but the master table 'smsc.id' is 'integer'. Non-numeric values ('Orange', 'simulator') were detected in 'sent_sms'.",
+                  "suggestion": "Cleanse 'sent_sms.smsc_id' to ensure only numeric IDs are stored, or update the master 'smsc' table to support string identifiers."
+                },
+                {
+                  "issue_id": "SI-004",
+                  "table": "user_contact_tags",
+                  "column": "tag_id",
+                  "severity": "medium",
+                  "category": "Missing Index",
+                  "description": "The mapping table 'user_contact_tags' has a unique index on (user_contact_id, tag_id) but lacks a secondary index on 'tag_id' alone, which is necessary for efficient reverse lookups and deletions by tag.",
+                  "suggestion": "Add a B-tree index on 'user_contact_tags(tag_id)'."
+                },
+                {
+                  "issue_id": "SI-005",
+                  "table": "prm_status",
+                  "column": "code",
+                  "severity": "low",
+                  "category": "Redundant Constraint",
+                  "description": "Redundant unique constraint 'ukblxl9et72bx7m3pcwq2nxy9mg' on (code, type) exists while 'code' is already globally unique via 'uk_e8pxw4kf260uh50pnilbj8nbw'.",
+                  "suggestion": "Drop the composite unique constraint (code, type) to simplify the schema."
+                },
+                {
+                  "issue_id": "SI-006",
+                  "table": "groupe",
+                  "column": "admin_id",
+                  "severity": "low",
+                  "category": "Nullable Violation",
+                  "description": "8 records in the 'groupe' table have a NULL 'admin_id', which may lead to orphaned groups without management.",
+                  "suggestion": "Verify if system-level groups are allowed to be admin-less; otherwise, assign a default administrator."
+                }
+              ],
+              "prior_reports": []
+            }
+          ]
+        },
+        {
+          "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-11T19:40:12.866465Z",
+          "agent": "RowLevelValidator",
+          "summary": {
+            "total_items_analyzed": 10266,
+            "items_passed": 10262,
+            "items_flagged": 4,
+            "critical_issues": 0,
+            "high_issues": 2,
+            "medium_issues": 2,
+            "low_issues": 0,
+            "overall_quality_score": 99.99,
+            "overall_confidence": 0.95,
+            "flagged_tables": [
+              "audit_log",
+              "campagne_contacts",
+              "sent_sms",
+              "users_legacy"
+            ]
+          },
+          "metrics": {
+            "total_rows_analyzed": 10266,
+            "rows_with_issues": 185,
+            "rows_with_issues_ratio": 0.018,
+            "format_violations": 12,
+            "encoding_issues": 0,
+            "hidden_null_count": 0,
+            "outlier_rows": 0,
+            "avg_row_quality_score": 98.2,
+            "avg_row_confidence": 0.95
+          },
+          "findings": [
+            {
+              "table": "sent_sms",
+              "row_id": "Multiple (12 rows)",
+              "field_values": {
+                "smsc_id": "Orange, simulator"
+              },
+              "rule_broken": "Gateway Identifier Sanitization: smsc_id must be numeric to join with smsc.id.",
+              "severity": "high"
+            },
+            {
+              "table": "campagne_contacts",
+              "row_id": "Multiple (31 rows)",
+              "field_values": {
+                "contact_id": "10000, 9999, 9998, 9997, 20049, etc."
+              },
+              "rule_broken": "Mapping Table Referencing: contact_id does not exist in the contacts table (orphaned records).",
+              "severity": "high"
+            },
+            {
+              "table": "audit_log",
+              "row_id": "Multiple (135 rows)",
+              "field_values": {
+                "job_id": "84f3722c-d1e7-418e-b4bf-6aad8f6a8e2e, etc."
+              },
+              "rule_broken": "Orphaned Audit Logs: job_id does not correspond to a valid record in the jobs table.",
+              "severity": "medium"
+            },
+            {
+              "table": "users_legacy",
+              "row_id": "Multiple (7 rows)",
+              "field_values": {
+                "email": "ebs@yopmail.com, agentebs@yopmail.com, etc."
+              },
+              "rule_broken": "Legacy User Synchronization: User email not found in the modern users table.",
+              "severity": "medium"
+            }
+          ],
+          "prior_reports": [
+            {
+              "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+              "database_id": "localhost_5432_easybulk",
+              "run_timestamp": "2026-04-11T19:37:20.523153Z",
+              "agent": "SchemaIntegrityValidator",
+              "summary": {
+                "total_items_analyzed": 10,
+                "items_passed": 4,
+                "items_flagged": 6,
+                "critical_issues": 0,
+                "high_issues": 3,
+                "medium_issues": 1,
+                "low_issues": 2,
+                "overall_quality_score": 92.4,
+                "overall_confidence": 0.72,
+                "flagged_tables": [
+                  "campagne_contacts",
+                  "groupe",
+                  "prm_status",
+                  "sent_sms",
+                  "user_contact_tags"
+                ]
+              },
+              "metrics": {
+                "total_tables": 91,
+                "total_columns": 683,
+                "tables_with_no_primary_key": 4,
+                "missing_foreign_keys": 2,
+                "constraint_violations": 1,
+                "type_mismatches": 2,
+                "nullable_violations": 1
+              },
+              "findings": [
+                {
+                  "issue_id": "SI-001",
+                  "table": "campagne_contacts",
+                  "column": "N/A",
+                  "severity": "high",
+                  "category": "Missing Primary Key",
+                  "description": "Mapping tables 'campagne_contacts', 'campagne_tags', and 'expediteur_groupe' lack formal primary keys, risking duplicate entries and performance issues.",
+                  "suggestion": "Implement composite primary keys on (campagne_id, contact_id), (campagne_id, tag_name), and (groupe_id, expediteur_id) respectively."
+                },
+                {
+                  "issue_id": "SI-002",
+                  "table": "campagne_contacts",
+                  "column": "contact_id",
+                  "severity": "high",
+                  "category": "Type Mismatch",
+                  "description": "Type discrepancy between 'campagne_contacts.contact_id' (bigint) and 'contacts.msisdn' (varchar). 10+ orphaned records found in 'campagne_contacts' that do not exist in 'contacts'.",
+                  "suggestion": "Align column types to 'character varying' to support non-numeric MSISDNs and enforce a foreign key constraint."
+                },
+                {
+                  "issue_id": "SI-003",
+                  "table": "sent_sms",
+                  "column": "smsc_id",
+                  "severity": "high",
+                  "category": "Type Mismatch",
+                  "description": "Transactional table 'sent_sms' uses 'character varying' for 'smsc_id', but the master table 'smsc.id' is 'integer'. Non-numeric values ('Orange', 'simulator') were detected in 'sent_sms'.",
+                  "suggestion": "Cleanse 'sent_sms.smsc_id' to ensure only numeric IDs are stored, or update the master 'smsc' table to support string identifiers."
+                },
+                {
+                  "issue_id": "SI-004",
+                  "table": "user_contact_tags",
+                  "column": "tag_id",
+                  "severity": "medium",
+                  "category": "Missing Index",
+                  "description": "The mapping table 'user_contact_tags' has a unique index on (user_contact_id, tag_id) but lacks a secondary index on 'tag_id' alone, which is necessary for efficient reverse lookups and deletions by tag.",
+                  "suggestion": "Add a B-tree index on 'user_contact_tags(tag_id)'."
+                },
+                {
+                  "issue_id": "SI-005",
+                  "table": "prm_status",
+                  "column": "code",
+                  "severity": "low",
+                  "category": "Redundant Constraint",
+                  "description": "Redundant unique constraint 'ukblxl9et72bx7m3pcwq2nxy9mg' on (code, type) exists while 'code' is already globally unique via 'uk_e8pxw4kf260uh50pnilbj8nbw'.",
+                  "suggestion": "Drop the composite unique constraint (code, type) to simplify the schema."
+                },
+                {
+                  "issue_id": "SI-006",
+                  "table": "groupe",
+                  "column": "admin_id",
+                  "severity": "low",
+                  "category": "Nullable Violation",
+                  "description": "8 records in the 'groupe' table have a NULL 'admin_id', which may lead to orphaned groups without management.",
+                  "suggestion": "Verify if system-level groups are allowed to be admin-less; otherwise, assign a default administrator."
+                }
+              ],
+              "prior_reports": []
+            },
+            {
+              "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+              "database_id": "localhost_5432_easybulk",
+              "run_timestamp": "2026-04-11T19:38:33.474446Z",
+              "agent": "ColumnValidatorAgent",
+              "summary": {
+                "total_items_analyzed": 22,
+                "items_passed": 16,
+                "items_flagged": 6,
+                "critical_issues": 0,
+                "high_issues": 1,
+                "medium_issues": 3,
+                "low_issues": 2,
+                "overall_quality_score": 97.45,
+                "overall_confidence": 0.9409,
+                "flagged_tables": [
+                  "campagne",
+                  "campaign_spool_state",
+                  "campaign_type_permission",
+                  "prm_status",
+                  "sent_sms"
+                ]
+              },
+              "metrics": {
+                "total_columns_analyzed": 22,
+                "duplicate_columns_found": 0,
+                "constant_columns_found": 3,
+                "high_null_ratio_columns": 0,
+                "low_cardinality_anomalies": 3,
+                "high_cardinality_anomalies": 0,
+                "semantic_mismatches": 1,
+                "domain_violations": 0,
+                "distribution_anomalies": 0,
+                "avg_column_quality_score": 91.2,
+                "avg_column_confidence": 0.98
+              },
+              "findings": [
+                {
+                  "table": "sent_sms",
+                  "column": "smsc_id",
+                  "quality_score": 45,
+                  "confidence": 1.0,
+                  "status": "flagged",
+                  "issues": [
+                    {
+                      "severity": "high",
+                      "type": "semantic_mismatch",
+                      "description": "Column contains non-numeric string identifiers (e.g., 'Orange', 'simulator') while the master table 'smsc.id' is an integer. This will cause casting failures during joins."
+                    }
+                  ],
+                  "metrics": {
+                    "null_ratio": 0.0,
+                    "distinct_ratio": 0.08,
+                    "non_numeric_ratio": 1.0,
+                    "inferred_type": "string"
+                  }
+                },
+                {
+                  "table": "campagne",
+                  "column": "me_only",
+                  "quality_score": 70,
+                  "confidence": 1.0,
+                  "status": "flagged",
+                  "issues": [
+                    {
+                      "severity": "medium",
+                      "type": "constant_column",
+                      "description": "Column has zero variance (cardinality = 1) across 9 rows. This may indicate hardcoded logic or an abandoned feature."
+                    }
+                  ],
+                  "metrics": {
+                    "null_ratio": 0.0,
+                    "distinct_count": 1,
+                    "dominant_value_ratio": 1.0
+                  }
+                },
+                {
+                  "table": "campagne",
+                  "column": "deactivated_by_group",
+                  "quality_score": 70,
+                  "confidence": 1.0,
+                  "status": "flagged",
+                  "issues": [
+                    {
+                      "severity": "medium",
+                      "type": "constant_column",
+                      "description": "Column has zero variance (cardinality = 1) across 9 rows."
+                    }
+                  ],
+                  "metrics": {
+                    "null_ratio": 0.0,
+                    "distinct_count": 1,
+                    "dominant_value_ratio": 1.0
+                  }
+                },
+                {
+                  "table": "campaign_type_permission",
+                  "column": "enabled",
+                  "quality_score": 70,
+                  "confidence": 1.0,
+                  "status": "flagged",
+                  "issues": [
+                    {
+                      "severity": "medium",
+                      "type": "constant_column",
+                      "description": "Column has zero variance (cardinality = 1) across 18 rows."
+                    }
+                  ],
+                  "metrics": {
+                    "null_ratio": 0.0,
+                    "distinct_count": 1,
+                    "dominant_value_ratio": 1.0
+                  }
+                },
+                {
+                  "table": "prm_status",
+                  "column": "code",
+                  "quality_score": 95,
+                  "confidence": 1.0,
+                  "status": "flagged",
+                  "issues": [
+                    {
+                      "severity": "low",
+                      "type": "redundant_constraint",
+                      "description": "The column is globally unique (25/25 rows), making the composite unique constraint (code, type) redundant."
+                    }
+                  ],
+                  "metrics": {
+                    "null_ratio": 0.0,
+                    "distinct_ratio": 1.0
+                  }
+                },
+                {
+                  "table": "contacts",
+                  "column": "msisdn",
+                  "quality_score": 100,
+                  "confidence": 1.0,
+                  "status": "passed",
+                  "issues": [],
+                  "metrics": {
+                    "null_ratio": 0.0,
+                    "invalid_length_ratio": 0.0,
+                    "non_numeric_ratio": 0.0,
+                    "min_length": 7,
+                    "max_length": 15
+                  }
+                },
+                {
+                  "table": "campaign_spool_state",
+                  "column": "last_updated_date",
+                  "quality_score": 0,
+                  "confidence": 0.0,
+                  "status": "insufficient_data",
+                  "issues": [
+                    {
+                      "severity": "low",
+                      "type": "access_denied",
+                      "description": "Query to monitor spooler liveness was blocked by safety filters."
+                    }
+                  ],
+                  "metrics": {}
+                }
+              ],
+              "prior_reports": [
+                {
+                  "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+                  "database_id": "localhost_5432_easybulk",
+                  "run_timestamp": "2026-04-11T19:37:20.523153Z",
+                  "agent": "SchemaIntegrityValidator",
+                  "summary": {
+                    "total_items_analyzed": 10,
+                    "items_passed": 4,
+                    "items_flagged": 6,
+                    "critical_issues": 0,
+                    "high_issues": 3,
+                    "medium_issues": 1,
+                    "low_issues": 2,
+                    "overall_quality_score": 92.4,
+                    "overall_confidence": 0.72,
+                    "flagged_tables": [
+                      "campagne_contacts",
+                      "groupe",
+                      "prm_status",
+                      "sent_sms",
+                      "user_contact_tags"
+                    ]
+                  },
+                  "metrics": {
+                    "total_tables": 91,
+                    "total_columns": 683,
+                    "tables_with_no_primary_key": 4,
+                    "missing_foreign_keys": 2,
+                    "constraint_violations": 1,
+                    "type_mismatches": 2,
+                    "nullable_violations": 1
+                  },
+                  "findings": [
+                    {
+                      "issue_id": "SI-001",
+                      "table": "campagne_contacts",
+                      "column": "N/A",
+                      "severity": "high",
+                      "category": "Missing Primary Key",
+                      "description": "Mapping tables 'campagne_contacts', 'campagne_tags', and 'expediteur_groupe' lack formal primary keys, risking duplicate entries and performance issues.",
+                      "suggestion": "Implement composite primary keys on (campagne_id, contact_id), (campagne_id, tag_name), and (groupe_id, expediteur_id) respectively."
+                    },
+                    {
+                      "issue_id": "SI-002",
+                      "table": "campagne_contacts",
+                      "column": "contact_id",
+                      "severity": "high",
+                      "category": "Type Mismatch",
+                      "description": "Type discrepancy between 'campagne_contacts.contact_id' (bigint) and 'contacts.msisdn' (varchar). 10+ orphaned records found in 'campagne_contacts' that do not exist in 'contacts'.",
+                      "suggestion": "Align column types to 'character varying' to support non-numeric MSISDNs and enforce a foreign key constraint."
+                    },
+                    {
+                      "issue_id": "SI-003",
+                      "table": "sent_sms",
+                      "column": "smsc_id",
+                      "severity": "high",
+                      "category": "Type Mismatch",
+                      "description": "Transactional table 'sent_sms' uses 'character varying' for 'smsc_id', but the master table 'smsc.id' is 'integer'. Non-numeric values ('Orange', 'simulator') were detected in 'sent_sms'.",
+                      "suggestion": "Cleanse 'sent_sms.smsc_id' to ensure only numeric IDs are stored, or update the master 'smsc' table to support string identifiers."
+                    },
+                    {
+                      "issue_id": "SI-004",
+                      "table": "user_contact_tags",
+                      "column": "tag_id",
+                      "severity": "medium",
+                      "category": "Missing Index",
+                      "description": "The mapping table 'user_contact_tags' has a unique index on (user_contact_id, tag_id) but lacks a secondary index on 'tag_id' alone, which is necessary for efficient reverse lookups and deletions by tag.",
+                      "suggestion": "Add a B-tree index on 'user_contact_tags(tag_id)'."
+                    },
+                    {
+                      "issue_id": "SI-005",
+                      "table": "prm_status",
+                      "column": "code",
+                      "severity": "low",
+                      "category": "Redundant Constraint",
+                      "description": "Redundant unique constraint 'ukblxl9et72bx7m3pcwq2nxy9mg' on (code, type) exists while 'code' is already globally unique via 'uk_e8pxw4kf260uh50pnilbj8nbw'.",
+                      "suggestion": "Drop the composite unique constraint (code, type) to simplify the schema."
+                    },
+                    {
+                      "issue_id": "SI-006",
+                      "table": "groupe",
+                      "column": "admin_id",
+                      "severity": "low",
+                      "category": "Nullable Violation",
+                      "description": "8 records in the 'groupe' table have a NULL 'admin_id', which may lead to orphaned groups without management.",
+                      "suggestion": "Verify if system-level groups are allowed to be admin-less; otherwise, assign a default administrator."
+                    }
+                  ],
+                  "prior_reports": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-11T19:43:14.876289Z",
+      "agent": "DataFixPlanner",
+      "summary": {
+        "total_items_analyzed": 22,
+        "items_passed": 10,
+        "items_flagged": 12,
+        "critical_issues": 0,
+        "high_issues": 7,
+        "medium_issues": 3,
+        "low_issues": 2,
+        "overall_quality_score": 92.0,
+        "overall_confidence": 0.95,
+        "flagged_tables": [
+          "audit_log",
+          "campagne_contacts",
+          "campagne_tags",
+          "expediteur_groupe",
+          "groupe",
+          "prm_status",
+          "sent_sms",
+          "smsc_routing_rule",
+          "user_contact_tags",
+          "users_legacy"
+        ]
+      },
+      "metrics": {
+        "total_issues_received": 22,
+        "fixes_generated": 12,
+        "critical_fixes": 0,
+        "high_fixes": 7,
+        "medium_fixes": 3,
+        "low_fixes": 2,
+        "estimated_rows_affected": 197,
+        "fix_confidence": 0.95
+      },
+      "findings": [
+        {
+          "id": "fix_001",
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts_clean",
+          "problem": "The mapping table lacks a primary key, which allows duplicate campaign-to-contact associations.",
+          "fix": "Add composite primary key to campagne_contacts",
+          "severity": "high",
+          "confidence": 0.95,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS campagne_contacts_clean (LIKE campagne_contacts INCLUDING ALL);",
+            "INSERT INTO campagne_contacts_clean SELECT * FROM campagne_contacts ON CONFLICT DO NOTHING;",
+            "DELETE FROM campagne_contacts_clean WHERE ctid NOT IN (SELECT MIN(ctid) FROM campagne_contacts_clean GROUP BY campagne_id, contact_id);",
+            "ALTER TABLE campagne_contacts_clean ADD PRIMARY KEY (campagne_id, contact_id);"
+          ],
+          "explanation": "Establishing a primary key prevents duplicate records and improves query performance for campaign lookups."
+        },
+        {
+          "id": "fix_002",
+          "table": "campagne_tags",
+          "target_table": "campagne_tags_clean",
+          "problem": "The mapping table for campaign tags lacks a primary key, risking redundant tag assignments.",
+          "fix": "Add composite primary key to campagne_tags",
+          "severity": "high",
+          "confidence": 0.95,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS campagne_tags_clean (LIKE campagne_tags INCLUDING ALL);",
+            "INSERT INTO campagne_tags_clean SELECT * FROM campagne_tags ON CONFLICT DO NOTHING;",
+            "DELETE FROM campagne_tags_clean WHERE ctid NOT IN (SELECT MIN(ctid) FROM campagne_tags_clean GROUP BY campagne_id, tag_name);",
+            "ALTER TABLE campagne_tags_clean ADD PRIMARY KEY (campagne_id, tag_name);"
+          ],
+          "explanation": "A composite primary key ensures that each tag is only associated with a specific campaign once."
+        },
+        {
+          "id": "fix_003",
+          "table": "expediteur_groupe",
+          "target_table": "expediteur_groupe_clean",
+          "problem": "The mapping table for sender groups lacks a primary key, which can lead to duplicate group memberships.",
+          "fix": "Add composite primary key to expediteur_groupe",
+          "severity": "high",
+          "confidence": 0.95,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS expediteur_groupe_clean (LIKE expediteur_groupe INCLUDING ALL);",
+            "INSERT INTO expediteur_groupe_clean SELECT * FROM expediteur_groupe ON CONFLICT DO NOTHING;",
+            "DELETE FROM expediteur_groupe_clean WHERE ctid NOT IN (SELECT MIN(ctid) FROM expediteur_groupe_clean GROUP BY groupe_id, expediteur_id);",
+            "ALTER TABLE expediteur_groupe_clean ADD PRIMARY KEY (groupe_id, expediteur_id);"
+          ],
+          "explanation": "Enforcing uniqueness at the database level prevents logical errors in sender group management."
+        },
+        {
+          "id": "fix_004",
+          "table": "user_contact_tags",
+          "target_table": "user_contact_tags_clean",
+          "problem": "The user contact tags table lacks a formal primary key despite having a unique index.",
+          "fix": "Add composite primary key to user_contact_tags",
+          "severity": "high",
+          "confidence": 0.95,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS user_contact_tags_clean (LIKE user_contact_tags INCLUDING ALL);",
+            "INSERT INTO user_contact_tags_clean SELECT * FROM user_contact_tags ON CONFLICT DO NOTHING;",
+            "DELETE FROM user_contact_tags_clean WHERE ctid NOT IN (SELECT MIN(ctid) FROM user_contact_tags_clean GROUP BY user_contact_id, tag_id);",
+            "ALTER TABLE user_contact_tags_clean ADD PRIMARY KEY (user_contact_id, tag_id);"
+          ],
+          "explanation": "Formalizing the primary key ensures standard relational integrity and better integration with ORM tools."
+        },
+        {
+          "id": "fix_005",
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts_clean",
+          "problem": "There is a type mismatch between contact IDs (bigint) and the master contact list (varchar), resulting in 31 orphaned records.",
+          "fix": "Align contact ID types and remove orphans",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 31,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS campagne_contacts_clean (LIKE campagne_contacts INCLUDING ALL);",
+            "INSERT INTO campagne_contacts_clean SELECT * FROM campagne_contacts ON CONFLICT DO NOTHING;",
+            "ALTER TABLE campagne_contacts_clean ALTER COLUMN contact_id TYPE character varying USING contact_id::character varying;",
+            "DELETE FROM campagne_contacts_clean WHERE contact_id NOT IN (SELECT msisdn FROM contacts);",
+            "ALTER TABLE campagne_contacts_clean ADD CONSTRAINT fk_campagne_contacts_contact FOREIGN KEY (contact_id) REFERENCES contacts(msisdn);"
+          ],
+          "explanation": "Converting the ID to a string allows it to match the format used in the contacts table, and removing orphans ensures that every campaign contact actually exists."
+        },
+        {
+          "id": "fix_006",
+          "table": "sent_sms",
+          "target_table": "sent_sms_clean",
+          "problem": "The SMS gateway ID column contains text labels like 'Orange' instead of numeric IDs, breaking links to the gateway master table.",
+          "fix": "Map gateway labels to numeric IDs",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 12,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS sent_sms_clean (LIKE sent_sms INCLUDING ALL);",
+            "INSERT INTO sent_sms_clean SELECT * FROM sent_sms ON CONFLICT DO NOTHING;",
+            "UPDATE sent_sms_clean s SET smsc_id = m.id::varchar FROM smsc m WHERE s.smsc_id = m.name;",
+            "ALTER TABLE sent_sms_clean ALTER COLUMN smsc_id TYPE integer USING smsc_id::integer;",
+            "ALTER TABLE sent_sms_clean ADD CONSTRAINT fk_sent_sms_smsc FOREIGN KEY (smsc_id) REFERENCES smsc(id);"
+          ],
+          "explanation": "This replaces descriptive names with their corresponding internal IDs so the database can correctly join SMS records with gateway information."
+        },
+        {
+          "id": "fix_007",
+          "table": "groupe",
+          "target_table": "groupe_clean",
+          "problem": "Eight groups are missing an assigned administrator, which could lead to unmanaged records.",
+          "fix": "Assign default administrator to groups",
+          "severity": "low",
+          "confidence": 0.85,
+          "estimated_rows_affected": 8,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS groupe_clean (LIKE groupe INCLUDING ALL);",
+            "INSERT INTO groupe_clean SELECT * FROM groupe ON CONFLICT DO NOTHING;",
+            "UPDATE groupe_clean SET admin_id = (SELECT id FROM users_legacy LIMIT 1) WHERE admin_id IS NULL;",
+            "ALTER TABLE groupe_clean ADD CONSTRAINT chk_active_group_has_admin CHECK (admin_id IS NOT NULL);"
+          ],
+          "explanation": "Assigning a default administrator ensures every group has an owner, and the new constraint prevents future groups from being created without one."
+        },
+        {
+          "id": "fix_008",
+          "table": "smsc_routing_rule",
+          "target_table": "smsc_routing_rule_clean",
+          "problem": "Organization ID 2 has four duplicate default routing rules, creating ambiguity in how messages are sent.",
+          "fix": "Remove duplicate default routing rules",
+          "severity": "high",
+          "confidence": 0.95,
+          "estimated_rows_affected": 4,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS smsc_routing_rule_clean (LIKE smsc_routing_rule INCLUDING ALL);",
+            "INSERT INTO smsc_routing_rule_clean SELECT * FROM smsc_routing_rule ON CONFLICT DO NOTHING;",
+            "DELETE FROM smsc_routing_rule_clean WHERE id IN (SELECT id FROM (SELECT id, row_number() OVER (PARTITION BY organization_id ORDER BY priority DESC, updated_at DESC) as rn FROM smsc_routing_rule_clean WHERE expediteur_id IS NULL AND groupe_id IS NULL) t WHERE t.rn > 1);"
+          ],
+          "explanation": "This keeps only the most recently updated or highest priority default rule per organization, ensuring predictable message routing."
+        },
+        {
+          "id": "fix_009",
+          "table": "audit_log",
+          "target_table": "audit_log_clean",
+          "problem": "135 audit log entries reference background jobs that no longer exist in the system.",
+          "fix": "Purge orphaned audit logs",
+          "severity": "medium",
+          "confidence": 1.0,
+          "estimated_rows_affected": 135,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS audit_log_clean (LIKE audit_log INCLUDING ALL);",
+            "INSERT INTO audit_log_clean SELECT * FROM audit_log ON CONFLICT DO NOTHING;",
+            "DELETE FROM audit_log_clean WHERE job_id NOT IN (SELECT id FROM jobs) AND job_id IS NOT NULL;"
+          ],
+          "explanation": "Cleaning up logs for non-existent jobs reduces database bloat and ensures the audit trail only contains relevant information."
+        },
+        {
+          "id": "fix_010",
+          "table": "user_contact_tags",
+          "target_table": "user_contact_tags_clean",
+          "problem": "Searching for contacts by a specific tag is slow because there is no index on the tag ID column.",
+          "fix": "Create index on tag_id",
+          "severity": "medium",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS user_contact_tags_clean (LIKE user_contact_tags INCLUDING ALL);",
+            "INSERT INTO user_contact_tags_clean SELECT * FROM user_contact_tags ON CONFLICT DO NOTHING;",
+            "CREATE INDEX idx_user_contact_tags_tag_id ON user_contact_tags_clean(tag_id);"
+          ],
+          "explanation": "Adding an index allows the database to quickly find all contacts associated with a specific tag without scanning the entire table."
+        },
+        {
+          "id": "fix_011",
+          "table": "prm_status",
+          "target_table": "prm_status_clean",
+          "problem": "A composite unique constraint is redundant because the 'code' column is already unique on its own.",
+          "fix": "Drop redundant unique constraint",
+          "severity": "low",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS prm_status_clean (LIKE prm_status INCLUDING ALL);",
+            "INSERT INTO prm_status_clean SELECT * FROM prm_status ON CONFLICT DO NOTHING;",
+            "ALTER TABLE prm_status_clean DROP CONSTRAINT ukblxl9et72bx7m3pcwq2nxy9mg;"
+          ],
+          "explanation": "Removing redundant constraints simplifies the database schema and slightly improves the performance of data modifications."
+        },
+        {
+          "id": "fix_012",
+          "table": "users_legacy",
+          "target_table": "users_legacy_clean",
+          "problem": "Seven legacy user records have broken links to the modern identity provider (Keycloak).",
+          "fix": "Reset broken Keycloak identifiers",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 7,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS users_legacy_clean (LIKE users_legacy INCLUDING ALL);",
+            "INSERT INTO users_legacy_clean SELECT * FROM users_legacy ON CONFLICT DO NOTHING;",
+            "UPDATE users_legacy_clean SET id_user_keycloak = NULL WHERE id_user_keycloak NOT IN (SELECT id::varchar FROM users);"
+          ],
+          "explanation": "Setting invalid external IDs to NULL prevents the application from attempting to sync with non-existent accounts in the identity provider."
+        }
+      ],
+      "prior_reports": [
+        {
+          "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-11T19:37:20.523153Z",
+          "agent": "SchemaIntegrityValidator",
+          "summary": {
+            "total_items_analyzed": 10,
+            "items_passed": 4,
+            "items_flagged": 6,
+            "critical_issues": 0,
+            "high_issues": 3,
+            "medium_issues": 1,
+            "low_issues": 2,
+            "overall_quality_score": 92.4,
+            "overall_confidence": 0.72,
+            "flagged_tables": [
+              "campagne_contacts",
+              "groupe",
+              "prm_status",
+              "sent_sms",
+              "user_contact_tags"
+            ]
+          },
+          "metrics": {
+            "total_tables": 91,
+            "total_columns": 683,
+            "tables_with_no_primary_key": 4,
+            "missing_foreign_keys": 2,
+            "constraint_violations": 1,
+            "type_mismatches": 2,
+            "nullable_violations": 1
+          },
+          "findings": [
+            {
+              "issue_id": "SI-001",
+              "table": "campagne_contacts",
+              "column": "N/A",
+              "severity": "high",
+              "category": "Missing Primary Key",
+              "description": "Mapping tables 'campagne_contacts', 'campagne_tags', and 'expediteur_groupe' lack formal primary keys, risking duplicate entries and performance issues.",
+              "suggestion": "Implement composite primary keys on (campagne_id, contact_id), (campagne_id, tag_name), and (groupe_id, expediteur_id) respectively."
+            },
+            {
+              "issue_id": "SI-002",
+              "table": "campagne_contacts",
+              "column": "contact_id",
+              "severity": "high",
+              "category": "Type Mismatch",
+              "description": "Type discrepancy between 'campagne_contacts.contact_id' (bigint) and 'contacts.msisdn' (varchar). 10+ orphaned records found in 'campagne_contacts' that do not exist in 'contacts'.",
+              "suggestion": "Align column types to 'character varying' to support non-numeric MSISDNs and enforce a foreign key constraint."
+            },
+            {
+              "issue_id": "SI-003",
+              "table": "sent_sms",
+              "column": "smsc_id",
+              "severity": "high",
+              "category": "Type Mismatch",
+              "description": "Transactional table 'sent_sms' uses 'character varying' for 'smsc_id', but the master table 'smsc.id' is 'integer'. Non-numeric values ('Orange', 'simulator') were detected in 'sent_sms'.",
+              "suggestion": "Cleanse 'sent_sms.smsc_id' to ensure only numeric IDs are stored, or update the master 'smsc' table to support string identifiers."
+            },
+            {
+              "issue_id": "SI-004",
+              "table": "user_contact_tags",
+              "column": "tag_id",
+              "severity": "medium",
+              "category": "Missing Index",
+              "description": "The mapping table 'user_contact_tags' has a unique index on (user_contact_id, tag_id) but lacks a secondary index on 'tag_id' alone, which is necessary for efficient reverse lookups and deletions by tag.",
+              "suggestion": "Add a B-tree index on 'user_contact_tags(tag_id)'."
+            },
+            {
+              "issue_id": "SI-005",
+              "table": "prm_status",
+              "column": "code",
+              "severity": "low",
+              "category": "Redundant Constraint",
+              "description": "Redundant unique constraint 'ukblxl9et72bx7m3pcwq2nxy9mg' on (code, type) exists while 'code' is already globally unique via 'uk_e8pxw4kf260uh50pnilbj8nbw'.",
+              "suggestion": "Drop the composite unique constraint (code, type) to simplify the schema."
+            },
+            {
+              "issue_id": "SI-006",
+              "table": "groupe",
+              "column": "admin_id",
+              "severity": "low",
+              "category": "Nullable Violation",
+              "description": "8 records in the 'groupe' table have a NULL 'admin_id', which may lead to orphaned groups without management.",
+              "suggestion": "Verify if system-level groups are allowed to be admin-less; otherwise, assign a default administrator."
+            }
+          ],
+          "prior_reports": []
+        },
+        {
+          "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-11T19:38:33.474446Z",
+          "agent": "ColumnValidatorAgent",
+          "summary": {
+            "total_items_analyzed": 22,
+            "items_passed": 16,
+            "items_flagged": 6,
+            "critical_issues": 0,
+            "high_issues": 1,
+            "medium_issues": 3,
+            "low_issues": 2,
+            "overall_quality_score": 97.45,
+            "overall_confidence": 0.9409,
+            "flagged_tables": [
+              "campagne",
+              "campaign_spool_state",
+              "campaign_type_permission",
+              "prm_status",
+              "sent_sms"
+            ]
+          },
+          "metrics": {
+            "total_columns_analyzed": 22,
+            "duplicate_columns_found": 0,
+            "constant_columns_found": 3,
+            "high_null_ratio_columns": 0,
+            "low_cardinality_anomalies": 3,
+            "high_cardinality_anomalies": 0,
+            "semantic_mismatches": 1,
+            "domain_violations": 0,
+            "distribution_anomalies": 0,
+            "avg_column_quality_score": 91.2,
+            "avg_column_confidence": 0.98
+          },
+          "findings": [
+            {
+              "table": "sent_sms",
+              "column": "smsc_id",
+              "quality_score": 45,
+              "confidence": 1.0,
+              "status": "flagged",
+              "issues": [
+                {
+                  "severity": "high",
+                  "type": "semantic_mismatch",
+                  "description": "Column contains non-numeric string identifiers (e.g., 'Orange', 'simulator') while the master table 'smsc.id' is an integer. This will cause casting failures during joins."
+                }
+              ],
+              "metrics": {
+                "null_ratio": 0.0,
+                "distinct_ratio": 0.08,
+                "non_numeric_ratio": 1.0,
+                "inferred_type": "string"
+              }
+            },
+            {
+              "table": "campagne",
+              "column": "me_only",
+              "quality_score": 70,
+              "confidence": 1.0,
+              "status": "flagged",
+              "issues": [
+                {
+                  "severity": "medium",
+                  "type": "constant_column",
+                  "description": "Column has zero variance (cardinality = 1) across 9 rows. This may indicate hardcoded logic or an abandoned feature."
+                }
+              ],
+              "metrics": {
+                "null_ratio": 0.0,
+                "distinct_count": 1,
+                "dominant_value_ratio": 1.0
+              }
+            },
+            {
+              "table": "campagne",
+              "column": "deactivated_by_group",
+              "quality_score": 70,
+              "confidence": 1.0,
+              "status": "flagged",
+              "issues": [
+                {
+                  "severity": "medium",
+                  "type": "constant_column",
+                  "description": "Column has zero variance (cardinality = 1) across 9 rows."
+                }
+              ],
+              "metrics": {
+                "null_ratio": 0.0,
+                "distinct_count": 1,
+                "dominant_value_ratio": 1.0
+              }
+            },
+            {
+              "table": "campaign_type_permission",
+              "column": "enabled",
+              "quality_score": 70,
+              "confidence": 1.0,
+              "status": "flagged",
+              "issues": [
+                {
+                  "severity": "medium",
+                  "type": "constant_column",
+                  "description": "Column has zero variance (cardinality = 1) across 18 rows."
+                }
+              ],
+              "metrics": {
+                "null_ratio": 0.0,
+                "distinct_count": 1,
+                "dominant_value_ratio": 1.0
+              }
+            },
+            {
+              "table": "prm_status",
+              "column": "code",
+              "quality_score": 95,
+              "confidence": 1.0,
+              "status": "flagged",
+              "issues": [
+                {
+                  "severity": "low",
+                  "type": "redundant_constraint",
+                  "description": "The column is globally unique (25/25 rows), making the composite unique constraint (code, type) redundant."
+                }
+              ],
+              "metrics": {
+                "null_ratio": 0.0,
+                "distinct_ratio": 1.0
+              }
+            },
+            {
+              "table": "contacts",
+              "column": "msisdn",
+              "quality_score": 100,
+              "confidence": 1.0,
+              "status": "passed",
+              "issues": [],
+              "metrics": {
+                "null_ratio": 0.0,
+                "invalid_length_ratio": 0.0,
+                "non_numeric_ratio": 0.0,
+                "min_length": 7,
+                "max_length": 15
+              }
+            },
+            {
+              "table": "campaign_spool_state",
+              "column": "last_updated_date",
+              "quality_score": 0,
+              "confidence": 0.0,
+              "status": "insufficient_data",
+              "issues": [
+                {
+                  "severity": "low",
+                  "type": "access_denied",
+                  "description": "Query to monitor spooler liveness was blocked by safety filters."
+                }
+              ],
+              "metrics": {}
+            }
+          ],
+          "prior_reports": [
+            {
+              "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+              "database_id": "localhost_5432_easybulk",
+              "run_timestamp": "2026-04-11T19:37:20.523153Z",
+              "agent": "SchemaIntegrityValidator",
+              "summary": {
+                "total_items_analyzed": 10,
+                "items_passed": 4,
+                "items_flagged": 6,
+                "critical_issues": 0,
+                "high_issues": 3,
+                "medium_issues": 1,
+                "low_issues": 2,
+                "overall_quality_score": 92.4,
+                "overall_confidence": 0.72,
+                "flagged_tables": [
+                  "campagne_contacts",
+                  "groupe",
+                  "prm_status",
+                  "sent_sms",
+                  "user_contact_tags"
+                ]
+              },
+              "metrics": {
+                "total_tables": 91,
+                "total_columns": 683,
+                "tables_with_no_primary_key": 4,
+                "missing_foreign_keys": 2,
+                "constraint_violations": 1,
+                "type_mismatches": 2,
+                "nullable_violations": 1
+              },
+              "findings": [
+                {
+                  "issue_id": "SI-001",
+                  "table": "campagne_contacts",
+                  "column": "N/A",
+                  "severity": "high",
+                  "category": "Missing Primary Key",
+                  "description": "Mapping tables 'campagne_contacts', 'campagne_tags', and 'expediteur_groupe' lack formal primary keys, risking duplicate entries and performance issues.",
+                  "suggestion": "Implement composite primary keys on (campagne_id, contact_id), (campagne_id, tag_name), and (groupe_id, expediteur_id) respectively."
+                },
+                {
+                  "issue_id": "SI-002",
+                  "table": "campagne_contacts",
+                  "column": "contact_id",
+                  "severity": "high",
+                  "category": "Type Mismatch",
+                  "description": "Type discrepancy between 'campagne_contacts.contact_id' (bigint) and 'contacts.msisdn' (varchar). 10+ orphaned records found in 'campagne_contacts' that do not exist in 'contacts'.",
+                  "suggestion": "Align column types to 'character varying' to support non-numeric MSISDNs and enforce a foreign key constraint."
+                },
+                {
+                  "issue_id": "SI-003",
+                  "table": "sent_sms",
+                  "column": "smsc_id",
+                  "severity": "high",
+                  "category": "Type Mismatch",
+                  "description": "Transactional table 'sent_sms' uses 'character varying' for 'smsc_id', but the master table 'smsc.id' is 'integer'. Non-numeric values ('Orange', 'simulator') were detected in 'sent_sms'.",
+                  "suggestion": "Cleanse 'sent_sms.smsc_id' to ensure only numeric IDs are stored, or update the master 'smsc' table to support string identifiers."
+                },
+                {
+                  "issue_id": "SI-004",
+                  "table": "user_contact_tags",
+                  "column": "tag_id",
+                  "severity": "medium",
+                  "category": "Missing Index",
+                  "description": "The mapping table 'user_contact_tags' has a unique index on (user_contact_id, tag_id) but lacks a secondary index on 'tag_id' alone, which is necessary for efficient reverse lookups and deletions by tag.",
+                  "suggestion": "Add a B-tree index on 'user_contact_tags(tag_id)'."
+                },
+                {
+                  "issue_id": "SI-005",
+                  "table": "prm_status",
+                  "column": "code",
+                  "severity": "low",
+                  "category": "Redundant Constraint",
+                  "description": "Redundant unique constraint 'ukblxl9et72bx7m3pcwq2nxy9mg' on (code, type) exists while 'code' is already globally unique via 'uk_e8pxw4kf260uh50pnilbj8nbw'.",
+                  "suggestion": "Drop the composite unique constraint (code, type) to simplify the schema."
+                },
+                {
+                  "issue_id": "SI-006",
+                  "table": "groupe",
+                  "column": "admin_id",
+                  "severity": "low",
+                  "category": "Nullable Violation",
+                  "description": "8 records in the 'groupe' table have a NULL 'admin_id', which may lead to orphaned groups without management.",
+                  "suggestion": "Verify if system-level groups are allowed to be admin-less; otherwise, assign a default administrator."
+                }
+              ],
+              "prior_reports": []
+            }
+          ]
+        },
+        {
+          "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-11T19:40:12.866465Z",
+          "agent": "RowLevelValidator",
+          "summary": {
+            "total_items_analyzed": 10266,
+            "items_passed": 10262,
+            "items_flagged": 4,
+            "critical_issues": 0,
+            "high_issues": 2,
+            "medium_issues": 2,
+            "low_issues": 0,
+            "overall_quality_score": 99.99,
+            "overall_confidence": 0.95,
+            "flagged_tables": [
+              "audit_log",
+              "campagne_contacts",
+              "sent_sms",
+              "users_legacy"
+            ]
+          },
+          "metrics": {
+            "total_rows_analyzed": 10266,
+            "rows_with_issues": 185,
+            "rows_with_issues_ratio": 0.018,
+            "format_violations": 12,
+            "encoding_issues": 0,
+            "hidden_null_count": 0,
+            "outlier_rows": 0,
+            "avg_row_quality_score": 98.2,
+            "avg_row_confidence": 0.95
+          },
+          "findings": [
+            {
+              "table": "sent_sms",
+              "row_id": "Multiple (12 rows)",
+              "field_values": {
+                "smsc_id": "Orange, simulator"
+              },
+              "rule_broken": "Gateway Identifier Sanitization: smsc_id must be numeric to join with smsc.id.",
+              "severity": "high"
+            },
+            {
+              "table": "campagne_contacts",
+              "row_id": "Multiple (31 rows)",
+              "field_values": {
+                "contact_id": "10000, 9999, 9998, 9997, 20049, etc."
+              },
+              "rule_broken": "Mapping Table Referencing: contact_id does not exist in the contacts table (orphaned records).",
+              "severity": "high"
+            },
+            {
+              "table": "audit_log",
+              "row_id": "Multiple (135 rows)",
+              "field_values": {
+                "job_id": "84f3722c-d1e7-418e-b4bf-6aad8f6a8e2e, etc."
+              },
+              "rule_broken": "Orphaned Audit Logs: job_id does not correspond to a valid record in the jobs table.",
+              "severity": "medium"
+            },
+            {
+              "table": "users_legacy",
+              "row_id": "Multiple (7 rows)",
+              "field_values": {
+                "email": "ebs@yopmail.com, agentebs@yopmail.com, etc."
+              },
+              "rule_broken": "Legacy User Synchronization: User email not found in the modern users table.",
+              "severity": "medium"
+            }
+          ],
+          "prior_reports": [
+            {
+              "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+              "database_id": "localhost_5432_easybulk",
+              "run_timestamp": "2026-04-11T19:37:20.523153Z",
+              "agent": "SchemaIntegrityValidator",
+              "summary": {
+                "total_items_analyzed": 10,
+                "items_passed": 4,
+                "items_flagged": 6,
+                "critical_issues": 0,
+                "high_issues": 3,
+                "medium_issues": 1,
+                "low_issues": 2,
+                "overall_quality_score": 92.4,
+                "overall_confidence": 0.72,
+                "flagged_tables": [
+                  "campagne_contacts",
+                  "groupe",
+                  "prm_status",
+                  "sent_sms",
+                  "user_contact_tags"
+                ]
+              },
+              "metrics": {
+                "total_tables": 91,
+                "total_columns": 683,
+                "tables_with_no_primary_key": 4,
+                "missing_foreign_keys": 2,
+                "constraint_violations": 1,
+                "type_mismatches": 2,
+                "nullable_violations": 1
+              },
+              "findings": [
+                {
+                  "issue_id": "SI-001",
+                  "table": "campagne_contacts",
+                  "column": "N/A",
+                  "severity": "high",
+                  "category": "Missing Primary Key",
+                  "description": "Mapping tables 'campagne_contacts', 'campagne_tags', and 'expediteur_groupe' lack formal primary keys, risking duplicate entries and performance issues.",
+                  "suggestion": "Implement composite primary keys on (campagne_id, contact_id), (campagne_id, tag_name), and (groupe_id, expediteur_id) respectively."
+                },
+                {
+                  "issue_id": "SI-002",
+                  "table": "campagne_contacts",
+                  "column": "contact_id",
+                  "severity": "high",
+                  "category": "Type Mismatch",
+                  "description": "Type discrepancy between 'campagne_contacts.contact_id' (bigint) and 'contacts.msisdn' (varchar). 10+ orphaned records found in 'campagne_contacts' that do not exist in 'contacts'.",
+                  "suggestion": "Align column types to 'character varying' to support non-numeric MSISDNs and enforce a foreign key constraint."
+                },
+                {
+                  "issue_id": "SI-003",
+                  "table": "sent_sms",
+                  "column": "smsc_id",
+                  "severity": "high",
+                  "category": "Type Mismatch",
+                  "description": "Transactional table 'sent_sms' uses 'character varying' for 'smsc_id', but the master table 'smsc.id' is 'integer'. Non-numeric values ('Orange', 'simulator') were detected in 'sent_sms'.",
+                  "suggestion": "Cleanse 'sent_sms.smsc_id' to ensure only numeric IDs are stored, or update the master 'smsc' table to support string identifiers."
+                },
+                {
+                  "issue_id": "SI-004",
+                  "table": "user_contact_tags",
+                  "column": "tag_id",
+                  "severity": "medium",
+                  "category": "Missing Index",
+                  "description": "The mapping table 'user_contact_tags' has a unique index on (user_contact_id, tag_id) but lacks a secondary index on 'tag_id' alone, which is necessary for efficient reverse lookups and deletions by tag.",
+                  "suggestion": "Add a B-tree index on 'user_contact_tags(tag_id)'."
+                },
+                {
+                  "issue_id": "SI-005",
+                  "table": "prm_status",
+                  "column": "code",
+                  "severity": "low",
+                  "category": "Redundant Constraint",
+                  "description": "Redundant unique constraint 'ukblxl9et72bx7m3pcwq2nxy9mg' on (code, type) exists while 'code' is already globally unique via 'uk_e8pxw4kf260uh50pnilbj8nbw'.",
+                  "suggestion": "Drop the composite unique constraint (code, type) to simplify the schema."
+                },
+                {
+                  "issue_id": "SI-006",
+                  "table": "groupe",
+                  "column": "admin_id",
+                  "severity": "low",
+                  "category": "Nullable Violation",
+                  "description": "8 records in the 'groupe' table have a NULL 'admin_id', which may lead to orphaned groups without management.",
+                  "suggestion": "Verify if system-level groups are allowed to be admin-less; otherwise, assign a default administrator."
+                }
+              ],
+              "prior_reports": []
+            },
+            {
+              "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+              "database_id": "localhost_5432_easybulk",
+              "run_timestamp": "2026-04-11T19:38:33.474446Z",
+              "agent": "ColumnValidatorAgent",
+              "summary": {
+                "total_items_analyzed": 22,
+                "items_passed": 16,
+                "items_flagged": 6,
+                "critical_issues": 0,
+                "high_issues": 1,
+                "medium_issues": 3,
+                "low_issues": 2,
+                "overall_quality_score": 97.45,
+                "overall_confidence": 0.9409,
+                "flagged_tables": [
+                  "campagne",
+                  "campaign_spool_state",
+                  "campaign_type_permission",
+                  "prm_status",
+                  "sent_sms"
+                ]
+              },
+              "metrics": {
+                "total_columns_analyzed": 22,
+                "duplicate_columns_found": 0,
+                "constant_columns_found": 3,
+                "high_null_ratio_columns": 0,
+                "low_cardinality_anomalies": 3,
+                "high_cardinality_anomalies": 0,
+                "semantic_mismatches": 1,
+                "domain_violations": 0,
+                "distribution_anomalies": 0,
+                "avg_column_quality_score": 91.2,
+                "avg_column_confidence": 0.98
+              },
+              "findings": [
+                {
+                  "table": "sent_sms",
+                  "column": "smsc_id",
+                  "quality_score": 45,
+                  "confidence": 1.0,
+                  "status": "flagged",
+                  "issues": [
+                    {
+                      "severity": "high",
+                      "type": "semantic_mismatch",
+                      "description": "Column contains non-numeric string identifiers (e.g., 'Orange', 'simulator') while the master table 'smsc.id' is an integer. This will cause casting failures during joins."
+                    }
+                  ],
+                  "metrics": {
+                    "null_ratio": 0.0,
+                    "distinct_ratio": 0.08,
+                    "non_numeric_ratio": 1.0,
+                    "inferred_type": "string"
+                  }
+                },
+                {
+                  "table": "campagne",
+                  "column": "me_only",
+                  "quality_score": 70,
+                  "confidence": 1.0,
+                  "status": "flagged",
+                  "issues": [
+                    {
+                      "severity": "medium",
+                      "type": "constant_column",
+                      "description": "Column has zero variance (cardinality = 1) across 9 rows. This may indicate hardcoded logic or an abandoned feature."
+                    }
+                  ],
+                  "metrics": {
+                    "null_ratio": 0.0,
+                    "distinct_count": 1,
+                    "dominant_value_ratio": 1.0
+                  }
+                },
+                {
+                  "table": "campagne",
+                  "column": "deactivated_by_group",
+                  "quality_score": 70,
+                  "confidence": 1.0,
+                  "status": "flagged",
+                  "issues": [
+                    {
+                      "severity": "medium",
+                      "type": "constant_column",
+                      "description": "Column has zero variance (cardinality = 1) across 9 rows."
+                    }
+                  ],
+                  "metrics": {
+                    "null_ratio": 0.0,
+                    "distinct_count": 1,
+                    "dominant_value_ratio": 1.0
+                  }
+                },
+                {
+                  "table": "campaign_type_permission",
+                  "column": "enabled",
+                  "quality_score": 70,
+                  "confidence": 1.0,
+                  "status": "flagged",
+                  "issues": [
+                    {
+                      "severity": "medium",
+                      "type": "constant_column",
+                      "description": "Column has zero variance (cardinality = 1) across 18 rows."
+                    }
+                  ],
+                  "metrics": {
+                    "null_ratio": 0.0,
+                    "distinct_count": 1,
+                    "dominant_value_ratio": 1.0
+                  }
+                },
+                {
+                  "table": "prm_status",
+                  "column": "code",
+                  "quality_score": 95,
+                  "confidence": 1.0,
+                  "status": "flagged",
+                  "issues": [
+                    {
+                      "severity": "low",
+                      "type": "redundant_constraint",
+                      "description": "The column is globally unique (25/25 rows), making the composite unique constraint (code, type) redundant."
+                    }
+                  ],
+                  "metrics": {
+                    "null_ratio": 0.0,
+                    "distinct_ratio": 1.0
+                  }
+                },
+                {
+                  "table": "contacts",
+                  "column": "msisdn",
+                  "quality_score": 100,
+                  "confidence": 1.0,
+                  "status": "passed",
+                  "issues": [],
+                  "metrics": {
+                    "null_ratio": 0.0,
+                    "invalid_length_ratio": 0.0,
+                    "non_numeric_ratio": 0.0,
+                    "min_length": 7,
+                    "max_length": 15
+                  }
+                },
+                {
+                  "table": "campaign_spool_state",
+                  "column": "last_updated_date",
+                  "quality_score": 0,
+                  "confidence": 0.0,
+                  "status": "insufficient_data",
+                  "issues": [
+                    {
+                      "severity": "low",
+                      "type": "access_denied",
+                      "description": "Query to monitor spooler liveness was blocked by safety filters."
+                    }
+                  ],
+                  "metrics": {}
+                }
+              ],
+              "prior_reports": [
+                {
+                  "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+                  "database_id": "localhost_5432_easybulk",
+                  "run_timestamp": "2026-04-11T19:37:20.523153Z",
+                  "agent": "SchemaIntegrityValidator",
+                  "summary": {
+                    "total_items_analyzed": 10,
+                    "items_passed": 4,
+                    "items_flagged": 6,
+                    "critical_issues": 0,
+                    "high_issues": 3,
+                    "medium_issues": 1,
+                    "low_issues": 2,
+                    "overall_quality_score": 92.4,
+                    "overall_confidence": 0.72,
+                    "flagged_tables": [
+                      "campagne_contacts",
+                      "groupe",
+                      "prm_status",
+                      "sent_sms",
+                      "user_contact_tags"
+                    ]
+                  },
+                  "metrics": {
+                    "total_tables": 91,
+                    "total_columns": 683,
+                    "tables_with_no_primary_key": 4,
+                    "missing_foreign_keys": 2,
+                    "constraint_violations": 1,
+                    "type_mismatches": 2,
+                    "nullable_violations": 1
+                  },
+                  "findings": [
+                    {
+                      "issue_id": "SI-001",
+                      "table": "campagne_contacts",
+                      "column": "N/A",
+                      "severity": "high",
+                      "category": "Missing Primary Key",
+                      "description": "Mapping tables 'campagne_contacts', 'campagne_tags', and 'expediteur_groupe' lack formal primary keys, risking duplicate entries and performance issues.",
+                      "suggestion": "Implement composite primary keys on (campagne_id, contact_id), (campagne_id, tag_name), and (groupe_id, expediteur_id) respectively."
+                    },
+                    {
+                      "issue_id": "SI-002",
+                      "table": "campagne_contacts",
+                      "column": "contact_id",
+                      "severity": "high",
+                      "category": "Type Mismatch",
+                      "description": "Type discrepancy between 'campagne_contacts.contact_id' (bigint) and 'contacts.msisdn' (varchar). 10+ orphaned records found in 'campagne_contacts' that do not exist in 'contacts'.",
+                      "suggestion": "Align column types to 'character varying' to support non-numeric MSISDNs and enforce a foreign key constraint."
+                    },
+                    {
+                      "issue_id": "SI-003",
+                      "table": "sent_sms",
+                      "column": "smsc_id",
+                      "severity": "high",
+                      "category": "Type Mismatch",
+                      "description": "Transactional table 'sent_sms' uses 'character varying' for 'smsc_id', but the master table 'smsc.id' is 'integer'. Non-numeric values ('Orange', 'simulator') were detected in 'sent_sms'.",
+                      "suggestion": "Cleanse 'sent_sms.smsc_id' to ensure only numeric IDs are stored, or update the master 'smsc' table to support string identifiers."
+                    },
+                    {
+                      "issue_id": "SI-004",
+                      "table": "user_contact_tags",
+                      "column": "tag_id",
+                      "severity": "medium",
+                      "category": "Missing Index",
+                      "description": "The mapping table 'user_contact_tags' has a unique index on (user_contact_id, tag_id) but lacks a secondary index on 'tag_id' alone, which is necessary for efficient reverse lookups and deletions by tag.",
+                      "suggestion": "Add a B-tree index on 'user_contact_tags(tag_id)'."
+                    },
+                    {
+                      "issue_id": "SI-005",
+                      "table": "prm_status",
+                      "column": "code",
+                      "severity": "low",
+                      "category": "Redundant Constraint",
+                      "description": "Redundant unique constraint 'ukblxl9et72bx7m3pcwq2nxy9mg' on (code, type) exists while 'code' is already globally unique via 'uk_e8pxw4kf260uh50pnilbj8nbw'.",
+                      "suggestion": "Drop the composite unique constraint (code, type) to simplify the schema."
+                    },
+                    {
+                      "issue_id": "SI-006",
+                      "table": "groupe",
+                      "column": "admin_id",
+                      "severity": "low",
+                      "category": "Nullable Violation",
+                      "description": "8 records in the 'groupe' table have a NULL 'admin_id', which may lead to orphaned groups without management.",
+                      "suggestion": "Verify if system-level groups are allowed to be admin-less; otherwise, assign a default administrator."
+                    }
+                  ],
+                  "prior_reports": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-11T19:41:54.103603Z",
+          "agent": "CrossRowValidator",
+          "summary": {
+            "total_items_analyzed": 28400,
+            "items_passed": 28394,
+            "items_flagged": 6,
+            "critical_issues": 0,
+            "high_issues": 4,
+            "medium_issues": 2,
+            "low_issues": 0,
+            "overall_quality_score": 100.0,
+            "overall_confidence": 0.95,
+            "flagged_tables": [
+              "audit_log",
+              "campagne_contacts",
+              "campaign_spool_state",
+              "sent_sms",
+              "smsc_routing_rule",
+              "users_legacy"
+            ]
+          },
+          "metrics": {
+            "total_row_pairs_analyzed": 28400,
+            "temporal_anomalies": 1,
+            "sequential_breaks": 0,
+            "cross_column_violations": 0,
+            "row_pattern_anomalies": 0,
+            "tables_with_cross_row_issues": 6,
+            "avg_relationship_confidence": 0.95
+          },
+          "findings": [
+            {
+              "issue_id": "CRV-001",
+              "table": "smsc_routing_rule",
+              "severity": "high",
+              "category": "Routing Rule Defaults",
+              "description": "Duplicate default routing rules detected for Organization ID 2. Four rules exist where both 'expediteur_id' and 'groupe_id' are NULL, creating ambiguity in the SMS routing logic.",
+              "suggestion": "Ensure each organization has exactly one default routing rule by removing redundant NULL-scoped entries."
+            },
+            {
+              "issue_id": "CRV-002",
+              "table": "sent_sms",
+              "severity": "high",
+              "category": "Gateway Mapping Integrity",
+              "description": "Transactional records in 'sent_sms' reference non-numeric 'smsc_id' values ('Orange', 'simulator') that do not exist in the master 'smsc' table. This breaks referential integrity and prevents successful joins.",
+              "suggestion": "Cleanse 'sent_sms.smsc_id' to use numeric identifiers or update the 'smsc' master table to include these string-based gateways."
+            },
+            {
+              "issue_id": "CRV-003",
+              "table": "campagne_contacts",
+              "severity": "high",
+              "category": "Cross-Type Referential Integrity",
+              "description": "31 orphaned records found in 'campagne_contacts' where 'contact_id' (bigint) does not have a corresponding 'msisdn' (varchar) in the 'contacts' table.",
+              "suggestion": "Investigate the source of these orphaned mappings and implement a foreign key constraint after aligning data types."
+            },
+            {
+              "issue_id": "CRV-004",
+              "table": "campaign_spool_state",
+              "severity": "high",
+              "category": "Temporal Health",
+              "description": "The campaign spooler appears to be stuck. The 'last_updated_date' (2025-03-06) is over a year behind the current system time (2026).",
+              "suggestion": "Restart the spooler service and monitor the 'last_updated_date' for active increments."
+            },
+            {
+              "issue_id": "CRV-005",
+              "table": "audit_log",
+              "severity": "medium",
+              "category": "Job Result Integrity",
+              "description": "135 audit log entries reference 'job_id' values that do not exist in the 'jobs' table, indicating incomplete cleanup or failed job persistence.",
+              "suggestion": "Verify job deletion policies and ensure audit logs are either archived or deleted alongside their parent jobs."
+            },
+            {
+              "issue_id": "CRV-006",
+              "table": "users_legacy",
+              "severity": "medium",
+              "category": "Legacy User Synchronization",
+              "description": "7 legacy user records fail to synchronize with the modern 'users' table. Specifically, their Keycloak IDs and emails are missing from the primary user store.",
+              "suggestion": "Re-run the migration script for these 7 users to ensure identity provider consistency."
+            }
+          ],
+          "prior_reports": [
+            {
+              "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+              "database_id": "localhost_5432_easybulk",
+              "run_timestamp": "2026-04-11T19:37:20.523153Z",
+              "agent": "SchemaIntegrityValidator",
+              "summary": {
+                "total_items_analyzed": 10,
+                "items_passed": 4,
+                "items_flagged": 6,
+                "critical_issues": 0,
+                "high_issues": 3,
+                "medium_issues": 1,
+                "low_issues": 2,
+                "overall_quality_score": 92.4,
+                "overall_confidence": 0.72,
+                "flagged_tables": [
+                  "campagne_contacts",
+                  "groupe",
+                  "prm_status",
+                  "sent_sms",
+                  "user_contact_tags"
+                ]
+              },
+              "metrics": {
+                "total_tables": 91,
+                "total_columns": 683,
+                "tables_with_no_primary_key": 4,
+                "missing_foreign_keys": 2,
+                "constraint_violations": 1,
+                "type_mismatches": 2,
+                "nullable_violations": 1
+              },
+              "findings": [
+                {
+                  "issue_id": "SI-001",
+                  "table": "campagne_contacts",
+                  "column": "N/A",
+                  "severity": "high",
+                  "category": "Missing Primary Key",
+                  "description": "Mapping tables 'campagne_contacts', 'campagne_tags', and 'expediteur_groupe' lack formal primary keys, risking duplicate entries and performance issues.",
+                  "suggestion": "Implement composite primary keys on (campagne_id, contact_id), (campagne_id, tag_name), and (groupe_id, expediteur_id) respectively."
+                },
+                {
+                  "issue_id": "SI-002",
+                  "table": "campagne_contacts",
+                  "column": "contact_id",
+                  "severity": "high",
+                  "category": "Type Mismatch",
+                  "description": "Type discrepancy between 'campagne_contacts.contact_id' (bigint) and 'contacts.msisdn' (varchar). 10+ orphaned records found in 'campagne_contacts' that do not exist in 'contacts'.",
+                  "suggestion": "Align column types to 'character varying' to support non-numeric MSISDNs and enforce a foreign key constraint."
+                },
+                {
+                  "issue_id": "SI-003",
+                  "table": "sent_sms",
+                  "column": "smsc_id",
+                  "severity": "high",
+                  "category": "Type Mismatch",
+                  "description": "Transactional table 'sent_sms' uses 'character varying' for 'smsc_id', but the master table 'smsc.id' is 'integer'. Non-numeric values ('Orange', 'simulator') were detected in 'sent_sms'.",
+                  "suggestion": "Cleanse 'sent_sms.smsc_id' to ensure only numeric IDs are stored, or update the master 'smsc' table to support string identifiers."
+                },
+                {
+                  "issue_id": "SI-004",
+                  "table": "user_contact_tags",
+                  "column": "tag_id",
+                  "severity": "medium",
+                  "category": "Missing Index",
+                  "description": "The mapping table 'user_contact_tags' has a unique index on (user_contact_id, tag_id) but lacks a secondary index on 'tag_id' alone, which is necessary for efficient reverse lookups and deletions by tag.",
+                  "suggestion": "Add a B-tree index on 'user_contact_tags(tag_id)'."
+                },
+                {
+                  "issue_id": "SI-005",
+                  "table": "prm_status",
+                  "column": "code",
+                  "severity": "low",
+                  "category": "Redundant Constraint",
+                  "description": "Redundant unique constraint 'ukblxl9et72bx7m3pcwq2nxy9mg' on (code, type) exists while 'code' is already globally unique via 'uk_e8pxw4kf260uh50pnilbj8nbw'.",
+                  "suggestion": "Drop the composite unique constraint (code, type) to simplify the schema."
+                },
+                {
+                  "issue_id": "SI-006",
+                  "table": "groupe",
+                  "column": "admin_id",
+                  "severity": "low",
+                  "category": "Nullable Violation",
+                  "description": "8 records in the 'groupe' table have a NULL 'admin_id', which may lead to orphaned groups without management.",
+                  "suggestion": "Verify if system-level groups are allowed to be admin-less; otherwise, assign a default administrator."
+                }
+              ],
+              "prior_reports": []
+            },
+            {
+              "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+              "database_id": "localhost_5432_easybulk",
+              "run_timestamp": "2026-04-11T19:38:33.474446Z",
+              "agent": "ColumnValidatorAgent",
+              "summary": {
+                "total_items_analyzed": 22,
+                "items_passed": 16,
+                "items_flagged": 6,
+                "critical_issues": 0,
+                "high_issues": 1,
+                "medium_issues": 3,
+                "low_issues": 2,
+                "overall_quality_score": 97.45,
+                "overall_confidence": 0.9409,
+                "flagged_tables": [
+                  "campagne",
+                  "campaign_spool_state",
+                  "campaign_type_permission",
+                  "prm_status",
+                  "sent_sms"
+                ]
+              },
+              "metrics": {
+                "total_columns_analyzed": 22,
+                "duplicate_columns_found": 0,
+                "constant_columns_found": 3,
+                "high_null_ratio_columns": 0,
+                "low_cardinality_anomalies": 3,
+                "high_cardinality_anomalies": 0,
+                "semantic_mismatches": 1,
+                "domain_violations": 0,
+                "distribution_anomalies": 0,
+                "avg_column_quality_score": 91.2,
+                "avg_column_confidence": 0.98
+              },
+              "findings": [
+                {
+                  "table": "sent_sms",
+                  "column": "smsc_id",
+                  "quality_score": 45,
+                  "confidence": 1.0,
+                  "status": "flagged",
+                  "issues": [
+                    {
+                      "severity": "high",
+                      "type": "semantic_mismatch",
+                      "description": "Column contains non-numeric string identifiers (e.g., 'Orange', 'simulator') while the master table 'smsc.id' is an integer. This will cause casting failures during joins."
+                    }
+                  ],
+                  "metrics": {
+                    "null_ratio": 0.0,
+                    "distinct_ratio": 0.08,
+                    "non_numeric_ratio": 1.0,
+                    "inferred_type": "string"
+                  }
+                },
+                {
+                  "table": "campagne",
+                  "column": "me_only",
+                  "quality_score": 70,
+                  "confidence": 1.0,
+                  "status": "flagged",
+                  "issues": [
+                    {
+                      "severity": "medium",
+                      "type": "constant_column",
+                      "description": "Column has zero variance (cardinality = 1) across 9 rows. This may indicate hardcoded logic or an abandoned feature."
+                    }
+                  ],
+                  "metrics": {
+                    "null_ratio": 0.0,
+                    "distinct_count": 1,
+                    "dominant_value_ratio": 1.0
+                  }
+                },
+                {
+                  "table": "campagne",
+                  "column": "deactivated_by_group",
+                  "quality_score": 70,
+                  "confidence": 1.0,
+                  "status": "flagged",
+                  "issues": [
+                    {
+                      "severity": "medium",
+                      "type": "constant_column",
+                      "description": "Column has zero variance (cardinality = 1) across 9 rows."
+                    }
+                  ],
+                  "metrics": {
+                    "null_ratio": 0.0,
+                    "distinct_count": 1,
+                    "dominant_value_ratio": 1.0
+                  }
+                },
+                {
+                  "table": "campaign_type_permission",
+                  "column": "enabled",
+                  "quality_score": 70,
+                  "confidence": 1.0,
+                  "status": "flagged",
+                  "issues": [
+                    {
+                      "severity": "medium",
+                      "type": "constant_column",
+                      "description": "Column has zero variance (cardinality = 1) across 18 rows."
+                    }
+                  ],
+                  "metrics": {
+                    "null_ratio": 0.0,
+                    "distinct_count": 1,
+                    "dominant_value_ratio": 1.0
+                  }
+                },
+                {
+                  "table": "prm_status",
+                  "column": "code",
+                  "quality_score": 95,
+                  "confidence": 1.0,
+                  "status": "flagged",
+                  "issues": [
+                    {
+                      "severity": "low",
+                      "type": "redundant_constraint",
+                      "description": "The column is globally unique (25/25 rows), making the composite unique constraint (code, type) redundant."
+                    }
+                  ],
+                  "metrics": {
+                    "null_ratio": 0.0,
+                    "distinct_ratio": 1.0
+                  }
+                },
+                {
+                  "table": "contacts",
+                  "column": "msisdn",
+                  "quality_score": 100,
+                  "confidence": 1.0,
+                  "status": "passed",
+                  "issues": [],
+                  "metrics": {
+                    "null_ratio": 0.0,
+                    "invalid_length_ratio": 0.0,
+                    "non_numeric_ratio": 0.0,
+                    "min_length": 7,
+                    "max_length": 15
+                  }
+                },
+                {
+                  "table": "campaign_spool_state",
+                  "column": "last_updated_date",
+                  "quality_score": 0,
+                  "confidence": 0.0,
+                  "status": "insufficient_data",
+                  "issues": [
+                    {
+                      "severity": "low",
+                      "type": "access_denied",
+                      "description": "Query to monitor spooler liveness was blocked by safety filters."
+                    }
+                  ],
+                  "metrics": {}
+                }
+              ],
+              "prior_reports": [
+                {
+                  "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+                  "database_id": "localhost_5432_easybulk",
+                  "run_timestamp": "2026-04-11T19:37:20.523153Z",
+                  "agent": "SchemaIntegrityValidator",
+                  "summary": {
+                    "total_items_analyzed": 10,
+                    "items_passed": 4,
+                    "items_flagged": 6,
+                    "critical_issues": 0,
+                    "high_issues": 3,
+                    "medium_issues": 1,
+                    "low_issues": 2,
+                    "overall_quality_score": 92.4,
+                    "overall_confidence": 0.72,
+                    "flagged_tables": [
+                      "campagne_contacts",
+                      "groupe",
+                      "prm_status",
+                      "sent_sms",
+                      "user_contact_tags"
+                    ]
+                  },
+                  "metrics": {
+                    "total_tables": 91,
+                    "total_columns": 683,
+                    "tables_with_no_primary_key": 4,
+                    "missing_foreign_keys": 2,
+                    "constraint_violations": 1,
+                    "type_mismatches": 2,
+                    "nullable_violations": 1
+                  },
+                  "findings": [
+                    {
+                      "issue_id": "SI-001",
+                      "table": "campagne_contacts",
+                      "column": "N/A",
+                      "severity": "high",
+                      "category": "Missing Primary Key",
+                      "description": "Mapping tables 'campagne_contacts', 'campagne_tags', and 'expediteur_groupe' lack formal primary keys, risking duplicate entries and performance issues.",
+                      "suggestion": "Implement composite primary keys on (campagne_id, contact_id), (campagne_id, tag_name), and (groupe_id, expediteur_id) respectively."
+                    },
+                    {
+                      "issue_id": "SI-002",
+                      "table": "campagne_contacts",
+                      "column": "contact_id",
+                      "severity": "high",
+                      "category": "Type Mismatch",
+                      "description": "Type discrepancy between 'campagne_contacts.contact_id' (bigint) and 'contacts.msisdn' (varchar). 10+ orphaned records found in 'campagne_contacts' that do not exist in 'contacts'.",
+                      "suggestion": "Align column types to 'character varying' to support non-numeric MSISDNs and enforce a foreign key constraint."
+                    },
+                    {
+                      "issue_id": "SI-003",
+                      "table": "sent_sms",
+                      "column": "smsc_id",
+                      "severity": "high",
+                      "category": "Type Mismatch",
+                      "description": "Transactional table 'sent_sms' uses 'character varying' for 'smsc_id', but the master table 'smsc.id' is 'integer'. Non-numeric values ('Orange', 'simulator') were detected in 'sent_sms'.",
+                      "suggestion": "Cleanse 'sent_sms.smsc_id' to ensure only numeric IDs are stored, or update the master 'smsc' table to support string identifiers."
+                    },
+                    {
+                      "issue_id": "SI-004",
+                      "table": "user_contact_tags",
+                      "column": "tag_id",
+                      "severity": "medium",
+                      "category": "Missing Index",
+                      "description": "The mapping table 'user_contact_tags' has a unique index on (user_contact_id, tag_id) but lacks a secondary index on 'tag_id' alone, which is necessary for efficient reverse lookups and deletions by tag.",
+                      "suggestion": "Add a B-tree index on 'user_contact_tags(tag_id)'."
+                    },
+                    {
+                      "issue_id": "SI-005",
+                      "table": "prm_status",
+                      "column": "code",
+                      "severity": "low",
+                      "category": "Redundant Constraint",
+                      "description": "Redundant unique constraint 'ukblxl9et72bx7m3pcwq2nxy9mg' on (code, type) exists while 'code' is already globally unique via 'uk_e8pxw4kf260uh50pnilbj8nbw'.",
+                      "suggestion": "Drop the composite unique constraint (code, type) to simplify the schema."
+                    },
+                    {
+                      "issue_id": "SI-006",
+                      "table": "groupe",
+                      "column": "admin_id",
+                      "severity": "low",
+                      "category": "Nullable Violation",
+                      "description": "8 records in the 'groupe' table have a NULL 'admin_id', which may lead to orphaned groups without management.",
+                      "suggestion": "Verify if system-level groups are allowed to be admin-less; otherwise, assign a default administrator."
+                    }
+                  ],
+                  "prior_reports": []
+                }
+              ]
+            },
+            {
+              "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+              "database_id": "localhost_5432_easybulk",
+              "run_timestamp": "2026-04-11T19:40:12.866465Z",
+              "agent": "RowLevelValidator",
+              "summary": {
+                "total_items_analyzed": 10266,
+                "items_passed": 10262,
+                "items_flagged": 4,
+                "critical_issues": 0,
+                "high_issues": 2,
+                "medium_issues": 2,
+                "low_issues": 0,
+                "overall_quality_score": 99.99,
+                "overall_confidence": 0.95,
+                "flagged_tables": [
+                  "audit_log",
+                  "campagne_contacts",
+                  "sent_sms",
+                  "users_legacy"
+                ]
+              },
+              "metrics": {
+                "total_rows_analyzed": 10266,
+                "rows_with_issues": 185,
+                "rows_with_issues_ratio": 0.018,
+                "format_violations": 12,
+                "encoding_issues": 0,
+                "hidden_null_count": 0,
+                "outlier_rows": 0,
+                "avg_row_quality_score": 98.2,
+                "avg_row_confidence": 0.95
+              },
+              "findings": [
+                {
+                  "table": "sent_sms",
+                  "row_id": "Multiple (12 rows)",
+                  "field_values": {
+                    "smsc_id": "Orange, simulator"
+                  },
+                  "rule_broken": "Gateway Identifier Sanitization: smsc_id must be numeric to join with smsc.id.",
+                  "severity": "high"
+                },
+                {
+                  "table": "campagne_contacts",
+                  "row_id": "Multiple (31 rows)",
+                  "field_values": {
+                    "contact_id": "10000, 9999, 9998, 9997, 20049, etc."
+                  },
+                  "rule_broken": "Mapping Table Referencing: contact_id does not exist in the contacts table (orphaned records).",
+                  "severity": "high"
+                },
+                {
+                  "table": "audit_log",
+                  "row_id": "Multiple (135 rows)",
+                  "field_values": {
+                    "job_id": "84f3722c-d1e7-418e-b4bf-6aad8f6a8e2e, etc."
+                  },
+                  "rule_broken": "Orphaned Audit Logs: job_id does not correspond to a valid record in the jobs table.",
+                  "severity": "medium"
+                },
+                {
+                  "table": "users_legacy",
+                  "row_id": "Multiple (7 rows)",
+                  "field_values": {
+                    "email": "ebs@yopmail.com, agentebs@yopmail.com, etc."
+                  },
+                  "rule_broken": "Legacy User Synchronization: User email not found in the modern users table.",
+                  "severity": "medium"
+                }
+              ],
+              "prior_reports": [
+                {
+                  "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+                  "database_id": "localhost_5432_easybulk",
+                  "run_timestamp": "2026-04-11T19:37:20.523153Z",
+                  "agent": "SchemaIntegrityValidator",
+                  "summary": {
+                    "total_items_analyzed": 10,
+                    "items_passed": 4,
+                    "items_flagged": 6,
+                    "critical_issues": 0,
+                    "high_issues": 3,
+                    "medium_issues": 1,
+                    "low_issues": 2,
+                    "overall_quality_score": 92.4,
+                    "overall_confidence": 0.72,
+                    "flagged_tables": [
+                      "campagne_contacts",
+                      "groupe",
+                      "prm_status",
+                      "sent_sms",
+                      "user_contact_tags"
+                    ]
+                  },
+                  "metrics": {
+                    "total_tables": 91,
+                    "total_columns": 683,
+                    "tables_with_no_primary_key": 4,
+                    "missing_foreign_keys": 2,
+                    "constraint_violations": 1,
+                    "type_mismatches": 2,
+                    "nullable_violations": 1
+                  },
+                  "findings": [
+                    {
+                      "issue_id": "SI-001",
+                      "table": "campagne_contacts",
+                      "column": "N/A",
+                      "severity": "high",
+                      "category": "Missing Primary Key",
+                      "description": "Mapping tables 'campagne_contacts', 'campagne_tags', and 'expediteur_groupe' lack formal primary keys, risking duplicate entries and performance issues.",
+                      "suggestion": "Implement composite primary keys on (campagne_id, contact_id), (campagne_id, tag_name), and (groupe_id, expediteur_id) respectively."
+                    },
+                    {
+                      "issue_id": "SI-002",
+                      "table": "campagne_contacts",
+                      "column": "contact_id",
+                      "severity": "high",
+                      "category": "Type Mismatch",
+                      "description": "Type discrepancy between 'campagne_contacts.contact_id' (bigint) and 'contacts.msisdn' (varchar). 10+ orphaned records found in 'campagne_contacts' that do not exist in 'contacts'.",
+                      "suggestion": "Align column types to 'character varying' to support non-numeric MSISDNs and enforce a foreign key constraint."
+                    },
+                    {
+                      "issue_id": "SI-003",
+                      "table": "sent_sms",
+                      "column": "smsc_id",
+                      "severity": "high",
+                      "category": "Type Mismatch",
+                      "description": "Transactional table 'sent_sms' uses 'character varying' for 'smsc_id', but the master table 'smsc.id' is 'integer'. Non-numeric values ('Orange', 'simulator') were detected in 'sent_sms'.",
+                      "suggestion": "Cleanse 'sent_sms.smsc_id' to ensure only numeric IDs are stored, or update the master 'smsc' table to support string identifiers."
+                    },
+                    {
+                      "issue_id": "SI-004",
+                      "table": "user_contact_tags",
+                      "column": "tag_id",
+                      "severity": "medium",
+                      "category": "Missing Index",
+                      "description": "The mapping table 'user_contact_tags' has a unique index on (user_contact_id, tag_id) but lacks a secondary index on 'tag_id' alone, which is necessary for efficient reverse lookups and deletions by tag.",
+                      "suggestion": "Add a B-tree index on 'user_contact_tags(tag_id)'."
+                    },
+                    {
+                      "issue_id": "SI-005",
+                      "table": "prm_status",
+                      "column": "code",
+                      "severity": "low",
+                      "category": "Redundant Constraint",
+                      "description": "Redundant unique constraint 'ukblxl9et72bx7m3pcwq2nxy9mg' on (code, type) exists while 'code' is already globally unique via 'uk_e8pxw4kf260uh50pnilbj8nbw'.",
+                      "suggestion": "Drop the composite unique constraint (code, type) to simplify the schema."
+                    },
+                    {
+                      "issue_id": "SI-006",
+                      "table": "groupe",
+                      "column": "admin_id",
+                      "severity": "low",
+                      "category": "Nullable Violation",
+                      "description": "8 records in the 'groupe' table have a NULL 'admin_id', which may lead to orphaned groups without management.",
+                      "suggestion": "Verify if system-level groups are allowed to be admin-less; otherwise, assign a default administrator."
+                    }
+                  ],
+                  "prior_reports": []
+                },
+                {
+                  "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+                  "database_id": "localhost_5432_easybulk",
+                  "run_timestamp": "2026-04-11T19:38:33.474446Z",
+                  "agent": "ColumnValidatorAgent",
+                  "summary": {
+                    "total_items_analyzed": 22,
+                    "items_passed": 16,
+                    "items_flagged": 6,
+                    "critical_issues": 0,
+                    "high_issues": 1,
+                    "medium_issues": 3,
+                    "low_issues": 2,
+                    "overall_quality_score": 97.45,
+                    "overall_confidence": 0.9409,
+                    "flagged_tables": [
+                      "campagne",
+                      "campaign_spool_state",
+                      "campaign_type_permission",
+                      "prm_status",
+                      "sent_sms"
+                    ]
+                  },
+                  "metrics": {
+                    "total_columns_analyzed": 22,
+                    "duplicate_columns_found": 0,
+                    "constant_columns_found": 3,
+                    "high_null_ratio_columns": 0,
+                    "low_cardinality_anomalies": 3,
+                    "high_cardinality_anomalies": 0,
+                    "semantic_mismatches": 1,
+                    "domain_violations": 0,
+                    "distribution_anomalies": 0,
+                    "avg_column_quality_score": 91.2,
+                    "avg_column_confidence": 0.98
+                  },
+                  "findings": [
+                    {
+                      "table": "sent_sms",
+                      "column": "smsc_id",
+                      "quality_score": 45,
+                      "confidence": 1.0,
+                      "status": "flagged",
+                      "issues": [
+                        {
+                          "severity": "high",
+                          "type": "semantic_mismatch",
+                          "description": "Column contains non-numeric string identifiers (e.g., 'Orange', 'simulator') while the master table 'smsc.id' is an integer. This will cause casting failures during joins."
+                        }
+                      ],
+                      "metrics": {
+                        "null_ratio": 0.0,
+                        "distinct_ratio": 0.08,
+                        "non_numeric_ratio": 1.0,
+                        "inferred_type": "string"
+                      }
+                    },
+                    {
+                      "table": "campagne",
+                      "column": "me_only",
+                      "quality_score": 70,
+                      "confidence": 1.0,
+                      "status": "flagged",
+                      "issues": [
+                        {
+                          "severity": "medium",
+                          "type": "constant_column",
+                          "description": "Column has zero variance (cardinality = 1) across 9 rows. This may indicate hardcoded logic or an abandoned feature."
+                        }
+                      ],
+                      "metrics": {
+                        "null_ratio": 0.0,
+                        "distinct_count": 1,
+                        "dominant_value_ratio": 1.0
+                      }
+                    },
+                    {
+                      "table": "campagne",
+                      "column": "deactivated_by_group",
+                      "quality_score": 70,
+                      "confidence": 1.0,
+                      "status": "flagged",
+                      "issues": [
+                        {
+                          "severity": "medium",
+                          "type": "constant_column",
+                          "description": "Column has zero variance (cardinality = 1) across 9 rows."
+                        }
+                      ],
+                      "metrics": {
+                        "null_ratio": 0.0,
+                        "distinct_count": 1,
+                        "dominant_value_ratio": 1.0
+                      }
+                    },
+                    {
+                      "table": "campaign_type_permission",
+                      "column": "enabled",
+                      "quality_score": 70,
+                      "confidence": 1.0,
+                      "status": "flagged",
+                      "issues": [
+                        {
+                          "severity": "medium",
+                          "type": "constant_column",
+                          "description": "Column has zero variance (cardinality = 1) across 18 rows."
+                        }
+                      ],
+                      "metrics": {
+                        "null_ratio": 0.0,
+                        "distinct_count": 1,
+                        "dominant_value_ratio": 1.0
+                      }
+                    },
+                    {
+                      "table": "prm_status",
+                      "column": "code",
+                      "quality_score": 95,
+                      "confidence": 1.0,
+                      "status": "flagged",
+                      "issues": [
+                        {
+                          "severity": "low",
+                          "type": "redundant_constraint",
+                          "description": "The column is globally unique (25/25 rows), making the composite unique constraint (code, type) redundant."
+                        }
+                      ],
+                      "metrics": {
+                        "null_ratio": 0.0,
+                        "distinct_ratio": 1.0
+                      }
+                    },
+                    {
+                      "table": "contacts",
+                      "column": "msisdn",
+                      "quality_score": 100,
+                      "confidence": 1.0,
+                      "status": "passed",
+                      "issues": [],
+                      "metrics": {
+                        "null_ratio": 0.0,
+                        "invalid_length_ratio": 0.0,
+                        "non_numeric_ratio": 0.0,
+                        "min_length": 7,
+                        "max_length": 15
+                      }
+                    },
+                    {
+                      "table": "campaign_spool_state",
+                      "column": "last_updated_date",
+                      "quality_score": 0,
+                      "confidence": 0.0,
+                      "status": "insufficient_data",
+                      "issues": [
+                        {
+                          "severity": "low",
+                          "type": "access_denied",
+                          "description": "Query to monitor spooler liveness was blocked by safety filters."
+                        }
+                      ],
+                      "metrics": {}
+                    }
+                  ],
+                  "prior_reports": [
+                    {
+                      "pipeline_run_id": "bb684178-94ec-47f6-8528-0d37a1a331e2",
+                      "database_id": "localhost_5432_easybulk",
+                      "run_timestamp": "2026-04-11T19:37:20.523153Z",
+                      "agent": "SchemaIntegrityValidator",
+                      "summary": {
+                        "total_items_analyzed": 10,
+                        "items_passed": 4,
+                        "items_flagged": 6,
+                        "critical_issues": 0,
+                        "high_issues": 3,
+                        "medium_issues": 1,
+                        "low_issues": 2,
+                        "overall_quality_score": 92.4,
+                        "overall_confidence": 0.72,
+                        "flagged_tables": [
+                          "campagne_contacts",
+                          "groupe",
+                          "prm_status",
+                          "sent_sms",
+                          "user_contact_tags"
+                        ]
+                      },
+                      "metrics": {
+                        "total_tables": 91,
+                        "total_columns": 683,
+                        "tables_with_no_primary_key": 4,
+                        "missing_foreign_keys": 2,
+                        "constraint_violations": 1,
+                        "type_mismatches": 2,
+                        "nullable_violations": 1
+                      },
+                      "findings": [
+                        {
+                          "issue_id": "SI-001",
+                          "table": "campagne_contacts",
+                          "column": "N/A",
+                          "severity": "high",
+                          "category": "Missing Primary Key",
+                          "description": "Mapping tables 'campagne_contacts', 'campagne_tags', and 'expediteur_groupe' lack formal primary keys, risking duplicate entries and performance issues.",
+                          "suggestion": "Implement composite primary keys on (campagne_id, contact_id), (campagne_id, tag_name), and (groupe_id, expediteur_id) respectively."
+                        },
+                        {
+                          "issue_id": "SI-002",
+                          "table": "campagne_contacts",
+                          "column": "contact_id",
+                          "severity": "high",
+                          "category": "Type Mismatch",
+                          "description": "Type discrepancy between 'campagne_contacts.contact_id' (bigint) and 'contacts.msisdn' (varchar). 10+ orphaned records found in 'campagne_contacts' that do not exist in 'contacts'.",
+                          "suggestion": "Align column types to 'character varying' to support non-numeric MSISDNs and enforce a foreign key constraint."
+                        },
+                        {
+                          "issue_id": "SI-003",
+                          "table": "sent_sms",
+                          "column": "smsc_id",
+                          "severity": "high",
+                          "category": "Type Mismatch",
+                          "description": "Transactional table 'sent_sms' uses 'character varying' for 'smsc_id', but the master table 'smsc.id' is 'integer'. Non-numeric values ('Orange', 'simulator') were detected in 'sent_sms'.",
+                          "suggestion": "Cleanse 'sent_sms.smsc_id' to ensure only numeric IDs are stored, or update the master 'smsc' table to support string identifiers."
+                        },
+                        {
+                          "issue_id": "SI-004",
+                          "table": "user_contact_tags",
+                          "column": "tag_id",
+                          "severity": "medium",
+                          "category": "Missing Index",
+                          "description": "The mapping table 'user_contact_tags' has a unique index on (user_contact_id, tag_id) but lacks a secondary index on 'tag_id' alone, which is necessary for efficient reverse lookups and deletions by tag.",
+                          "suggestion": "Add a B-tree index on 'user_contact_tags(tag_id)'."
+                        },
+                        {
+                          "issue_id": "SI-005",
+                          "table": "prm_status",
+                          "column": "code",
+                          "severity": "low",
+                          "category": "Redundant Constraint",
+                          "description": "Redundant unique constraint 'ukblxl9et72bx7m3pcwq2nxy9mg' on (code, type) exists while 'code' is already globally unique via 'uk_e8pxw4kf260uh50pnilbj8nbw'.",
+                          "suggestion": "Drop the composite unique constraint (code, type) to simplify the schema."
+                        },
+                        {
+                          "issue_id": "SI-006",
+                          "table": "groupe",
+                          "column": "admin_id",
+                          "severity": "low",
+                          "category": "Nullable Violation",
+                          "description": "8 records in the 'groupe' table have a NULL 'admin_id', which may lead to orphaned groups without management.",
+                          "suggestion": "Verify if system-level groups are allowed to be admin-less; otherwise, assign a default administrator."
+                        }
+                      ],
+                      "prior_reports": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

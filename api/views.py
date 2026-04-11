@@ -42,9 +42,9 @@ from api.db import (
     update_job_status,
     get_job_guidelines,
 )
-from api.fix_safety import validate_fix_queries
 from api.permissions import find_owned_job
 from api.serializers import CleanRequestSerializer, JobDeleteSerializer
+from agents.query_executor_agent import QueryExecutorAgent
 from services.analysis_service import compute_row_outliers, to_native
 from services.postgres_connection import (
     looks_like_postgres_dsn,
@@ -1189,20 +1189,16 @@ class ExecuteFixView(APIView):
 
     Body: { "queries": ["SQL1", "SQL2", ...] }
 
-    Executes the supplied SQL statements for a single fix card against the
-    user's PostgreSQL database inside one transaction. Only queries that
-    target *_clean tables are allowed — any query touching a non-_clean
-    table is rejected with 400 to protect source data.
+        Executes the supplied SQL statements for a single fix card against the
+        user's PostgreSQL database inside one transaction.
 
     Returns:
-      success: { "success": true, "rows_affected": [n, n, ...] }
-      failure: { "success": false, "error": "<message>" }
+            strict execution log payload with status, transaction outcome,
+            duration, and per-query details.
     """
     permission_classes = [IsAuthenticated]
 
     def post(self, request, job_id):
-        import psycopg2
-
         # 1 — Ownership
         job = find_owned_job(job_id, request.user)
         if not job:
@@ -1226,34 +1222,44 @@ class ExecuteFixView(APIView):
                 {'detail': 'queries must be a non-empty list of SQL strings.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
-        # 4 — Safety guard: every write query must target a single *_clean table.
-        try:
-            validate_fix_queries(queries)
-        except ValueError as exc:
+        if any(not isinstance(q, str) or not q.strip() for q in queries):
             return Response(
-                {'detail': str(exc)},
+                {'detail': 'Each query must be a non-empty SQL string.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # 5 — Execute all queries in a single transaction
-        rows_affected = []
-        try:
-            with psycopg2.connect(connection_string) as conn:
-                with conn.cursor() as cur:
-                    for q in queries:
-                        cur.execute(q)
-                        rows_affected.append(cur.rowcount if cur.rowcount >= 0 else 0)
-                conn.commit()
-        except Exception as exc:
-            audit_log(job_id, 'FIX_EXECUTION_FAILED', {'error': str(exc)})
-            return Response(
-                {'success': False, 'error': str(exc)},
-                status=status.HTTP_200_OK,  # 200 so the frontend reads the body
+        # 4 — Execute all queries via isolated execution agent
+        execution_log = QueryExecutorAgent().execute(
+            queries=queries,
+            connection_string=connection_string,
+        )
+
+        if execution_log.get('status') == 'success':
+            audit_log(
+                job_id,
+                'FIX_EXECUTED',
+                {
+                    'database_id': execution_log.get('database_id'),
+                    'rows_affected': execution_log.get('rows_affected'),
+                    'duration_ms': execution_log.get('duration_ms'),
+                    'query_count': len(queries),
+                    'transaction': execution_log.get('transaction'),
+                },
+            )
+        else:
+            audit_log(
+                job_id,
+                'FIX_EXECUTION_FAILED',
+                {
+                    'database_id': execution_log.get('database_id'),
+                    'duration_ms': execution_log.get('duration_ms'),
+                    'query_count': len(queries),
+                    'transaction': execution_log.get('transaction'),
+                    'error': execution_log.get('error'),
+                },
             )
 
-        audit_log(job_id, 'FIX_EXECUTED', {'rows_affected': rows_affected})
-        return Response({'success': True, 'rows_affected': rows_affected})
+        return Response(execution_log, status=status.HTTP_200_OK)
 
 
 # ──────────────────────────────────────────────
