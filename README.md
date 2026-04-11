@@ -35,11 +35,12 @@ Users upload a **CSV file** via the web interface. The platform automatically:
 - Offers a **data cleaning** step and lets the user download the cleaned file
 
 ### 1.2 PostgreSQL Database Validation (AI-Powered)
-Users provide a **PostgreSQL connection string**. A team of **four AI agents** (powered by Google Gemini) then:
+Users provide a **PostgreSQL connection string**. A dynamic, guideline-driven multi-agent pipeline (powered by Google Gemini) then:
 - Inspect the database **schema** for structural issues (missing primary keys, unlinked foreign key columns, bad nullability)
-- Run **cross-row SQL queries** to detect aggregate violations (quota overflows, duplicate phone numbers, referential gaps)
+- Run **column-level analysis** to detect duplicate/constant columns, null/cardinality/domain anomalies, semantic mismatches, and distribution drift
 - Run **row-level SQL queries** to detect per-row business rule violations (impossible dates, blank required fields, format errors, etc.)
-- Synthesise findings to generate a **structured JSON Cleaning Plan**, mapping out the exact transformation steps needed to fix the database automatically.
+- Run **cross-row SQL queries** to detect temporal, sequential, relational, and aggregate anomalies
+- Synthesize findings to generate **structured JSON fix cards** for human-in-the-loop execution.
 
 All results are stored in MongoDB. Users can review the full report and engage in a **human-in-the-loop chat** with the Agent OS memory directly on the platform.
 
@@ -90,10 +91,11 @@ All results are stored in MongoDB. Users can review the full report and engage i
    │                                                │
    │   ┌───────────────────────────────────────┐   │
    │   │  Master Agent (Team leader)           │   │
-   │   │    ├── Schema Integrity Validator     │   │
-   │   │    ├── Cross-Row Validator            │   │
-   │   │    ├── Row-Level Logic Validator      │   │
-   │   │    └── Data Cleaning Planner          │   │
+   │   │    ├── Schema Integrity Validator      │   │
+   │   │    ├── Column Validator                │   │
+   │   │    ├── Row-Level Logic Validator       │   │
+   │   │    ├── Cross-Row Validator             │   │
+   │   │    └── Data Fix Planner                │   │
    │   └───────────────────────────────────────┘   │
    └───────────────────────────────────────────────┘
 ```
@@ -261,7 +263,7 @@ The agents run **embedded inside the Celery worker process** — no HTTP call to
 
 The AI module is located in `backend-django/agents/` and uses the **Agno** agent framework with **Google Gemini Flash** as the language model.
 
-It implements a **multi-agent team** where a master agent coordinates four specialist sub-agents, each with a specific validation responsibility.
+It implements a **multi-agent team** where a master agent coordinates specialist validators in this order: schema, column, row-level, cross-row, then fix planning.
 
 ### Architecture
 
@@ -273,19 +275,21 @@ User prompt / Celery task
   │  - Receives the user's request                   │
   │  - Decides which agents to call and in what order│
   │  - Synthesises all outputs into one final report │
-  └───────┬────────────────┬────────────────┬────────┬───────┘
-          ↓                ↓                ↓        ↓
+   └───────┬────────────────┬────────────────┬────────────────┬───────────────┘
+               ↓                ↓                ↓                ↓
  ┌────────────────┐ ┌────────────────┐ ┌────────────────┐ ┌────────────────┐
- │Schema Integrity│ │Cross-Row       │ │Row-Level Logic │ │Data Cleaning   │
- │Validator       │ │Validator       │ │Validator       │ │Planner         │
+ │Schema Integrity│ │Column          │ │Row-Level Logic │ │Cross-Row       │
+ │Validator       │ │Validator       │ │Validator       │ │Validator       │
  │                │ │                │ │                │ │                │
- │Checks: missing │ │Checks: quota   │ │Checks: date    │ │Consumes all    │
- │PKs, unlinked   │ │math, duplicate │ │ranges, blank   │ │prior reports & │
- │FKs, bad        │ │msisdns,        │ │fields, formats.│ │generates a JSON│
- │nullability.    │ │orphaned refs.  │ │                │ │cleaning plan.  │
+ │Checks: PK/FK,  │ │Checks: null/   │ │Checks: date    │ │Checks: temporal│
+ │indexes,        │ │cardinality,    │ │ranges, blank   │ │and relational  │
+ │nullability.    │ │domain, drift.  │ │fields, formats.│ │multi-row rules.│
  └────────────────┘ └────────────────┘ └────────────────┘ └────────────────┘
-          │                │                │
-          └────────────────┴────────────────┘
+                                       ↓
+                         ┌────────────────────┐
+                         │Data Fix Planner    │
+                         │(JSON fix cards)    │
+                         └────────────────────┘
                            ↓
                     PostgreSQL Database
                   (agents query via SQL tools)
@@ -295,8 +299,9 @@ User prompt / Celery task
 
 #### 1. Sequential execution (coordinate mode)
 Each agent **passes its findings to the next one** via the prompt context:
-- Agent 2 (Cross-Row) receives Agent 1's schema findings to know real table/column names
-- Agent 3 (Row-Level) receives both previous agents' findings
+- Agent 2 (Column) receives Agent 1's schema findings
+- Agent 3 (Row-Level) receives schema + column findings
+- Agent 4 (Cross-Row) receives schema + column + row-level findings
 
 This avoids redundant schema discovery and ensures the agents build on each other's work.
 
@@ -398,27 +403,37 @@ The project uses **two databases**, each chosen for a different purpose:
    → calls postgres_service.analyze_postgres_database()
    → calls validation_team.orchestrator_workflow()
 
-3. Agent 1 (Schema Integrity Validator) runs
+3. Agent 0 (Guideline Generator) runs before each downstream stage
+   → introspects database and emits stage-specific guidelines
+
+4. Agent 1 (Schema Integrity Validator) runs
    → queries information_schema via execute_pg_query tool
    → returns markdown schema report
 
-4. Agent 2 (Cross-Row Validator) receives Agent 1's report + context
-   → runs GROUP BY / HAVING / JOIN SQL queries
-   → returns markdown cross-row violations report
+5. Agent 2 (Column Validator) receives schema report + context
+   → runs column-wide aggregate SQL checks
+   → returns strict JSON column analysis report
 
-5. Agent 3 (Row-Level Logic Validator) receives both previous reports
+6. Agent 3 (Row-Level Logic Validator) receives schema + column findings
    → runs targeted WHERE-clause queries for each business rule
    → returns markdown row-level violations report
 
-6. postgres_service formats results into standard dict, including the cleaning plan
-7. postgres_tasks saves to MongoDB, sets status "completed"
-8. Angular detects "completed" and enables the AI Chat and "Download Plan" features
+7. Agent 4 (Cross-Row Validator) receives schema + column + row-level findings
+   → runs temporal/sequential/relational multi-row SQL checks
+   → returns markdown cross-row violations report
+
+8. Agent 5 (Data Fix Planner) receives all previous findings
+   → generates deterministic JSON fix cards
+
+9. postgres_service formats results into standard dict
+10. postgres_tasks saves to MongoDB, sets status "completed"
+11. Angular detects "completed" and enables AI Chat + fix review features
 
 ### 9.3 Persistent AI Chat Flow (Human-in-the-Loop)
 
 ```
 1. Analysis Finishes
-   → Angular crafts a Markdown summary of the 4 agents' results.
+   → Angular crafts a Markdown summary of schema + column + row-level + cross-row outputs.
    → Angular POSTs this summary to Django to be saved as the first "System" chat message.
    → User is navigated to the /AI-chat/:jobId screen.
 

@@ -235,6 +235,9 @@ CELERY_TIMEZONE = 'UTC'
 UPLOAD_DIR = BASE_DIR / 'uploads'
 UPLOAD_DIR.mkdir(exist_ok=True)
 
+REPORTS_DIR = BASE_DIR / 'reports'
+REPORTS_DIR.mkdir(exist_ok=True)
+
 # Max upload size: 500 MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 500 * 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = 500 * 1024 * 1024

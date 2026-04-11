@@ -135,13 +135,14 @@ class JobGuideline(models.Model):
     """
     Per-run AI-generated guideline text for each pipeline phase.
 
-    guidelines shape:
-      {
-        "schema_integrity_validator": "...",
-        "cross_row_validator":        "...",
-        "row_level_validator":        "...",
-        "data_fix_planner":           "..."
-      }
+        guidelines shape:
+            {
+                "schema_integrity_validator": "...",
+                "column_validator":           "...",
+                "cross_row_validator":        "...",
+                "row_level_validator":        "...",
+                "data_fix_planner":           "..."
+            }
     """
     job = models.OneToOneField(
         Job, on_delete=models.CASCADE, related_name='guideline',

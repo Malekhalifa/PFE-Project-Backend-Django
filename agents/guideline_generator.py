@@ -35,6 +35,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 TARGET_AGENT_KEYS = {
     "schema_integrity_validator",
+    "column_validator",
     "row_level_validator",
     "cross_row_validator",
     "data_fix_planner",
@@ -139,10 +140,19 @@ _ROLE_DESCRIPTIONS = {
         "unlinked foreign key columns, suspicious nullability, naming convention "
         "violations, and missing indexes."
     ),
+    "column_validator": (
+        "analyzes each column as a whole and detects single-column quality issues: "
+        "duplicate/near-duplicate columns, constant or near-constant behavior, null ratio "
+        "and cardinality anomalies, semantic mismatches inferred from column names, "
+        "domain/category inconsistencies, inferred type-distribution inconsistencies, and "
+        "distribution-level drift signals (entropy/cardinality/skew) when historical baselines exist."
+    ),
     "cross_row_validator": (
-        "detects data quality issues that span multiple rows: referential integrity "
-        "violations (orphaned foreign keys), aggregate math errors, duplicate values "
-        "in columns that should be unique, and cross-table consistency problems."
+        "detects data quality issues visible only across multiple rows: referential integrity "
+        "violations (orphaned foreign keys), aggregate math errors, duplicate values in unique columns, "
+        "cross-table consistency problems, temporal anomalies, and sequential pattern breaks. "
+        "It does NOT perform single-column distribution anomaly checks (skewness, entropy/cardinality drift, "
+        "constant or near-constant behavior), which belong to the column_validator."
     ),
     "row_level_validator": (
         "validates individual rows for logical consistency: impossible date ranges, "
@@ -151,7 +161,7 @@ _ROLE_DESCRIPTIONS = {
         "business rule failures."
     ),
     "data_fix_planner": (
-        "reads validation reports from the previous three agents and produces a structured "
+        "reads validation reports from the previous validation stages and produces a structured "
         "list of human-reviewable SQL fix cards. It needs to understand which issues were "
         "found, which tables/columns are affected, and what safe corrective SQL patterns "
         "are appropriate."
@@ -178,10 +188,15 @@ class DatabaseGuidelineGeneratorAgent:
 
         # ... run Schema Validator, collect schema_report ...
 
-        guidelines = gen.generate(target_agent="cross_row_validator",
-                                  prior_findings=schema_report)
+        guidelines = gen.generate(target_agent="column_validator",
+                      prior_findings=schema_report)
 
-        # ... and so on for row_level_validator and data_fix_planner ...
+        # ... run Column Validator, append column_report ...
+
+        guidelines = gen.generate(target_agent="row_level_validator",
+                      prior_findings=schema_report + "\n\n" + column_report)
+
+        # ... then cross_row_validator and data_fix_planner ...
 
         gen.save_guidelines()   # persist new version to disk
     """
@@ -227,8 +242,8 @@ class DatabaseGuidelineGeneratorAgent:
         Generate guidelines for `target_agent` by introspecting the live database.
 
         Args:
-            target_agent: One of 'schema_integrity_validator', 'cross_row_validator',
-                          'row_level_validator', 'data_fix_planner'.
+            target_agent: One of 'schema_integrity_validator', 'column_validator',
+                          'row_level_validator', 'cross_row_validator', 'data_fix_planner'.
             prior_findings: Accumulated markdown output from agents that have already
                             run this pipeline pass. Empty string on the first call.
 
@@ -376,6 +391,14 @@ class DatabaseGuidelineGeneratorAgent:
             "performs data quality validation on the PostgreSQL database.",
         )
         readable_name = target_agent.replace("_", " ").title()
+        mandatory_focus = ""
+        if target_agent == "cross_row_validator":
+            mandatory_focus = """
+5. MUST include a concrete Organization Hierarchy Consistency check when tables `user_mission`, `membership`, and `groupe` exist.
+6. MUST include a concrete Routing Rule Defaults check when table `smsc_routing_rule` exists (missing defaults and duplicate defaults per scope).
+7. If required tables do not exist, include an explicit N/A guideline naming the missing tables.
+8. Do not produce guidance that says checks should be skipped due to execution limits; prefer batched/efficient SQL patterns.
+"""
 
         return f"""You are generating guidelines for the **{readable_name}** agent.
 
@@ -403,6 +426,7 @@ for the **{readable_name}** agent. The guidelines must:
 2. Flag specific structural or data risks you detected during introspection.
 3. Include concrete SQL patterns or checks the agent should run for this specific database.
 4. Be actionable — each guideline should map to a specific check the agent can perform.
+{mandatory_focus}
 {prior_guideline_context}{prior_findings_section}
 
 ---

@@ -21,6 +21,7 @@ File format
       "schema_snapshot": "<md5 hash>",
       "guidelines": {
         "schema_integrity_validator": "...",
+        "column_validator": "...",
         "row_level_validator": "...",
         "cross_row_validator": "...",
         "data_fix_planner": "..."
@@ -144,6 +145,7 @@ class GuidelinesStore:
         store.save_version(
             guidelines={
                 "schema_integrity_validator": "...",
+                "column_validator": "...",
                 "row_level_validator": "...",
                 "cross_row_validator": "...",
                 "data_fix_planner": "...",
@@ -172,9 +174,10 @@ class GuidelinesStore:
 
             {
                 "schema_integrity_validator": "...",
-                "row_level_validator":        "...",
-                "cross_row_validator":        "...",
-                "data_fix_planner":           "...",
+                "column_validator": "...",
+                "row_level_validator": "...",
+                "cross_row_validator": "...",
+                "data_fix_planner": "...",
                 "_version": 2,
                 "_created_at": "2026-01-01T00:00:00+00:00",
                 "_schema_snapshot": "<md5>",

@@ -28,6 +28,7 @@ from api.db import (
     get_job,
     get_jobs_for_user,
     get_analysis_result,
+    save_analysis_result,
     get_cleaning_result,
     get_analysis_job_ids,
     get_cleaning_job_ids,
@@ -69,6 +70,157 @@ def _sanitize_for_json(obj):
         if math.isnan(obj) or math.isinf(obj):
             return None
     return obj
+
+
+_GUIDELINE_KEYS = [
+    'schema_integrity_validator',
+    'column_validator',
+    'row_level_validator',
+    'cross_row_validator',
+    'data_fix_planner',
+]
+
+
+def _default_column_validator_analysis() -> dict:
+    return {
+        'agent': 'ColumnValidatorAgent',
+        'database_id': 'unknown',
+        'run_timestamp': 'unknown',
+        'report': 'No report generated.',
+        'findings': [],
+        'summary': {
+            'total_items_analyzed': 0,
+            'items_passed': 0,
+            'items_flagged': 0,
+            'critical_issues': 0,
+            'high_issues': 0,
+            'medium_issues': 0,
+            'low_issues': 0,
+            'overall_quality_score': 100,
+            'overall_confidence': 0.0,
+            'flagged_tables': [],
+        },
+        'metrics': {
+            'total_columns_analyzed': 0,
+            'duplicate_columns_found': 0,
+            'constant_columns_found': 0,
+            'high_null_ratio_columns': 0,
+            'low_cardinality_anomalies': 0,
+            'high_cardinality_anomalies': 0,
+            'semantic_mismatches': 0,
+            'domain_violations': 0,
+            'distribution_anomalies': 0,
+            'avg_column_quality_score': 100,
+            'avg_column_confidence': 0.0,
+        },
+        'prior_reports': [],
+        'error': 'column_validator_missing',
+        'message': 'Column validator output was missing for this run.',
+    }
+
+
+def _ensure_column_validator_result(job_id: str, analysis_doc: dict) -> dict:
+    """Ensure postgres-agentic result payload always includes column_validator_analysis."""
+    result = dict((analysis_doc or {}).get('result') or {})
+    if 'schema_analysis' not in result:
+        return result
+    if 'column_validator_analysis' in result:
+        return result
+
+    result['column_validator_analysis'] = _default_column_validator_analysis()
+    try:
+        save_analysis_result(
+            job_id=job_id,
+            result=result,
+            analysis_type=(analysis_doc or {}).get('analysis_type', 'postgres_agentic'),
+        )
+    except Exception:
+        # Never fail the response path because of a backfill write.
+        pass
+    return result
+
+
+def _enrich_report_download_meta(job_id: str, result: dict) -> dict:
+    payload = dict(result or {})
+    report_path = payload.get('report_file_path')
+    has_report_file = bool(report_path and os.path.exists(report_path))
+    export_payload = _build_postgres_export_payload(payload)
+    has_embedded_report = bool(export_payload.get('reports'))
+    has_report = has_report_file or has_embedded_report
+
+    payload['report_download_available'] = has_report
+    payload['report_download_url'] = f'/api/results/{job_id}/export' if has_report else None
+    payload['report_meta'] = {
+        'database_id': payload.get('report_database_id') or payload.get('database_id'),
+        'run_timestamp': payload.get('report_timestamp') or payload.get('final_report', {}).get('run_timestamp'),
+        'file_name': payload.get('report_file_name') or (f'analysis-report-{job_id}.json' if has_report else None),
+    }
+    # Keep response payload lean; full JSON bundle is available through /export.
+    payload.pop('download_report_json', None)
+    return payload
+
+
+def _extract_agent_reports_for_export(result: dict) -> dict:
+    payload = dict(result or {})
+
+    source_reports = payload.get('agent_reports')
+    if isinstance(source_reports, dict) and source_reports:
+        export_reports = {
+            key: value
+            for key, value in source_reports.items()
+            if isinstance(value, dict)
+        }
+        if export_reports:
+            return export_reports
+
+    export_reports = {}
+
+    schema_json = (payload.get('schema_analysis') or {}).get('json_report')
+    if isinstance(schema_json, dict):
+        export_reports['schema_integrity_validator'] = schema_json
+
+    column_json = payload.get('column_validator_analysis')
+    if isinstance(column_json, dict):
+        export_reports['column_validator'] = {
+            key: value
+            for key, value in column_json.items()
+            if key not in {'report', 'markdown_report'}
+        }
+
+    row_json = (payload.get('row_level_analysis') or {}).get('json_report')
+    if isinstance(row_json, dict):
+        export_reports['row_level_validator'] = row_json
+
+    cross_json = (payload.get('cross_row_analysis') or {}).get('json_report')
+    if isinstance(cross_json, dict):
+        export_reports['cross_row_validator'] = cross_json
+
+    final_report = payload.get('final_report')
+    if isinstance(final_report, dict):
+        export_reports['data_fix_planner'] = final_report
+
+    return export_reports
+
+
+def _build_postgres_export_payload(result: dict) -> dict:
+    payload = dict(result or {})
+
+    inline_bundle = payload.get('download_report_json')
+    if isinstance(inline_bundle, dict) and inline_bundle.get('reports'):
+        return inline_bundle
+
+    reports = _extract_agent_reports_for_export(payload)
+
+    return {
+        'pipeline_run_id': payload.get('pipeline_run_id') or payload.get('final_report', {}).get('pipeline_run_id'),
+        'database_id': payload.get('database_id') or payload.get('report_database_id') or payload.get('final_report', {}).get('database_id'),
+        'run_timestamp': payload.get('report_timestamp') or payload.get('final_report', {}).get('run_timestamp'),
+        'summary': {
+            'confidence_score': payload.get('confidence_score'),
+            'data_quality_score': payload.get('data_quality_score'),
+        },
+        'reports': reports,
+    }
 
 
 # ──────────────────────────────────────────────
@@ -275,7 +427,21 @@ class StatusView(APIView):
     def get(self, request, jobId):
         job = find_owned_job(jobId, request.user)
         job_status = job['status'] if job else 'unknown'
-        return Response({'status': job_status})
+        response_payload = {'status': job_status}
+
+        if job_status == 'completed':
+            analysis = get_analysis_result(jobId)
+            result = (analysis or {}).get('result', {})
+            if result.get('schema_analysis'):
+                result = _ensure_column_validator_result(jobId, analysis)
+                result = _enrich_report_download_meta(jobId, result)
+
+            report_path = result.get('report_file_path')
+            has_download = bool(result.get('report_download_available'))
+            if has_download or (report_path and os.path.exists(report_path)):
+                response_payload['url'] = f'/api/results/{jobId}/export'
+
+        return Response(response_payload)
 
 
 class ResultsView(APIView):
@@ -296,6 +462,9 @@ class ResultsView(APIView):
             return Response({'detail': 'Results not found'}, status=status.HTTP_404_NOT_FOUND)
 
         result = analysis['result']
+        if 'schema_analysis' in result:
+            result = _ensure_column_validator_result(jobId, analysis)
+            result = _enrich_report_download_meta(jobId, result)
 
         # If it's already the new CSV format natively (has dataset_summary)
         # OR if it's an agentic postgres format (has schema_analysis)
@@ -337,6 +506,8 @@ class ResultsView(APIView):
 
         if 'schema_analysis' in result:
             response_data['schema_analysis'] = result['schema_analysis']
+        if 'column_validator_analysis' in result:
+            response_data['column_validator_analysis'] = result['column_validator_analysis']
         if 'cross_row_analysis' in result:
             response_data['cross_row_analysis'] = result['cross_row_analysis']
         if 'row_level_analysis' in result:
@@ -363,6 +534,28 @@ class ResultsExportView(APIView):
             return Response({'detail': 'Results not found'}, status=status.HTTP_404_NOT_FOUND)
 
         data = analysis['result']
+        if 'schema_analysis' in data:
+            data = _ensure_column_validator_result(jobId, analysis)
+
+            report_path = data.get('report_file_path')
+            if report_path and os.path.exists(report_path):
+                filename = data.get('report_file_name') or f'analysis-report-{jobId}.json'
+                return FileResponse(
+                    open(report_path, 'rb'),
+                    content_type='application/json',
+                    as_attachment=True,
+                    filename=filename,
+                )
+
+            export_payload = _build_postgres_export_payload(data)
+            if export_payload.get('reports'):
+                return Response(_sanitize_for_json(export_payload))
+
+        # If already in native CSV-v2 format or agentic PostgreSQL format,
+        # return as-is (sanitized) so all generated keys are preserved.
+        if 'dataset_summary' in data or 'schema_analysis' in data:
+            return Response(_sanitize_for_json(data))
+
         meta = data.get('meta', {})
         qr = _sanitize_for_json(data.get('quality_report', {}))
         cleaned = data.get('cleaned_data', {})
@@ -858,10 +1051,16 @@ class AgentChatProxyView(APIView):
                     context_parts = []
                     if result.get('schema_analysis', {}).get('report'):
                         context_parts.append(f"## Schema Analysis Report\n{result['schema_analysis']['report']}")
-                    if result.get('cross_row_analysis', {}).get('report'):
-                        context_parts.append(f"## Cross-Row Analysis Report\n{result['cross_row_analysis']['report']}")
+                    column_report = (
+                        result.get('column_validator_analysis', {}).get('report')
+                        or result.get('column_validator_analysis', {}).get('markdown_report')
+                    )
+                    if column_report:
+                        context_parts.append(f"## Column Validator Analysis Report\n{column_report}")
                     if result.get('row_level_analysis', {}).get('report'):
                         context_parts.append(f"## Row-Level Analysis Report\n{result['row_level_analysis']['report']}")
+                    if result.get('cross_row_analysis', {}).get('report'):
+                        context_parts.append(f"## Cross-Row Analysis Report\n{result['cross_row_analysis']['report']}")
                     if context_parts:
                         context = '\n\n---\n\n'.join(context_parts)
                         enriched_message = (
@@ -1068,18 +1267,21 @@ class GuidelinesView(APIView):
     Returns the AI-generated guideline text produced by the GuidelineGenerator
     for each pipeline phase, stored during the analysis run.
 
-    Lookup order:
-      1. MongoDB `job_guidelines` collection  (per-run, precise)
-      2. File-based GuidelinesStore           (latest version for the database —
-         fallback for jobs analysed before per-run persistence was added)
+        Lookup order:
+            1. Per-run DB `job_guidelines` entry (primary)
+            2. File-based GuidelinesStore latest version (fallback)
 
-    Response shape:
-      {
-        "schema_integrity_validator": "...",
-        "cross_row_validator":        "...",
-        "row_level_validator":        "...",
-        "data_fix_planner":           "..."
-      }
+        Returns a partial map when analysis is still running instead of 404,
+        so the frontend can progressively reveal available guideline stages.
+
+        Response shape:
+            {
+                "schema_integrity_validator": "...",
+                "column_validator":           "...",
+                "cross_row_validator":        "...",
+                "row_level_validator":        "...",
+                "data_fix_planner":           "..."
+            }
     """
     permission_classes = [IsAuthenticated]
 
@@ -1091,14 +1293,11 @@ class GuidelinesView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # ── 1. Primary: per-run MongoDB entry ──────────────────────────
-        guidelines = get_job_guidelines(jobId)
-        if guidelines:
-            return Response(guidelines)
+        # ── 1. Primary: per-run DB entry ───────────────────────────────
+        persisted = dict(get_job_guidelines(jobId) or {})
 
-        # ── 2. Fallback: file-based GuidelinesStore ─────────────────────
-        # Works for jobs that were analysed before per-run persistence was
-        # added — the store holds the latest version for that database.
+        # ── 2. Fallback: file-based GuidelinesStore ────────────────────
+        fallback = {}
         connection_string = job.get('connection_string')
         if connection_string:
             try:
@@ -1106,15 +1305,27 @@ class GuidelinesView(APIView):
                 store = GuidelinesStore(connection_string)
                 latest = store.load_latest()
                 if latest:
-                    # Strip internal metadata keys (_version, _created_at, _schema_snapshot)
-                    public = {k: v for k, v in latest.items() if not k.startswith('_')}
-                    if public:
-                        return Response(public)
+                    fallback = {
+                        k: v for k, v in latest.items()
+                        if not k.startswith('_') and isinstance(v, str)
+                    }
             except Exception:
                 pass  # never let the fallback crash the endpoint
 
-        return Response(
-            {'detail': 'No guidelines found for this job yet.'},
-            status=status.HTTP_404_NOT_FOUND,
-        )
+        merged = {**fallback, **persisted}
+
+        ordered = {}
+        for key in _GUIDELINE_KEYS:
+            text = (merged.get(key) or '').strip()
+            if text:
+                ordered[key] = text
+
+        # Preserve any additional non-empty keys without dropping them.
+        for key, value in merged.items():
+            if key in ordered:
+                continue
+            if isinstance(value, str) and value.strip():
+                ordered[key] = value
+
+        return Response(ordered)
 

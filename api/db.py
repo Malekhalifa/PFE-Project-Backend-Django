@@ -29,6 +29,52 @@ from api.models import (
     JobGuideline,
 )
 
+_GUIDELINE_KEYS = [
+    'schema_integrity_validator',
+    'column_validator',
+    'row_level_validator',
+    'cross_row_validator',
+    'data_fix_planner',
+]
+
+
+def _default_column_validator_analysis() -> dict[str, Any]:
+    return {
+        'agent': 'ColumnValidatorAgent',
+        'database_id': 'unknown',
+        'run_timestamp': 'unknown',
+        'report': 'No report generated.',
+        'findings': [],
+        'summary': {
+            'total_items_analyzed': 0,
+            'items_passed': 0,
+            'items_flagged': 0,
+            'critical_issues': 0,
+            'high_issues': 0,
+            'medium_issues': 0,
+            'low_issues': 0,
+            'overall_quality_score': 100,
+            'overall_confidence': 0.0,
+            'flagged_tables': [],
+        },
+        'metrics': {
+            'total_columns_analyzed': 0,
+            'duplicate_columns_found': 0,
+            'constant_columns_found': 0,
+            'high_null_ratio_columns': 0,
+            'low_cardinality_anomalies': 0,
+            'high_cardinality_anomalies': 0,
+            'semantic_mismatches': 0,
+            'domain_violations': 0,
+            'distribution_anomalies': 0,
+            'avg_column_quality_score': 100,
+            'avg_column_confidence': 0.0,
+        },
+        'prior_reports': [],
+        'error': 'column_validator_missing',
+        'message': 'Column validator output was not persisted for this run.',
+    }
+
 
 # ──────────────────────────────────────────────
 # Internal helpers
@@ -205,10 +251,15 @@ def save_analysis_result(
     analysis_type: str = 'in-memory',
 ) -> None:
     """Upsert an analysis result for a job."""
+    payload = dict(result or {})
+    # Agentic PostgreSQL runs should always expose a column validator payload.
+    if 'schema_analysis' in payload and 'column_validator_analysis' not in payload:
+        payload['column_validator_analysis'] = _default_column_validator_analysis()
+
     AnalysisResult.objects.update_or_create(
         job_id=job_id,
         defaults={
-            'result': result,
+            'result': payload,
             'analysis_type': analysis_type,
         },
     )
@@ -318,18 +369,24 @@ def save_job_guideline(job_id: str, agent_key: str, guideline_text: str) -> None
     """
     Upsert one agent's guideline text for a job.
 
-    agent_key is one of:
-      'schema_integrity_validator' | 'cross_row_validator' |
-      'row_level_validator'        | 'data_fix_planner'
+        agent_key is one of:
+            'schema_integrity_validator' | 'column_validator' |
+            'row_level_validator'        | 'cross_row_validator' |
+            'data_fix_planner'
 
     Guidelines accumulate as the pipeline progresses.
     """
-    obj, created = JobGuideline.objects.get_or_create(
+    obj, _ = JobGuideline.objects.get_or_create(
         job_id=job_id,
         defaults={'guidelines': {}},
     )
+    base = dict.fromkeys(_GUIDELINE_KEYS, '')
     # Merge-update the specific agent key
-    obj.guidelines = {**obj.guidelines, agent_key: guideline_text}
+    obj.guidelines = {
+        **base,
+        **(obj.guidelines or {}),
+        agent_key: guideline_text,
+    }
     obj.save(update_fields=['guidelines', 'updated_at'])
 
 

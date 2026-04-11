@@ -35,11 +35,12 @@ Users upload a **CSV file** via the web interface. The platform automatically:
 - Offers a **data cleaning** step and lets the user download the cleaned file
 
 ### 1.2 PostgreSQL Database Validation (AI-Powered)
-Users provide a **PostgreSQL connection string**. A team of **four AI agents** (powered by Google Gemini) then:
+Users provide a **PostgreSQL connection string**. A guideline-driven validation pipeline (powered by Google Gemini) then:
 - Inspect the database **schema** for structural issues (missing primary keys, unlinked foreign key columns, bad nullability)
-- Run **cross-row SQL queries** to detect aggregate violations (quota overflows, duplicate phone numbers, referential gaps)
+- Run **column-level analysis** to detect duplicate/constant columns, null/cardinality/domain anomalies, semantic mismatches, and distribution drift
 - Run **row-level SQL queries** to detect per-row business rule violations (impossible dates, blank required fields, format errors, etc.)
-- Synthesise findings to generate a **structured JSON Cleaning Plan**, mapping out the exact transformation steps needed to fix the database automatically.
+- Run **cross-row SQL queries** to detect temporal, sequential, and relational anomalies
+- Synthesise findings to generate **structured JSON fix cards** for human review and execution.
 
 All results are stored in MongoDB. Users can review the full report and engage in a **human-in-the-loop chat** with the Agent OS memory directly on the platform.
 
@@ -95,7 +96,7 @@ All results are stored in MongoDB. Users can review the full report and engage i
    │   │    ├── Column Validator               │   │
    │   │    ├── Row-Level Logic Validator      │   │
    │   │    ├── Cross-Row Validator            │   │
-   │   │    └── Data Cleaning Planner          │   │
+   │   │    └── Data Fix Planner               │   │
    │   └───────────────────────────────────────┘   │
    └───────────────────────────────────────────────┘
 ```
@@ -275,19 +276,21 @@ User prompt / Celery task
   │  - Receives the user's request                   │
   │  - Decides which agents to call and in what order│
   │  - Synthesises all outputs into one final report │
-  └───────┬────────────────┬────────────────┬────────┬───────┘
-          ↓                ↓                ↓        ↓
+   └───────┬────────────────┬────────────────┬────────────────┬───────────────┘
+               ↓                ↓                ↓                ↓
  ┌────────────────┐ ┌────────────────┐ ┌────────────────┐ ┌────────────────┐
- │Schema Integrity│ │Cross-Row       │ │Row-Level Logic │ │Data Cleaning   │
- │Validator       │ │Validator       │ │Validator       │ │Planner         │
+ │Schema Integrity│ │Column          │ │Row-Level Logic │ │Cross-Row       │
+ │Validator       │ │Validator       │ │Validator       │ │Validator       │
  │                │ │                │ │                │ │                │
- │Checks: missing │ │Checks: quota   │ │Checks: date    │ │Consumes all    │
- │PKs, unlinked   │ │math, duplicate │ │ranges, blank   │ │prior reports & │
- │FKs, bad        │ │msisdns,        │ │fields, formats.│ │generates a JSON│
- │nullability.    │ │orphaned refs.  │ │                │ │cleaning plan.  │
+ │Checks: PK/FK,  │ │Checks: null/   │ │Checks: date    │ │Checks: temporal│
+ │indexes,        │ │cardinality,    │ │ranges, blank   │ │and relational  │
+ │nullability.    │ │domain, drift.  │ │fields, formats.│ │multi-row rules.│
  └────────────────┘ └────────────────┘ └────────────────┘ └────────────────┘
-          │                │                │
-          └────────────────┴────────────────┘
+                                       ↓
+                         ┌────────────────────┐
+                         │Data Fix Planner    │
+                         │(JSON fix cards)    │
+                         └────────────────────┘
                            ↓
                     PostgreSQL Database
                   (agents query via SQL tools)
@@ -297,8 +300,9 @@ User prompt / Celery task
 
 #### 1. Sequential execution (coordinate mode)
 Each agent **passes its findings to the next one** via the prompt context:
-- Agent 2 (Cross-Row) receives Agent 1's schema findings to know real table/column names
-- Agent 3 (Row-Level) receives both previous agents' findings
+- Agent 2 (Column) receives Agent 1's schema findings
+- Agent 3 (Row-Level) receives schema + column findings
+- Agent 4 (Cross-Row) receives schema + column + row-level findings
 
 This avoids redundant schema discovery and ensures the agents build on each other's work.
 
@@ -408,21 +412,21 @@ The project uses **two databases**, each chosen for a different purpose:
    → returns markdown schema report
 
 5. Agent 2 (Column Validator) receives Agent 1's report + context
-   → runs data type, format, and statistical outlier queries
-   → returns markdown column constraints violations report
+   → runs column-wide aggregate/statistical/semantic checks
+   → returns strict JSON column analysis report
 
-6. Agent 3 (Row-Level Logic Validator) receives previous reports
+6. Agent 3 (Row-Level Logic Validator) receives schema + column findings
    → runs targeted WHERE-clause queries for each business rule
    → returns markdown row-level violations report
 
-7. Agent 4 (Cross-Row Validator) receives previous reports
-   → runs aggregate GROUP BY / HAVING / JOIN SQL queries
+7. Agent 4 (Cross-Row Validator) receives schema + column + row-level findings
+   → runs temporal/sequential/relational multi-row SQL queries
    → returns markdown cross-row violations report
 
-8. Agent 5 (Data Cleaning Planner) receives all preceding cascading reports
+8. Agent 5 (Data Fix Planner) receives all preceding cascading reports
    → generates the deterministic JSON fix card list
 
-9. postgres_service formats results into standard dict, including the cleaning plan
+9. postgres_service formats results into standard dict, including `column_validator_analysis`
 10. postgres_tasks saves to MongoDB, sets status "completed"
 11. Angular detects "completed" and enables the AI Chat and "Download Plan" features
 
@@ -430,7 +434,7 @@ The project uses **two databases**, each chosen for a different purpose:
 
 ```
 1. Analysis Finishes
-   → Angular crafts a Markdown summary of the 4 agents' results.
+   → Angular crafts a Markdown summary of schema + column + row-level + cross-row outputs.
    → Angular POSTs this summary to Django to be saved as the first "System" chat message.
    → User is navigated to the /AI-chat/:jobId screen.
 
