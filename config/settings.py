@@ -309,12 +309,11 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Brevo SMTP email transport + Brevo API key for SMS
+# Brevo SMTP email transport
 BREVO_SMTP_HOST = env('BREVO_SMTP_HOST', default='smtp-relay.brevo.com')
 BREVO_SMTP_PORT = env.int('BREVO_SMTP_PORT', default=587)
 BREVO_SMTP_LOGIN = env('BREVO_SMTP_LOGIN', default='')
 BREVO_SMTP_KEY = env('BREVO_SMTP_KEY', default='')
-BREVO_API_KEY = env('BREVO_API_KEY', default='')
 
 EMAIL_FROM_NAME = env('EMAIL_FROM_NAME', default='QualityLab')
 EMAIL_FROM_ADDRESS = env('EMAIL_FROM_ADDRESS', default='noreply@qualitylab.com')
@@ -332,4 +331,3 @@ if EMAIL_USE_SSL:
 DEFAULT_FROM_EMAIL = formataddr((EMAIL_FROM_NAME, EMAIL_FROM_ADDRESS))
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 ADMIN_EMAIL = env('ADMIN_EMAIL', default='')
-ADMIN_PHONE = env('ADMIN_PHONE', default='')

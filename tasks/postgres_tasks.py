@@ -9,12 +9,9 @@ from config.celery import app
 from services.postgres_service import analyze_postgres_database
 from services.notification_service import (
     notify_admin_job_failed,
-    notify_admin_job_failed_sms,
     notify_admin_job_stuck,
-    notify_admin_job_stuck_sms,
     notify_user_analysis_started,
     notify_user_analysis_results_ready,
-    notify_user_job_completed_sms,
 )
 from api.db import (
     get_job,
@@ -37,21 +34,21 @@ def _safe_notify(func, *args):
         return None
 
 
-def _get_user_contact(job_id: str) -> tuple[str | None, str | None]:
+def _get_user_contact(job_id: str) -> str | None:
     job = get_job(job_id) or {}
     user_id = job.get('user_id')
     if not user_id:
-        return None, None
+        return None
 
     try:
-        user = User.objects.filter(id=user_id).only('email', 'phone_number').first()
+        user = User.objects.filter(id=user_id).only('email').first()
     except Exception:
         _logger.exception('Failed to resolve user contact for job %s', job_id)
-        return None, None
+        return None
 
     if not user:
-        return None, None
-    return user.email, user.phone_number
+        return None
+    return user.email
 
 @app.task(bind=True, max_retries=0, time_limit=1800) # 30 mins limit to give AI agents enough time
 def analyze_postgres_task(self, job_id: str, connection_string: str, domain_rules: list = None):
@@ -70,7 +67,7 @@ def analyze_postgres_task(self, job_id: str, connection_string: str, domain_rule
     update_job_status(job_id, 'running')
     audit_log(job_id, 'DB_ANALYSIS_STARTED', {"target": "PostgreSQL Agentic Workflow"})
 
-    user_email, phone_number = _get_user_contact(job_id)
+    user_email = _get_user_contact(job_id)
     _safe_notify(notify_user_analysis_started, user_email, job_id)
 
     try:
@@ -106,7 +103,6 @@ def analyze_postgres_task(self, job_id: str, connection_string: str, domain_rule
         })
 
         _safe_notify(notify_user_analysis_results_ready, user_email, job_id)
-        _safe_notify(notify_user_job_completed_sms, phone_number, job_id)
 
     except Exception as e:
         failed_at_step = 'unknown'
@@ -118,7 +114,6 @@ def analyze_postgres_task(self, job_id: str, connection_string: str, domain_rule
         update_job_status(job_id, 'failed')
         audit_log(job_id, 'DB_ANALYSIS_FAILED', {'error': str(e)})
         _safe_notify(notify_admin_job_failed, job_id, failed_at_step, str(e))
-        _safe_notify(notify_admin_job_failed_sms, job_id, failed_at_step)
         raise
 
 
@@ -240,7 +235,6 @@ def check_stuck_jobs(self):
     for job in stuck_jobs:
         duration_minutes = max(10, int((now - job.updated_at).total_seconds() // 60))
         _safe_notify(notify_admin_job_stuck, job.id, job.status, duration_minutes)
-        _safe_notify(notify_admin_job_stuck_sms, job.id, job.status, duration_minutes)
         alert_count += 1
 
     if alert_count:

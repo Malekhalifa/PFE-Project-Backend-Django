@@ -16,36 +16,6 @@ class CustomRegisterSerializer(RegisterSerializer):
     username = serializers.CharField(required=False, allow_blank=True, max_length=150)
     first_name = serializers.CharField(required=False, allow_blank=True, max_length=150)
     last_name = serializers.CharField(required=False, allow_blank=True, max_length=150)
-    phone_number = serializers.CharField(required=False, allow_blank=True, max_length=32)
-
-    def validate_phone_number(self, value):
-        phone = (value or '').strip()
-        if not phone:
-            return ''
-
-        compact = (
-            phone.replace(' ', '')
-            .replace('-', '')
-            .replace('(', '')
-            .replace(')', '')
-        )
-        if compact.count('+') > 1:
-            raise serializers.ValidationError(
-                'Enter a valid phone number (digits with optional +, spaces, - or parentheses).'
-            )
-
-        has_plus = compact.startswith('+')
-        digits = compact[1:] if has_plus else compact
-
-        if '+' in digits or not digits.isdigit():
-            raise serializers.ValidationError(
-                'Enter a valid phone number (digits with optional +, spaces, - or parentheses).'
-            )
-
-        if len(digits) < 7 or len(digits) > 15:
-            raise serializers.ValidationError('Phone number must contain between 7 and 15 digits.')
-
-        return f'+{digits}' if has_plus else digits
 
     def validate_username(self, value):
         if not value or not value.strip():
@@ -69,7 +39,6 @@ class CustomRegisterSerializer(RegisterSerializer):
             data['username'] = username
         data['first_name'] = (self.validated_data.get('first_name') or '').strip()
         data['last_name'] = (self.validated_data.get('last_name') or '').strip()
-        data['phone_number'] = (self.validated_data.get('phone_number') or '').strip()
         return data
 
     def save(self, request):
@@ -80,16 +49,12 @@ class CustomRegisterSerializer(RegisterSerializer):
             update_fields.append('role')
         first_name = (self.validated_data.get('first_name') or '').strip()
         last_name = (self.validated_data.get('last_name') or '').strip()
-        phone_number = (self.validated_data.get('phone_number') or '').strip()
         if first_name != (user.first_name or ''):
             user.first_name = first_name
             update_fields.append('first_name')
         if last_name != (user.last_name or ''):
             user.last_name = last_name
             update_fields.append('last_name')
-        if phone_number != (user.phone_number or ''):
-            user.phone_number = phone_number
-            update_fields.append('phone_number')
         if update_fields:
             user.save(update_fields=update_fields)
         return user
@@ -100,11 +65,10 @@ class CustomUserDetailsSerializer(UserDetailsSerializer):
     role = serializers.CharField(read_only=True)
     first_name = serializers.CharField(required=False, allow_blank=True, max_length=150)
     last_name = serializers.CharField(required=False, allow_blank=True, max_length=150)
-    phone_number = serializers.CharField(required=False, allow_blank=True, max_length=32)
 
     class Meta(UserDetailsSerializer.Meta):
         model = User
-        fields = ('id', 'email', 'role', 'first_name', 'last_name', 'phone_number')
+        fields = ('id', 'email', 'role', 'first_name', 'last_name')
 
 
 class TokenSocialLoginSerializer(SocialLoginSerializer):

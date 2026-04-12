@@ -1,18 +1,4 @@
 import logging
-from typing import Any
-
-import httpx
-
-try:
-    import brevo_python as brevo_sdk
-    _BREVO_LEGACY_SMS_API = True
-except ModuleNotFoundError:
-    try:
-        import brevo as brevo_sdk
-        _BREVO_LEGACY_SMS_API = False
-    except ModuleNotFoundError:
-        brevo_sdk = None
-        _BREVO_LEGACY_SMS_API = False
 
 from django.conf import settings
 from django.core.mail import send_mail
@@ -77,58 +63,6 @@ def _send_html_email(*, to_email: str, subject: str, title: str, message_html: s
         fail_silently=False,
         html_message=html_message,
     )
-
-
-def _get_sms_api_instance() -> Any | None:
-    if brevo_sdk is None:
-        logger.warning('Skipping SMS send because Brevo SDK is not installed.')
-        return None
-
-    api_key = getattr(settings, 'BREVO_API_KEY', '')
-    if not api_key:
-        api_key = (getattr(settings, 'ANYMAIL', {}) or {}).get('BREVO_API_KEY', '')
-    if not api_key:
-        logger.warning('Skipping SMS send because BREVO_API_KEY is not configured.')
-        return None
-
-    if _BREVO_LEGACY_SMS_API:
-        # Preferred compatibility path requested for brevo-python SDK.
-        configuration = brevo_sdk.Configuration()
-        configuration.api_key['api-key'] = api_key
-        return brevo_sdk.TransactionalSMSApi(
-            brevo_sdk.ApiClient(configuration)
-        )
-
-    # Fallback path for newer `brevo` SDK layout.
-    from brevo.transactional_sms.client import SyncClientWrapper, TransactionalSmsClient
-
-    wrapper = SyncClientWrapper(
-        api_key=api_key,
-        base_url='https://api.brevo.com',
-        timeout=10.0,
-        httpx_client=httpx.Client(timeout=10.0),
-    )
-    return TransactionalSmsClient(client_wrapper=wrapper)
-
-
-def _send_sms(phone_number: str, content: str) -> Any | None:
-    if not phone_number:
-        return None
-
-    api_instance = _get_sms_api_instance()
-    if not api_instance:
-        return None
-
-    payload = brevo_sdk.SendTransacSms(
-        sender='QualityLab',
-        recipient=phone_number,
-        content=content,
-        type='transactional',
-    )
-
-    if hasattr(api_instance, 'send_transac_sms'):
-        return api_instance.send_transac_sms(payload)
-    return api_instance.sendTransacSms(payload)
 
 
 # ---------------------------------------------------------------------------
@@ -246,51 +180,3 @@ def notify_admin_job_stuck(job_id: str, stuck_at_step: str, duration_minutes: in
         title='Stuck pipeline job detected',
         message_html=message_html,
     )
-
-
-# ---------------------------------------------------------------------------
-# SMS notifications
-# ---------------------------------------------------------------------------
-
-def notify_user_job_completed_sms(phone_number: str | None, job_id: str) -> Any | None:
-    if not phone_number:
-        return None
-
-    message = f'QualityLab: Your analysis job #{job_id} is ready. Log in to view results.'
-    try:
-        return _send_sms(phone_number, message)
-    except Exception:
-        logger.exception('Failed to send user completed SMS for job %s', job_id)
-        return None
-
-
-def notify_admin_job_failed_sms(job_id: str, failed_at_step: str) -> Any | None:
-    if not settings.ADMIN_PHONE:
-        logger.info('Skipping admin failed SMS because ADMIN_PHONE is not configured.')
-        return None
-
-    message = (
-        f'QualityLab ALERT: Job #{job_id} failed at step {failed_at_step}. '
-        'Check dashboard.'
-    )
-    try:
-        return _send_sms(settings.ADMIN_PHONE, message)
-    except Exception:
-        logger.exception('Failed to send admin failed SMS for job %s', job_id)
-        return None
-
-
-def notify_admin_job_stuck_sms(job_id: str, stuck_at_step: str, duration_minutes: int) -> Any | None:
-    if not settings.ADMIN_PHONE:
-        logger.info('Skipping admin stuck SMS because ADMIN_PHONE is not configured.')
-        return None
-
-    message = (
-        f'QualityLab ALERT: Job #{job_id} is stuck at step {stuck_at_step} '
-        f'for {duration_minutes} min. Check dashboard.'
-    )
-    try:
-        return _send_sms(settings.ADMIN_PHONE, message)
-    except Exception:
-        logger.exception('Failed to send admin stuck SMS for job %s', job_id)
-        return None

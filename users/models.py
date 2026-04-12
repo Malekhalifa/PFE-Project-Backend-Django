@@ -16,7 +16,6 @@ from django.db import models
 class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True)
-    phone_number = models.CharField(max_length=32, blank=True, default='')
     role = models.CharField(
         max_length=10,
         choices=[('user', 'user'), ('admin', 'admin')],
