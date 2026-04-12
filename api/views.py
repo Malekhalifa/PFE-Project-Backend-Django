@@ -46,6 +46,7 @@ from api.db import (
 from api.permissions import find_owned_job
 from api.serializers import CleanRequestSerializer, JobDeleteSerializer
 from agents.query_executor_agent import QueryExecutorAgent
+from agents.reporting import synthesize_fixes_from_prior_reports
 from services.analysis_service import compute_row_outliers, to_native
 from services.notification_service import notify_user_fix_executed
 from services.postgres_connection import (
@@ -143,6 +144,65 @@ def _ensure_column_validator_result(job_id: str, analysis_doc: dict) -> dict:
         # Never fail the response path because of a backfill write.
         pass
     return result
+
+
+def _count_fix_cards(fixes_payload: Any) -> int:
+    if isinstance(fixes_payload, list):
+        return len([item for item in fixes_payload if isinstance(item, dict)])
+    if isinstance(fixes_payload, dict):
+        nested = fixes_payload.get('fixes')
+        if isinstance(nested, list):
+            return len([item for item in nested if isinstance(item, dict)])
+    return 0
+
+
+def _ensure_fix_cards_result(job_id: str, result: dict, analysis_type: str = 'postgres_agentic') -> dict:
+    """Ensure result payload exposes non-empty `fixes` cards for UI consumers."""
+    payload = dict(result or {})
+    if _count_fix_cards(payload.get('fixes')) > 0:
+        return payload
+
+    final_report = payload.get('final_report')
+    final_report_dict = dict(final_report) if isinstance(final_report, dict) else {}
+
+    fix_cards: list[dict] = []
+    if isinstance(final_report_dict.get('findings'), list):
+        fix_cards = [item for item in final_report_dict['findings'] if isinstance(item, dict)]
+
+    if not fix_cards:
+        prior_reports = final_report_dict.get('prior_reports')
+        if isinstance(prior_reports, list):
+            fix_cards = synthesize_fixes_from_prior_reports(prior_reports)
+
+    if not fix_cards:
+        return payload
+
+    payload['fixes'] = {'fixes': fix_cards}
+
+    if not isinstance(final_report_dict.get('findings'), list) or not final_report_dict.get('findings'):
+        final_report_dict['findings'] = fix_cards
+        metrics = final_report_dict.get('metrics') if isinstance(final_report_dict.get('metrics'), dict) else {}
+        summary = final_report_dict.get('summary') if isinstance(final_report_dict.get('summary'), dict) else {}
+        metrics = dict(metrics)
+        summary = dict(summary)
+        metrics['fixes_generated'] = len(fix_cards)
+        summary['items_flagged'] = len(fix_cards)
+        summary['items_passed'] = max(int(summary.get('total_items_analyzed') or len(fix_cards)) - len(fix_cards), 0)
+        final_report_dict['metrics'] = metrics
+        final_report_dict['summary'] = summary
+        payload['final_report'] = final_report_dict
+
+    try:
+        save_analysis_result(
+            job_id=job_id,
+            result=payload,
+            analysis_type=analysis_type,
+        )
+    except Exception:
+        # Never fail response path because of backfill persistence.
+        pass
+
+    return payload
 
 
 def _enrich_report_download_meta(job_id: str, result: dict) -> dict:
@@ -469,6 +529,7 @@ class ResultsView(APIView):
         result = analysis['result']
         if 'schema_analysis' in result:
             result = _ensure_column_validator_result(jobId, analysis)
+            result = _ensure_fix_cards_result(jobId, result, analysis.get('analysis_type', 'postgres_agentic'))
             result = _enrich_report_download_meta(jobId, result)
 
         # If it's already the new CSV format natively (has dataset_summary)
@@ -1178,7 +1239,15 @@ class GetFixesView(APIView):
             )
 
         analysis = get_analysis_result(job_id)
-        fixes = (analysis or {}).get('result', {}).get('fixes', None)
+        result = (analysis or {}).get('result', {})
+        if 'schema_analysis' in result:
+            result = _ensure_fix_cards_result(
+                job_id,
+                result,
+                (analysis or {}).get('analysis_type', 'postgres_agentic'),
+            )
+
+        fixes = (result or {}).get('fixes', None)
         if fixes is None:
             return Response(
                 {'detail': 'No fixes found. Re-run analysis to generate fix cards.'},

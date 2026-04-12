@@ -1,5 +1,6 @@
 import json
 import re
+import ast
 from datetime import datetime, timezone
 from typing import Any, Iterable
 
@@ -37,6 +38,84 @@ def parse_json_payload(raw_text: str) -> tuple[dict[str, Any] | list[Any] | None
     payload = strip_code_fences(raw_text)
     if not payload:
         return None, "empty_output"
+
+    def _try_parse(candidate: str) -> tuple[dict[str, Any] | list[Any] | None, str | None]:
+        try:
+            parsed = json.loads(candidate)
+            if isinstance(parsed, (dict, list)):
+                return parsed, None
+            return None, "json_root_must_be_object_or_array"
+        except Exception as exc:
+            return None, str(exc)
+
+    def _extract_balanced_json(candidate: str) -> str | None:
+        start = -1
+        opener = ""
+        for i, ch in enumerate(candidate):
+            if ch in "[{":
+                start = i
+                opener = ch
+                break
+        if start < 0:
+            return None
+
+        closer = "]" if opener == "[" else "}"
+        depth = 0
+        in_string = False
+        escaped = False
+
+        for i in range(start, len(candidate)):
+            ch = candidate[i]
+            if in_string:
+                if escaped:
+                    escaped = False
+                    continue
+                if ch == "\\":
+                    escaped = True
+                    continue
+                if ch == '"':
+                    in_string = False
+                continue
+
+            if ch == '"':
+                in_string = True
+                continue
+
+            if ch == opener:
+                depth += 1
+            elif ch == closer:
+                depth -= 1
+                if depth == 0:
+                    return candidate[start:i + 1]
+
+        return None
+
+    parsed, parse_error = _try_parse(payload)
+    if parsed is not None:
+        return parsed, None
+
+    extracted = _extract_balanced_json(payload)
+    if extracted:
+        parsed, extracted_error = _try_parse(extracted)
+        if parsed is not None:
+            return parsed, None
+
+        # Common LLM issue: trailing commas before ] or }
+        sanitized = re.sub(r",\s*([}\]])", r"\1", extracted)
+        parsed, sanitized_error = _try_parse(sanitized)
+        if parsed is not None:
+            return parsed, None
+
+        # Last-resort recovery for Python-literal-like payloads.
+        try:
+            literal = ast.literal_eval(sanitized)
+            if isinstance(literal, (dict, list)):
+                return literal, None
+        except Exception:
+            pass
+
+        return None, sanitized_error or extracted_error or parse_error
+
     try:
         parsed = json.loads(payload)
         if isinstance(parsed, (dict, list)):
@@ -685,6 +764,82 @@ def _normalize_fix_findings(payload: dict[str, Any] | list[Any]) -> list[dict[st
     return []
 
 
+def synthesize_fixes_from_prior_reports(
+    prior_reports: list[dict[str, Any]],
+    *,
+    max_fixes: int = 25,
+) -> list[dict[str, Any]]:
+    """
+    Build fallback fix cards from prior validator findings.
+
+    This is used when DataFixPlanner returns no structured findings even though
+    upstream validators reported flagged issues.
+    """
+    synthesized: list[dict[str, Any]] = []
+    dedupe_keys: set[str] = set()
+
+    for report in _as_list(prior_reports):
+        report_dict = _as_dict(report)
+        agent_name = str(report_dict.get("agent") or "UnknownAgent")
+
+        for finding_raw in _as_list(report_dict.get("findings")):
+            finding = _as_dict(finding_raw)
+            if not finding or not _flagged_item(finding):
+                continue
+
+            issues = _extract_item_issues(finding)
+            first_issue = issues[0] if issues else {}
+
+            severity = normalize_severity(first_issue.get("severity") or finding.get("severity"))
+            table_name = _pick_table_name(finding) or "unknown_table"
+            problem = str(
+                first_issue.get("description")
+                or finding.get("description")
+                or finding.get("problem")
+                or "Issue detected and requires remediation."
+            ).strip()
+            remediation = str(
+                first_issue.get("remediation")
+                or finding.get("remediation")
+                or "Review the issue and prepare a safe SQL remediation query."
+            ).strip()
+
+            dedupe = f"{table_name}|{severity}|{problem.lower()}"
+            if dedupe in dedupe_keys:
+                continue
+            dedupe_keys.add(dedupe)
+
+            fix_id = f"AUTO_FIX_{len(synthesized) + 1:03d}"
+            placeholder_sql = (
+                "-- AUTO-GENERATED PLACEHOLDER. Replace this SQL with the real fix before applying.\n"
+                f"-- Source agent: {agent_name}\n"
+                f"-- Severity: {severity}\n"
+                "INVALID_SQL_PLACEHOLDER;"
+            )
+
+            synthesized.append(
+                {
+                    "id": fix_id,
+                    "table": table_name,
+                    "target_table": table_name,
+                    "problem": problem,
+                    "fix": remediation,
+                    "queries": [placeholder_sql],
+                    "explanation": (
+                        "Fallback fix card generated because DataFixPlanner returned no structured findings. "
+                        "Edit SQL before applying."
+                    ),
+                    "severity": severity,
+                    "source_agent": agent_name,
+                }
+            )
+
+            if len(synthesized) >= max_fixes:
+                return synthesized
+
+    return synthesized
+
+
 def build_fix_planner_report(
     raw_text: str,
     *,
@@ -700,11 +855,29 @@ def build_fix_planner_report(
     payload_dict = _as_dict(payload)
     metrics_input = _as_dict(payload_dict.get("metrics"))
 
-    total_issues_received = sum(
+    total_issues_received_from_summary = sum(
         _as_int(_as_dict(report.get("summary")).get("items_flagged"), 0)
         for report in prior_reports
         if isinstance(report, dict)
     )
+
+    total_flagged_findings = 0
+    for report in prior_reports:
+        report_dict = _as_dict(report)
+        for finding_raw in _as_list(report_dict.get("findings")):
+            finding = _as_dict(finding_raw)
+            if finding and _flagged_item(finding):
+                total_flagged_findings += 1
+
+    total_issues_received = max(total_issues_received_from_summary, total_flagged_findings)
+
+    if not findings and total_issues_received > 0:
+        findings = synthesize_fixes_from_prior_reports(prior_reports)
+        if findings:
+            if parse_error:
+                parse_error = f"{parse_error}; fix_planner_returned_no_findings_using_fallback"
+            else:
+                parse_error = "fix_planner_returned_no_findings_using_fallback"
 
     fixes_generated = len(findings)
     critical_fixes = 0
@@ -751,13 +924,13 @@ def build_fix_planner_report(
     fix_confidence = 0.8 if not fix_confidences else (sum(fix_confidences) / float(len(fix_confidences)))
 
     metrics = {
-        "total_issues_received": int(_coalesce_int(total_issues_received, metrics_input.get("total_issues_received"), total_issues_received)),
-        "fixes_generated": int(_coalesce_int(fixes_generated, metrics_input.get("fixes_generated"), fixes_generated)),
-        "critical_fixes": int(_coalesce_int(critical_fixes, metrics_input.get("critical_fixes"), critical_fixes)),
-        "high_fixes": int(_coalesce_int(high_fixes, metrics_input.get("high_fixes"), high_fixes)),
-        "medium_fixes": int(_coalesce_int(medium_fixes, metrics_input.get("medium_fixes"), medium_fixes)),
-        "low_fixes": int(_coalesce_int(low_fixes, metrics_input.get("low_fixes"), low_fixes)),
-        "estimated_rows_affected": int(_coalesce_int(estimated_rows_affected, metrics_input.get("estimated_rows_affected"), estimated_rows_affected)),
+        "total_issues_received": int(max(total_issues_received, _as_int(metrics_input.get("total_issues_received"), 0))),
+        "fixes_generated": int(max(fixes_generated, _as_int(metrics_input.get("fixes_generated"), 0))),
+        "critical_fixes": int(max(critical_fixes, _as_int(metrics_input.get("critical_fixes"), 0))),
+        "high_fixes": int(max(high_fixes, _as_int(metrics_input.get("high_fixes"), 0))),
+        "medium_fixes": int(max(medium_fixes, _as_int(metrics_input.get("medium_fixes"), 0))),
+        "low_fixes": int(max(low_fixes, _as_int(metrics_input.get("low_fixes"), 0))),
+        "estimated_rows_affected": int(max(estimated_rows_affected, _as_int(metrics_input.get("estimated_rows_affected"), 0))),
         "fix_confidence": round(_coalesce_float(fix_confidence, metrics_input.get("fix_confidence"), fix_confidence), 4),
     }
 

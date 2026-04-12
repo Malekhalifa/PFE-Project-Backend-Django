@@ -314,6 +314,8 @@ FIX_PLANNER_INSTRUCTIONS = [
     "One fix card = one distinct, specific problem.",
     "If fixing a problem requires multiple SQL statements, include all of them in 'queries'.",
     "Use concrete column names and table names from the reports — never placeholders.",
+    "Each item in 'queries' MUST be a valid JSON string. Keep SQL single-line per array item and never emit bare newlines inside JSON strings.",
+    "Do not output trailing commas anywhere in JSON.",
     # ── SQL rules ───────────────────────────────────────────────────────
     "NULL filling — categorical columns: use mode (most frequent non-null value).",
     "NULL filling — numeric columns: use median (percentile_cont(0.5)).",
