@@ -1,12 +1,16 @@
 """
 Auth views using dj-rest-auth while preserving existing API shapes.
 """
+import logging
+
 from django.conf import settings
+from django.db import IntegrityError
 from django.shortcuts import redirect
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.messages.middleware import MessageMiddleware
 import requests as http_requests
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.test import APIRequestFactory
@@ -22,6 +26,9 @@ from dj_rest_auth.views import LoginView, LogoutView, UserDetailsView
 from .serializers import UserSerializer
 from .dj_rest_auth_serializers import CustomRegisterSerializer, TokenSocialLoginSerializer, CustomUserDetailsSerializer
 from .models import User
+
+
+logger = logging.getLogger(__name__)
 
 
 def _set_jwt_cookie(response, user):
@@ -43,11 +50,16 @@ def _set_jwt_cookie(response, user):
 
 def _get_or_create_social_user(email):
     """Find existing user by email or create a new one for social login."""
-    user, _ = User.objects.get_or_create(
-        email=email,
-        defaults={'username': email, 'role': 'user'},
-    )
-    return user
+    normalized_email = (email or '').strip().lower()
+    try:
+        user, _ = User.objects.get_or_create(
+            email=normalized_email,
+            defaults={'username': normalized_email, 'role': 'user'},
+        )
+        return user
+    except IntegrityError:
+        # Race-safe fallback when two social callbacks attempt the same email.
+        return User.objects.get(email__iexact=normalized_email)
 
 
 def _exchange_github_code(code):
@@ -111,26 +123,74 @@ class CustomRegisterView(RegisterView):
     def get_response_data(self, user):
         return {'user': UserSerializer(user).data}
 
+    @staticmethod
+    def _build_integrity_error_response(exc):
+        text = str(exc)
+        if 'users_email_key' in text or 'Key (email)=' in text:
+            message = 'This email is already registered. Welcome back! Please sign in instead.'
+            return Response(
+                {
+                    'email': [message],
+                    'error': message,
+                    'code': 'email_already_registered',
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        if 'users_username_key' in text or 'Key (username)=' in text:
+            message = 'That username is already taken. Please choose another one.'
+            return Response(
+                {
+                    'username': [message],
+                    'error': message,
+                    'code': 'username_already_registered',
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        logger.warning('Unhandled registration integrity error: %s', text)
+        return Response(
+            {
+                'error': 'We could not create your account due to a data conflict. Please try again.',
+                'code': 'registration_conflict',
+            },
+            status=status.HTTP_409_CONFLICT,
+        )
+
     def create(self, request, *args, **kwargs):
         """
         Mirror dj-rest-auth register flow but ensure successful signup sets
         the same JWT cookie used by login/social flows.
         """
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        data = self.get_response_data(user)
+        try:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            user = self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            data = self.get_response_data(user)
 
-        if data:
-            response = Response(
-                data,
-                status=status.HTTP_201_CREATED,
-                headers=headers,
+            if data:
+                response = Response(
+                    data,
+                    status=status.HTTP_201_CREATED,
+                    headers=headers,
+                )
+                return _set_jwt_cookie(response, user)
+
+            return Response(status=status.HTTP_204_NO_CONTENT, headers=headers)
+        except ValidationError:
+            raise
+        except IntegrityError as exc:
+            return self._build_integrity_error_response(exc)
+        except Exception:
+            logger.exception('Unexpected server error while registering user')
+            return Response(
+                {
+                    'error': 'Unexpected server error while creating your account. Please try again shortly.',
+                    'code': 'registration_server_error',
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-            return _set_jwt_cookie(response, user)
-
-        return Response(status=status.HTTP_204_NO_CONTENT, headers=headers)
 
 
 class CustomLoginView(LoginView):

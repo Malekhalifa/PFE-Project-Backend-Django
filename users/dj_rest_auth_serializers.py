@@ -2,6 +2,7 @@
 dj-rest-auth custom serializers to keep existing API shapes and user fields.
 """
 
+from django.db import IntegrityError
 from dj_rest_auth.registration.serializers import RegisterSerializer
 from dj_rest_auth.registration.serializers import SocialLoginSerializer
 from dj_rest_auth.serializers import UserDetailsSerializer
@@ -17,6 +18,8 @@ class CustomRegisterSerializer(RegisterSerializer):
     first_name = serializers.CharField(required=False, allow_blank=True, max_length=150)
     last_name = serializers.CharField(required=False, allow_blank=True, max_length=150)
 
+    duplicate_email_error = 'This email is already registered. Try signing in instead.'
+
     def validate_username(self, value):
         if not value or not value.strip():
             return value
@@ -24,9 +27,16 @@ class CustomRegisterSerializer(RegisterSerializer):
             raise serializers.ValidationError('A user with that username already exists.')
         return value.strip()
 
+    def validate_email(self, value):
+        email = (value or '').strip().lower()
+        if User.objects.filter(email__iexact=email).exists():
+            raise serializers.ValidationError(self.duplicate_email_error)
+        return email
+
     def get_cleaned_data(self):
         data = super().get_cleaned_data()
-        email = data.get('email')
+        email = (data.get('email') or '').strip().lower()
+        data['email'] = email
         username = (self.validated_data.get('username') or '').strip()
         if not username and email:
             base = email.split('@')[0]
@@ -42,7 +52,13 @@ class CustomRegisterSerializer(RegisterSerializer):
         return data
 
     def save(self, request):
-        user = super().save(request)
+        try:
+            user = super().save(request)
+        except IntegrityError as exc:
+            if 'users_email_key' in str(exc) or 'Key (email)=' in str(exc):
+                raise serializers.ValidationError({'email': [self.duplicate_email_error]})
+            raise
+
         update_fields = []
         if getattr(user, 'role', None) != 'user':
             user.role = 'user'

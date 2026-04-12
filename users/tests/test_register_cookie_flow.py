@@ -4,11 +4,13 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import django
+from django.db import IntegrityError
 from rest_framework import status
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 django.setup()
 
+from users import dj_rest_auth_views
 from users.dj_rest_auth_views import CustomRegisterView
 
 
@@ -67,6 +69,67 @@ class CustomRegisterViewCookieTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         mock_set_jwt_cookie.assert_not_called()
+
+    @patch("users.dj_rest_auth_views._set_jwt_cookie")
+    def test_create_returns_409_for_duplicate_email_integrity_error(self, mock_set_jwt_cookie):
+        view = CustomRegisterView()
+
+        request = SimpleNamespace(data={"email": "existing@example.com"})
+
+        serializer = MagicMock()
+        serializer.data = {"email": "existing@example.com"}
+        serializer.is_valid.return_value = True
+
+        view.get_serializer = MagicMock(return_value=serializer)
+        view.perform_create = MagicMock(
+            side_effect=IntegrityError(
+                'duplicate key value violates unique constraint "users_email_key" DETAIL: Key (email)=(existing@example.com) already exists.'
+            )
+        )
+
+        response = view.create(request)
+
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+        self.assertEqual(response.data.get("code"), "email_already_registered")
+        self.assertIn("email", response.data)
+        mock_set_jwt_cookie.assert_not_called()
+
+    @patch("users.dj_rest_auth_views._set_jwt_cookie")
+    @patch("users.dj_rest_auth_views.logger.exception")
+    def test_create_returns_500_json_for_unexpected_error(self, mock_logger_exception, mock_set_jwt_cookie):
+        view = CustomRegisterView()
+
+        request = SimpleNamespace(data={"email": "new.user@example.com"})
+
+        serializer = MagicMock()
+        serializer.data = {"email": "new.user@example.com"}
+        serializer.is_valid.return_value = True
+
+        view.get_serializer = MagicMock(return_value=serializer)
+        view.perform_create = MagicMock(side_effect=RuntimeError("boom"))
+
+        response = view.create(request)
+
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        self.assertEqual(response.data.get("code"), "registration_server_error")
+        self.assertIn("error", response.data)
+        mock_logger_exception.assert_called_once()
+        mock_set_jwt_cookie.assert_not_called()
+
+
+class SocialUserRaceSafetyTests(unittest.TestCase):
+    @patch("users.dj_rest_auth_views.User.objects.get")
+    @patch("users.dj_rest_auth_views.User.objects.get_or_create")
+    def test_get_or_create_social_user_falls_back_after_integrity_error(self, mock_get_or_create, mock_get):
+        expected_user = SimpleNamespace(id="user-1", email="race@example.com", role="user")
+        mock_get_or_create.side_effect = IntegrityError('duplicate key value violates unique constraint "users_email_key"')
+        mock_get.return_value = expected_user
+
+        user = dj_rest_auth_views._get_or_create_social_user("Race@Example.com")
+
+        self.assertIs(user, expected_user)
+        mock_get_or_create.assert_called_once()
+        mock_get.assert_called_once_with(email__iexact="race@example.com")
 
 
 if __name__ == "__main__":
