@@ -111,6 +111,27 @@ class CustomRegisterView(RegisterView):
     def get_response_data(self, user):
         return {'user': UserSerializer(user).data}
 
+    def create(self, request, *args, **kwargs):
+        """
+        Mirror dj-rest-auth register flow but ensure successful signup sets
+        the same JWT cookie used by login/social flows.
+        """
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        data = self.get_response_data(user)
+
+        if data:
+            response = Response(
+                data,
+                status=status.HTTP_201_CREATED,
+                headers=headers,
+            )
+            return _set_jwt_cookie(response, user)
+
+        return Response(status=status.HTTP_204_NO_CONTENT, headers=headers)
+
 
 class CustomLoginView(LoginView):
     """POST /api/login — verify credentials, set JWT cookie."""
