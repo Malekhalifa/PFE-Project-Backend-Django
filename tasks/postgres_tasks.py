@@ -1,10 +1,21 @@
 import logging
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from django.db import close_old_connections
+from django.db.models import Q
+from django.utils import timezone as dj_tz
 from config.celery import app
 from services.postgres_service import analyze_postgres_database
+from services.notification_service import (
+    notify_admin_job_failed,
+    notify_admin_job_failed_sms,
+    notify_admin_job_stuck,
+    notify_admin_job_stuck_sms,
+    notify_user_analysis_started,
+    notify_user_analysis_results_ready,
+    notify_user_job_completed_sms,
+)
 from api.db import (
     get_job,
     get_analysis_result,
@@ -12,7 +23,35 @@ from api.db import (
     save_analysis_result,
     update_job_cleaning_report,
 )
-from api.models import audit_log
+from api.models import Job, audit_log
+from users.models import User
+
+_logger = logging.getLogger(__name__)
+
+
+def _safe_notify(func, *args):
+    try:
+        return func(*args)
+    except Exception:
+        _logger.exception('Notification call failed: %s', getattr(func, '__name__', str(func)))
+        return None
+
+
+def _get_user_contact(job_id: str) -> tuple[str | None, str | None]:
+    job = get_job(job_id) or {}
+    user_id = job.get('user_id')
+    if not user_id:
+        return None, None
+
+    try:
+        user = User.objects.filter(id=user_id).only('email', 'phone_number').first()
+    except Exception:
+        _logger.exception('Failed to resolve user contact for job %s', job_id)
+        return None, None
+
+    if not user:
+        return None, None
+    return user.email, user.phone_number
 
 @app.task(bind=True, max_retries=0, time_limit=1800) # 30 mins limit to give AI agents enough time
 def analyze_postgres_task(self, job_id: str, connection_string: str, domain_rules: list = None):
@@ -30,6 +69,9 @@ def analyze_postgres_task(self, job_id: str, connection_string: str, domain_rule
 
     update_job_status(job_id, 'running')
     audit_log(job_id, 'DB_ANALYSIS_STARTED', {"target": "PostgreSQL Agentic Workflow"})
+
+    user_email, phone_number = _get_user_contact(job_id)
+    _safe_notify(notify_user_analysis_started, user_email, job_id)
 
     try:
         started_at = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
@@ -63,9 +105,20 @@ def analyze_postgres_task(self, job_id: str, connection_string: str, domain_rule
             'duration_ms': duration_ms,
         })
 
+        _safe_notify(notify_user_analysis_results_ready, user_email, job_id)
+        _safe_notify(notify_user_job_completed_sms, phone_number, job_id)
+
     except Exception as e:
+        failed_at_step = 'unknown'
+        try:
+            failed_at_step = (get_job(job_id) or {}).get('status') or 'unknown'
+        except Exception:
+            _logger.exception('Failed to resolve failed pipeline step for job %s', job_id)
+
         update_job_status(job_id, 'failed')
         audit_log(job_id, 'DB_ANALYSIS_FAILED', {'error': str(e)})
+        _safe_notify(notify_admin_job_failed, job_id, failed_at_step, str(e))
+        _safe_notify(notify_admin_job_failed_sms, job_id, failed_at_step)
         raise
 
 
@@ -162,3 +215,35 @@ def execute_postgres_cleaning_task(self, job_id: str):
         audit_log(job_id, 'POSTGRES_CLEANING_FAILED', {'error': str(exc)})
         # Do NOT re-raise — Celery max_retries=0 means a raise would permanently
         # fail the task and obscure the real error from the audit log.
+
+
+@app.task(bind=True)
+def check_stuck_jobs(self):
+    """
+    Periodic monitor that alerts admins when jobs stay in a running phase too long.
+
+    Criteria:
+      - status == 'running' OR status starts with 'running_'
+      - updated_at older than 10 minutes
+    """
+    close_old_connections()
+
+    now = dj_tz.now()
+    stale_before = now - timedelta(minutes=10)
+
+    stuck_jobs = Job.objects.filter(
+        (Q(status='running') | Q(status__startswith='running_')),
+        updated_at__lt=stale_before,
+    ).only('id', 'status', 'updated_at')
+
+    alert_count = 0
+    for job in stuck_jobs:
+        duration_minutes = max(10, int((now - job.updated_at).total_seconds() // 60))
+        _safe_notify(notify_admin_job_stuck, job.id, job.status, duration_minutes)
+        _safe_notify(notify_admin_job_stuck_sms, job.id, job.status, duration_minutes)
+        alert_count += 1
+
+    if alert_count:
+        _logger.warning('check_stuck_jobs sent %s alert(s)', alert_count)
+
+    return {'stuck_jobs_alerted': alert_count}

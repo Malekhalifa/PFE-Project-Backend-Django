@@ -6,6 +6,7 @@ Migrated from Node.js + FastAPI to Django + DRF.
 import os
 from pathlib import Path
 from datetime import timedelta
+from email.utils import formataddr
 
 import environ
 
@@ -308,5 +309,27 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Email (password reset) — console backend until SMTP is configured
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Brevo SMTP email transport + Brevo API key for SMS
+BREVO_SMTP_HOST = env('BREVO_SMTP_HOST', default='smtp-relay.brevo.com')
+BREVO_SMTP_PORT = env.int('BREVO_SMTP_PORT', default=587)
+BREVO_SMTP_LOGIN = env('BREVO_SMTP_LOGIN', default='')
+BREVO_SMTP_KEY = env('BREVO_SMTP_KEY', default='')
+BREVO_API_KEY = env('BREVO_API_KEY', default='')
+
+EMAIL_FROM_NAME = env('EMAIL_FROM_NAME', default='QualityLab')
+EMAIL_FROM_ADDRESS = env('EMAIL_FROM_ADDRESS', default='noreply@qualitylab.com')
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = BREVO_SMTP_HOST
+EMAIL_PORT = BREVO_SMTP_PORT
+EMAIL_HOST_USER = BREVO_SMTP_LOGIN
+EMAIL_HOST_PASSWORD = BREVO_SMTP_KEY
+EMAIL_USE_SSL = env.bool('BREVO_SMTP_USE_SSL', default=BREVO_SMTP_PORT == 465)
+EMAIL_USE_TLS = env.bool('BREVO_SMTP_USE_TLS', default=not EMAIL_USE_SSL)
+if EMAIL_USE_SSL:
+    EMAIL_USE_TLS = False
+
+DEFAULT_FROM_EMAIL = formataddr((EMAIL_FROM_NAME, EMAIL_FROM_ADDRESS))
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+ADMIN_EMAIL = env('ADMIN_EMAIL', default='')
+ADMIN_PHONE = env('ADMIN_PHONE', default='')

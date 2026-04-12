@@ -13,6 +13,7 @@ Each task:
   5. Writes audit log entries
 """
 import os
+import logging
 import time
 from datetime import datetime, timezone
 
@@ -32,6 +33,32 @@ from api.db import (
     save_cleaning_result,
 )
 from api.models import audit_log
+from users.models import User
+from services.notification_service import notify_user_cleaning_done
+
+
+logger = logging.getLogger(__name__)
+
+
+def _safe_notify(func, *args):
+    try:
+        return func(*args)
+    except Exception:
+        logger.exception('Notification call failed: %s', getattr(func, '__name__', str(func)))
+        return None
+
+
+def _get_user_email(job_id: str) -> str | None:
+    job = get_job(job_id) or {}
+    user_id = job.get('user_id')
+    if not user_id:
+        return None
+    try:
+        user = User.objects.filter(id=user_id).only('email').first()
+    except Exception:
+        logger.exception('Failed to resolve user email for job %s', job_id)
+        return None
+    return user.email if user else None
 
 
 LARGE_FILE_THRESHOLD_BYTES = 100 * 1024 * 1024  # 100 MB
@@ -147,6 +174,7 @@ def clean_csv_task(self, job_id, file_path, mode='auto', rules=None, options=Non
         # Update job with cleaned file path
         update_job_cleaned_path(job_id, result['cleaned_file_path'])
         update_job_status(job_id, 'cleaned')
+        _safe_notify(notify_user_cleaning_done, _get_user_email(job_id), job_id)
 
         # Audit log each rule applied
         for r in result['rules_applied']:

@@ -11,6 +11,7 @@ import math
 import os
 import secrets
 import uuid
+import logging
 import requests as http_requests
 
 import pandas as pd
@@ -46,6 +47,7 @@ from api.permissions import find_owned_job
 from api.serializers import CleanRequestSerializer, JobDeleteSerializer
 from agents.query_executor_agent import QueryExecutorAgent
 from services.analysis_service import compute_row_outliers, to_native
+from services.notification_service import notify_user_fix_executed
 from services.postgres_connection import (
     looks_like_postgres_dsn,
     redact_postgres_dsn,
@@ -54,6 +56,9 @@ from services.postgres_connection import (
 from tasks.csv_tasks import analyze_csv_task, clean_csv_task
 from tasks.postgres_tasks import analyze_postgres_task
 from users.models import User
+
+
+logger = logging.getLogger(__name__)
 
 
 def _sanitize_for_json(obj):
@@ -1258,6 +1263,12 @@ class ExecuteFixView(APIView):
                     'error': execution_log.get('error'),
                 },
             )
+
+        try:
+            user_email = getattr(request.user, 'email', '')
+            notify_user_fix_executed(user_email, job_id, execution_log.get('status'))
+        except Exception:
+            logger.exception('Failed to send fix execution notification for job %s', job_id)
 
         return Response(execution_log, status=status.HTTP_200_OK)
 

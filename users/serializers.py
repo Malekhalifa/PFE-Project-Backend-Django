@@ -12,6 +12,7 @@ from .models import User
 
 class RegisterSerializer(serializers.Serializer):
     email = serializers.EmailField()
+    phone_number = serializers.CharField(required=False, allow_blank=True, max_length=32)
     password = serializers.CharField(min_length=8, write_only=True)
 
     def validate_email(self, value):
@@ -34,6 +35,7 @@ class RegisterSerializer(serializers.Serializer):
         user = User.objects.create_user(
             username=username,
             email=email,
+            phone_number=(validated_data.get('phone_number') or '').strip(),
             password=validated_data['password'],
             role='user',  # hard-coded — no admin via register
         )
@@ -49,4 +51,5 @@ class UserSerializer(serializers.Serializer):
     """Read-only serializer matching Node.js { id, email, role } shape."""
     id = serializers.UUIDField()
     email = serializers.EmailField()
+    phone_number = serializers.CharField(allow_blank=True, required=False)
     role = serializers.CharField()

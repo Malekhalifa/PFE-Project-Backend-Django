@@ -5,11 +5,13 @@ from django.conf import settings
 from django.shortcuts import redirect
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.messages.middleware import MessageMiddleware
+import requests as http_requests
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.test import APIRequestFactory
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import AccessToken
 
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
@@ -19,6 +21,77 @@ from dj_rest_auth.views import LoginView, LogoutView, UserDetailsView
 
 from .serializers import UserSerializer
 from .dj_rest_auth_serializers import CustomRegisterSerializer, TokenSocialLoginSerializer, CustomUserDetailsSerializer
+from .models import User
+
+
+def _set_jwt_cookie(response, user):
+    """Create a JWT access token and set it as an httpOnly cookie."""
+    token = AccessToken.for_user(user)
+    token['role'] = user.role
+
+    response.set_cookie(
+        key=settings.JWT_COOKIE_NAME,
+        value=str(token),
+        httponly=settings.JWT_COOKIE_HTTPONLY,
+        secure=settings.JWT_COOKIE_SECURE,
+        samesite=settings.JWT_COOKIE_SAMESITE,
+        max_age=settings.JWT_COOKIE_MAX_AGE,
+        path=settings.JWT_COOKIE_PATH,
+    )
+    return response
+
+
+def _get_or_create_social_user(email):
+    """Find existing user by email or create a new one for social login."""
+    user, _ = User.objects.get_or_create(
+        email=email,
+        defaults={'username': email, 'role': 'user'},
+    )
+    return user
+
+
+def _exchange_github_code(code):
+    """Exchange a GitHub OAuth code for an access token and return verified email."""
+    try:
+        token_resp = http_requests.post(
+            'https://github.com/login/oauth/access_token',
+            json={
+                'client_id': settings.SOCIAL_AUTH_GITHUB_KEY,
+                'client_secret': settings.SOCIAL_AUTH_GITHUB_SECRET,
+                'code': code,
+            },
+            headers={'Accept': 'application/json'},
+            timeout=10,
+        )
+        if token_resp.status_code != 200:
+            return None
+
+        access_token = token_resp.json().get('access_token')
+        if not access_token:
+            return None
+
+        emails_resp = http_requests.get(
+            'https://api.github.com/user/emails',
+            headers={
+                'Authorization': f'Bearer {access_token}',
+                'Accept': 'application/vnd.github+json',
+            },
+            timeout=10,
+        )
+        if emails_resp.status_code != 200:
+            return None
+
+        emails = emails_resp.json()
+        for entry in emails:
+            if entry.get('primary') and entry.get('verified'):
+                return entry['email']
+        for entry in emails:
+            if entry.get('verified'):
+                return entry['email']
+
+        return None
+    except http_requests.RequestException:
+        return None
 
 
 class CustomRegisterView(RegisterView):
@@ -152,41 +225,10 @@ class GitHubCallbackView(APIView):
         if error or not code:
             return redirect(f'{frontend}/#/login?error=github_denied')
 
-        factory = APIRequestFactory()
-        post_request = factory.post(
-            '/api/github/callback',
-            {'code': code, 'redirect_uri': settings.GITHUB_CALLBACK_URL},
-        )
-        SessionMiddleware(lambda req: None).process_request(post_request)
-        post_request.session.save()
-        MessageMiddleware(lambda req: None).process_request(post_request)
-        login_response = GitHubSocialLoginView.as_view()(post_request)
+        email = _exchange_github_code(code)
+        if not email:
+            return redirect(f'{frontend}/#/login?error=github_failed')
 
-        if login_response.status_code >= 400:
-            detail = None
-            if hasattr(login_response, 'data'):
-                detail = login_response.data
-            elif hasattr(login_response, 'content'):
-                try:
-                    detail = login_response.content.decode('utf-8')
-                except Exception:
-                    detail = 'github_failed'
-            return Response(
-                {'error': 'github_failed', 'detail': detail},
-                status=login_response.status_code,
-            )
-
+        user = _get_or_create_social_user(email)
         response = redirect(f'{frontend}/#/')
-        for key, morsel in login_response.cookies.items():
-            response.set_cookie(
-                key=key,
-                value=morsel.value,
-                max_age=morsel['max-age'] or None,
-                expires=morsel['expires'] or None,
-                path=morsel['path'] or '/',
-                domain=morsel['domain'] or None,
-                secure=bool(morsel['secure']),
-                httponly=bool(morsel['httponly']),
-                samesite=morsel['samesite'] or None,
-            )
-        return response
+        return _set_jwt_cookie(response, user)
