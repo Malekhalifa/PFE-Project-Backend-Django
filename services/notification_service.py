@@ -150,6 +150,37 @@ def notify_user_fix_executed(user_email: str, job_id: str, status: str) -> int:
     )
 
 
+def send_email_verification_challenge(
+    *,
+    user_email: str,
+    verification_code: str,
+    verify_link: str,
+    is_resend: bool = False,
+) -> int:
+    ttl_minutes = int(getattr(settings, 'EMAIL_VERIFICATION_CODE_TTL_MINUTES', 15))
+    subject = '🔐 QualityLab — Verify your email'
+    title = 'Verify your email before analysis'
+    intro = (
+        '<p>We sent this reminder because your account still needs verification.</p>'
+        if is_resend
+        else '<p>Welcome to QualityLab. Please verify your email before starting analysis.</p>'
+    )
+    message_html = (
+        f'{intro}'
+        '<p>You can verify in one click with the button below, or enter this 6-digit code in the app:</p>'
+        f'<p style="font-size:24px;font-weight:700;letter-spacing:4px;color:#111827;">{verification_code}</p>'
+        f'<p>This code expires in {ttl_minutes} minute(s).</p>'
+    )
+    return _send_html_email(
+        to_email=user_email,
+        subject=subject,
+        title=title,
+        message_html=message_html,
+        cta_label='Verify Email',
+        cta_href=verify_link,
+    )
+
+
 def notify_admin_job_failed(job_id: str, failed_at_step: str, error_message: str) -> int:
     subject = '🔴 QualityLab ALERT — Pipeline Job Failed'
     message_html = (

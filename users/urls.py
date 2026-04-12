@@ -15,6 +15,9 @@ urlpatterns = [
     path('social-login', views.SocialLoginProxyView.as_view(), name='social-login'),
     path('github/login', views.GitHubLoginView.as_view(), name='github-login'),
     path('github/callback', views.GitHubCallbackView.as_view(), name='github-callback'),
+    path('email-verification/resend', views.EmailVerificationResendView.as_view(), name='email-verification-resend'),
+    path('email-verification/verify-code', views.EmailVerificationVerifyCodeView.as_view(), name='email-verification-verify-code'),
+    path('email-verification/verify-link', views.EmailVerificationVerifyLinkView.as_view(), name='email-verification-verify-link'),
 
     # Password reset/change
     path('password/reset', PasswordResetView.as_view(), name='password_reset'),

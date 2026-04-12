@@ -62,6 +62,22 @@ from users.models import User
 logger = logging.getLogger(__name__)
 
 
+def _email_not_verified_response() -> Response:
+    return Response(
+        {
+            'error': 'Please verify your email before running this action.',
+            'code': 'email_not_verified',
+        },
+        status=status.HTTP_403_FORBIDDEN,
+    )
+
+
+def _require_verified_email(request) -> Response | None:
+    if bool(getattr(request.user, 'email_verified', False)):
+        return None
+    return _email_not_verified_response()
+
+
 def _sanitize_for_json(obj):
     """
     Recursively sanitize data for JSON serialization.
@@ -303,6 +319,10 @@ class UploadView(APIView):
     parser_classes = [MultiPartParser]
 
     def post(self, request):
+        unverified = _require_verified_email(request)
+        if unverified:
+            return unverified
+
         uploaded_file = request.FILES.get('file')
         if not uploaded_file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
@@ -351,6 +371,10 @@ class AnalyzeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, jobId):
+        unverified = _require_verified_email(request)
+        if unverified:
+            return unverified
+
         job = find_owned_job(jobId, request.user)
         if not job:
             return Response(
@@ -418,6 +442,10 @@ class AnalyzePostgresView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        unverified = _require_verified_email(request)
+        if unverified:
+            return unverified
+
         conn_str = request.data.get('connection_string')
         domain_rules = request.data.get('domain_rules', [])
         
@@ -744,6 +772,10 @@ class CleanView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, jobId):
+        unverified = _require_verified_email(request)
+        if unverified:
+            return unverified
+
         job = find_owned_job(jobId, request.user)
         if not job:
             return Response({'error': 'Job not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -952,6 +984,10 @@ class JobsView(APIView):
 
     def delete(self, request):
         """Bulk delete jobs. Body: { job_ids: ["id1", "id2", ...] }"""
+        unverified = _require_verified_email(request)
+        if unverified:
+            return unverified
+
         serializer = JobDeleteSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(
@@ -1273,6 +1309,10 @@ class ExecuteFixView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, job_id):
+        unverified = _require_verified_email(request)
+        if unverified:
+            return unverified
+
         # 1 — Ownership
         job = find_owned_job(job_id, request.user)
         if not job:

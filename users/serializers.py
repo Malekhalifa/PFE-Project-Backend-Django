@@ -50,3 +50,4 @@ class UserSerializer(serializers.Serializer):
     id = serializers.UUIDField()
     email = serializers.EmailField()
     role = serializers.CharField()
+    email_verified = serializers.BooleanField()

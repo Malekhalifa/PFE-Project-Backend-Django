@@ -8,6 +8,7 @@ from django.db import IntegrityError
 from django.shortcuts import redirect
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.messages.middleware import MessageMiddleware
+from django.utils import timezone
 import requests as http_requests
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
@@ -26,9 +27,61 @@ from dj_rest_auth.views import LoginView, LogoutView, UserDetailsView
 from .serializers import UserSerializer
 from .dj_rest_auth_serializers import CustomRegisterSerializer, TokenSocialLoginSerializer, CustomUserDetailsSerializer
 from .models import User
+from .email_verification import (
+    issue_email_verification_challenge,
+    verify_email_with_code,
+    verify_email_with_token,
+)
+from services.notification_service import send_email_verification_challenge
 
 
 logger = logging.getLogger(__name__)
+
+
+def _build_verify_redirect_url(status_value: str) -> str:
+    base_url = settings.FRONTEND_VERIFY_EMAIL_URL
+    separator = '&' if '?' in base_url else '?'
+    return f'{base_url}{separator}status={status_value}'
+
+
+def _trigger_verification_email(request, user, *, is_resend: bool) -> dict:
+    challenge, raw_code, raw_token, cooldown_remaining = issue_email_verification_challenge(user)
+    if cooldown_remaining > 0:
+        return {
+            'sent': False,
+            'cooldown_remaining': cooldown_remaining,
+            'error': None,
+        }
+
+    if not challenge:
+        return {
+            'sent': False,
+            'cooldown_remaining': 0,
+            'error': None,
+        }
+
+    verify_link = request.build_absolute_uri(
+        f'/api/email-verification/verify-link?token={raw_token}'
+    )
+    try:
+        send_email_verification_challenge(
+            user_email=user.email,
+            verification_code=raw_code,
+            verify_link=verify_link,
+            is_resend=is_resend,
+        )
+        return {
+            'sent': True,
+            'cooldown_remaining': 0,
+            'error': None,
+        }
+    except Exception:
+        logger.exception('Failed to send verification email for user %s', user.id)
+        return {
+            'sent': False,
+            'cooldown_remaining': 0,
+            'error': 'email_send_failed',
+        }
 
 
 def _set_jwt_cookie(response, user):
@@ -51,15 +104,32 @@ def _set_jwt_cookie(response, user):
 def _get_or_create_social_user(email):
     """Find existing user by email or create a new one for social login."""
     normalized_email = (email or '').strip().lower()
+    now = timezone.now()
     try:
-        user, _ = User.objects.get_or_create(
+        user, created = User.objects.get_or_create(
             email=normalized_email,
-            defaults={'username': normalized_email, 'role': 'user'},
+            defaults={
+                'username': normalized_email,
+                'role': 'user',
+                'email_verified': True,
+                'email_verified_at': now,
+            },
         )
+        if not created and not bool(getattr(user, 'email_verified', False)):
+            user.email_verified = True
+            user.email_verified_at = now
+            if hasattr(user, 'save'):
+                user.save(update_fields=['email_verified', 'email_verified_at'])
         return user
     except IntegrityError:
         # Race-safe fallback when two social callbacks attempt the same email.
-        return User.objects.get(email__iexact=normalized_email)
+        user = User.objects.get(email__iexact=normalized_email)
+        if not bool(getattr(user, 'email_verified', False)):
+            user.email_verified = True
+            user.email_verified_at = now
+            if hasattr(user, 'save'):
+                user.save(update_fields=['email_verified', 'email_verified_at'])
+        return user
 
 
 def _exchange_github_code(code):
@@ -175,7 +245,18 @@ class CustomRegisterView(RegisterView):
                     status=status.HTTP_201_CREATED,
                     headers=headers,
                 )
-                return _set_jwt_cookie(response, user)
+                response = _set_jwt_cookie(response, user)
+                is_verified = bool(getattr(user, 'email_verified', False))
+                response.data['email_verification_required'] = not is_verified
+                should_trigger_verification = isinstance(user, User) and not is_verified
+                if should_trigger_verification:
+                    verification_state = _trigger_verification_email(request, user, is_resend=False)
+                    response.data['email_verification_email_sent'] = verification_state.get('sent', False)
+                    response.data['email_verification_retry_after_seconds'] = verification_state.get('cooldown_remaining', 0)
+                else:
+                    response.data['email_verification_email_sent'] = False
+                    response.data['email_verification_retry_after_seconds'] = 0
+                return response
 
             return Response(status=status.HTTP_204_NO_CONTENT, headers=headers)
         except ValidationError:
@@ -201,6 +282,16 @@ class CustomLoginView(LoginView):
     def get_response(self):
         response = super().get_response()
         response.data = {'user': UserSerializer(self.user).data}
+        is_verified = bool(getattr(self.user, 'email_verified', False))
+        response.data['email_verification_required'] = not is_verified
+        should_trigger_verification = isinstance(self.user, User) and not is_verified
+        if should_trigger_verification:
+            verification_state = _trigger_verification_email(self.request, self.user, is_resend=False)
+            response.data['email_verification_email_sent'] = verification_state.get('sent', False)
+            response.data['email_verification_retry_after_seconds'] = verification_state.get('cooldown_remaining', 0)
+        else:
+            response.data['email_verification_email_sent'] = False
+            response.data['email_verification_retry_after_seconds'] = 0
         return response
 
 
@@ -242,6 +333,15 @@ class GoogleSocialLoginView(SocialLoginView):
     serializer_class = TokenSocialLoginSerializer
     permission_classes = [AllowAny]
 
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        user = getattr(self, 'user', None)
+        if user and not user.email_verified:
+            user.email_verified = True
+            user.email_verified_at = timezone.now()
+            user.save(update_fields=['email_verified', 'email_verified_at'])
+        return response
+
 
 class GitHubSocialLoginView(SocialLoginView):
     """Internal social login view for GitHub OAuth."""
@@ -271,6 +371,115 @@ class SocialLoginProxyView(APIView):
         post_request.session.save()
         MessageMiddleware(lambda req: None).process_request(post_request)
         return GoogleSocialLoginView.as_view()(post_request)
+
+
+class EmailVerificationResendView(APIView):
+    """POST /api/email-verification/resend — send a fresh verification email."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        if user.email_verified:
+            return Response(
+                {
+                    'message': 'Email already verified.',
+                    'code': 'already_verified',
+                    'user': UserSerializer(user).data,
+                }
+            )
+
+        verification_state = _trigger_verification_email(request, user, is_resend=True)
+        if verification_state.get('cooldown_remaining', 0) > 0:
+            return Response(
+                {
+                    'error': 'Please wait before requesting a new verification email.',
+                    'code': 'verification_cooldown',
+                    'retry_after_seconds': verification_state['cooldown_remaining'],
+                },
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+
+        if verification_state.get('error'):
+            return Response(
+                {
+                    'error': 'Failed to send verification email. Please try again.',
+                    'code': 'verification_email_send_failed',
+                },
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        return Response(
+            {
+                'message': 'Verification email sent.',
+                'code': 'verification_email_sent',
+                'retry_after_seconds': int(getattr(settings, 'EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS', 60)),
+            }
+        )
+
+
+class EmailVerificationVerifyCodeView(APIView):
+    """POST /api/email-verification/verify-code — verify account by 6-digit code."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        code = request.data.get('code', '')
+        result = verify_email_with_code(user, code)
+
+        if result in {'verified', 'already_verified'}:
+            return Response(
+                {
+                    'message': 'Email verified successfully.',
+                    'code': 'email_verified',
+                    'user': UserSerializer(user).data,
+                }
+            )
+
+        if result == 'too_many_attempts':
+            return Response(
+                {
+                    'error': 'Too many invalid attempts. Request a new verification email.',
+                    'code': 'verification_too_many_attempts',
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if result == 'challenge_missing':
+            return Response(
+                {
+                    'error': 'Verification code expired. Request a new verification email.',
+                    'code': 'verification_code_expired',
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(
+            {
+                'error': 'Invalid verification code.',
+                'code': 'verification_code_invalid',
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+
+class EmailVerificationVerifyLinkView(APIView):
+    """GET /api/email-verification/verify-link?token=... — verify by one-click link."""
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        token = request.query_params.get('token', '')
+        user, result = verify_email_with_token(token)
+
+        if result in {'verified', 'already_verified'}:
+            response = redirect(_build_verify_redirect_url('verified'))
+            if user is not None:
+                response = _set_jwt_cookie(response, user)
+            return response
+
+        if result in {'token_expired', 'token_consumed'}:
+            return redirect(_build_verify_redirect_url('expired'))
+
+        return redirect(_build_verify_redirect_url('invalid'))
 
 
 class GitHubLoginView(APIView):
