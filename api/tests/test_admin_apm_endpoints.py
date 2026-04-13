@@ -181,21 +181,47 @@ class AdminApmEndpointTests(TestCase):
 
     def test_pipeline_performance_returns_measured_metrics_when_step_events_exist(self):
         job = self._create_job(user=self.regular_user, status='completed', mode='agentic_postgres')
+        pipeline_run_id = 'run-measured-1'
 
         self._create_audit(
             job_id=job.id,
             event_type='PIPELINE_STEP_COMPLETED',
-            payload={'step': 'schema_validation', 'duration_ms': 150, 'status_code': 200},
+            payload={
+                'step': 'schema_validation',
+                'duration_ms': 150,
+                'status_code': 200,
+                'pipeline_run_id': pipeline_run_id,
+            },
         )
         self._create_audit(
             job_id=job.id,
             event_type='PIPELINE_STEP_COMPLETED',
-            payload={'step': 'schema_validation', 'duration_ms': 250, 'status_code': 200},
+            payload={
+                'step': 'schema_validation',
+                'duration_ms': 250,
+                'status_code': 200,
+                'pipeline_run_id': pipeline_run_id,
+            },
         )
         self._create_audit(
             job_id=job.id,
             event_type='PIPELINE_STEP_FAILED',
-            payload={'step': 'schema_validation', 'duration_ms': 300, 'status_code': 500},
+            payload={
+                'step': 'schema_validation',
+                'duration_ms': 300,
+                'status_code': 500,
+                'pipeline_run_id': pipeline_run_id,
+            },
+        )
+        self._create_audit(
+            job_id=job.id,
+            event_type='PIPELINE_STEP_COMPLETED',
+            payload={
+                'step': 'saving_guidelines',
+                'duration_ms': 50,
+                'status_code': 200,
+                'pipeline_run_id': pipeline_run_id,
+            },
         )
 
         request = self._auth_request(
@@ -217,7 +243,19 @@ class AdminApmEndpointTests(TestCase):
         self.assertAlmostEqual(float(schema_metric.get('success_rate')), 66.67, places=2)
         self.assertAlmostEqual(float(schema_metric.get('average_duration_ms')), 233.33, places=2)
 
-    def test_pipeline_performance_falls_back_to_estimated_mode_without_step_events(self):
+        saving_metric = next((row for row in step_rows if row.get('step') == 'saving_guidelines'), None)
+        self.assertIsNotNone(saving_metric)
+        self.assertEqual(saving_metric.get('source'), 'measured')
+        self.assertEqual(saving_metric.get('sample_count'), 1)
+
+        total_metric = next((row for row in step_rows if row.get('step') == 'total_pipeline'), None)
+        self.assertIsNotNone(total_metric)
+        self.assertEqual(total_metric.get('source'), 'measured')
+        self.assertEqual(total_metric.get('sample_count'), 1)
+        self.assertAlmostEqual(float(total_metric.get('average_duration_ms')), 750.0, places=2)
+        self.assertAlmostEqual(float(total_metric.get('success_rate')), 0.0, places=2)
+
+    def test_pipeline_performance_keeps_measured_only_mode_without_step_events(self):
         job = self._create_job(user=self.regular_user, status='completed', mode='agentic_postgres')
 
         self._create_audit(
@@ -240,15 +278,77 @@ class AdminApmEndpointTests(TestCase):
         response = AdminPipelinePerformanceView.as_view()(request)
 
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.data.get('uses_estimation'))
+        self.assertFalse(response.data.get('uses_estimation'))
 
         step_rows = response.data.get('steps') or []
         schema_metric = next((row for row in step_rows if row.get('step') == 'schema_validation'), None)
         self.assertIsNotNone(schema_metric)
-        self.assertEqual(schema_metric.get('source'), 'estimated')
-        self.assertEqual(schema_metric.get('sample_count'), 1)
-        self.assertAlmostEqual(float(schema_metric.get('average_duration_ms')), 100.0, places=2)
-        self.assertAlmostEqual(float(schema_metric.get('success_rate')), 50.0, places=2)
+        self.assertEqual(schema_metric.get('source'), 'none')
+        self.assertEqual(schema_metric.get('sample_count'), 0)
+        self.assertAlmostEqual(float(schema_metric.get('average_duration_ms')), 0.0, places=2)
+        self.assertAlmostEqual(float(schema_metric.get('success_rate')), 0.0, places=2)
+
+        total_metric = next((row for row in step_rows if row.get('step') == 'total_pipeline'), None)
+        self.assertIsNotNone(total_metric)
+        self.assertEqual(total_metric.get('source'), 'none')
+        self.assertEqual(total_metric.get('sample_count'), 0)
+        self.assertAlmostEqual(float(total_metric.get('average_duration_ms')), 0.0, places=2)
+
+    def test_pipeline_performance_adds_total_pipeline_row_from_real_run_timings(self):
+        job = self._create_job(user=self.regular_user, status='completed', mode='agentic_postgres')
+
+        for step, duration in [
+            ('schema_validation', 120),
+            ('column_validation', 180),
+            ('saving_guidelines', 40),
+        ]:
+            self._create_audit(
+                job_id=job.id,
+                event_type='PIPELINE_STEP_COMPLETED',
+                payload={
+                    'step': step,
+                    'duration_ms': duration,
+                    'status_code': 200,
+                    'pipeline_run_id': 'run-total-a',
+                },
+            )
+
+        for step, duration in [
+            ('schema_validation', 200),
+            ('column_validation', 100),
+            ('saving_guidelines', 60),
+        ]:
+            self._create_audit(
+                job_id=job.id,
+                event_type='PIPELINE_STEP_COMPLETED',
+                payload={
+                    'step': step,
+                    'duration_ms': duration,
+                    'status_code': 200,
+                    'pipeline_run_id': 'run-total-b',
+                },
+            )
+
+        request = self._auth_request(
+            method='get',
+            path='/api/admin/pipeline-performance/',
+            user=self.staff_user,
+            data={'days': 7},
+        )
+        response = AdminPipelinePerformanceView.as_view()(request)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.data.get('uses_estimation'))
+
+        step_rows = response.data.get('steps') or []
+        total_metric = next((row for row in step_rows if row.get('step') == 'total_pipeline'), None)
+        self.assertIsNotNone(total_metric)
+        self.assertEqual(total_metric.get('source'), 'measured')
+        self.assertEqual(total_metric.get('sample_count'), 2)
+        self.assertAlmostEqual(float(total_metric.get('average_duration_ms')), 350.0, places=2)
+        self.assertAlmostEqual(float(total_metric.get('min_duration_ms')), 340.0, places=2)
+        self.assertAlmostEqual(float(total_metric.get('max_duration_ms')), 360.0, places=2)
+        self.assertAlmostEqual(float(total_metric.get('success_rate')), 100.0, places=2)
 
     def test_audit_log_supports_filter_combinations(self):
         now = dj_tz.now()

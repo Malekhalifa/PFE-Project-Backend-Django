@@ -114,6 +114,7 @@ _PIPELINE_STEP_DEFINITIONS = [
     ('cross_row_validation', 'Cross Row Validation'),
     ('guideline_gen_fix_planner', 'Guideline Generation - Fix Planner'),
     ('fix_planner', 'Fix Planner'),
+    ('saving_guidelines', 'Saving Guidelines'),
 ]
 
 
@@ -1648,6 +1649,7 @@ class AdminPipelinePerformanceView(APIView):
         since = now - timedelta(days=window_days)
 
         step_metrics: dict[str, dict[str, Any]] = {}
+        run_metrics: dict[str, dict[str, Any]] = {}
         measured_logs = AuditLog.objects.filter(
             created_at__gte=since,
             event_type__in=['PIPELINE_STEP_COMPLETED', 'PIPELINE_STEP_FAILED'],
@@ -1682,40 +1684,26 @@ class AdminPipelinePerformanceView(APIView):
             if duration_ms is not None and duration_ms >= 0:
                 metric['durations'].append(duration_ms)
 
+            pipeline_run_id = str(payload.get('pipeline_run_id') or '').strip()
+            if not pipeline_run_id:
+                continue
+
+            run_metric = run_metrics.setdefault(
+                pipeline_run_id,
+                {
+                    'duration_ms': 0.0,
+                    'timed_steps': 0,
+                    'has_failure': False,
+                },
+            )
+            if duration_ms is not None and duration_ms >= 0:
+                run_metric['duration_ms'] += duration_ms
+                run_metric['timed_steps'] += 1
+
+            if entry.event_type == 'PIPELINE_STEP_FAILED' or classification == 'error':
+                run_metric['has_failure'] = True
+
         uses_estimation = False
-        if not step_metrics:
-            uses_estimation = True
-            completed_logs = AuditLog.objects.filter(
-                created_at__gte=since,
-                event_type='DB_ANALYSIS_COMPLETED',
-            ).only('payload')
-            failed_count = AuditLog.objects.filter(
-                created_at__gte=since,
-                event_type='DB_ANALYSIS_FAILED',
-            ).count()
-
-            completed_count = 0
-            run_durations: list[float] = []
-            for entry in completed_logs.iterator():
-                completed_count += 1
-                payload = entry.payload if isinstance(entry.payload, dict) else {}
-                try:
-                    run_duration = float(payload.get('duration_ms'))
-                except (TypeError, ValueError):
-                    run_duration = None
-                if run_duration is not None and run_duration >= 0:
-                    run_durations.append(run_duration)
-
-            per_step_count = max(len(_PIPELINE_STEP_DEFINITIONS), 1)
-            estimated_per_step_durations = [duration / per_step_count for duration in run_durations]
-
-            for step, _label in _PIPELINE_STEP_DEFINITIONS:
-                step_metrics[step] = {
-                    'durations': list(estimated_per_step_durations),
-                    'success': completed_count,
-                    'total': completed_count + failed_count,
-                    'source': 'estimated',
-                }
 
         step_label_map = {key: label for key, label in _PIPELINE_STEP_DEFINITIONS}
         canonical_steps = [key for key, _label in _PIPELINE_STEP_DEFINITIONS]
@@ -1752,6 +1740,35 @@ class AdminPipelinePerformanceView(APIView):
                     'source': metric['source'],
                 }
             )
+
+        run_totals = [
+            entry['duration_ms']
+            for entry in run_metrics.values()
+            if entry.get('timed_steps', 0) > 0
+        ]
+        total_sample_count = len(run_totals)
+        total_average_duration_ms = round(sum(run_totals) / total_sample_count, 2) if total_sample_count else 0.0
+        total_min_duration_ms = round(min(run_totals), 2) if total_sample_count else 0.0
+        total_max_duration_ms = round(max(run_totals), 2) if total_sample_count else 0.0
+        successful_runs = sum(
+            1
+            for entry in run_metrics.values()
+            if entry.get('timed_steps', 0) > 0 and not entry.get('has_failure', False)
+        )
+        total_success_rate = round((successful_runs * 100.0) / total_sample_count, 2) if total_sample_count else 0.0
+
+        step_rows.append(
+            {
+                'step': 'total_pipeline',
+                'label': 'Total Pipeline',
+                'average_duration_ms': total_average_duration_ms,
+                'min_duration_ms': total_min_duration_ms,
+                'max_duration_ms': total_max_duration_ms,
+                'sample_count': total_sample_count,
+                'success_rate': total_success_rate,
+                'source': 'measured' if total_sample_count else 'none',
+            }
+        )
 
         return Response(
             {

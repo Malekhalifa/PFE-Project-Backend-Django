@@ -269,34 +269,38 @@ def orchestrator_workflow(
 
     _step_started('schema_validation')
     _emit("running_schema")
-    schema_agent = Agent(
-        name="Schema Integrity Validator",
-        model=_make_model(),
-        description=SCHEMA_DESCRIPTION,
-        instructions=SCHEMA_INSTRUCTIONS,
-        tools=[execute_pg_query],
-        tool_call_limit=_VALIDATOR_TOOL_CALL_LIMIT,
-        markdown=False,
-    )
-    schema_prompt = (
-        _inject_guidelines(schema_guidelines)
-        + "Perform schema integrity validation using live SELECT-only introspection. "
-        + _JSON_REPORT_CONTRACT
-        + "\n\nPopulate schema metrics exactly: total_tables, total_columns, tables_with_no_primary_key, "
-        + "missing_foreign_keys, constraint_violations, type_mismatches, nullable_violations."
-        + _PRIOR_REPORTS_SECTION
-        + _serialize_prior_reports(prior_reports)
-        + rules_section
-    )
-    schema_raw, schema_runtime_error = _run_agent(schema_agent, schema_prompt)
-    schema_report = build_schema_report(
-        schema_raw,
-        pipeline_run_id=pipeline_run_id,
-        database_id=database_id,
-        prior_reports=prior_reports,
-        runtime_error=schema_runtime_error,
-    )
-    _step_finished('schema_validation', success=schema_runtime_error is None, error=schema_runtime_error)
+    try:
+        schema_agent = Agent(
+            name="Schema Integrity Validator",
+            model=_make_model(),
+            description=SCHEMA_DESCRIPTION,
+            instructions=SCHEMA_INSTRUCTIONS,
+            tools=[execute_pg_query],
+            tool_call_limit=_VALIDATOR_TOOL_CALL_LIMIT,
+            markdown=False,
+        )
+        schema_prompt = (
+            _inject_guidelines(schema_guidelines)
+            + "Perform schema integrity validation using live SELECT-only introspection. "
+            + _JSON_REPORT_CONTRACT
+            + "\n\nPopulate schema metrics exactly: total_tables, total_columns, tables_with_no_primary_key, "
+            + "missing_foreign_keys, constraint_violations, type_mismatches, nullable_violations."
+            + _PRIOR_REPORTS_SECTION
+            + _serialize_prior_reports(prior_reports)
+            + rules_section
+        )
+        schema_raw, schema_runtime_error = _run_agent(schema_agent, schema_prompt)
+        schema_report = build_schema_report(
+            schema_raw,
+            pipeline_run_id=pipeline_run_id,
+            database_id=database_id,
+            prior_reports=prior_reports,
+            runtime_error=schema_runtime_error,
+        )
+        _step_finished('schema_validation', success=schema_runtime_error is None, error=schema_runtime_error)
+    except Exception as exc:
+        _step_finished('schema_validation', success=False, error=str(exc))
+        raise
     prior_reports.append(clone_json(schema_report))
     prior_findings = report_to_context_block(schema_report, "Schema Integrity Findings")
 
@@ -318,38 +322,42 @@ def orchestrator_workflow(
 
     _step_started('column_validation')
     _emit("running_column")
-    column_agent = Agent(
-        name="Column Validator",
-        model=_make_model(),
-        description=COLUMN_VALIDATOR_DESCRIPTION,
-        instructions=COLUMN_VALIDATOR_INSTRUCTIONS,
-        tools=[execute_pg_query],
-        tool_call_limit=_VALIDATOR_TOOL_CALL_LIMIT,
-        markdown=False,
-    )
-    column_prompt = (
-        _inject_guidelines(column_guidelines)
-        + "Perform column-level validation with structured findings only. "
-        + _JSON_REPORT_CONTRACT
-        + "\n\nPopulate column metrics exactly: total_columns_analyzed, duplicate_columns_found, "
-        + "constant_columns_found, high_null_ratio_columns, low_cardinality_anomalies, "
-        + "high_cardinality_anomalies, semantic_mismatches, domain_violations, "
-        + "distribution_anomalies, avg_column_quality_score, avg_column_confidence."
-        + "\n\n--- Schema Report (JSON) ---\n"
-        + json.dumps(schema_report, ensure_ascii=False, indent=2)
-        + _PRIOR_REPORTS_SECTION
-        + _serialize_prior_reports(prior_reports)
-        + rules_section
-    )
-    column_raw, column_runtime_error = _run_agent(column_agent, column_prompt)
-    column_report = build_column_report(
-        column_raw,
-        pipeline_run_id=pipeline_run_id,
-        database_id=database_id,
-        prior_reports=prior_reports,
-        runtime_error=column_runtime_error,
-    )
-    _step_finished('column_validation', success=column_runtime_error is None, error=column_runtime_error)
+    try:
+        column_agent = Agent(
+            name="Column Validator",
+            model=_make_model(),
+            description=COLUMN_VALIDATOR_DESCRIPTION,
+            instructions=COLUMN_VALIDATOR_INSTRUCTIONS,
+            tools=[execute_pg_query],
+            tool_call_limit=_VALIDATOR_TOOL_CALL_LIMIT,
+            markdown=False,
+        )
+        column_prompt = (
+            _inject_guidelines(column_guidelines)
+            + "Perform column-level validation with structured findings only. "
+            + _JSON_REPORT_CONTRACT
+            + "\n\nPopulate column metrics exactly: total_columns_analyzed, duplicate_columns_found, "
+            + "constant_columns_found, high_null_ratio_columns, low_cardinality_anomalies, "
+            + "high_cardinality_anomalies, semantic_mismatches, domain_violations, "
+            + "distribution_anomalies, avg_column_quality_score, avg_column_confidence."
+            + "\n\n--- Schema Report (JSON) ---\n"
+            + json.dumps(schema_report, ensure_ascii=False, indent=2)
+            + _PRIOR_REPORTS_SECTION
+            + _serialize_prior_reports(prior_reports)
+            + rules_section
+        )
+        column_raw, column_runtime_error = _run_agent(column_agent, column_prompt)
+        column_report = build_column_report(
+            column_raw,
+            pipeline_run_id=pipeline_run_id,
+            database_id=database_id,
+            prior_reports=prior_reports,
+            runtime_error=column_runtime_error,
+        )
+        _step_finished('column_validation', success=column_runtime_error is None, error=column_runtime_error)
+    except Exception as exc:
+        _step_finished('column_validation', success=False, error=str(exc))
+        raise
     prior_reports.append(clone_json(column_report))
     prior_findings += "\n\n" + report_to_context_block(column_report, "Column Findings")
 
@@ -371,35 +379,39 @@ def orchestrator_workflow(
 
     _step_started('row_level_validation')
     _emit("running_row_level")
-    row_agent = Agent(
-        name="Row Level Validator",
-        model=_make_model(),
-        description=ROW_LEVEL_DESCRIPTION,
-        instructions=ROW_LEVEL_INSTRUCTIONS,
-        tools=[execute_pg_query],
-        tool_call_limit=_VALIDATOR_TOOL_CALL_LIMIT,
-        markdown=False,
-    )
-    row_prompt = (
-        _inject_guidelines(row_guidelines)
-        + "Perform row-level validation and return structured JSON findings. "
-        + _JSON_REPORT_CONTRACT
-        + "\n\nPopulate row metrics exactly: total_rows_analyzed, rows_with_issues, rows_with_issues_ratio, "
-        + "format_violations, encoding_issues, hidden_null_count, outlier_rows, "
-        + "avg_row_quality_score, avg_row_confidence."
-        + _PRIOR_REPORTS_SECTION
-        + _serialize_prior_reports(prior_reports)
-        + rules_section
-    )
-    row_raw, row_runtime_error = _run_agent(row_agent, row_prompt)
-    row_report = build_row_report(
-        row_raw,
-        pipeline_run_id=pipeline_run_id,
-        database_id=database_id,
-        prior_reports=prior_reports,
-        runtime_error=row_runtime_error,
-    )
-    _step_finished('row_level_validation', success=row_runtime_error is None, error=row_runtime_error)
+    try:
+        row_agent = Agent(
+            name="Row Level Validator",
+            model=_make_model(),
+            description=ROW_LEVEL_DESCRIPTION,
+            instructions=ROW_LEVEL_INSTRUCTIONS,
+            tools=[execute_pg_query],
+            tool_call_limit=_VALIDATOR_TOOL_CALL_LIMIT,
+            markdown=False,
+        )
+        row_prompt = (
+            _inject_guidelines(row_guidelines)
+            + "Perform row-level validation and return structured JSON findings. "
+            + _JSON_REPORT_CONTRACT
+            + "\n\nPopulate row metrics exactly: total_rows_analyzed, rows_with_issues, rows_with_issues_ratio, "
+            + "format_violations, encoding_issues, hidden_null_count, outlier_rows, "
+            + "avg_row_quality_score, avg_row_confidence."
+            + _PRIOR_REPORTS_SECTION
+            + _serialize_prior_reports(prior_reports)
+            + rules_section
+        )
+        row_raw, row_runtime_error = _run_agent(row_agent, row_prompt)
+        row_report = build_row_report(
+            row_raw,
+            pipeline_run_id=pipeline_run_id,
+            database_id=database_id,
+            prior_reports=prior_reports,
+            runtime_error=row_runtime_error,
+        )
+        _step_finished('row_level_validation', success=row_runtime_error is None, error=row_runtime_error)
+    except Exception as exc:
+        _step_finished('row_level_validation', success=False, error=str(exc))
+        raise
     prior_reports.append(clone_json(row_report))
     prior_findings += "\n\n" + report_to_context_block(row_report, "Row Level Findings")
 
@@ -421,34 +433,38 @@ def orchestrator_workflow(
 
     _step_started('cross_row_validation')
     _emit("running_cross_row")
-    cross_agent = Agent(
-        name="Cross Row Validator",
-        model=_make_model(),
-        description=CROSS_ROW_DESCRIPTION,
-        instructions=CROSS_ROW_INSTRUCTIONS,
-        tools=[execute_pg_query],
-        tool_call_limit=_CROSS_ROW_TOOL_CALL_LIMIT,
-        markdown=False,
-    )
-    cross_prompt = (
-        _inject_guidelines(cross_guidelines)
-        + "Perform cross-row validation and return structured JSON findings. "
-        + _JSON_REPORT_CONTRACT
-        + "\n\nPopulate cross-row metrics exactly: total_row_pairs_analyzed, temporal_anomalies, sequential_breaks, "
-        + "cross_column_violations, row_pattern_anomalies, tables_with_cross_row_issues, avg_relationship_confidence."
-        + _PRIOR_REPORTS_SECTION
-        + _serialize_prior_reports(prior_reports)
-        + rules_section
-    )
-    cross_raw, cross_runtime_error = _run_agent(cross_agent, cross_prompt)
-    cross_report = build_cross_row_report(
-        cross_raw,
-        pipeline_run_id=pipeline_run_id,
-        database_id=database_id,
-        prior_reports=prior_reports,
-        runtime_error=cross_runtime_error,
-    )
-    _step_finished('cross_row_validation', success=cross_runtime_error is None, error=cross_runtime_error)
+    try:
+        cross_agent = Agent(
+            name="Cross Row Validator",
+            model=_make_model(),
+            description=CROSS_ROW_DESCRIPTION,
+            instructions=CROSS_ROW_INSTRUCTIONS,
+            tools=[execute_pg_query],
+            tool_call_limit=_CROSS_ROW_TOOL_CALL_LIMIT,
+            markdown=False,
+        )
+        cross_prompt = (
+            _inject_guidelines(cross_guidelines)
+            + "Perform cross-row validation and return structured JSON findings. "
+            + _JSON_REPORT_CONTRACT
+            + "\n\nPopulate cross-row metrics exactly: total_row_pairs_analyzed, temporal_anomalies, sequential_breaks, "
+            + "cross_column_violations, row_pattern_anomalies, tables_with_cross_row_issues, avg_relationship_confidence."
+            + _PRIOR_REPORTS_SECTION
+            + _serialize_prior_reports(prior_reports)
+            + rules_section
+        )
+        cross_raw, cross_runtime_error = _run_agent(cross_agent, cross_prompt)
+        cross_report = build_cross_row_report(
+            cross_raw,
+            pipeline_run_id=pipeline_run_id,
+            database_id=database_id,
+            prior_reports=prior_reports,
+            runtime_error=cross_runtime_error,
+        )
+        _step_finished('cross_row_validation', success=cross_runtime_error is None, error=cross_runtime_error)
+    except Exception as exc:
+        _step_finished('cross_row_validation', success=False, error=str(exc))
+        raise
     prior_reports.append(clone_json(cross_report))
     prior_findings += "\n\n" + report_to_context_block(cross_report, "Cross Row Findings")
 
@@ -470,40 +486,48 @@ def orchestrator_workflow(
 
     _step_started('fix_planner')
     _emit("running_fix_planner")
-    fix_planner = Agent(
-        name="Data Fix Planner",
-        model=_make_model(),
-        description=FIX_PLANNER_DESCRIPTION,
-        instructions=FIX_PLANNER_INSTRUCTIONS,
-        tools=[],
-        tool_call_limit=_FIX_PLANNER_TOOL_CALL_LIMIT,
-        markdown=False,
-    )
-    fix_prompt = (
-        _inject_guidelines(fix_guidelines)
-        + "Generate fix planning output as structured JSON findings (one finding per fix card). "
-        + _JSON_REPORT_CONTRACT
-        + "\n\nPopulate fix planner metrics exactly: total_issues_received, fixes_generated, critical_fixes, "
-        + "high_fixes, medium_fixes, low_fixes, estimated_rows_affected, fix_confidence."
-        + "\n\nUse prior reports chain as the only source of truth for issue accumulation."
-        + _PRIOR_REPORTS_SECTION
-        + _serialize_prior_reports(prior_reports)
-    )
-    fix_raw, fix_runtime_error = _run_agent(fix_planner, fix_prompt)
-    final_report = build_fix_planner_report(
-        fix_raw,
-        pipeline_run_id=pipeline_run_id,
-        database_id=database_id,
-        prior_reports=prior_reports,
-        runtime_error=fix_runtime_error,
-    )
-    _step_finished('fix_planner', success=fix_runtime_error is None, error=fix_runtime_error)
+    try:
+        fix_planner = Agent(
+            name="Data Fix Planner",
+            model=_make_model(),
+            description=FIX_PLANNER_DESCRIPTION,
+            instructions=FIX_PLANNER_INSTRUCTIONS,
+            tools=[],
+            tool_call_limit=_FIX_PLANNER_TOOL_CALL_LIMIT,
+            markdown=False,
+        )
+        fix_prompt = (
+            _inject_guidelines(fix_guidelines)
+            + "Generate fix planning output as structured JSON findings (one finding per fix card). "
+            + _JSON_REPORT_CONTRACT
+            + "\n\nPopulate fix planner metrics exactly: total_issues_received, fixes_generated, critical_fixes, "
+            + "high_fixes, medium_fixes, low_fixes, estimated_rows_affected, fix_confidence."
+            + "\n\nUse prior reports chain as the only source of truth for issue accumulation."
+            + _PRIOR_REPORTS_SECTION
+            + _serialize_prior_reports(prior_reports)
+        )
+        fix_raw, fix_runtime_error = _run_agent(fix_planner, fix_prompt)
+        final_report = build_fix_planner_report(
+            fix_raw,
+            pipeline_run_id=pipeline_run_id,
+            database_id=database_id,
+            prior_reports=prior_reports,
+            runtime_error=fix_runtime_error,
+        )
+        _step_finished('fix_planner', success=fix_runtime_error is None, error=fix_runtime_error)
+    except Exception as exc:
+        _step_finished('fix_planner', success=False, error=str(exc))
+        raise
 
     # Persist guidelines version after all phases complete.
     _step_started('saving_guidelines')
     _emit("saving_guidelines")
-    generator.save_guidelines()
-    _step_finished('saving_guidelines', success=True)
+    try:
+        generator.save_guidelines()
+        _step_finished('saving_guidelines', success=True)
+    except Exception as exc:
+        _step_finished('saving_guidelines', success=False, error=str(exc))
+        raise
 
     confidence_score, data_quality_score = aggregate_pipeline_scores(
         [schema_report, column_report, row_report, cross_report]
