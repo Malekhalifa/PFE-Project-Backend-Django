@@ -9,6 +9,7 @@ urlpatterns = [
     path('register', views.CustomRegisterView.as_view(), name='register'),
     path('login', views.CustomLoginView.as_view(), name='login'),
     path('logout', views.CustomLogoutView.as_view(), name='logout'),
+    path('logout-all', views.LogoutAllDevicesView.as_view(), name='logout-all'),
     path('me', views.CustomUserDetailsView.as_view(), name='me'),
 
     # Social login

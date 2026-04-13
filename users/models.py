@@ -15,6 +15,18 @@ from django.db import models
 
 
 class User(AbstractUser):
+    LANGUAGE_CHOICES = [
+        ('en', 'English'),
+        ('fr', 'French'),
+        ('ar', 'Arabic'),
+    ]
+
+    THEME_CHOICES = [
+        ('system', 'System'),
+        ('light', 'Light'),
+        ('dark', 'Dark'),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True)
     role = models.CharField(
@@ -24,6 +36,12 @@ class User(AbstractUser):
     )
     email_verified = models.BooleanField(default=False)
     email_verified_at = models.DateTimeField(null=True, blank=True)
+    accent_color = models.CharField(max_length=7, default='#0ea5e9')
+    bio = models.CharField(max_length=160, blank=True, default='')
+    preferred_language = models.CharField(max_length=2, choices=LANGUAGE_CHOICES, default='en')
+    notifications_enabled = models.BooleanField(default=True)
+    theme_preference = models.CharField(max_length=10, choices=THEME_CHOICES, default='system')
+    session_version = models.PositiveIntegerField(default=0)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']

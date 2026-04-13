@@ -2,6 +2,8 @@
 dj-rest-auth custom serializers to keep existing API shapes and user fields.
 """
 
+import re
+
 from django.db import IntegrityError
 from dj_rest_auth.registration.serializers import RegisterSerializer
 from dj_rest_auth.registration.serializers import SocialLoginSerializer
@@ -77,15 +79,62 @@ class CustomRegisterSerializer(RegisterSerializer):
 
 
 class CustomUserDetailsSerializer(UserDetailsSerializer):
-    """Expose id/email/role/first_name/last_name for frontend user details."""
+    """Expose and validate profile + settings fields for frontend account pages."""
+
+    HEX_COLOR_RE = re.compile(r'^#[0-9a-fA-F]{6}$')
+
+    email = serializers.EmailField(read_only=True)
+    username = serializers.CharField(required=False, allow_blank=False, max_length=150)
     role = serializers.CharField(read_only=True)
     email_verified = serializers.BooleanField(read_only=True)
+    last_login = serializers.DateTimeField(read_only=True)
     first_name = serializers.CharField(required=False, allow_blank=True, max_length=150)
     last_name = serializers.CharField(required=False, allow_blank=True, max_length=150)
+    accent_color = serializers.CharField(required=False, max_length=7)
+    bio = serializers.CharField(required=False, allow_blank=True, max_length=160)
+    preferred_language = serializers.ChoiceField(required=False, choices=User.LANGUAGE_CHOICES)
+    notifications_enabled = serializers.BooleanField(required=False)
+    theme_preference = serializers.ChoiceField(required=False, choices=User.THEME_CHOICES)
+
+    def validate_username(self, value):
+        normalized = (value or '').strip()
+        if not normalized:
+            raise serializers.ValidationError('Username cannot be empty.')
+
+        exists = User.objects.filter(username__iexact=normalized)
+        if self.instance is not None:
+            exists = exists.exclude(pk=self.instance.pk)
+        if exists.exists():
+            raise serializers.ValidationError('A user with that username already exists.')
+        return normalized
+
+    def validate_accent_color(self, value):
+        normalized = (value or '').strip()
+        if not self.HEX_COLOR_RE.fullmatch(normalized):
+            raise serializers.ValidationError('Accent color must be a valid hex color like #0ea5e9.')
+        return normalized.lower()
+
+    def validate_bio(self, value):
+        # Strip but preserve user intent if they intentionally keep bio empty.
+        return (value or '').strip()
 
     class Meta(UserDetailsSerializer.Meta):
         model = User
-        fields = ('id', 'email', 'role', 'email_verified', 'first_name', 'last_name')
+        fields = (
+            'id',
+            'email',
+            'username',
+            'role',
+            'email_verified',
+            'first_name',
+            'last_name',
+            'accent_color',
+            'bio',
+            'preferred_language',
+            'notifications_enabled',
+            'theme_preference',
+            'last_login',
+        )
 
 
 class TokenSocialLoginSerializer(SocialLoginSerializer):

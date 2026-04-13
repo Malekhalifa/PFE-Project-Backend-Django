@@ -5,6 +5,7 @@ import logging
 
 from django.conf import settings
 from django.db import IntegrityError
+from django.db.models import F
 from django.shortcuts import redirect
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.messages.middleware import MessageMiddleware
@@ -88,6 +89,7 @@ def _set_jwt_cookie(response, user):
     """Create a JWT access token and set it as an httpOnly cookie."""
     token = AccessToken.for_user(user)
     token['role'] = user.role
+    token['sv'] = int(getattr(user, 'session_version', 0))
 
     response.set_cookie(
         key=settings.JWT_COOKIE_NAME,
@@ -96,6 +98,14 @@ def _set_jwt_cookie(response, user):
         secure=settings.JWT_COOKIE_SECURE,
         samesite=settings.JWT_COOKIE_SAMESITE,
         max_age=settings.JWT_COOKIE_MAX_AGE,
+        path=settings.JWT_COOKIE_PATH,
+    )
+    return response
+
+
+def _clear_jwt_cookie(response):
+    response.delete_cookie(
+        key=settings.JWT_COOKIE_NAME,
         path=settings.JWT_COOKIE_PATH,
     )
     return response
@@ -324,6 +334,47 @@ class CustomUserDetailsView(UserDetailsView):
         response = super().patch(request, *args, **kwargs)
         response.data = {'user': response.data}
         return response
+
+    def delete(self, request, *args, **kwargs):
+        provided_username = (request.data.get('username') or '').strip()
+        current_username = (request.user.username or '').strip()
+
+        if not provided_username:
+            return Response(
+                {
+                    'error': 'Please provide your username to confirm account deletion.',
+                    'code': 'username_required',
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if provided_username != current_username:
+            return Response(
+                {
+                    'error': 'Username confirmation does not match.',
+                    'code': 'username_mismatch',
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        request.user.delete()
+        response = Response({'message': 'Account deleted', 'code': 'account_deleted'})
+        return _clear_jwt_cookie(response)
+
+
+class LogoutAllDevicesView(APIView):
+    """POST /api/logout-all — revoke all active sessions for current user."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        User.objects.filter(pk=request.user.pk).update(session_version=F('session_version') + 1)
+        response = Response(
+            {
+                'message': 'All active sessions have been revoked.',
+                'code': 'sessions_revoked',
+            }
+        )
+        return _clear_jwt_cookie(response)
 
 
 class GoogleSocialLoginView(SocialLoginView):

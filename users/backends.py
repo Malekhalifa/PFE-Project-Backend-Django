@@ -26,7 +26,14 @@ class CookieJWTAuthentication(JWTAuthentication):
 
         try:
             validated_token = self.get_validated_token(raw_token)
-            return self.get_user(validated_token), validated_token
+            user = self.get_user(validated_token)
+
+            token_session_version = int(validated_token.get('sv', 0))
+            user_session_version = int(getattr(user, 'session_version', 0))
+            if token_session_version != user_session_version:
+                raise InvalidToken('Session has been revoked. Please sign in again.')
+
+            return user, validated_token
         except (InvalidToken, AuthenticationFailed):
             # Token is invalid, expired, or references a deleted/recreated user.
             # Return None so DRF treats the request as anonymous (not a hard 401).
