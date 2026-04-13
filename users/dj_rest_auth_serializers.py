@@ -86,6 +86,7 @@ class CustomUserDetailsSerializer(UserDetailsSerializer):
     email = serializers.EmailField(read_only=True)
     username = serializers.CharField(required=False, allow_blank=False, max_length=150)
     role = serializers.CharField(read_only=True)
+    is_staff = serializers.BooleanField(read_only=True)
     email_verified = serializers.BooleanField(read_only=True)
     last_login = serializers.DateTimeField(read_only=True)
     first_name = serializers.CharField(required=False, allow_blank=True, max_length=150)
@@ -94,6 +95,7 @@ class CustomUserDetailsSerializer(UserDetailsSerializer):
     bio = serializers.CharField(required=False, allow_blank=True, max_length=160)
     preferred_language = serializers.ChoiceField(required=False, choices=User.LANGUAGE_CHOICES)
     notifications_enabled = serializers.BooleanField(required=False)
+    email_notifications_enabled = serializers.BooleanField(required=False)
     theme_preference = serializers.ChoiceField(required=False, choices=User.THEME_CHOICES)
 
     def validate_username(self, value):
@@ -125,6 +127,7 @@ class CustomUserDetailsSerializer(UserDetailsSerializer):
             'email',
             'username',
             'role',
+            'is_staff',
             'email_verified',
             'first_name',
             'last_name',
@@ -132,6 +135,7 @@ class CustomUserDetailsSerializer(UserDetailsSerializer):
             'bio',
             'preferred_language',
             'notifications_enabled',
+            'email_notifications_enabled',
             'theme_preference',
             'last_login',
         )

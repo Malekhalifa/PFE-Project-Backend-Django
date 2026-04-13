@@ -48,6 +48,13 @@ urlpatterns = [
     path('fixes/<str:job_id>/', views.GetFixesView.as_view(), name='get-fixes'),
     path('execute-fix/<str:job_id>/', views.ExecuteFixView.as_view(), name='execute-fix'),
 
+    # Admin APM Monitoring
+    path('admin/stats/', views.AdminStatsView.as_view(), name='admin-stats'),
+    path('admin/pipeline-performance/', views.AdminPipelinePerformanceView.as_view(), name='admin-pipeline-performance'),
+    path('admin/audit-log/', views.AdminAuditLogView.as_view(), name='admin-audit-log'),
+    path('admin/error-timeline/', views.AdminErrorTimelineView.as_view(), name='admin-error-timeline'),
+    path('admin/test-email/', views.AdminTestEmailView.as_view(), name='admin-test-email'),
+
     # AI-Generated Guidelines
     path('guidelines/<str:jobId>', views.GuidelinesView.as_view(), name='guidelines'),
 ]

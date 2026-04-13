@@ -40,6 +40,7 @@ class User(AbstractUser):
     bio = models.CharField(max_length=160, blank=True, default='')
     preferred_language = models.CharField(max_length=2, choices=LANGUAGE_CHOICES, default='en')
     notifications_enabled = models.BooleanField(default=True)
+    email_notifications_enabled = models.BooleanField(default=True)
     theme_preference = models.CharField(max_length=10, choices=THEME_CHOICES, default='system')
     session_version = models.PositiveIntegerField(default=0)
 

@@ -12,18 +12,25 @@ import os
 import secrets
 import uuid
 import logging
+import json
 import requests as http_requests
+from datetime import datetime, time, timedelta, timezone
+from typing import Any
 
 import pandas as pd
 from django.conf import settings
+from django.core.mail import send_mail
+from django.db.models import Q
 from django.http import FileResponse
+from django.utils import timezone as dj_tz
+from django.utils.dateparse import parse_date, parse_datetime
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.models import audit_log
+from api.models import AuditLog, Job, audit_log
 from api.db import (
     create_job,
     get_job,
@@ -92,6 +99,113 @@ def _sanitize_for_json(obj):
         if math.isnan(obj) or math.isinf(obj):
             return None
     return obj
+
+
+_ADMIN_ACTIVE_JOB_STATUSES = {'starting', 'running', 'cleaning'}
+_TERMINAL_ACTIVE_PREFIX_EXCLUSIONS = {'cleaning_completed', 'cleaning_failed'}
+_PIPELINE_STEP_DEFINITIONS = [
+    ('guideline_gen_schema', 'Guideline Generation - Schema'),
+    ('schema_validation', 'Schema Validation'),
+    ('guideline_gen_column', 'Guideline Generation - Column'),
+    ('column_validation', 'Column Validation'),
+    ('guideline_gen_row_level', 'Guideline Generation - Row Level'),
+    ('row_level_validation', 'Row Level Validation'),
+    ('guideline_gen_cross_row', 'Guideline Generation - Cross Row'),
+    ('cross_row_validation', 'Cross Row Validation'),
+    ('guideline_gen_fix_planner', 'Guideline Generation - Fix Planner'),
+    ('fix_planner', 'Fix Planner'),
+]
+
+
+def _require_admin_staff(request) -> Response | None:
+    if bool(getattr(request.user, 'is_staff', False)):
+        return None
+
+    return Response(
+        {
+            'error': 'Admin access required.',
+            'code': 'admin_required',
+        },
+        status=status.HTTP_403_FORBIDDEN,
+    )
+
+
+def _coerce_int(value, default: int, *, minimum: int | None = None, maximum: int | None = None) -> int:
+    try:
+        parsed = int(str(value).strip())
+    except (TypeError, ValueError):
+        parsed = default
+
+    if minimum is not None and parsed < minimum:
+        parsed = minimum
+    if maximum is not None and parsed > maximum:
+        parsed = maximum
+    return parsed
+
+
+def _parse_datetime_filter(value: str | None, *, end_of_day: bool = False):
+    if not value:
+        return None
+
+    raw = str(value).strip()
+    if not raw:
+        return None
+
+    parsed = parse_datetime(raw)
+    if parsed is None:
+        date_value = parse_date(raw)
+        if date_value is None:
+            return None
+        parsed = datetime.combine(date_value, time.max if end_of_day else time.min)
+
+    if dj_tz.is_naive(parsed):
+        parsed = parsed.replace(tzinfo=timezone.utc)
+
+    return parsed
+
+
+def _extract_status_code(payload: Any) -> int | None:
+    if not isinstance(payload, dict):
+        return None
+
+    raw = payload.get('status_code')
+    if raw is None:
+        return None
+
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return None
+
+
+def _classify_audit_event(event_type: str, payload: Any) -> str | None:
+    status_code = _extract_status_code(payload)
+    if status_code is not None:
+        if status_code >= 500:
+            return 'error'
+        if 200 <= status_code < 500:
+            return 'success'
+
+    event = str(event_type or '').upper()
+    if any(token in event for token in ('FAILED', 'ERROR', 'EXCEPTION')):
+        return 'error'
+    if any(token in event for token in ('COMPLETED', 'SUCCESS', 'EXECUTED', 'SENT')):
+        return 'success'
+    return None
+
+
+def _is_active_job_status(status_value: str | None) -> bool:
+    normalized = str(status_value or '').strip().lower()
+    if not normalized:
+        return False
+
+    if normalized in _ADMIN_ACTIVE_JOB_STATUSES:
+        return True
+
+    if normalized in _TERMINAL_ACTIVE_PREFIX_EXCLUSIONS:
+        return False
+
+    return normalized.startswith('running_')
 
 
 _GUIDELINE_KEYS = [
@@ -1358,6 +1472,7 @@ class ExecuteFixView(APIView):
                     'duration_ms': execution_log.get('duration_ms'),
                     'query_count': len(queries),
                     'transaction': execution_log.get('transaction'),
+                    'status_code': 200,
                 },
             )
         else:
@@ -1370,16 +1485,518 @@ class ExecuteFixView(APIView):
                     'query_count': len(queries),
                     'transaction': execution_log.get('transaction'),
                     'error': execution_log.get('error'),
+                    'status_code': 500,
                 },
             )
 
         try:
-            user_email = getattr(request.user, 'email', '')
-            notify_user_fix_executed(user_email, job_id, execution_log.get('status'))
+            if bool(getattr(request.user, 'email_notifications_enabled', True)):
+                user_email = getattr(request.user, 'email', '')
+                notify_user_fix_executed(user_email, job_id, execution_log.get('status'))
         except Exception:
             logger.exception('Failed to send fix execution notification for job %s', job_id)
 
         return Response(execution_log, status=status.HTTP_200_OK)
+
+
+# ──────────────────────────────────────────────
+# Admin APM Monitoring
+# ──────────────────────────────────────────────
+
+class AdminStatsView(APIView):
+    """GET /api/admin/stats/ — aggregate KPI cards and active-jobs snapshot."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        admin_error = _require_admin_staff(request)
+        if admin_error:
+            return admin_error
+
+        now = dj_tz.now()
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        total_users = User.objects.count()
+        total_jobs = Job.objects.count()
+        jobs_today = Job.objects.filter(created_at__gte=today_start).count()
+        failed_jobs = Job.objects.filter(status__in=['failed', 'cleaning_failed']).count()
+        failed_jobs_today = Job.objects.filter(
+            created_at__gte=today_start,
+            status__in=['failed', 'cleaning_failed'],
+        ).count()
+
+        active_jobs_qs = Job.objects.filter(
+            Q(status__in=list(_ADMIN_ACTIVE_JOB_STATUSES)) | Q(status__startswith='running_')
+        ).only('id', 'status', 'updated_at', 'user_id', 'file_name', 'mode').order_by('-updated_at')
+        active_jobs_count = active_jobs_qs.count()
+        active_jobs_sample = list(active_jobs_qs[:25])
+
+        active_user_ids = [entry.user_id for entry in active_jobs_sample if entry.user_id]
+        active_user_emails = {
+            str(user.id): user.email
+            for user in User.objects.filter(id__in=active_user_ids).only('id', 'email')
+        }
+        active_jobs_details = [
+            {
+                'job_id': entry.id,
+                'status': entry.status,
+                'mode': entry.mode,
+                'file_name': entry.file_name,
+                'updated_at': entry.updated_at.isoformat().replace('+00:00', 'Z') if entry.updated_at else None,
+                'user_email': active_user_emails.get(entry.user_id),
+            }
+            for entry in active_jobs_sample
+            if _is_active_job_status(entry.status)
+        ]
+
+        duration_event_types = [
+            'ANALYSIS_COMPLETED',
+            'DB_ANALYSIS_COMPLETED',
+            'CLEANING_COMPLETED',
+            'POSTGRES_CLEANING_COMPLETED',
+            'FIX_EXECUTED',
+        ]
+        duration_logs = AuditLog.objects.filter(
+            created_at__gte=now - timedelta(days=7),
+            event_type__in=duration_event_types,
+        ).only('event_type', 'payload')
+
+        duration_buckets: dict[str, list[float]] = {}
+        for entry in duration_logs.iterator():
+            payload = entry.payload if isinstance(entry.payload, dict) else {}
+            raw_duration = payload.get('duration_ms')
+            try:
+                duration_value = float(raw_duration)
+            except (TypeError, ValueError):
+                continue
+
+            if duration_value < 0:
+                continue
+            duration_buckets.setdefault(entry.event_type, []).append(duration_value)
+
+        all_durations = [duration for values in duration_buckets.values() for duration in values]
+        average_response_time_ms = round(sum(all_durations) / len(all_durations), 2) if all_durations else 0.0
+
+        slowest_endpoint = None
+        slowest_endpoint_duration_ms = 0.0
+        if duration_buckets:
+            slowest_endpoint, durations = max(
+                duration_buckets.items(),
+                key=lambda item: sum(item[1]) / len(item[1]),
+            )
+            slowest_endpoint_duration_ms = round(sum(durations) / len(durations), 2)
+
+        classified_events = AuditLog.objects.filter(
+            created_at__gte=now - timedelta(hours=24)
+        ).only('event_type', 'payload')
+        classified_total = 0
+        error_events = 0
+        for entry in classified_events.iterator():
+            classification = _classify_audit_event(entry.event_type, entry.payload)
+            if classification is None:
+                continue
+            classified_total += 1
+            if classification == 'error':
+                error_events += 1
+
+        error_rate = round((error_events * 100.0) / classified_total, 2) if classified_total else 0.0
+
+        fixes_applied_today = AuditLog.objects.filter(
+            event_type='FIX_EXECUTED',
+            created_at__gte=today_start,
+        ).count()
+
+        health_status = 'healthy'
+        if error_rate >= 20 or failed_jobs_today >= 10:
+            health_status = 'critical'
+        elif error_rate >= 10 or failed_jobs_today >= 3:
+            health_status = 'warning'
+
+        return Response(
+            {
+                'health_status': health_status,
+                'total_users': total_users,
+                'total_jobs': total_jobs,
+                'jobs_today': jobs_today,
+                'active_jobs': active_jobs_count,
+                'active_jobs_details': active_jobs_details,
+                'average_response_time': average_response_time_ms,
+                'average_response_time_ms': average_response_time_ms,
+                'slowest_endpoint': slowest_endpoint,
+                'slowest_endpoint_duration_ms': slowest_endpoint_duration_ms,
+                'failed_jobs': failed_jobs,
+                'failed_jobs_today': failed_jobs_today,
+                'error_rate': error_rate,
+                'fixes_applied_today': fixes_applied_today,
+                'last_updated': now.isoformat().replace('+00:00', 'Z'),
+            }
+        )
+
+
+class AdminPipelinePerformanceView(APIView):
+    """GET /api/admin/pipeline-performance/ — step-level timings and success rates."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        admin_error = _require_admin_staff(request)
+        if admin_error:
+            return admin_error
+
+        now = dj_tz.now()
+        window_days = _coerce_int(request.query_params.get('days'), 7, minimum=1, maximum=30)
+        since = now - timedelta(days=window_days)
+
+        step_metrics: dict[str, dict[str, Any]] = {}
+        measured_logs = AuditLog.objects.filter(
+            created_at__gte=since,
+            event_type__in=['PIPELINE_STEP_COMPLETED', 'PIPELINE_STEP_FAILED'],
+        ).only('event_type', 'payload')
+
+        for entry in measured_logs.iterator():
+            payload = entry.payload if isinstance(entry.payload, dict) else {}
+            step = str(payload.get('step') or '').strip()
+            if not step:
+                continue
+
+            metric = step_metrics.setdefault(
+                step,
+                {
+                    'durations': [],
+                    'success': 0,
+                    'total': 0,
+                    'source': 'measured',
+                },
+            )
+
+            metric['total'] += 1
+            classification = _classify_audit_event(entry.event_type, payload)
+            if classification != 'error' and entry.event_type == 'PIPELINE_STEP_COMPLETED':
+                metric['success'] += 1
+
+            try:
+                duration_ms = float(payload.get('duration_ms'))
+            except (TypeError, ValueError):
+                duration_ms = None
+
+            if duration_ms is not None and duration_ms >= 0:
+                metric['durations'].append(duration_ms)
+
+        uses_estimation = False
+        if not step_metrics:
+            uses_estimation = True
+            completed_logs = AuditLog.objects.filter(
+                created_at__gte=since,
+                event_type='DB_ANALYSIS_COMPLETED',
+            ).only('payload')
+            failed_count = AuditLog.objects.filter(
+                created_at__gte=since,
+                event_type='DB_ANALYSIS_FAILED',
+            ).count()
+
+            completed_count = 0
+            run_durations: list[float] = []
+            for entry in completed_logs.iterator():
+                completed_count += 1
+                payload = entry.payload if isinstance(entry.payload, dict) else {}
+                try:
+                    run_duration = float(payload.get('duration_ms'))
+                except (TypeError, ValueError):
+                    run_duration = None
+                if run_duration is not None and run_duration >= 0:
+                    run_durations.append(run_duration)
+
+            per_step_count = max(len(_PIPELINE_STEP_DEFINITIONS), 1)
+            estimated_per_step_durations = [duration / per_step_count for duration in run_durations]
+
+            for step, _label in _PIPELINE_STEP_DEFINITIONS:
+                step_metrics[step] = {
+                    'durations': list(estimated_per_step_durations),
+                    'success': completed_count,
+                    'total': completed_count + failed_count,
+                    'source': 'estimated',
+                }
+
+        step_label_map = {key: label for key, label in _PIPELINE_STEP_DEFINITIONS}
+        canonical_steps = [key for key, _label in _PIPELINE_STEP_DEFINITIONS]
+        extra_steps = sorted([key for key in step_metrics.keys() if key not in canonical_steps])
+        ordered_steps = canonical_steps + extra_steps
+
+        step_rows = []
+        for step in ordered_steps:
+            metric = step_metrics.get(
+                step,
+                {
+                    'durations': [],
+                    'success': 0,
+                    'total': 0,
+                    'source': 'none',
+                },
+            )
+            durations = metric['durations']
+            sample_count = len(durations)
+            average_duration_ms = round(sum(durations) / sample_count, 2) if sample_count else 0.0
+            min_duration_ms = round(min(durations), 2) if sample_count else 0.0
+            max_duration_ms = round(max(durations), 2) if sample_count else 0.0
+            success_rate = round((metric['success'] * 100.0) / metric['total'], 2) if metric['total'] else 0.0
+
+            step_rows.append(
+                {
+                    'step': step,
+                    'label': step_label_map.get(step, step.replace('_', ' ').title()),
+                    'average_duration_ms': average_duration_ms,
+                    'min_duration_ms': min_duration_ms,
+                    'max_duration_ms': max_duration_ms,
+                    'sample_count': sample_count,
+                    'success_rate': success_rate,
+                    'source': metric['source'],
+                }
+            )
+
+        return Response(
+            {
+                'window_days': window_days,
+                'uses_estimation': uses_estimation,
+                'steps': step_rows,
+                'generated_at': now.isoformat().replace('+00:00', 'Z'),
+            }
+        )
+
+
+class AdminAuditLogView(APIView):
+    """GET /api/admin/audit-log/ — filtered and paginated audit events."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        admin_error = _require_admin_staff(request)
+        if admin_error:
+            return admin_error
+
+        page = _coerce_int(request.query_params.get('page'), 1, minimum=1)
+        limit = _coerce_int(request.query_params.get('limit'), 25, minimum=1, maximum=200)
+
+        event_filter = str(request.query_params.get('event') or '').strip()
+        job_id_filter = str(request.query_params.get('job_id') or '').strip()
+        user_email_filter = str(request.query_params.get('user_email') or '').strip()
+        date_from_raw = request.query_params.get('date_from')
+        date_to_raw = request.query_params.get('date_to')
+
+        date_from = _parse_datetime_filter(date_from_raw)
+        date_to = _parse_datetime_filter(date_to_raw, end_of_day=True)
+        if date_from_raw and date_from is None:
+            return Response({'error': 'Invalid date_from format. Use ISO datetime or YYYY-MM-DD.'}, status=400)
+        if date_to_raw and date_to is None:
+            return Response({'error': 'Invalid date_to format. Use ISO datetime or YYYY-MM-DD.'}, status=400)
+
+        queryset = AuditLog.objects.all().order_by('-created_at')
+
+        if event_filter:
+            queryset = queryset.filter(event_type__icontains=event_filter)
+        if job_id_filter:
+            queryset = queryset.filter(job_id__icontains=job_id_filter)
+        if date_from:
+            queryset = queryset.filter(created_at__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(created_at__lte=date_to)
+
+        if user_email_filter:
+            matching_user_ids = [
+                str(uid)
+                for uid in User.objects.filter(email__icontains=user_email_filter).values_list('id', flat=True)
+            ]
+            if matching_user_ids:
+                matching_job_ids = list(
+                    Job.objects.filter(user_id__in=matching_user_ids).values_list('id', flat=True)
+                )
+                if matching_job_ids:
+                    queryset = queryset.filter(job_id__in=matching_job_ids)
+                else:
+                    queryset = queryset.none()
+            else:
+                queryset = queryset.none()
+
+        total = queryset.count()
+        offset = (page - 1) * limit
+        rows = list(queryset[offset:offset + limit])
+
+        row_job_ids = [entry.job_id for entry in rows if entry.job_id]
+        job_owner_map = {
+            row['id']: row['user_id']
+            for row in Job.objects.filter(id__in=row_job_ids).values('id', 'user_id')
+        }
+        owner_user_ids = [uid for uid in set(job_owner_map.values()) if uid]
+        owner_email_map = {
+            str(user.id): user.email
+            for user in User.objects.filter(id__in=owner_user_ids).only('id', 'email')
+        }
+
+        items = []
+        for entry in rows:
+            payload = entry.payload if isinstance(entry.payload, dict) else {}
+            owner_user_id = job_owner_map.get(entry.job_id or '')
+            user_email = owner_email_map.get(owner_user_id or '')
+            classification = _classify_audit_event(entry.event_type, payload) or 'unknown'
+
+            items.append(
+                {
+                    'id': entry.id,
+                    'timestamp': entry.created_at.isoformat().replace('+00:00', 'Z'),
+                    'event': entry.event_type,
+                    'job_id': entry.job_id,
+                    'user_email': user_email,
+                    'status': classification,
+                    'status_code': _extract_status_code(payload),
+                    'detail': json.dumps(payload, ensure_ascii=True, sort_keys=True),
+                    'payload': payload,
+                }
+            )
+
+        total_pages = max(1, math.ceil(total / limit)) if total else 1
+        return Response(
+            {
+                'items': items,
+                'page': page,
+                'limit': limit,
+                'total': total,
+                'total_pages': total_pages,
+            }
+        )
+
+
+class AdminErrorTimelineView(APIView):
+    """GET /api/admin/error-timeline/ — 24h grouped success/error counts."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        admin_error = _require_admin_staff(request)
+        if admin_error:
+            return admin_error
+
+        hours = _coerce_int(request.query_params.get('hours'), 24, minimum=1, maximum=168)
+        current_hour = dj_tz.now().astimezone(timezone.utc).replace(minute=0, second=0, microsecond=0)
+        start_hour = current_hour - timedelta(hours=hours - 1)
+
+        buckets: dict[str, dict[str, Any]] = {}
+        cursor = start_hour
+        while cursor <= current_hour:
+            key = cursor.isoformat().replace('+00:00', 'Z')
+            buckets[key] = {
+                'hour': key,
+                'error_count': 0,
+                'success_count': 0,
+            }
+            cursor += timedelta(hours=1)
+
+        timeline_logs = AuditLog.objects.filter(
+            created_at__gte=start_hour,
+            created_at__lt=current_hour + timedelta(hours=1),
+        ).only('created_at', 'event_type', 'payload')
+
+        for entry in timeline_logs.iterator():
+            bucket_hour = entry.created_at.astimezone(timezone.utc).replace(minute=0, second=0, microsecond=0)
+            bucket_key = bucket_hour.isoformat().replace('+00:00', 'Z')
+            bucket = buckets.get(bucket_key)
+            if not bucket:
+                continue
+
+            classification = _classify_audit_event(entry.event_type, entry.payload)
+            if classification == 'error':
+                bucket['error_count'] += 1
+            elif classification == 'success':
+                bucket['success_count'] += 1
+
+        timeline = [buckets[key] for key in sorted(buckets.keys())]
+        return Response(
+            {
+                'hours': hours,
+                'timeline': timeline,
+            }
+        )
+
+
+class AdminTestEmailView(APIView):
+    """POST /api/admin/test-email/ — sends SMTP diagnostic mail to ADMIN_EMAIL."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        admin_error = _require_admin_staff(request)
+        if admin_error:
+            return admin_error
+
+        admin_email = str(getattr(settings, 'ADMIN_EMAIL', '') or '').strip()
+        if not admin_email:
+            return Response(
+                {
+                    'ok': False,
+                    'error': 'ADMIN_EMAIL is not configured.',
+                    'code': 'admin_email_missing',
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        now = dj_tz.now()
+        subject = f'QualityLab Admin Diagnostic - {now.strftime("%Y-%m-%d %H:%M:%S UTC")}'
+        plain_message = (
+            'This is a test email from the QualityLab admin dashboard. '
+            'Your SMTP configuration is working.'
+        )
+        html_message = (
+            '<p>This is a test email from the <strong>QualityLab admin dashboard</strong>.</p>'
+            '<p>Your SMTP configuration is working.</p>'
+        )
+
+        try:
+            sent_count = send_mail(
+                subject=subject,
+                message=plain_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[admin_email],
+                fail_silently=False,
+                html_message=html_message,
+            )
+
+            if sent_count != 1:
+                raise RuntimeError(f'Expected sent_count=1, got {sent_count}.')
+
+            audit_log(
+                '',
+                'ADMIN_TEST_EMAIL_SENT',
+                {
+                    'recipient': admin_email,
+                    'status_code': 200,
+                },
+            )
+            return Response(
+                {
+                    'ok': True,
+                    'recipient': admin_email,
+                    'sent_count': sent_count,
+                    'message': 'Test email sent successfully.',
+                }
+            )
+
+        except Exception as exc:
+            audit_log(
+                '',
+                'ADMIN_TEST_EMAIL_FAILED',
+                {
+                    'recipient': admin_email,
+                    'status_code': 500,
+                    'error': str(exc),
+                },
+            )
+            logger.exception('Failed to send admin test email')
+            return Response(
+                {
+                    'ok': False,
+                    'error': 'Failed to send admin test email.',
+                    'detail': str(exc),
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 # ──────────────────────────────────────────────

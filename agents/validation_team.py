@@ -15,6 +15,7 @@ The final DataFixPlanner report is persisted to reports/ as pretty-printed JSON.
 import json
 import logging
 import os
+import time
 import uuid
 
 from agno.agent import Agent
@@ -168,6 +169,7 @@ def orchestrator_workflow(
       - report artifact metadata for download wiring
     """
     from api.db import update_job_status, save_job_guideline  # avoid circular import
+    from api.models import audit_log
     from services.report_service import save_final_pipeline_report
 
     def _emit(status: str):
@@ -200,6 +202,49 @@ def orchestrator_workflow(
 
     pipeline_run_id = str(uuid.uuid4())
     database_id = derive_database_id(connection_string)
+    step_start_times: dict[str, float] = {}
+
+    def _step_started(step: str):
+        if not job_id:
+            return
+        step_start_times[step] = time.perf_counter()
+        try:
+            audit_log(
+                job_id,
+                'PIPELINE_STEP_STARTED',
+                {
+                    'step': step,
+                    'pipeline_run_id': pipeline_run_id,
+                    'status_code': 102,
+                },
+            )
+        except Exception:
+            pass
+
+    def _step_finished(step: str, *, success: bool, error: str | None = None):
+        if not job_id:
+            return
+
+        started_at = step_start_times.pop(step, None)
+        duration_ms = int((time.perf_counter() - started_at) * 1000) if started_at is not None else None
+        payload = {
+            'step': step,
+            'pipeline_run_id': pipeline_run_id,
+            'status_code': 200 if success else 500,
+        }
+        if duration_ms is not None:
+            payload['duration_ms'] = duration_ms
+        if error:
+            payload['error'] = str(error)
+
+        try:
+            audit_log(
+                job_id,
+                'PIPELINE_STEP_COMPLETED' if success else 'PIPELINE_STEP_FAILED',
+                payload,
+            )
+        except Exception:
+            pass
 
     prior_findings = ""
     prior_reports: list[dict] = []
@@ -209,13 +254,20 @@ def orchestrator_workflow(
     # ------------------------------------------------------------------
     # AGENT 1 - SchemaIntegrityValidator
     # ------------------------------------------------------------------
-    _emit("running_guideline_gen_schema")
-    schema_guidelines = generator.generate(
-        target_agent="schema_integrity_validator",
-        prior_findings=prior_findings,
-    )
-    _save_guideline("schema_integrity_validator", schema_guidelines)
+    _step_started('guideline_gen_schema')
+    try:
+        _emit("running_guideline_gen_schema")
+        schema_guidelines = generator.generate(
+            target_agent="schema_integrity_validator",
+            prior_findings=prior_findings,
+        )
+        _save_guideline("schema_integrity_validator", schema_guidelines)
+        _step_finished('guideline_gen_schema', success=True)
+    except Exception as exc:
+        _step_finished('guideline_gen_schema', success=False, error=str(exc))
+        raise
 
+    _step_started('schema_validation')
     _emit("running_schema")
     schema_agent = Agent(
         name="Schema Integrity Validator",
@@ -244,19 +296,27 @@ def orchestrator_workflow(
         prior_reports=prior_reports,
         runtime_error=schema_runtime_error,
     )
+    _step_finished('schema_validation', success=schema_runtime_error is None, error=schema_runtime_error)
     prior_reports.append(clone_json(schema_report))
     prior_findings = report_to_context_block(schema_report, "Schema Integrity Findings")
 
     # ------------------------------------------------------------------
     # AGENT 2 - ColumnValidatorAgent
     # ------------------------------------------------------------------
-    _emit("running_guideline_gen_column")
-    column_guidelines = generator.generate(
-        target_agent="column_validator",
-        prior_findings=prior_findings,
-    )
-    _save_guideline("column_validator", column_guidelines)
+    _step_started('guideline_gen_column')
+    try:
+        _emit("running_guideline_gen_column")
+        column_guidelines = generator.generate(
+            target_agent="column_validator",
+            prior_findings=prior_findings,
+        )
+        _save_guideline("column_validator", column_guidelines)
+        _step_finished('guideline_gen_column', success=True)
+    except Exception as exc:
+        _step_finished('guideline_gen_column', success=False, error=str(exc))
+        raise
 
+    _step_started('column_validation')
     _emit("running_column")
     column_agent = Agent(
         name="Column Validator",
@@ -289,19 +349,27 @@ def orchestrator_workflow(
         prior_reports=prior_reports,
         runtime_error=column_runtime_error,
     )
+    _step_finished('column_validation', success=column_runtime_error is None, error=column_runtime_error)
     prior_reports.append(clone_json(column_report))
     prior_findings += "\n\n" + report_to_context_block(column_report, "Column Findings")
 
     # ------------------------------------------------------------------
     # AGENT 3 - RowLevelValidator
     # ------------------------------------------------------------------
-    _emit("running_guideline_gen_row_level")
-    row_guidelines = generator.generate(
-        target_agent="row_level_validator",
-        prior_findings=prior_findings,
-    )
-    _save_guideline("row_level_validator", row_guidelines)
+    _step_started('guideline_gen_row_level')
+    try:
+        _emit("running_guideline_gen_row_level")
+        row_guidelines = generator.generate(
+            target_agent="row_level_validator",
+            prior_findings=prior_findings,
+        )
+        _save_guideline("row_level_validator", row_guidelines)
+        _step_finished('guideline_gen_row_level', success=True)
+    except Exception as exc:
+        _step_finished('guideline_gen_row_level', success=False, error=str(exc))
+        raise
 
+    _step_started('row_level_validation')
     _emit("running_row_level")
     row_agent = Agent(
         name="Row Level Validator",
@@ -331,19 +399,27 @@ def orchestrator_workflow(
         prior_reports=prior_reports,
         runtime_error=row_runtime_error,
     )
+    _step_finished('row_level_validation', success=row_runtime_error is None, error=row_runtime_error)
     prior_reports.append(clone_json(row_report))
     prior_findings += "\n\n" + report_to_context_block(row_report, "Row Level Findings")
 
     # ------------------------------------------------------------------
     # AGENT 4 - CrossRowValidator
     # ------------------------------------------------------------------
-    _emit("running_guideline_gen_cross_row")
-    cross_guidelines = generator.generate(
-        target_agent="cross_row_validator",
-        prior_findings=prior_findings,
-    )
-    _save_guideline("cross_row_validator", cross_guidelines)
+    _step_started('guideline_gen_cross_row')
+    try:
+        _emit("running_guideline_gen_cross_row")
+        cross_guidelines = generator.generate(
+            target_agent="cross_row_validator",
+            prior_findings=prior_findings,
+        )
+        _save_guideline("cross_row_validator", cross_guidelines)
+        _step_finished('guideline_gen_cross_row', success=True)
+    except Exception as exc:
+        _step_finished('guideline_gen_cross_row', success=False, error=str(exc))
+        raise
 
+    _step_started('cross_row_validation')
     _emit("running_cross_row")
     cross_agent = Agent(
         name="Cross Row Validator",
@@ -372,19 +448,27 @@ def orchestrator_workflow(
         prior_reports=prior_reports,
         runtime_error=cross_runtime_error,
     )
+    _step_finished('cross_row_validation', success=cross_runtime_error is None, error=cross_runtime_error)
     prior_reports.append(clone_json(cross_report))
     prior_findings += "\n\n" + report_to_context_block(cross_report, "Cross Row Findings")
 
     # ------------------------------------------------------------------
     # AGENT 5 - DataFixPlanner
     # ------------------------------------------------------------------
-    _emit("running_guideline_gen_fix_planner")
-    fix_guidelines = generator.generate(
-        target_agent="data_fix_planner",
-        prior_findings=prior_findings,
-    )
-    _save_guideline("data_fix_planner", fix_guidelines)
+    _step_started('guideline_gen_fix_planner')
+    try:
+        _emit("running_guideline_gen_fix_planner")
+        fix_guidelines = generator.generate(
+            target_agent="data_fix_planner",
+            prior_findings=prior_findings,
+        )
+        _save_guideline("data_fix_planner", fix_guidelines)
+        _step_finished('guideline_gen_fix_planner', success=True)
+    except Exception as exc:
+        _step_finished('guideline_gen_fix_planner', success=False, error=str(exc))
+        raise
 
+    _step_started('fix_planner')
     _emit("running_fix_planner")
     fix_planner = Agent(
         name="Data Fix Planner",
@@ -413,10 +497,13 @@ def orchestrator_workflow(
         prior_reports=prior_reports,
         runtime_error=fix_runtime_error,
     )
+    _step_finished('fix_planner', success=fix_runtime_error is None, error=fix_runtime_error)
 
     # Persist guidelines version after all phases complete.
+    _step_started('saving_guidelines')
     _emit("saving_guidelines")
     generator.save_guidelines()
+    _step_finished('saving_guidelines', success=True)
 
     confidence_score, data_quality_score = aggregate_pipeline_scores(
         [schema_report, column_report, row_report, cross_report]

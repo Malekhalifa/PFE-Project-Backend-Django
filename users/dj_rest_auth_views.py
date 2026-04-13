@@ -33,7 +33,11 @@ from .email_verification import (
     verify_email_with_code,
     verify_email_with_token,
 )
-from services.notification_service import send_email_verification_challenge
+from services.notification_service import (
+    send_email_verification_challenge,
+    notify_user_email_notifications_enabled,
+    notify_user_email_notifications_disabled,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -320,18 +324,41 @@ class CustomUserDetailsView(UserDetailsView):
     permission_classes = [IsAuthenticated]
     serializer_class = CustomUserDetailsSerializer  # explicitly override so REST_AUTH_SERIALIZERS is not needed
 
+    def _maybe_notify_email_preference_change(self, previous_value: bool):
+        try:
+            request_user = self.request.user
+            request_user.refresh_from_db(fields=['email', 'email_notifications_enabled'])
+            current_value = bool(getattr(request_user, 'email_notifications_enabled', True))
+            if current_value == bool(previous_value):
+                return
+
+            user_email = getattr(request_user, 'email', '')
+            if current_value:
+                notify_user_email_notifications_enabled(user_email)
+            else:
+                notify_user_email_notifications_disabled(user_email)
+        except Exception:
+            logger.exception(
+                'Failed to send email notification preference confirmation for user %s',
+                getattr(self.request.user, 'id', 'unknown'),
+            )
+
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
         response.data = {'user': response.data}
         return response
 
     def put(self, request, *args, **kwargs):
+        previous_email_pref = bool(getattr(request.user, 'email_notifications_enabled', True))
         response = super().put(request, *args, **kwargs)
+        self._maybe_notify_email_preference_change(previous_email_pref)
         response.data = {'user': response.data}
         return response
 
     def patch(self, request, *args, **kwargs):
+        previous_email_pref = bool(getattr(request.user, 'email_notifications_enabled', True))
         response = super().patch(request, *args, **kwargs)
+        self._maybe_notify_email_preference_change(previous_email_pref)
         response.data = {'user': response.data}
         return response
 

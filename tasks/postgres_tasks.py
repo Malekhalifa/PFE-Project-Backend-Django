@@ -34,21 +34,19 @@ def _safe_notify(func, *args):
         return None
 
 
-def _get_user_contact(job_id: str) -> str | None:
+def _get_job_user(job_id: str) -> User | None:
     job = get_job(job_id) or {}
     user_id = job.get('user_id')
     if not user_id:
         return None
 
     try:
-        user = User.objects.filter(id=user_id).only('email').first()
+        user = User.objects.filter(id=user_id).only('id', 'email', 'email_notifications_enabled').first()
     except Exception:
         _logger.exception('Failed to resolve user contact for job %s', job_id)
         return None
 
-    if not user:
-        return None
-    return user.email
+    return user
 
 @app.task(bind=True, max_retries=0, time_limit=1800) # 30 mins limit to give AI agents enough time
 def analyze_postgres_task(self, job_id: str, connection_string: str, domain_rules: list = None):
@@ -65,10 +63,14 @@ def analyze_postgres_task(self, job_id: str, connection_string: str, domain_rule
     close_old_connections()
 
     update_job_status(job_id, 'running')
-    audit_log(job_id, 'DB_ANALYSIS_STARTED', {"target": "PostgreSQL Agentic Workflow"})
+    audit_log(job_id, 'DB_ANALYSIS_STARTED', {
+        'target': 'PostgreSQL Agentic Workflow',
+        'status_code': 102,
+    })
 
-    user_email = _get_user_contact(job_id)
-    _safe_notify(notify_user_analysis_started, user_email, job_id)
+    job_user = _get_job_user(job_id)
+    if job_user and bool(getattr(job_user, 'email_notifications_enabled', True)):
+        _safe_notify(notify_user_analysis_started, job_user.email, job_id)
 
     try:
         started_at = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
@@ -100,9 +102,12 @@ def analyze_postgres_task(self, job_id: str, connection_string: str, domain_rule
         audit_log(job_id, 'DB_ANALYSIS_COMPLETED', {
             'analysis_type': 'postgres_agentic',
             'duration_ms': duration_ms,
+            'status_code': 200,
         })
 
-        _safe_notify(notify_user_analysis_results_ready, user_email, job_id)
+        refreshed_job_user = _get_job_user(job_id)
+        if refreshed_job_user and bool(getattr(refreshed_job_user, 'email_notifications_enabled', True)):
+            _safe_notify(notify_user_analysis_results_ready, refreshed_job_user.email, job_id)
 
     except Exception as e:
         failed_at_step = 'unknown'
@@ -112,7 +117,10 @@ def analyze_postgres_task(self, job_id: str, connection_string: str, domain_rule
             _logger.exception('Failed to resolve failed pipeline step for job %s', job_id)
 
         update_job_status(job_id, 'failed')
-        audit_log(job_id, 'DB_ANALYSIS_FAILED', {'error': str(e)})
+        audit_log(job_id, 'DB_ANALYSIS_FAILED', {
+            'error': str(e),
+            'status_code': 500,
+        })
         _safe_notify(notify_admin_job_failed, job_id, failed_at_step, str(e))
         raise
 
@@ -149,7 +157,7 @@ def execute_postgres_cleaning_task(self, job_id: str):
     close_old_connections()
 
     update_job_status(job_id, 'cleaning')
-    audit_log(job_id, 'POSTGRES_CLEANING_STARTED', {})
+    audit_log(job_id, 'POSTGRES_CLEANING_STARTED', {'status_code': 102})
 
     try:
         # 1 – Retrieve the job document
@@ -192,6 +200,7 @@ def execute_postgres_cleaning_task(self, job_id: str):
         audit_log(job_id, 'POSTGRES_CLEANING_COMPLETED', {
             'overall_status': report.get('status'),
             'tables_processed': len(report.get('tables', [])),
+            'status_code': 200,
         })
         _cleaning_logger.info(
             "execute_postgres_cleaning_task finished for job %s — %s",
@@ -207,7 +216,10 @@ def execute_postgres_cleaning_task(self, job_id: str):
             exc_info=True,
         )
         update_job_status(job_id, 'cleaning_failed')
-        audit_log(job_id, 'POSTGRES_CLEANING_FAILED', {'error': str(exc)})
+        audit_log(job_id, 'POSTGRES_CLEANING_FAILED', {
+            'error': str(exc),
+            'status_code': 500,
+        })
         # Do NOT re-raise — Celery max_retries=0 means a raise would permanently
         # fail the task and obscure the real error from the audit log.
 

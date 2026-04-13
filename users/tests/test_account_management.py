@@ -1,4 +1,5 @@
 import os
+from unittest.mock import patch
 
 import django
 from django.conf import settings
@@ -131,3 +132,52 @@ class AccountManagementTests(TestCase):
         self.assertIsNotNone(auth_result)
         auth_user, _ = auth_result
         self.assertEqual(auth_user.pk, self.user.pk)
+
+    @patch('users.dj_rest_auth_views.notify_user_email_notifications_enabled')
+    @patch('users.dj_rest_auth_views.notify_user_email_notifications_disabled')
+    def test_patch_me_sends_disable_confirmation_email(self, mock_disabled, mock_enabled):
+        self.user.email_notifications_enabled = True
+        self.user.save(update_fields=['email_notifications_enabled'])
+
+        view = CustomUserDetailsView.as_view()
+        request = self.factory.patch('/api/me', {'email_notifications_enabled': False}, format='json')
+        force_authenticate(request, user=self.user)
+        response = view(request)
+
+        self.user.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(self.user.email_notifications_enabled)
+        mock_disabled.assert_called_once_with(self.user.email)
+        mock_enabled.assert_not_called()
+
+    @patch('users.dj_rest_auth_views.notify_user_email_notifications_enabled')
+    @patch('users.dj_rest_auth_views.notify_user_email_notifications_disabled')
+    def test_patch_me_sends_enable_confirmation_email(self, mock_disabled, mock_enabled):
+        self.user.email_notifications_enabled = False
+        self.user.save(update_fields=['email_notifications_enabled'])
+
+        view = CustomUserDetailsView.as_view()
+        request = self.factory.patch('/api/me', {'email_notifications_enabled': True}, format='json')
+        force_authenticate(request, user=self.user)
+        response = view(request)
+
+        self.user.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(self.user.email_notifications_enabled)
+        mock_enabled.assert_called_once_with(self.user.email)
+        mock_disabled.assert_not_called()
+
+    @patch('users.dj_rest_auth_views.notify_user_email_notifications_enabled')
+    @patch('users.dj_rest_auth_views.notify_user_email_notifications_disabled')
+    def test_patch_me_does_not_send_confirmation_when_value_unchanged(self, mock_disabled, mock_enabled):
+        self.user.email_notifications_enabled = True
+        self.user.save(update_fields=['email_notifications_enabled'])
+
+        view = CustomUserDetailsView.as_view()
+        request = self.factory.patch('/api/me', {'preferred_language': 'fr'}, format='json')
+        force_authenticate(request, user=self.user)
+        response = view(request)
+
+        self.assertEqual(response.status_code, 200)
+        mock_enabled.assert_not_called()
+        mock_disabled.assert_not_called()

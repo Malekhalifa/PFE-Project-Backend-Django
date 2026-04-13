@@ -150,6 +150,40 @@ def notify_user_fix_executed(user_email: str, job_id: str, status: str) -> int:
     )
 
 
+def notify_user_email_notifications_enabled(user_email: str) -> int:
+    subject = '📩 QualityLab — Email notifications enabled'
+    message_html = (
+        '<p>Your email notifications have been successfully enabled.</p>'
+        '<p>You will now receive operational updates for analysis lifecycle events, '
+        'cleaning completion, and fix execution outcomes.</p>'
+    )
+    return _send_html_email(
+        to_email=user_email,
+        subject=subject,
+        title='Email notifications are now enabled',
+        message_html=message_html,
+        cta_label='Review Notification Settings',
+        cta_href='/settings',
+    )
+
+
+def notify_user_email_notifications_disabled(user_email: str) -> int:
+    subject = '🔕 QualityLab — Email notifications disabled'
+    message_html = (
+        '<p>Your email notifications have been turned off successfully.</p>'
+        '<p>QualityLab will stop sending non-security operational emails. '
+        'Security-related messages required for account protection may still be sent.</p>'
+    )
+    return _send_html_email(
+        to_email=user_email,
+        subject=subject,
+        title='Email notifications are now disabled',
+        message_html=message_html,
+        cta_label='Manage Preferences',
+        cta_href='/settings',
+    )
+
+
 def send_email_verification_challenge(
     *,
     user_email: str,
