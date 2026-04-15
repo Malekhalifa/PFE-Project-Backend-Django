@@ -23,6 +23,7 @@ urlpatterns = [
     path('analyze-postgres', views.AnalyzePostgresView.as_view(), name='analyze-postgres'),
     path('status/<str:jobId>', views.StatusView.as_view(), name='status'),
     path('results/<str:jobId>', views.ResultsView.as_view(), name='results'),
+    path('results/<str:jobId>/diff', views.ResultsDiffView.as_view(), name='results-diff'),
     path('results/<str:jobId>/export', views.ResultsExportView.as_view(), name='results-export'),
     path('raw/<str:jobId>', views.RawDataView.as_view(), name='raw'),
     path('raw_with_outliers/<str:jobId>', views.RawWithOutliersView.as_view(), name='raw-with-outliers'),
@@ -35,6 +36,10 @@ urlpatterns = [
 
     # Jobs (History) — GET and DELETE on the same /api/jobs path
     path('jobs', views.JobsView.as_view(), name='jobs'),
+    path('jobs/<str:job_id>', views.JobDetailView.as_view(), name='job-detail'),
+    path('jobs/<str:job_id>/', views.JobDetailView.as_view(), name='job-detail-slash'),
+    path('jobs/<str:job_id>/chat', views.JobChatView.as_view(), name='job-chat'),
+    path('jobs/<str:job_id>/chat/', views.JobChatView.as_view(), name='job-chat-slash'),
 
     # Power BI Integration
     path('share/<str:sharedToken>', views.ShareableView.as_view(), name='share'),

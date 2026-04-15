@@ -28,13 +28,14 @@ from services.cleaning_service import clean_csv
 from api.db import (
     get_job,
     update_job_status,
+    update_job_celery_task_id,
     update_job_cleaned_path,
     save_analysis_result,
     save_cleaning_result,
 )
 from api.models import audit_log
 from users.models import User
-from services.notification_service import notify_user_cleaning_done
+from services.notification_service import notify_job_webhook_event, notify_user_cleaning_done
 
 
 logger = logging.getLogger(__name__)
@@ -80,6 +81,11 @@ def analyze_csv_task(self, job_id, file_path, mode, options=None):
     close_old_connections()
 
     update_job_status(job_id, 'running')
+    if str((get_job(job_id) or {}).get('status') or '').upper() == 'CANCELLED':
+        audit_log(job_id, 'ANALYSIS_CANCELLED_BEFORE_START', {'status_code': 200})
+        update_job_celery_task_id(job_id, None)
+        return
+
     audit_log(job_id, 'ANALYSIS_STARTED', {'status_code': 102})
 
     try:
@@ -125,18 +131,47 @@ def analyze_csv_task(self, job_id, file_path, mode, options=None):
         )
 
         update_job_status(job_id, 'completed')
+        update_job_celery_task_id(job_id, None)
         audit_log(job_id, 'ANALYSIS_COMPLETED', {
             'analysis_type': analysis_type,
             'duration_ms': duration_ms,
             'status_code': 200,
         })
 
+        webhook_result = _safe_notify(
+            notify_job_webhook_event,
+            job_id=job_id,
+            event_type='job.completed',
+            status='completed',
+            payload={
+                'analysis_type': analysis_type,
+                'duration_ms': duration_ms,
+            },
+        )
+        if isinstance(webhook_result, dict):
+            event_type = 'WEBHOOK_CALLBACK_SENT' if webhook_result.get('ok') else 'WEBHOOK_CALLBACK_FAILED'
+            audit_log(job_id, event_type, webhook_result)
+
     except Exception as e:
         update_job_status(job_id, 'failed')
+        update_job_celery_task_id(job_id, None)
         audit_log(job_id, 'ANALYSIS_FAILED', {
             'error': str(e),
             'status_code': 500,
         })
+        webhook_result = _safe_notify(
+            notify_job_webhook_event,
+            job_id=job_id,
+            event_type='job.failed',
+            status='failed',
+            error=str(e),
+            payload={
+                'analysis_type': 'csv',
+            },
+        )
+        if isinstance(webhook_result, dict):
+            event_type = 'WEBHOOK_CALLBACK_SENT' if webhook_result.get('ok') else 'WEBHOOK_CALLBACK_FAILED'
+            audit_log(job_id, event_type, webhook_result)
         raise
 
 
@@ -156,6 +191,11 @@ def clean_csv_task(self, job_id, file_path, mode='auto', rules=None, options=Non
     close_old_connections()
 
     update_job_status(job_id, 'cleaning')
+    if str((get_job(job_id) or {}).get('status') or '').upper() == 'CANCELLED':
+        audit_log(job_id, 'CLEANING_CANCELLED_BEFORE_START', {'status_code': 200})
+        update_job_celery_task_id(job_id, None)
+        return
+
     audit_log(job_id, 'CLEANING_STARTED', {
         'mode': mode,
         'status_code': 102,
@@ -181,6 +221,7 @@ def clean_csv_task(self, job_id, file_path, mode='auto', rules=None, options=Non
         # Update job with cleaned file path
         update_job_cleaned_path(job_id, result['cleaned_file_path'])
         update_job_status(job_id, 'cleaned')
+        update_job_celery_task_id(job_id, None)
         job_user = _get_job_user(job_id)
         if job_user and bool(getattr(job_user, 'email_notifications_enabled', True)):
             _safe_notify(notify_user_cleaning_done, job_user.email, job_id)
@@ -198,6 +239,7 @@ def clean_csv_task(self, job_id, file_path, mode='auto', rules=None, options=Non
     except Exception as e:
         # On failure, revert to 'completed' status (matches Node.js behavior)
         update_job_status(job_id, 'completed')
+        update_job_celery_task_id(job_id, None)
         audit_log(job_id, 'ERROR', {
             'phase': 'cleaning',
             'error': str(e),

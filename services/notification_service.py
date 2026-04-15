@@ -1,9 +1,135 @@
 import logging
+import json
+import time
+import hmac
+import hashlib
+from typing import Any
 
 from django.conf import settings
 from django.core.mail import send_mail
+import requests as http_requests
+
+from api.models import Job
 
 logger = logging.getLogger(__name__)
+
+
+def _resolve_webhook_target(job_id: str) -> tuple[str | None, str | None, str | None]:
+    try:
+        job = (
+            Job.objects
+            .select_related('user')
+            .filter(id=job_id)
+            .only(
+                'id',
+                'webhook_url_override',
+                'user__id',
+                'user__webhook_url',
+                'user__webhook_secret_encrypted',
+                'user__notifications_enabled',
+            )
+            .first()
+        )
+    except Exception:
+        logger.exception('Failed to resolve webhook target for job=%s', job_id)
+        return None, None, 'lookup_failed'
+
+    if job is None:
+        return None, None, 'job_not_found'
+
+    user = getattr(job, 'user', None)
+    if user is None:
+        return None, None, 'user_missing'
+
+    if not bool(getattr(user, 'notifications_enabled', True)):
+        return None, None, 'notifications_disabled'
+
+    url = ((job.webhook_url_override or '').strip() or (getattr(user, 'webhook_url', '') or '').strip())
+    if not url:
+        return None, None, 'webhook_url_missing'
+
+    try:
+        secret = (user.get_webhook_secret() or '').strip()
+    except Exception:
+        logger.exception('Failed to decrypt webhook secret for user=%s', user.id)
+        return None, None, 'webhook_secret_invalid'
+
+    if not secret:
+        return None, None, 'webhook_secret_missing'
+
+    return url, secret, None
+
+
+def _build_webhook_signature(secret: str, timestamp: str, payload_bytes: bytes) -> str:
+    signed = hmac.new(
+        key=secret.encode('utf-8'),
+        msg=timestamp.encode('utf-8') + b'.' + payload_bytes,
+        digestmod=hashlib.sha256,
+    ).hexdigest()
+    return f'sha256={signed}'
+
+
+def notify_job_webhook_event(
+    *,
+    job_id: str,
+    event_type: str,
+    status: str,
+    payload: dict[str, Any] | None = None,
+    error: str | None = None,
+) -> dict[str, Any]:
+    """Send a signed callback to the configured webhook URL for the job owner."""
+    url, secret, skip_reason = _resolve_webhook_target(job_id)
+    if skip_reason:
+        return {
+            'ok': False,
+            'skipped': True,
+            'reason': skip_reason,
+            'event': event_type,
+        }
+
+    body = {
+        'event': event_type,
+        'job_id': str(job_id),
+        'status': status,
+        'timestamp': int(time.time()),
+        'payload': payload or {},
+    }
+    if error:
+        body['error'] = error
+
+    payload_bytes = json.dumps(body, separators=(',', ':'), sort_keys=True).encode('utf-8')
+    header_timestamp = str(int(time.time()))
+    signature = _build_webhook_signature(secret, header_timestamp, payload_bytes)
+    timeout_seconds = max(1, int(getattr(settings, 'WEBHOOK_CALLBACK_TIMEOUT_SECONDS', 5)))
+
+    headers = {
+        'Content-Type': 'application/json',
+        'X-QualityLab-Event': event_type,
+        'X-QualityLab-Timestamp': header_timestamp,
+        'X-QualityLab-Signature': signature,
+    }
+
+    try:
+        response = http_requests.post(
+            url,
+            data=payload_bytes,
+            headers=headers,
+            timeout=timeout_seconds,
+        )
+        return {
+            'ok': 200 <= response.status_code < 300,
+            'skipped': False,
+            'event': event_type,
+            'status_code': response.status_code,
+        }
+    except http_requests.RequestException as exc:
+        logger.warning('Webhook callback failed for job=%s event=%s: %s', job_id, event_type, exc)
+        return {
+            'ok': False,
+            'skipped': False,
+            'event': event_type,
+            'error': str(exc),
+        }
 
 
 def _build_html_email(title: str, message_html: str, cta_label: str | None = None, cta_href: str | None = None) -> str:

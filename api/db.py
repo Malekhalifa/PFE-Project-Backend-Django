@@ -10,6 +10,7 @@ from typing import Any
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone as dj_tz
 
 from api.models import (
@@ -110,8 +111,10 @@ def _serialize_job(job: Job) -> dict:
         'cleaned_file_path': job.cleaned_file_path,
         'connection_string': decrypted_connection_string,
         'status': job.status,
+        'celery_task_id': job.celery_task_id,
         'mode': job.mode,
         'llm_model': job.llm_model,
+        'webhook_url_override': job.webhook_url_override,
         'share_token': job.share_token,
         'created_at': job.created_at,
         'updated_at': job.updated_at,
@@ -163,6 +166,7 @@ def create_job(
     file_path: str,
     mode: str = 'normal',
     llm_model: str = _DEFAULT_LLM_MODEL,
+    webhook_url_override: str | None = None,
 ) -> str:
     """Create a new job row. Returns the job_id (UUID string)."""
     normalized_user_id = _normalize_uuid(user_id)
@@ -175,6 +179,7 @@ def create_job(
         file_path=file_path,
         mode=mode,
         llm_model=(llm_model or _DEFAULT_LLM_MODEL).strip() or _DEFAULT_LLM_MODEL,
+        webhook_url_override=(webhook_url_override or '').strip() or None,
         status='starting',
     )
     return str(job.id)
@@ -225,7 +230,45 @@ def update_job_status(job_id: str, job_status: str) -> None:
     normalized_job_id = _normalize_uuid(job_id)
     if not normalized_job_id:
         return
-    Job.objects.filter(id=normalized_job_id).update(status=job_status, updated_at=dj_tz.now())
+    status_value = str(job_status or '').strip()
+    if not status_value:
+        return
+
+    now = dj_tz.now()
+    if status_value == 'CANCELLED':
+        Job.objects.filter(id=normalized_job_id).update(status='CANCELLED', updated_at=now)
+        return
+
+    Job.objects.filter(id=normalized_job_id).exclude(status='CANCELLED').update(
+        status=status_value,
+        updated_at=now,
+    )
+
+
+def update_job_celery_task_id(job_id: str, task_id: str | None) -> None:
+    """Persist the latest Celery task identifier for a job."""
+    normalized_job_id = _normalize_uuid(job_id)
+    if not normalized_job_id:
+        return
+
+    normalized_task_id = (task_id or '').strip() or None
+    Job.objects.filter(id=normalized_job_id).update(
+        celery_task_id=normalized_task_id,
+        updated_at=dj_tz.now(),
+    )
+
+
+def update_job_webhook_override(job_id: str, webhook_url: str | None) -> None:
+    """Set or clear the per-job webhook callback URL override."""
+    normalized_job_id = _normalize_uuid(job_id)
+    if not normalized_job_id:
+        return
+
+    normalized_url = (webhook_url or '').strip() or None
+    Job.objects.filter(id=normalized_job_id).update(
+        webhook_url_override=normalized_url,
+        updated_at=dj_tz.now(),
+    )
 
 
 def update_job_cleaned_path(job_id: str, cleaned_file_path: str) -> None:
@@ -352,12 +395,76 @@ def save_analysis_result(
     if 'schema_analysis' in payload and 'column_validator_analysis' not in payload:
         payload['column_validator_analysis'] = _default_column_validator_analysis()
 
-    AnalysisResult.objects.update_or_create(
+    obj, _ = AnalysisResult.objects.update_or_create(
         job_id=normalized_job_id,
         defaults={
             'result': payload,
             'analysis_type': analysis_type,
         },
+    )
+
+    database_id = _extract_database_id(payload)
+    if not database_id:
+        return
+
+    user_id = (
+        Job.objects
+        .filter(id=normalized_job_id)
+        .values_list('user_id', flat=True)
+        .first()
+    )
+    if not user_id:
+        return
+
+    previous = _find_previous_analysis_result(
+        current_job_id=normalized_job_id,
+        user_id=str(user_id),
+        database_id=database_id,
+    )
+    previous_id = previous.id if previous else None
+    if obj.previous_run_id == previous_id:
+        return
+
+    obj.previous_run = previous
+    obj.save(update_fields=['previous_run', 'updated_at'])
+
+
+def _extract_database_id(payload: dict[str, Any]) -> str | None:
+    top_level = (payload.get('database_id') or '').strip()
+    if top_level:
+        return top_level
+
+    report_level = (payload.get('report_database_id') or '').strip()
+    if report_level:
+        return report_level
+
+    final_report = payload.get('final_report')
+    if isinstance(final_report, dict):
+        nested = (final_report.get('database_id') or '').strip()
+        if nested:
+            return nested
+
+    return None
+
+
+def _find_previous_analysis_result(
+    *,
+    current_job_id: str,
+    user_id: str,
+    database_id: str,
+) -> AnalysisResult | None:
+    return (
+        AnalysisResult.objects
+        .filter(job__user_id=user_id)
+        .exclude(job_id=current_job_id)
+        .filter(
+            Q(result__database_id=database_id)
+            | Q(result__report_database_id=database_id)
+            | Q(result__final_report__database_id=database_id)
+        )
+        .select_related('job')
+        .order_by('-created_at')
+        .first()
     )
 
 

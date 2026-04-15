@@ -49,6 +49,7 @@ class JobDeleteSerializer(serializers.Serializer):
 class AnalyzePostgresSerializer(serializers.Serializer):
     connection_string = serializers.CharField(required=True, allow_blank=False)
     domain_rules = serializers.ListField(required=False, default=list)
+    webhook_url = serializers.URLField(required=False, allow_blank=True, allow_null=True, max_length=2048)
     llm_model = serializers.CharField(
         required=False,
         allow_blank=False,
@@ -68,3 +69,26 @@ class AnalyzePostgresSerializer(serializers.Serializer):
             )
 
         return model_id
+
+    def validate_webhook_url(self, value: str | None) -> str | None:
+        normalized = (value or '').strip()
+        return normalized or None
+
+
+class AnalyzeCsvStartSerializer(serializers.Serializer):
+    webhook_url = serializers.URLField(required=False, allow_blank=True, allow_null=True, max_length=2048)
+
+    def validate_webhook_url(self, value: str | None) -> str | None:
+        normalized = (value or '').strip()
+        return normalized or None
+
+
+class ChatMessageCreateSerializer(serializers.Serializer):
+    role = serializers.ChoiceField(choices=['user', 'agent'])
+    content = serializers.CharField(required=True, allow_blank=False, max_length=20000)
+
+    def validate_content(self, value: str) -> str:
+        normalized = (value or '').strip()
+        if not normalized:
+            raise serializers.ValidationError('content cannot be empty')
+        return normalized

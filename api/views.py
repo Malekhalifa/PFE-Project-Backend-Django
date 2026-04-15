@@ -31,7 +31,8 @@ from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
-from api.models import AuditLog, Job, audit_log
+from config.celery import app as celery_app
+from api.models import AnalysisResult, AuditLog, Job, audit_log
 from api.db import (
     create_job,
     get_job,
@@ -49,14 +50,22 @@ from api.db import (
     update_job_connection_string,
     get_job_by_share_token,
     update_job_status,
+    update_job_celery_task_id,
+    update_job_webhook_override,
     get_job_guidelines,
 )
 from api.permissions import find_owned_job
-from api.serializers import AnalyzePostgresSerializer, CleanRequestSerializer, JobDeleteSerializer
+from api.serializers import (
+    AnalyzeCsvStartSerializer,
+    AnalyzePostgresSerializer,
+    ChatMessageCreateSerializer,
+    CleanRequestSerializer,
+    JobDeleteSerializer,
+)
 from agents.query_executor_agent import QueryExecutorAgent
 from agents.reporting import synthesize_fixes_from_prior_reports
 from services.analysis_service import compute_row_outliers, to_native
-from services.notification_service import notify_user_fix_executed
+from services.notification_service import notify_job_webhook_event, notify_user_fix_executed
 from services.postgres_connection import (
     looks_like_postgres_dsn,
     redact_postgres_dsn,
@@ -428,6 +437,80 @@ def _build_postgres_export_payload(result: dict) -> dict:
     }
 
 
+def _extract_quality_score(result_payload: dict | None) -> float | None:
+    payload = result_payload or {}
+
+    candidates = [
+        payload.get('data_quality_score'),
+        ((payload.get('column_validator_analysis') or {}).get('summary') or {}).get('overall_quality_score'),
+        (payload.get('quality_report') or {}).get('quality_score'),
+        ((payload.get('final_report') or {}).get('summary') or {}).get('data_quality_score'),
+    ]
+    for raw in candidates:
+        try:
+            value = float(raw)
+        except (TypeError, ValueError):
+            continue
+        if math.isnan(value) or math.isinf(value):
+            continue
+        return round(value, 4)
+
+    return None
+
+
+def _normalize_flagged_tables(values: list[Any]) -> list[str]:
+    normalized: list[str] = []
+    seen: set[str] = set()
+    for raw in values:
+        table = str(raw or '').strip()
+        if not table:
+            continue
+        key = table.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        normalized.append(table)
+    return sorted(normalized, key=str.lower)
+
+
+def _extract_flagged_tables(result_payload: dict | None) -> list[str]:
+    payload = result_payload or {}
+
+    column_summary = (payload.get('column_validator_analysis') or {}).get('summary') or {}
+    flagged = column_summary.get('flagged_tables')
+    if isinstance(flagged, list):
+        return _normalize_flagged_tables(flagged)
+
+    findings = (payload.get('final_report') or {}).get('findings')
+    if not isinstance(findings, list):
+        return []
+
+    inferred: list[Any] = []
+    for item in findings:
+        if not isinstance(item, dict):
+            continue
+        table = item.get('table') or item.get('table_name')
+        if table:
+            inferred.append(table)
+
+    return _normalize_flagged_tables(inferred)
+
+
+def _extract_pipeline_run_id(result_payload: dict | None) -> str | None:
+    payload = result_payload or {}
+    run_id = (payload.get('pipeline_run_id') or '').strip()
+    if run_id:
+        return run_id
+
+    final_report = payload.get('final_report')
+    if isinstance(final_report, dict):
+        nested = (final_report.get('pipeline_run_id') or '').strip()
+        if nested:
+            return nested
+
+    return None
+
+
 # ──────────────────────────────────────────────
 # Upload
 # ──────────────────────────────────────────────
@@ -506,16 +589,27 @@ class AnalyzeView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
+        start_serializer = AnalyzeCsvStartSerializer(data=request.data or {})
+        if not start_serializer.is_valid():
+            return Response(start_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        webhook_url = start_serializer.validated_data.get('webhook_url')
+        if webhook_url is not None:
+            update_job_webhook_override(jobId, webhook_url)
+
         # Dispatch Celery task (fire-and-forget)
-        analyze_csv_task.delay(
+        async_result = analyze_csv_task.delay(
             job_id=jobId,
             file_path=job['file_path'],
             mode=job.get('mode', 'normal'),
             options={},
         )
+        task_id = str(getattr(async_result, 'id', '') or '')
+        if task_id:
+            update_job_celery_task_id(jobId, task_id)
 
-        audit_log(jobId, 'ANALYSIS_ENQUEUED', {}, user_id=str(request.user.id))
-        return Response({'message': 'analysis started'})
+        audit_log(jobId, 'ANALYSIS_ENQUEUED', {'task_id': task_id}, user_id=str(request.user.id))
+        return Response({'message': 'analysis started', 'task_id': task_id})
 
 
 class TestPostgresConnectionView(APIView):
@@ -577,6 +671,7 @@ class AnalyzePostgresView(APIView):
 
         conn_str = serializer.validated_data['connection_string']
         domain_rules = serializer.validated_data.get('domain_rules', [])
+        webhook_url = serializer.validated_data.get('webhook_url')
         llm_model = serializer.validated_data.get('llm_model', 'gemini-2.0-flash').strip() or 'gemini-2.0-flash'
 
         # 1) Quick format check (pattern) to fail fast on obvious mistakes.
@@ -623,21 +718,25 @@ class AnalyzePostgresView(APIView):
             file_path="postgres://<hidden>",
             mode="agentic_postgres",
             llm_model=llm_model,
+            webhook_url_override=webhook_url,
         )
 
         # Persist the DSN in the job document so the cleaning task
         # can retrieve it later without needing it re-passed.
         update_job_connection_string(job_id, conn_str)
 
-        analyze_postgres_task.delay(
+        async_result = analyze_postgres_task.delay(
             job_id=job_id,
             connection_string=conn_str,
             domain_rules=domain_rules,
             llm_model=llm_model,
         )
+        task_id = str(getattr(async_result, 'id', '') or '')
+        if task_id:
+            update_job_celery_task_id(job_id, task_id)
 
-        audit_log(job_id, 'DB_ANALYSIS_ENQUEUED', {}, user_id=user_id)
-        return Response({'job_id': job_id, 'message': 'Postgres analysis started'})
+        audit_log(job_id, 'DB_ANALYSIS_ENQUEUED', {'task_id': task_id}, user_id=user_id)
+        return Response({'job_id': job_id, 'message': 'Postgres analysis started', 'task_id': task_id})
 
 
 class StatusView(APIView):
@@ -737,6 +836,113 @@ class ResultsView(APIView):
             response_data['row_level_analysis'] = result['row_level_analysis']
 
         return Response(response_data)
+
+
+class ResultsDiffView(APIView):
+    """
+    GET /api/results/<jobId>/diff — compare current run against previous run.
+
+    Query params:
+      - compare_to: optional job id override for the baseline run
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, jobId):
+        job = find_owned_job(jobId, request.user)
+        if not job:
+            return Response({'detail': 'Results not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        current = (
+            AnalysisResult.objects
+            .select_related('job', 'previous_run', 'previous_run__job')
+            .filter(job_id=jobId)
+            .first()
+        )
+        if not current:
+            return Response({'detail': 'Results not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        compare_to = (request.query_params.get('compare_to') or '').strip()
+        if compare_to:
+            baseline_job = find_owned_job(compare_to, request.user)
+            if not baseline_job:
+                return Response({'detail': 'Comparison run not found'}, status=status.HTTP_404_NOT_FOUND)
+            baseline = (
+                AnalysisResult.objects
+                .select_related('job')
+                .filter(job_id=compare_to)
+                .first()
+            )
+            if not baseline:
+                return Response({'detail': 'Comparison run has no analysis result'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            baseline = current.previous_run
+            if baseline is None:
+                return Response({'detail': 'No previous run found for this job'}, status=status.HTTP_404_NOT_FOUND)
+            if request.user.role != 'admin' and str(baseline.job.user_id) != str(request.user.id):
+                return Response({'detail': 'Comparison run not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        current_result = dict(current.result or {})
+        baseline_result = dict(baseline.result or {})
+
+        current_quality = _extract_quality_score(current_result)
+        baseline_quality = _extract_quality_score(baseline_result)
+        quality_delta = (
+            round(current_quality - baseline_quality, 4)
+            if current_quality is not None and baseline_quality is not None
+            else None
+        )
+
+        if quality_delta is None:
+            trend = 'unknown'
+        elif quality_delta > 0:
+            trend = 'improved'
+        elif quality_delta < 0:
+            trend = 'degraded'
+        else:
+            trend = 'unchanged'
+
+        current_tables = _extract_flagged_tables(current_result)
+        baseline_tables = _extract_flagged_tables(baseline_result)
+        current_by_key = {value.lower(): value for value in current_tables}
+        baseline_by_key = {value.lower(): value for value in baseline_tables}
+
+        new_keys = set(current_by_key.keys()) - set(baseline_by_key.keys())
+        resolved_keys = set(baseline_by_key.keys()) - set(current_by_key.keys())
+        unchanged_keys = set(current_by_key.keys()) & set(baseline_by_key.keys())
+
+        return Response(
+            {
+                'current_run': {
+                    'job_id': str(current.job_id),
+                    'pipeline_run_id': _extract_pipeline_run_id(current_result),
+                    'database_id': current_result.get('database_id') or current_result.get('report_database_id'),
+                    'created_at': current.created_at.isoformat() if current.created_at else None,
+                    'quality_score': current_quality,
+                    'flagged_tables': current_tables,
+                    'flagged_table_count': len(current_tables),
+                },
+                'previous_run': {
+                    'job_id': str(baseline.job_id),
+                    'pipeline_run_id': _extract_pipeline_run_id(baseline_result),
+                    'database_id': baseline_result.get('database_id') or baseline_result.get('report_database_id'),
+                    'created_at': baseline.created_at.isoformat() if baseline.created_at else None,
+                    'quality_score': baseline_quality,
+                    'flagged_tables': baseline_tables,
+                    'flagged_table_count': len(baseline_tables),
+                },
+                'diff': {
+                    'quality_score': {
+                        'delta': quality_delta,
+                        'trend': trend,
+                    },
+                    'flagged_tables': {
+                        'new': sorted([current_by_key[key] for key in new_keys], key=str.lower),
+                        'resolved': sorted([baseline_by_key[key] for key in resolved_keys], key=str.lower),
+                        'unchanged': sorted([current_by_key[key] for key in unchanged_keys], key=str.lower),
+                    },
+                },
+            }
+        )
 
 
 class ResultsExportView(APIView):
@@ -914,16 +1120,19 @@ class CleanView(APIView):
         rules = request.data.get('rules', {})
 
         # Dispatch Celery task (fire-and-forget)
-        clean_csv_task.delay(
+        async_result = clean_csv_task.delay(
             job_id=jobId,
             file_path=job['file_path'],
             mode=mode,
             rules=rules,
             options={},
         )
+        task_id = str(getattr(async_result, 'id', '') or '')
+        if task_id:
+            update_job_celery_task_id(jobId, task_id)
 
-        audit_log(jobId, 'CLEANING_ENQUEUED', {'mode': mode}, user_id=str(request.user.id))
-        return Response({'job_id': jobId, 'status': 'cleaning_started'})
+        audit_log(jobId, 'CLEANING_ENQUEUED', {'mode': mode, 'task_id': task_id}, user_id=str(request.user.id))
+        return Response({'job_id': jobId, 'status': 'cleaning_started', 'task_id': task_id})
 
 
 class CleanedFileView(APIView):
@@ -1160,6 +1369,89 @@ class JobsView(APIView):
         return Response({'deleted': len(owned_ids), 'job_ids': owned_ids})
 
 
+class JobDetailView(APIView):
+    """
+    DELETE /api/jobs/<job_id>/ — cancel a running job.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, job_id):
+        job = find_owned_job(job_id, request.user)
+        if not job:
+            return Response({'detail': 'Job not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        current_status = str(job.get('status') or '').strip()
+        if current_status.upper() == 'CANCELLED':
+            return Response({'job_id': job_id, 'status': 'CANCELLED', 'already_cancelled': True})
+
+        if not _is_active_job_status(current_status):
+            return Response(
+                {
+                    'error': 'Only running jobs can be cancelled.',
+                    'status': current_status,
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        task_id = str(job.get('celery_task_id') or '').strip()
+        revoked = False
+        revoke_error = None
+
+        if task_id:
+            try:
+                celery_app.control.revoke(task_id, terminate=True)
+                revoked = True
+            except Exception as exc:
+                logger.exception('Failed to revoke Celery task %s for job %s', task_id, job_id)
+                revoke_error = str(exc)
+
+        update_job_status(job_id, 'CANCELLED')
+        update_job_celery_task_id(job_id, None)
+
+        audit_payload = {
+            'cancelled_by': str(request.user.id),
+            'previous_status': current_status,
+            'task_id': task_id or None,
+            'revoke_requested': bool(task_id),
+            'revoked': revoked,
+        }
+        if revoke_error:
+            audit_payload['revoke_error'] = revoke_error
+        audit_log(job_id, 'JOB_CANCELLED', audit_payload, user_id=str(request.user.id))
+
+        callback = notify_job_webhook_event(
+            job_id=job_id,
+            event_type='job.cancelled',
+            status='CANCELLED',
+            payload={
+                'previous_status': current_status,
+                'task_id': task_id or None,
+            },
+        )
+        if isinstance(callback, dict):
+            callback_event = 'WEBHOOK_CALLBACK_SENT' if callback.get('ok') else 'WEBHOOK_CALLBACK_FAILED'
+            audit_log(
+                job_id,
+                callback_event,
+                {
+                    **callback,
+                    'event': 'job.cancelled',
+                },
+                user_id=str(request.user.id),
+            )
+
+        response_payload = {
+            'job_id': job_id,
+            'status': 'CANCELLED',
+            'task_id': task_id or None,
+            'revoked': revoked,
+        }
+        if revoke_error:
+            response_payload['revoke_error'] = revoke_error
+
+        return Response(response_payload)
+
+
 # ──────────────────────────────────────────────
 # Power BI Integration
 # ──────────────────────────────────────────────
@@ -1360,39 +1652,52 @@ class AgentChatProxyView(APIView):
             )
 
 
-class ChatHistoryView(APIView):
+class JobChatView(APIView):
     """
-    GET /api/chat-history/<jobId> — return all chat messages for a job.
+    GET/POST /api/jobs/<job_id>/chat/ — list or append chat messages for a job.
     """
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, jobId):
-        job = get_job(jobId)
+    def get(self, request, job_id):
+        job = find_owned_job(job_id, request.user)
         if not job:
             return Response({'error': 'Job not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        # Ownership check (admins can see all)
-        if request.user.role != 'admin' and job.get('user_id') != str(request.user.id):
-            return Response({'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
-
-        messages = get_chat_messages(jobId)
-        # Serialize datetimes
-        for m in messages:
-            if 'created_at' in m:
-                m['created_at'] = m['created_at'].isoformat()
+        messages = get_chat_messages(job_id)
+        for message in messages:
+            if 'created_at' in message:
+                message['created_at'] = message['created_at'].isoformat()
 
         return Response({'messages': messages})
 
-    def post(self, request, jobId):
-        """Save a single chat message (used by frontend to persist analysis summary)."""
-        role = request.data.get('role', '').strip()
-        content = request.data.get('content', '').strip()
+    def post(self, request, job_id):
+        job = find_owned_job(job_id, request.user)
+        if not job:
+            return Response({'error': 'Job not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        if not role or not content:
-            return Response({'error': 'role and content are required'}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = ChatMessageCreateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        save_chat_message(jobId, str(request.user.id), role, content)
+        save_chat_message(
+            job_id,
+            str(request.user.id),
+            serializer.validated_data['role'],
+            serializer.validated_data['content'],
+        )
         return Response({'ok': True})
+
+
+class ChatHistoryView(JobChatView):
+    """
+    Backward-compatible alias for GET/POST /api/chat-history/<jobId>.
+    """
+
+    def get(self, request, jobId):
+        return super().get(request, jobId)
+
+    def post(self, request, jobId):
+        return super().post(request, jobId)
 
 
 # ──────────────────────────────────────────────

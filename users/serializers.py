@@ -60,5 +60,7 @@ class UserSerializer(serializers.Serializer):
     preferred_language = serializers.CharField()
     notifications_enabled = serializers.BooleanField()
     email_notifications_enabled = serializers.BooleanField()
+    webhook_url = serializers.URLField(allow_null=True)
+    has_webhook_secret = serializers.BooleanField()
     theme_preference = serializers.CharField()
     last_login = serializers.DateTimeField(allow_null=True)

@@ -43,8 +43,10 @@ class Job(models.Model):
 
     # Job lifecycle
     status = models.CharField(max_length=64, default='starting', db_index=True)
+    celery_task_id = models.CharField(max_length=128, null=True, blank=True, db_index=True)
     mode = models.CharField(max_length=64, default='normal')
     llm_model = models.CharField(max_length=128, default='gemini-2.0-flash')
+    webhook_url_override = models.URLField(null=True, blank=True)
 
     # Power BI share
     share_token = models.CharField(max_length=128, null=True, blank=True, db_index=True)
@@ -70,6 +72,13 @@ class AnalysisResult(models.Model):
     job = models.OneToOneField(
         Job, on_delete=models.CASCADE, related_name='analysis_result',
         db_column='job_id',
+    )
+    previous_run = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='next_runs',
     )
     result = models.JSONField(default=dict)
     analysis_type = models.CharField(max_length=64, default='in-memory')

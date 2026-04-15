@@ -9,6 +9,7 @@ from django.utils import timezone as dj_tz
 from config.celery import app
 from services.postgres_service import analyze_postgres_database
 from services.notification_service import (
+    notify_job_webhook_event,
     notify_admin_job_failed,
     notify_admin_job_stuck,
     notify_user_analysis_started,
@@ -18,6 +19,7 @@ from api.db import (
     get_job,
     get_analysis_result,
     update_job_status,
+    update_job_celery_task_id,
     save_analysis_result,
     update_job_cleaning_report,
 )
@@ -71,6 +73,11 @@ def analyze_postgres_task(
     close_old_connections()
 
     update_job_status(job_id, 'running')
+    if str((get_job(job_id) or {}).get('status') or '').upper() == 'CANCELLED':
+        audit_log(job_id, 'DB_ANALYSIS_CANCELLED_BEFORE_START', {'status_code': 200})
+        update_job_celery_task_id(job_id, None)
+        return
+
     job_payload = get_job(job_id) or {}
     resolved_llm_model = (
         (job_payload.get('llm_model') if isinstance(job_payload, dict) else None)
@@ -122,6 +129,7 @@ def analyze_postgres_task(
         )
 
         update_job_status(job_id, 'completed')
+        update_job_celery_task_id(job_id, None)
         audit_log(job_id, 'DB_ANALYSIS_COMPLETED', {
             'analysis_type': 'postgres_agentic',
             'duration_ms': duration_ms,
@@ -132,6 +140,21 @@ def analyze_postgres_task(
         if refreshed_job_user and bool(getattr(refreshed_job_user, 'email_notifications_enabled', True)):
             _safe_notify(notify_user_analysis_results_ready, refreshed_job_user.email, job_id)
 
+        webhook_result = _safe_notify(
+            notify_job_webhook_event,
+            job_id=job_id,
+            event_type='job.completed',
+            status='completed',
+            payload={
+                'analysis_type': 'postgres_agentic',
+                'duration_ms': duration_ms,
+                'llm_model': resolved_llm_model,
+            },
+        )
+        if isinstance(webhook_result, dict):
+            event_type = 'WEBHOOK_CALLBACK_SENT' if webhook_result.get('ok') else 'WEBHOOK_CALLBACK_FAILED'
+            audit_log(job_id, event_type, webhook_result)
+
     except Exception as e:
         failed_at_step = 'unknown'
         try:
@@ -140,10 +163,26 @@ def analyze_postgres_task(
             _logger.exception('Failed to resolve failed pipeline step for job %s', job_id)
 
         update_job_status(job_id, 'failed')
+        update_job_celery_task_id(job_id, None)
         audit_log(job_id, 'DB_ANALYSIS_FAILED', {
             'error': str(e),
             'status_code': 500,
         })
+        webhook_result = _safe_notify(
+            notify_job_webhook_event,
+            job_id=job_id,
+            event_type='job.failed',
+            status='failed',
+            error=str(e),
+            payload={
+                'failed_at_step': failed_at_step,
+                'analysis_type': 'postgres_agentic',
+                'llm_model': resolved_llm_model,
+            },
+        )
+        if isinstance(webhook_result, dict):
+            event_type = 'WEBHOOK_CALLBACK_SENT' if webhook_result.get('ok') else 'WEBHOOK_CALLBACK_FAILED'
+            audit_log(job_id, event_type, webhook_result)
         _safe_notify(notify_admin_job_failed, job_id, failed_at_step, str(e))
         raise
 
@@ -180,6 +219,11 @@ def execute_postgres_cleaning_task(self, job_id: str):
     close_old_connections()
 
     update_job_status(job_id, 'cleaning')
+    if str((get_job(job_id) or {}).get('status') or '').upper() == 'CANCELLED':
+        audit_log(job_id, 'POSTGRES_CLEANING_CANCELLED_BEFORE_START', {'status_code': 200})
+        update_job_celery_task_id(job_id, None)
+        return
+
     audit_log(job_id, 'POSTGRES_CLEANING_STARTED', {'status_code': 102})
 
     try:
@@ -220,6 +264,7 @@ def execute_postgres_cleaning_task(self, job_id: str):
             else 'cleaning_completed'
         )
         update_job_status(job_id, final_status)
+        update_job_celery_task_id(job_id, None)
         audit_log(job_id, 'POSTGRES_CLEANING_COMPLETED', {
             'overall_status': report.get('status'),
             'tables_processed': len(report.get('tables', [])),
@@ -239,6 +284,7 @@ def execute_postgres_cleaning_task(self, job_id: str):
             exc_info=True,
         )
         update_job_status(job_id, 'cleaning_failed')
+        update_job_celery_task_id(job_id, None)
         audit_log(job_id, 'POSTGRES_CLEANING_FAILED', {
             'error': str(exc),
             'status_code': 500,
