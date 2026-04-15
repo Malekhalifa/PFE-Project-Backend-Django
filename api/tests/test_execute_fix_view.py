@@ -16,7 +16,7 @@ class ExecuteFixViewTests(unittest.TestCase):
     def _request(self, data):
         return SimpleNamespace(
             data=data,
-            user=SimpleNamespace(id="user-1", role="user"),
+            user=SimpleNamespace(id="user-1", role="user", email_verified=True),
         )
 
     @patch("api.views.audit_log")

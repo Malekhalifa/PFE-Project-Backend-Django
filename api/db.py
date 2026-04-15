@@ -14,6 +14,7 @@ with an `_id` key to match the MongoDB document shape that all callers expect:
   job.get('connection_string')
   … etc.
 """
+import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Any
@@ -28,6 +29,13 @@ from api.models import (
     ChatMessage,
     JobGuideline,
 )
+from api.connection_string_crypto import (
+    decrypt_connection_string,
+    encrypt_connection_string,
+)
+
+
+logger = logging.getLogger(__name__)
 
 _GUIDELINE_KEYS = [
     'schema_integrity_validator',
@@ -89,13 +97,19 @@ def _job_to_dict(job: Job) -> dict:
     Serialize a Job model instance to a plain dict that matches the shape
     callers expect from the old MongoDB document.
     """
+    try:
+        decrypted_connection_string = decrypt_connection_string(job.connection_string)
+    except ValueError:
+        logger.exception('Failed to decrypt connection string for job %s', job.id)
+        decrypted_connection_string = None
+
     return {
         '_id': job.id,
         'user_id': job.user_id,
         'file_name': job.file_name,
         'file_path': job.file_path,
         'cleaned_file_path': job.cleaned_file_path,
-        'connection_string': job.connection_string,
+        'connection_string': decrypted_connection_string,
         'status': job.status,
         'mode': job.mode,
         'share_token': job.share_token,
@@ -209,8 +223,10 @@ def get_job_by_share_token(share_token: str) -> dict | None:
 
 def update_job_connection_string(job_id: str, connection_string: str) -> None:
     """Persist the user's PostgreSQL DSN in the job row."""
+    encrypted_connection_string = encrypt_connection_string(connection_string)
     Job.objects.filter(id=job_id).update(
-        connection_string=connection_string, updated_at=dj_tz.now()
+        connection_string=encrypted_connection_string,
+        updated_at=dj_tz.now(),
     )
 
 

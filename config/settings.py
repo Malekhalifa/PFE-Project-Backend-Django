@@ -22,9 +22,40 @@ env = environ.Env(
 )
 environ.Env.read_env(BASE_DIR / '.env')
 
+
+def _normalize_throttle_rate(raw_value: str, default: str) -> str:
+    """Return a DRF-compatible throttle rate like '10/hour'."""
+    candidate = str(raw_value or '').split('#', 1)[0].strip()
+    if not candidate:
+        return default
+
+    if '/' not in candidate:
+        if candidate.isdigit():
+            # Bare integers are treated as per-minute limits for convenience.
+            return f'{int(candidate)}/minute'
+        return default
+
+    requests_count, period = [part.strip() for part in candidate.split('/', 1)]
+    if not requests_count.isdigit() or not period:
+        return default
+
+    if period[0].lower() not in {'s', 'm', 'h', 'd'}:
+        return default
+
+    return f'{int(requests_count)}/{period.lower()}'
+
 SECRET_KEY = env('SECRET_KEY', default='change-me-to-a-strong-random-secret')
 DEBUG = env('DEBUG')
 PRODUCTION = env('PRODUCTION')
+JOB_CONNECTION_STRING_ENCRYPTION_KEY = env('JOB_CONNECTION_STRING_ENCRYPTION_KEY', default='')
+ANALYZE_POSTGRES_RATE_LIMIT = _normalize_throttle_rate(
+    env('ANALYZE_POSTGRES_RATE_LIMIT', default='10/hour'),
+    default='10/hour',
+)
+EXECUTE_FIX_RATE_LIMIT = _normalize_throttle_rate(
+    env('EXECUTE_FIX_RATE_LIMIT', default='30/hour'),
+    default='30/hour',
+)
 
 ALLOWED_HOSTS = ['*']
 
@@ -149,6 +180,11 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_THROTTLE_RATES': {
+        # Scoped in api.views via UserRateThrottle subclasses.
+        'analyze_postgres': ANALYZE_POSTGRES_RATE_LIMIT,
+        'execute_fix': EXECUTE_FIX_RATE_LIMIT,
+    },
     'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
 }
 

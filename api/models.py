@@ -160,7 +160,7 @@ class JobGuideline(models.Model):
 
 
 # ──────────────────────────────────────────────
-# Audit log  (unchanged)
+# Audit log
 # ──────────────────────────────────────────────
 
 class AuditLog(models.Model):
@@ -169,6 +169,14 @@ class AuditLog(models.Model):
     ANALYSIS_STARTED, ANALYSIS_COMPLETED, CLEANING_STARTED, etc.
     """
     job_id = models.CharField(max_length=255, blank=True, null=True, db_index=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='audit_logs',
+        db_column='user_id',
+    )
     event_type = models.CharField(max_length=100)
     payload = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -181,13 +189,29 @@ class AuditLog(models.Model):
         return f'{self.event_type} — {self.job_id}'
 
 
-def audit_log(job_id: str, event_type: str, payload: dict | None = None) -> None:
+def audit_log(
+    job_id: str,
+    event_type: str,
+    payload: dict | None = None,
+    user_id: str | None = None,
+) -> None:
     """
     Convenience function to create an audit log entry.
-    Matches the Node.js auditLog(jobId, eventType, payload) function.
+    Matches the Node.js auditLog(jobId, eventType, payload) function,
+    while optionally recording who triggered the event.
     """
+    resolved_user_id = str(user_id).strip() if user_id else None
+    if not resolved_user_id and job_id:
+        resolved_user_id = (
+            Job.objects
+            .filter(id=job_id)
+            .values_list('user_id', flat=True)
+            .first()
+        )
+
     AuditLog.objects.create(
         job_id=job_id,
+        user_id=resolved_user_id,
         event_type=event_type,
         payload=payload or {},
     )

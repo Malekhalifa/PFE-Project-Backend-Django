@@ -28,6 +28,7 @@ from rest_framework import status
 from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 from api.models import AuditLog, Job, audit_log
@@ -67,6 +68,14 @@ from users.models import User
 
 
 logger = logging.getLogger(__name__)
+
+
+class AnalyzePostgresUserRateThrottle(UserRateThrottle):
+    scope = 'analyze_postgres'
+
+
+class ExecuteFixUserRateThrottle(UserRateThrottle):
+    scope = 'execute_fix'
 
 
 def _email_not_verified_response() -> Response:
@@ -465,12 +474,12 @@ class UploadView(APIView):
         )
 
         # Audit logs
-        audit_log(job_id, 'JOB_CREATED', {'user_id': user_id})
+        audit_log(job_id, 'JOB_CREATED', {'user_id': user_id}, user_id=user_id)
         audit_log(job_id, 'FILE_UPLOADED', {
             'fileName': uploaded_file.name,
             'size': file_size,
             'mode': mode,
-        })
+        }, user_id=user_id)
 
         return Response({'job_id': job_id})
 
@@ -505,7 +514,7 @@ class AnalyzeView(APIView):
             options={},
         )
 
-        audit_log(jobId, 'ANALYSIS_ENQUEUED', {})
+        audit_log(jobId, 'ANALYSIS_ENQUEUED', {}, user_id=str(request.user.id))
         return Response({'message': 'analysis started'})
 
 
@@ -555,6 +564,7 @@ class AnalyzePostgresView(APIView):
     Body: { "connection_string": "...", "domain_rules": [...] }
     """
     permission_classes = [IsAuthenticated]
+    throttle_classes = [AnalyzePostgresUserRateThrottle]
 
     def post(self, request):
         unverified = _require_verified_email(request)
@@ -622,7 +632,7 @@ class AnalyzePostgresView(APIView):
             domain_rules=domain_rules,
         )
 
-        audit_log(job_id, 'DB_ANALYSIS_ENQUEUED', {})
+        audit_log(job_id, 'DB_ANALYSIS_ENQUEUED', {}, user_id=user_id)
         return Response({'job_id': job_id, 'message': 'Postgres analysis started'})
 
 
@@ -908,7 +918,7 @@ class CleanView(APIView):
             options={},
         )
 
-        audit_log(jobId, 'CLEANING_ENQUEUED', {'mode': mode})
+        audit_log(jobId, 'CLEANING_ENQUEUED', {'mode': mode}, user_id=str(request.user.id))
         return Response({'job_id': jobId, 'status': 'cleaning_started'})
 
 
@@ -1141,7 +1151,7 @@ class JobsView(APIView):
         # Audit log each deletion
         owned_ids = [j['_id'] for j in deleted_jobs]
         for jid in owned_ids:
-            audit_log(jid, 'JOB_DELETED', {'deleted_by': user_id})
+            audit_log(jid, 'JOB_DELETED', {'deleted_by': user_id}, user_id=user_id)
 
         return Response({'deleted': len(owned_ids), 'job_ids': owned_ids})
 
@@ -1422,6 +1432,7 @@ class ExecuteFixView(APIView):
             duration, and per-query details.
     """
     permission_classes = [IsAuthenticated]
+    throttle_classes = [ExecuteFixUserRateThrottle]
 
     def post(self, request, job_id):
         unverified = _require_verified_email(request)
@@ -1475,6 +1486,7 @@ class ExecuteFixView(APIView):
                     'transaction': execution_log.get('transaction'),
                     'status_code': 200,
                 },
+                user_id=str(request.user.id),
             )
         else:
             audit_log(
@@ -1488,6 +1500,7 @@ class ExecuteFixView(APIView):
                     'error': execution_log.get('error'),
                     'status_code': 500,
                 },
+                user_id=str(request.user.id),
             )
 
         try:
@@ -1985,6 +1998,7 @@ class AdminTestEmailView(APIView):
                     'recipient': admin_email,
                     'status_code': 200,
                 },
+                user_id=str(request.user.id),
             )
             return Response(
                 {
@@ -2004,6 +2018,7 @@ class AdminTestEmailView(APIView):
                     'status_code': 500,
                     'error': str(exc),
                 },
+                user_id=str(request.user.id),
             )
             logger.exception('Failed to send admin test email')
             return Response(
