@@ -35,6 +35,15 @@ COMMON_RULES = [
     "Write your final answer as valid JSON only. Do not add markdown fences or extra prose.",
 ]
 
+# Shared quality policy for all validators and planners.
+GLOBAL_POLICY_RULES = [
+    "If a required table or column is missing, return an explicit N/A finding that lists missing objects.",
+    "Every finding should include evidence with fields: evidence.query, evidence.row_count, evidence.sample.",
+    "Every finding should include confidence_overall (0.0-1.0). If confidence is split, include confidence_data, confidence_logic, and confidence_execution.",
+    "Never invent table or column names that were not observed in schema discovery.",
+    "If tool budget is near limit, prioritize highest-impact checks and return status='partial' with skipped_checks.",
+]
+
 # ---------------------------------------------------------------------------
 # Guidelines injection template
 #
@@ -84,10 +93,11 @@ SCHEMA_INSTRUCTIONS = [
     "medium_issues, low_issues, overall_quality_score, overall_confidence, flagged_tables.",
     "metrics MUST include exactly: total_tables, total_columns, tables_with_no_primary_key, "
     "missing_foreign_keys, constraint_violations, type_mismatches, nullable_violations.",
+    "For each finding, include remediation_hint and evidence details showing the SQL used.",
     # TODO: Remove fallback once GuidelineGenerator is always guaranteed to run.
     # Fallback behaviour: if no guidelines are present, apply standard schema checks
     # (missing PKs on every table, nullable FK-suffix columns, tables without indexes).
-] + COMMON_RULES
+] + GLOBAL_POLICY_RULES + COMMON_RULES
 
 # ---------------------------------------------------------------------------
 # Agent 2 — Column Validator
@@ -133,6 +143,7 @@ COLUMN_VALIDATOR_INSTRUCTIONS = [
   "pipeline_run_id, database_id, run_timestamp, agent, summary, metrics, findings, prior_reports.",
   "Set agent to 'ColumnValidatorAgent'. findings must be an array of column-level objects.",
   "Each finding should include table, column, quality_score, confidence, status, issues[], and metrics fields.",
+  "For each finding, include evidence.query and bounded evidence.sample rows that justify the anomaly.",
   "summary MUST include: total_items_analyzed, items_passed, items_flagged, critical_issues, high_issues, "
   "medium_issues, low_issues, overall_quality_score, overall_confidence, flagged_tables.",
   "metrics MUST include exactly: total_columns_analyzed, duplicate_columns_found, constant_columns_found, "
@@ -140,7 +151,7 @@ COLUMN_VALIDATOR_INSTRUCTIONS = [
   "domain_violations, distribution_anomalies, avg_column_quality_score, avg_column_confidence.",
   "Use severity definitions exactly: critical (breaks downstream), high (integrity-affecting), "
   "medium (suspicious), low (minor).",
-] + COMMON_RULES
+] + GLOBAL_POLICY_RULES + COMMON_RULES
 
 # ---------------------------------------------------------------------------
 # Agent 3 — Row-Level Logic Validator
@@ -169,6 +180,7 @@ ROW_LEVEL_INSTRUCTIONS = [
   "Output MUST be valid JSON only (no markdown) with top-level fields: "
   "pipeline_run_id, database_id, run_timestamp, agent, summary, metrics, findings, prior_reports.",
   "Set agent to 'RowLevelValidator'. findings must be an array of row-level issue objects.",
+  "Each finding should include row_identifier plus evidence fields for reproducibility.",
   "summary MUST include: total_items_analyzed, items_passed, items_flagged, critical_issues, high_issues, "
   "medium_issues, low_issues, overall_quality_score, overall_confidence, flagged_tables.",
   "metrics MUST include exactly: total_rows_analyzed, rows_with_issues, rows_with_issues_ratio, "
@@ -180,7 +192,7 @@ ROW_LEVEL_INSTRUCTIONS = [
   # - created_at > updated_at
   # - Any numeric column named 'amount', 'price', 'cost', 'budget' WHERE value < 0
   # - Any text column named 'name', 'label', 'title', 'code' WHERE TRIM(col) = ''
-] + COMMON_RULES
+] + GLOBAL_POLICY_RULES + COMMON_RULES
 
 # ---------------------------------------------------------------------------
 # Agent 4 — Cross-Row Validator
@@ -224,6 +236,7 @@ CROSS_ROW_INSTRUCTIONS = [
   "Output MUST be valid JSON only (no markdown) with top-level fields: "
   "pipeline_run_id, database_id, run_timestamp, agent, summary, metrics, findings, prior_reports.",
   "Set agent to 'CrossRowValidator'. findings must be an array of cross-row issue objects.",
+  "Each finding should include impact_estimate and evidence fields for the relationship anomaly.",
   "summary MUST include: total_items_analyzed, items_passed, items_flagged, critical_issues, high_issues, "
   "medium_issues, low_issues, overall_quality_score, overall_confidence, flagged_tables.",
   "metrics MUST include exactly: total_row_pairs_analyzed, temporal_anomalies, sequential_breaks, "
@@ -233,7 +246,7 @@ CROSS_ROW_INSTRUCTIONS = [
   # - Duplicate values in any column named 'code', 'email', 'msisdn', or 'reference'.
   # - Rows where a '_id' column does not match any id in the referenced table.
   # - NULL values in columns that end with '_id' or '_fk'.
-] + COMMON_RULES
+] + GLOBAL_POLICY_RULES + COMMON_RULES
 
 # ---------------------------------------------------------------------------
 # Agent 5 — Fix Planner
@@ -315,6 +328,8 @@ FIX_PLANNER_INSTRUCTIONS = [
     "If fixing a problem requires multiple SQL statements, include all of them in 'queries'.",
     "Use concrete column names and table names from the reports — never placeholders.",
     "Each item in 'queries' MUST be a valid JSON string. Keep SQL single-line per array item and never emit bare newlines inside JSON strings.",
+    "Include preconditions[], verification_queries[], and rollback_queries[] for each fix card.",
+    "Only plan fixes for findings that have adequate evidence and confidence_overall.",
     "Do not output trailing commas anywhere in JSON.",
     # ── SQL rules ───────────────────────────────────────────────────────
     "NULL filling — categorical columns: use mode (most frequent non-null value).",
@@ -331,4 +346,4 @@ FIX_PLANNER_INSTRUCTIONS = [
     # ── Guidelines context ───────────────────────────────────────────────
     "Use the tailored guidelines provided in your prompt to prioritise fix cards and "
     "ensure the SQL patterns are appropriate for this specific database.",
-]
+  ] + GLOBAL_POLICY_RULES + COMMON_RULES

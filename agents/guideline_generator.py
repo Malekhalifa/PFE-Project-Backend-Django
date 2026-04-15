@@ -26,7 +26,7 @@ from agno.agent import Agent
 from agno.models.google import Gemini
 
 from .guidelines_store import GuidelinesStore, compute_schema_snapshot
-from .tools import execute_pg_query
+from .tools import execute_pg_query, introspect_schema_compact
 
 logger = logging.getLogger(__name__)
 
@@ -268,10 +268,18 @@ class DatabaseGuidelineGeneratorAgent:
             else ""
         )
 
+        introspection_snapshot = introspect_schema_compact(
+            schemas=["public"],
+            include_indexes=True,
+            include_constraints=True,
+            include_estimates=True,
+        )
+
         prompt = self._build_prompt(
             target_agent=target_agent,
             prior_guideline_context=prior_guideline_context,
             prior_findings_section=prior_findings_section,
+            introspection_snapshot=introspection_snapshot,
         )
 
         agent = Agent(
@@ -385,6 +393,7 @@ class DatabaseGuidelineGeneratorAgent:
         target_agent: str,
         prior_guideline_context: str,
         prior_findings_section: str,
+        introspection_snapshot: dict,
     ) -> str:
         role_desc = _ROLE_DESCRIPTIONS.get(
             target_agent,
@@ -400,9 +409,39 @@ class DatabaseGuidelineGeneratorAgent:
 8. Do not produce guidance that says checks should be skipped due to execution limits; prefer batched/efficient SQL patterns.
 """
 
+        snapshot_lines = ["Precomputed compact schema snapshot (use this as a fast baseline):"]
+        tables = introspection_snapshot.get("tables", []) if isinstance(introspection_snapshot, dict) else []
+        columns = introspection_snapshot.get("columns", []) if isinstance(introspection_snapshot, dict) else []
+        constraints = introspection_snapshot.get("constraints", []) if isinstance(introspection_snapshot, dict) else []
+        indexes = introspection_snapshot.get("indexes", []) if isinstance(introspection_snapshot, dict) else []
+        meta = introspection_snapshot.get("meta", {}) if isinstance(introspection_snapshot, dict) else {}
+
+        snapshot_lines.append(f"- Tables: {len(tables)}")
+        snapshot_lines.append(f"- Columns: {len(columns)}")
+        snapshot_lines.append(f"- Constraints: {len(constraints)}")
+        snapshot_lines.append(f"- Indexes: {len(indexes)}")
+
+        top_tables = tables[:10] if isinstance(tables, list) else []
+        if top_tables:
+            rendered = ", ".join(
+                f"{t.get('table')}({t.get('estimated_rows', 0)})"
+                for t in top_tables
+                if isinstance(t, dict)
+            )
+            if rendered:
+                snapshot_lines.append(f"- Top tables by estimate: {rendered}")
+
+        if isinstance(meta, dict) and meta.get("warnings"):
+            warnings = ", ".join(str(w) for w in meta.get("warnings", []))
+            snapshot_lines.append(f"- Snapshot warnings: {warnings}")
+
+        snapshot_block = "\n".join(snapshot_lines)
+
         return f"""You are generating guidelines for the **{readable_name}** agent.
 
 This agent {role_desc}
+
+{snapshot_block}
 
 ---
 

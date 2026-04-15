@@ -15,13 +15,20 @@ The final DataFixPlanner report is persisted to reports/ as pretty-printed JSON.
 import json
 import logging
 import os
+import signal
+import threading
 import time
 import uuid
 
 from agno.agent import Agent
 from agno.models.google import Gemini
 
-from .tools import execute_pg_query, postgres_tool
+from .tools import (
+    execute_pg_query,
+    postgres_tool,
+    allocate_query_budget,
+    enforce_quality_gate,
+)
 from .guideline_generator import DatabaseGuidelineGeneratorAgent
 from .agent_config import (
     SCHEMA_DESCRIPTION,
@@ -57,7 +64,13 @@ _GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 _VALIDATOR_TOOL_CALL_LIMIT = int(os.environ.get("VALIDATOR_TOOL_CALL_LIMIT", "40"))
 _CROSS_ROW_TOOL_CALL_LIMIT = int(os.environ.get("CROSS_ROW_TOOL_CALL_LIMIT", "60"))
 _FIX_PLANNER_TOOL_CALL_LIMIT = int(os.environ.get("FIX_PLANNER_TOOL_CALL_LIMIT", "30"))
+_PIPELINE_GATE_MIN_CONFIDENCE = float(os.environ.get("PIPELINE_GATE_MIN_CONFIDENCE", "0.55"))
+_PIPELINE_GATE_MIN_EVIDENCE_ROWS = int(os.environ.get("PIPELINE_GATE_MIN_EVIDENCE_ROWS", "0"))
+_PIPELINE_GATE_REQUIRE_EVIDENCE_QUERY = (
+    os.environ.get("PIPELINE_GATE_REQUIRE_EVIDENCE_QUERY", "false").strip().lower() in {"1", "true", "yes", "on"}
+)
 _PRIOR_REPORTS_SECTION = "\n\n--- Prior Reports Chain (JSON) ---\n"
+_FIX_PLANNER_TIMEOUT_SECONDS = int(os.environ.get("FIX_PLANNER_TIMEOUT_SECONDS", "120"))
 
 
 _JSON_REPORT_CONTRACT = (
@@ -66,6 +79,36 @@ _JSON_REPORT_CONTRACT = (
     "Use issue severities exactly: critical|high|medium|low. "
     "If execution is incomplete, include status='partial' and still return collected metrics/findings."
 )
+
+
+def _apply_quality_gate(report: dict, stage_name: str) -> dict:
+    """Attach quality-gate decision and forward only accepted findings downstream."""
+    findings = report.get("findings") if isinstance(report, dict) else []
+    gate_result = enforce_quality_gate(
+        findings=findings if isinstance(findings, list) else [],
+        min_confidence=_PIPELINE_GATE_MIN_CONFIDENCE,
+        min_evidence_rows=_PIPELINE_GATE_MIN_EVIDENCE_ROWS,
+        require_evidence_query=_PIPELINE_GATE_REQUIRE_EVIDENCE_QUERY,
+    )
+
+    gated = clone_json(report)
+    gated["quality_gate"] = {
+        "stage": stage_name,
+        "min_confidence": _PIPELINE_GATE_MIN_CONFIDENCE,
+        "min_evidence_rows": _PIPELINE_GATE_MIN_EVIDENCE_ROWS,
+        "require_evidence_query": _PIPELINE_GATE_REQUIRE_EVIDENCE_QUERY,
+        "accepted_count": len(gate_result.get("accepted_findings", [])),
+        "blocked_count": len(gate_result.get("blocked", [])),
+        "meta": gate_result.get("meta", {}),
+    }
+    gated["blocked_findings"] = gate_result.get("blocked", [])
+    gated["findings"] = gate_result.get("accepted_findings", [])
+
+    if gated.get("blocked_findings"):
+        gated["status"] = "partial"
+        gated.setdefault("errors", []).append("quality_gate_blocked_low_evidence_or_low_confidence_findings")
+
+    return gated
 
 
 def _make_model() -> Gemini:
@@ -106,15 +149,36 @@ def _parse_column_report(raw_report: str) -> tuple[dict, str]:
     return fallback, json.dumps(fallback, ensure_ascii=False, indent=2)
 
 
-def _run_agent(agent: Agent, prompt: str) -> tuple[str, str | None]:
-    try:
-        response = agent.run(prompt)
-        if hasattr(response, "content") and response.content:
-            return str(response.content), None
-        return str(response), None
-    except Exception as exc:
-        logger.error("Agent '%s' failed: %s", agent.name, exc)
-        return "", str(exc)
+def _run_agent(agent: Agent, prompt: str, timeout_seconds: int | None = None) -> tuple[str, str | None]:
+    """Run an agent with optional timeout to prevent hanging."""
+    result_container = {"response": None, "error": None, "done": False}
+
+    def _agent_thread():
+        try:
+            response = agent.run(prompt)
+            if hasattr(response, "content") and response.content:
+                result_container["response"] = str(response.content)
+            else:
+                result_container["response"] = str(response)
+            result_container["done"] = True
+        except Exception as exc:
+            logger.error("Agent '%s' failed: %s", agent.name, exc)
+            result_container["error"] = str(exc)
+            result_container["done"] = True
+
+    if timeout_seconds is None:
+        # Synchronous execution without timeout
+        _agent_thread()
+    else:
+        # Run in thread with timeout
+        thread = threading.Thread(target=_agent_thread, daemon=True)
+        thread.start()
+        thread.join(timeout=timeout_seconds)
+        if thread.is_alive():
+            result_container["error"] = f"Agent '{agent.name}' timed out after {timeout_seconds} seconds"
+            logger.error(result_container["error"])
+
+    return result_container["response"] or "", result_container["error"]
 
 
 def _inject_guidelines(guidelines: str) -> str:
@@ -125,6 +189,52 @@ def _serialize_prior_reports(prior_reports: list[dict]) -> str:
     if not prior_reports:
         return "[]"
     return json.dumps(prior_reports, ensure_ascii=False, indent=2)
+
+
+def _extract_compact_findings(prior_reports: list[dict]) -> str:
+    """Extract a compact summary of findings from prior reports for fix planner."""
+    compact_findings = []
+    for report in prior_reports:
+        if not isinstance(report, dict):
+            continue
+        findings = report.get("findings", [])
+        if not isinstance(findings, list):
+            continue
+        for finding in findings:
+            if not isinstance(finding, dict):
+                continue
+            table = finding.get("table") or finding.get("table_name") or "unknown"
+            severity = finding.get("severity", "medium")
+            description = finding.get("description") or finding.get("problem") or "Unknown issue"
+            if len(description) > 200:
+                description = description[:197] + "..."
+            compact_findings.append({"table": table, "severity": severity, "description": description})
+    
+    if not compact_findings:
+        return "No prior findings to remediate."
+    
+    # Sort by severity: critical, high, medium, low
+    severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+    compact_findings.sort(key=lambda f: (severity_order.get(f["severity"], 3), f["table"]))
+    
+    # Format as compact text
+    lines = [f"\n---\n**FINDINGS SUMMARY:**\n"]
+    current_severity = None
+    severity_counts = {}
+    
+    for finding in compact_findings[:30]:  # Limit to top 30 findings
+        sev = finding["severity"]
+        if sev != current_severity:
+            if current_severity is not None:
+                count = severity_counts.get(current_severity, 0)
+                if count > 30:
+                    lines.append(f"... and {count - 30} more {current_severity} items")
+            current_severity = sev
+            severity_counts[sev] = severity_counts.get(sev, 0) + 1
+            lines.append(f"\n**{sev.upper()}:**")
+        lines.append(f"  - {finding['table']}: {finding['description']}")
+    
+    return "\n".join(lines)
 
 
 def _build_download_report_bundle(
@@ -157,407 +267,232 @@ def _build_download_report_bundle(
     }
 
 
-def orchestrator_workflow(
-    connection_string: str, domain_rules: str, job_id: str | None = None
-) -> dict:
-    """
-    Main entry point for Celery tasks.
+class _PipelineHooks:
+    """Encapsulates job-status and audit logging side effects for pipeline steps."""
 
-    Returns a backwards-compatible payload for existing UI consumers plus:
-      - agent_reports: universal reports for all pipeline stages
-      - final_report: DataFixPlanner universal report (saved to disk)
-      - report artifact metadata for download wiring
-    """
-    from api.db import update_job_status, save_job_guideline  # avoid circular import
-    from api.models import audit_log
-    from services.report_service import save_final_pipeline_report
+    def __init__(
+        self,
+        *,
+        job_id: str | None,
+        pipeline_run_id: str,
+        update_job_status,
+        save_job_guideline,
+        audit_log,
+    ):
+        self.job_id = job_id
+        self.pipeline_run_id = pipeline_run_id
+        self._update_job_status = update_job_status
+        self._save_job_guideline = save_job_guideline
+        self._audit_log = audit_log
+        self._step_start_times: dict[str, float] = {}
 
-    def _emit(status: str):
-        if job_id:
-            try:
-                update_job_status(job_id, status)
-            except Exception:
-                pass
-
-    def _save_guideline(agent_key: str, text: str):
-        if job_id:
-            try:
-                save_job_guideline(job_id, agent_key, text)
-            except Exception:
-                pass
-
-    postgres_tool.connect(connection_string)
-
-    generator = DatabaseGuidelineGeneratorAgent(
-        connection_string=connection_string,
-        model_id=_GEMINI_MODEL_ID,
-        api_key=_GEMINI_API_KEY,
-    )
-
-    rules_section = (
-        f"\n\n---\n**Domain/Business Rules to Enforce:**\n{domain_rules}"
-        if domain_rules
-        else ""
-    )
-
-    pipeline_run_id = str(uuid.uuid4())
-    database_id = derive_database_id(connection_string)
-    step_start_times: dict[str, float] = {}
-
-    def _step_started(step: str):
-        if not job_id:
+    def emit(self, status: str) -> None:
+        if not self.job_id:
             return
-        step_start_times[step] = time.perf_counter()
         try:
-            audit_log(
-                job_id,
-                'PIPELINE_STEP_STARTED',
+            self._update_job_status(self.job_id, status)
+        except Exception:
+            pass
+
+    def save_guideline(self, agent_key: str, text: str) -> None:
+        if not self.job_id:
+            return
+        try:
+            self._save_job_guideline(self.job_id, agent_key, text)
+        except Exception:
+            pass
+
+    def _step_started(self, step: str) -> None:
+        if not self.job_id:
+            return
+        self._step_start_times[step] = time.perf_counter()
+        try:
+            self._audit_log(
+                self.job_id,
+                "PIPELINE_STEP_STARTED",
                 {
-                    'step': step,
-                    'pipeline_run_id': pipeline_run_id,
-                    'status_code': 102,
+                    "step": step,
+                    "pipeline_run_id": self.pipeline_run_id,
+                    "status_code": 102,
                 },
             )
         except Exception:
             pass
 
-    def _step_finished(step: str, *, success: bool, error: str | None = None):
-        if not job_id:
+    def _step_finished(self, step: str, *, success: bool, error: str | None = None) -> None:
+        if not self.job_id:
             return
 
-        started_at = step_start_times.pop(step, None)
+        started_at = self._step_start_times.pop(step, None)
         duration_ms = int((time.perf_counter() - started_at) * 1000) if started_at is not None else None
         payload = {
-            'step': step,
-            'pipeline_run_id': pipeline_run_id,
-            'status_code': 200 if success else 500,
+            "step": step,
+            "pipeline_run_id": self.pipeline_run_id,
+            "status_code": 200 if success else 500,
         }
         if duration_ms is not None:
-            payload['duration_ms'] = duration_ms
+            payload["duration_ms"] = duration_ms
         if error:
-            payload['error'] = str(error)
+            payload["error"] = str(error)
 
         try:
-            audit_log(
-                job_id,
-                'PIPELINE_STEP_COMPLETED' if success else 'PIPELINE_STEP_FAILED',
+            self._audit_log(
+                self.job_id,
+                "PIPELINE_STEP_COMPLETED" if success else "PIPELINE_STEP_FAILED",
                 payload,
             )
         except Exception:
             pass
 
-    prior_findings = ""
-    prior_reports: list[dict] = []
+    def run_step(self, *, step: str, running_status: str | None, action):
+        self._step_started(step)
+        if running_status:
+            self.emit(running_status)
+        try:
+            result = action()
+            self._step_finished(step, success=True)
+            return result
+        except Exception as exc:
+            self._step_finished(step, success=False, error=str(exc))
+            raise
 
-    logger.info("Pipeline started with pipeline_run_id=%s database_id=%s", pipeline_run_id, database_id)
 
-    # ------------------------------------------------------------------
-    # AGENT 1 - SchemaIntegrityValidator
-    # ------------------------------------------------------------------
-    _step_started('guideline_gen_schema')
-    try:
-        _emit("running_guideline_gen_schema")
-        schema_guidelines = generator.generate(
-            target_agent="schema_integrity_validator",
-            prior_findings=prior_findings,
-        )
-        _save_guideline("schema_integrity_validator", schema_guidelines)
-        _step_finished('guideline_gen_schema', success=True)
-    except Exception as exc:
-        _step_finished('guideline_gen_schema', success=False, error=str(exc))
-        raise
+def _build_rules_section(domain_rules: str) -> str:
+    return (
+        f"\n\n---\n**Domain/Business Rules to Enforce:**\n{domain_rules}"
+        if domain_rules
+        else ""
+    )
 
-    _step_started('schema_validation')
-    _emit("running_schema")
-    try:
-        schema_agent = Agent(
-            name="Schema Integrity Validator",
+
+def _generate_guidelines(
+    *,
+    hooks: _PipelineHooks,
+    generator: DatabaseGuidelineGeneratorAgent,
+    agent_key: str,
+    prior_findings: str,
+    step_name: str,
+    running_status: str,
+) -> str:
+    guidelines = hooks.run_step(
+        step=step_name,
+        running_status=running_status,
+        action=lambda: generator.generate(target_agent=agent_key, prior_findings=prior_findings),
+    )
+    hooks.save_guideline(agent_key, guidelines)
+    return guidelines
+
+
+def _run_validator_stage(
+    *,
+    hooks: _PipelineHooks,
+    step_name: str,
+    running_status: str,
+    stage_gate_name: str,
+    agent_name: str,
+    description: str,
+    instructions: list[str],
+    tool_call_limit: int,
+    prompt: str,
+    report_builder,
+    pipeline_run_id: str,
+    database_id: str,
+    prior_reports: list[dict],
+) -> dict:
+    def _action() -> dict:
+        agent = Agent(
+            name=agent_name,
             model=_make_model(),
-            description=SCHEMA_DESCRIPTION,
-            instructions=SCHEMA_INSTRUCTIONS,
+            description=description,
+            instructions=instructions,
             tools=[execute_pg_query],
-            tool_call_limit=_VALIDATOR_TOOL_CALL_LIMIT,
+            tool_call_limit=tool_call_limit,
             markdown=False,
         )
-        schema_prompt = (
-            _inject_guidelines(schema_guidelines)
-            + "Perform schema integrity validation using live SELECT-only introspection. "
-            + _JSON_REPORT_CONTRACT
-            + "\n\nPopulate schema metrics exactly: total_tables, total_columns, tables_with_no_primary_key, "
-            + "missing_foreign_keys, constraint_violations, type_mismatches, nullable_violations."
-            + _PRIOR_REPORTS_SECTION
-            + _serialize_prior_reports(prior_reports)
-            + rules_section
-        )
-        schema_raw, schema_runtime_error = _run_agent(schema_agent, schema_prompt)
-        schema_report = build_schema_report(
-            schema_raw,
+        logger.info("Starting validator agent '%s' with tool_call_limit=%d", agent_name, tool_call_limit)
+        raw, runtime_error = _run_agent(agent, prompt)
+        logger.info("Validator agent '%s' completed with %d chars output", agent_name, len(raw or ""))
+        report = report_builder(
+            raw,
             pipeline_run_id=pipeline_run_id,
             database_id=database_id,
             prior_reports=prior_reports,
-            runtime_error=schema_runtime_error,
+            runtime_error=runtime_error,
         )
-        _step_finished('schema_validation', success=schema_runtime_error is None, error=schema_runtime_error)
-    except Exception as exc:
-        _step_finished('schema_validation', success=False, error=str(exc))
-        raise
-    prior_reports.append(clone_json(schema_report))
-    prior_findings = report_to_context_block(schema_report, "Schema Integrity Findings")
+        return _apply_quality_gate(report, stage_gate_name)
 
-    # ------------------------------------------------------------------
-    # AGENT 2 - ColumnValidatorAgent
-    # ------------------------------------------------------------------
-    _step_started('guideline_gen_column')
-    try:
-        _emit("running_guideline_gen_column")
-        column_guidelines = generator.generate(
-            target_agent="column_validator",
-            prior_findings=prior_findings,
-        )
-        _save_guideline("column_validator", column_guidelines)
-        _step_finished('guideline_gen_column', success=True)
-    except Exception as exc:
-        _step_finished('guideline_gen_column', success=False, error=str(exc))
-        raise
+    return hooks.run_step(step=step_name, running_status=running_status, action=_action)
 
-    _step_started('column_validation')
-    _emit("running_column")
-    try:
-        column_agent = Agent(
-            name="Column Validator",
-            model=_make_model(),
-            description=COLUMN_VALIDATOR_DESCRIPTION,
-            instructions=COLUMN_VALIDATOR_INSTRUCTIONS,
-            tools=[execute_pg_query],
-            tool_call_limit=_VALIDATOR_TOOL_CALL_LIMIT,
-            markdown=False,
-        )
-        column_prompt = (
-            _inject_guidelines(column_guidelines)
-            + "Perform column-level validation with structured findings only. "
-            + _JSON_REPORT_CONTRACT
-            + "\n\nPopulate column metrics exactly: total_columns_analyzed, duplicate_columns_found, "
-            + "constant_columns_found, high_null_ratio_columns, low_cardinality_anomalies, "
-            + "high_cardinality_anomalies, semantic_mismatches, domain_violations, "
-            + "distribution_anomalies, avg_column_quality_score, avg_column_confidence."
-            + "\n\n--- Schema Report (JSON) ---\n"
-            + json.dumps(schema_report, ensure_ascii=False, indent=2)
-            + _PRIOR_REPORTS_SECTION
-            + _serialize_prior_reports(prior_reports)
-            + rules_section
-        )
-        column_raw, column_runtime_error = _run_agent(column_agent, column_prompt)
-        column_report = build_column_report(
-            column_raw,
-            pipeline_run_id=pipeline_run_id,
-            database_id=database_id,
-            prior_reports=prior_reports,
-            runtime_error=column_runtime_error,
-        )
-        _step_finished('column_validation', success=column_runtime_error is None, error=column_runtime_error)
-    except Exception as exc:
-        _step_finished('column_validation', success=False, error=str(exc))
-        raise
-    prior_reports.append(clone_json(column_report))
-    prior_findings += "\n\n" + report_to_context_block(column_report, "Column Findings")
 
-    # ------------------------------------------------------------------
-    # AGENT 3 - RowLevelValidator
-    # ------------------------------------------------------------------
-    _step_started('guideline_gen_row_level')
-    try:
-        _emit("running_guideline_gen_row_level")
-        row_guidelines = generator.generate(
-            target_agent="row_level_validator",
-            prior_findings=prior_findings,
-        )
-        _save_guideline("row_level_validator", row_guidelines)
-        _step_finished('guideline_gen_row_level', success=True)
-    except Exception as exc:
-        _step_finished('guideline_gen_row_level', success=False, error=str(exc))
-        raise
-
-    _step_started('row_level_validation')
-    _emit("running_row_level")
-    try:
-        row_agent = Agent(
-            name="Row Level Validator",
-            model=_make_model(),
-            description=ROW_LEVEL_DESCRIPTION,
-            instructions=ROW_LEVEL_INSTRUCTIONS,
-            tools=[execute_pg_query],
-            tool_call_limit=_VALIDATOR_TOOL_CALL_LIMIT,
-            markdown=False,
-        )
-        row_prompt = (
-            _inject_guidelines(row_guidelines)
-            + "Perform row-level validation and return structured JSON findings. "
-            + _JSON_REPORT_CONTRACT
-            + "\n\nPopulate row metrics exactly: total_rows_analyzed, rows_with_issues, rows_with_issues_ratio, "
-            + "format_violations, encoding_issues, hidden_null_count, outlier_rows, "
-            + "avg_row_quality_score, avg_row_confidence."
-            + _PRIOR_REPORTS_SECTION
-            + _serialize_prior_reports(prior_reports)
-            + rules_section
-        )
-        row_raw, row_runtime_error = _run_agent(row_agent, row_prompt)
-        row_report = build_row_report(
-            row_raw,
-            pipeline_run_id=pipeline_run_id,
-            database_id=database_id,
-            prior_reports=prior_reports,
-            runtime_error=row_runtime_error,
-        )
-        _step_finished('row_level_validation', success=row_runtime_error is None, error=row_runtime_error)
-    except Exception as exc:
-        _step_finished('row_level_validation', success=False, error=str(exc))
-        raise
-    prior_reports.append(clone_json(row_report))
-    prior_findings += "\n\n" + report_to_context_block(row_report, "Row Level Findings")
-
-    # ------------------------------------------------------------------
-    # AGENT 4 - CrossRowValidator
-    # ------------------------------------------------------------------
-    _step_started('guideline_gen_cross_row')
-    try:
-        _emit("running_guideline_gen_cross_row")
-        cross_guidelines = generator.generate(
-            target_agent="cross_row_validator",
-            prior_findings=prior_findings,
-        )
-        _save_guideline("cross_row_validator", cross_guidelines)
-        _step_finished('guideline_gen_cross_row', success=True)
-    except Exception as exc:
-        _step_finished('guideline_gen_cross_row', success=False, error=str(exc))
-        raise
-
-    _step_started('cross_row_validation')
-    _emit("running_cross_row")
-    try:
-        cross_agent = Agent(
-            name="Cross Row Validator",
-            model=_make_model(),
-            description=CROSS_ROW_DESCRIPTION,
-            instructions=CROSS_ROW_INSTRUCTIONS,
-            tools=[execute_pg_query],
-            tool_call_limit=_CROSS_ROW_TOOL_CALL_LIMIT,
-            markdown=False,
-        )
-        cross_prompt = (
-            _inject_guidelines(cross_guidelines)
-            + "Perform cross-row validation and return structured JSON findings. "
-            + _JSON_REPORT_CONTRACT
-            + "\n\nPopulate cross-row metrics exactly: total_row_pairs_analyzed, temporal_anomalies, sequential_breaks, "
-            + "cross_column_violations, row_pattern_anomalies, tables_with_cross_row_issues, avg_relationship_confidence."
-            + _PRIOR_REPORTS_SECTION
-            + _serialize_prior_reports(prior_reports)
-            + rules_section
-        )
-        cross_raw, cross_runtime_error = _run_agent(cross_agent, cross_prompt)
-        cross_report = build_cross_row_report(
-            cross_raw,
-            pipeline_run_id=pipeline_run_id,
-            database_id=database_id,
-            prior_reports=prior_reports,
-            runtime_error=cross_runtime_error,
-        )
-        _step_finished('cross_row_validation', success=cross_runtime_error is None, error=cross_runtime_error)
-    except Exception as exc:
-        _step_finished('cross_row_validation', success=False, error=str(exc))
-        raise
-    prior_reports.append(clone_json(cross_report))
-    prior_findings += "\n\n" + report_to_context_block(cross_report, "Cross Row Findings")
-
-    # ------------------------------------------------------------------
-    # AGENT 5 - DataFixPlanner
-    # ------------------------------------------------------------------
-    _step_started('guideline_gen_fix_planner')
-    try:
-        _emit("running_guideline_gen_fix_planner")
-        fix_guidelines = generator.generate(
-            target_agent="data_fix_planner",
-            prior_findings=prior_findings,
-        )
-        _save_guideline("data_fix_planner", fix_guidelines)
-        _step_finished('guideline_gen_fix_planner', success=True)
-    except Exception as exc:
-        _step_finished('guideline_gen_fix_planner', success=False, error=str(exc))
-        raise
-
-    _step_started('fix_planner')
-    _emit("running_fix_planner")
-    try:
-        fix_planner = Agent(
+def _run_fix_planner_stage(
+    *,
+    hooks: _PipelineHooks,
+    step_name: str,
+    running_status: str,
+    description: str,
+    instructions: list[str],
+    tool_call_limit: int,
+    prompt: str,
+    pipeline_run_id: str,
+    database_id: str,
+    prior_reports: list[dict],
+) -> dict:
+    def _action() -> dict:
+        planner = Agent(
             name="Data Fix Planner",
             model=_make_model(),
-            description=FIX_PLANNER_DESCRIPTION,
-            instructions=FIX_PLANNER_INSTRUCTIONS,
+            description=description,
+            instructions=instructions,
             tools=[],
-            tool_call_limit=_FIX_PLANNER_TOOL_CALL_LIMIT,
+            tool_call_limit=tool_call_limit,
             markdown=False,
         )
-        fix_prompt = (
-            _inject_guidelines(fix_guidelines)
-            + "Generate fix planning output as structured JSON findings (one finding per fix card). "
-            + _JSON_REPORT_CONTRACT
-            + "\n\nPopulate fix planner metrics exactly: total_issues_received, fixes_generated, critical_fixes, "
-            + "high_fixes, medium_fixes, low_fixes, estimated_rows_affected, fix_confidence."
-            + "\n\nUse prior reports chain as the only source of truth for issue accumulation."
-            + _PRIOR_REPORTS_SECTION
-            + _serialize_prior_reports(prior_reports)
-        )
-        fix_raw, fix_runtime_error = _run_agent(fix_planner, fix_prompt)
-        final_report = build_fix_planner_report(
-            fix_raw,
+        logger.info("Starting Data Fix Planner with timeout=%d seconds, prompt_size=%d chars", 
+                    _FIX_PLANNER_TIMEOUT_SECONDS, len(prompt or ""))
+        raw, runtime_error = _run_agent(planner, prompt, timeout_seconds=_FIX_PLANNER_TIMEOUT_SECONDS)
+        if runtime_error:
+            logger.error("Data Fix Planner error: %s", runtime_error)
+        logger.info("Data Fix Planner completed with %d chars output, error=%s", len(raw or ""), runtime_error or "none")
+        return build_fix_planner_report(
+            raw,
             pipeline_run_id=pipeline_run_id,
             database_id=database_id,
             prior_reports=prior_reports,
-            runtime_error=fix_runtime_error,
+            runtime_error=runtime_error,
         )
-        _step_finished('fix_planner', success=fix_runtime_error is None, error=fix_runtime_error)
-    except Exception as exc:
-        _step_finished('fix_planner', success=False, error=str(exc))
-        raise
 
-    # Persist guidelines version after all phases complete.
-    _step_started('saving_guidelines')
-    _emit("saving_guidelines")
-    try:
-        generator.save_guidelines()
-        _step_finished('saving_guidelines', success=True)
-    except Exception as exc:
-        _step_finished('saving_guidelines', success=False, error=str(exc))
-        raise
+    return hooks.run_step(step=step_name, running_status=running_status, action=_action)
 
-    confidence_score, data_quality_score = aggregate_pipeline_scores(
-        [schema_report, column_report, row_report, cross_report]
+
+def _reallocate_limits_from_schema(schema_report: dict, stage_limits: dict) -> dict:
+    schema_metrics = schema_report.get("metrics", {}) if isinstance(schema_report, dict) else {}
+    total_tables = int((schema_metrics or {}).get("total_tables", 0) or 0)
+    total_columns = int((schema_metrics or {}).get("total_columns", 0) or 0)
+
+    approx_rows = 0
+    if total_tables > 0 or total_columns > 0:
+        approx_rows = max(total_tables * max(total_columns, 1), total_columns)
+
+    payload = allocate_query_budget(
+        table_stats=[{"table": "_schema_scope", "estimated_rows": approx_rows}] if approx_rows > 0 else [],
+        default_limits=stage_limits,
     )
+    return payload.get("limits", stage_limits)
 
-    download_report_bundle = _build_download_report_bundle(
-        pipeline_run_id=pipeline_run_id,
-        database_id=database_id,
-        schema_report=schema_report,
-        column_report=column_report,
-        row_report=row_report,
-        cross_report=cross_report,
-        final_report=final_report,
-        confidence_score=confidence_score,
-        data_quality_score=data_quality_score,
-    )
 
-    report_artifact = {
-        "report_file_path": "",
-        "report_file_name": "",
-        "report_timestamp": final_report.get("run_timestamp"),
-        "report_database_id": final_report.get("database_id"),
-    }
-    try:
-        report_artifact = save_final_pipeline_report(download_report_bundle)
-    except Exception as exc:
-        logger.error("Failed to save final report file: %s", exc)
-        final_report["status"] = "partial"
-        final_report.setdefault("errors", []).append(f"report_save_failed: {exc}")
-
+def _build_final_response(
+    *,
+    pipeline_run_id: str,
+    database_id: str,
+    schema_report: dict,
+    column_report: dict,
+    row_report: dict,
+    cross_report: dict,
+    final_report: dict,
+    confidence_score: int,
+    data_quality_score: int,
+    report_artifact: dict,
+) -> dict:
     schema_markdown = report_to_markdown(schema_report, "Schema Integrity Validator Report")
     column_markdown = report_to_markdown(column_report, "Column Validator Report")
     row_markdown = report_to_markdown(row_report, "Row Level Validator Report")
@@ -593,8 +528,309 @@ def orchestrator_workflow(
             "data_fix_planner": final_report,
         },
         "final_report": final_report,
-        "download_report_json": download_report_bundle,
+        "download_report_json": _build_download_report_bundle(
+            pipeline_run_id=pipeline_run_id,
+            database_id=database_id,
+            schema_report=schema_report,
+            column_report=column_report,
+            row_report=row_report,
+            cross_report=cross_report,
+            final_report=final_report,
+            confidence_score=confidence_score,
+            data_quality_score=data_quality_score,
+        ),
         "confidence_score": confidence_score,
         "data_quality_score": data_quality_score,
         **report_artifact,
     }
+
+
+def orchestrator_workflow(
+    connection_string: str, domain_rules: str, job_id: str | None = None
+) -> dict:
+    """
+    Main entry point for Celery tasks.
+
+    Returns a backwards-compatible payload for existing UI consumers plus:
+      - agent_reports: universal reports for all pipeline stages
+      - final_report: DataFixPlanner universal report (saved to disk)
+      - report artifact metadata for download wiring
+    """
+    from api.db import update_job_status, save_job_guideline  # avoid circular import
+    from api.models import audit_log
+    from services.report_service import save_final_pipeline_report
+
+    postgres_tool.connect(connection_string)
+
+    generator = DatabaseGuidelineGeneratorAgent(
+        connection_string=connection_string,
+        model_id=_GEMINI_MODEL_ID,
+        api_key=_GEMINI_API_KEY,
+    )
+
+    rules_section = _build_rules_section(domain_rules)
+
+    pipeline_run_id = str(uuid.uuid4())
+    database_id = derive_database_id(connection_string)
+    hooks = _PipelineHooks(
+        job_id=job_id,
+        pipeline_run_id=pipeline_run_id,
+        update_job_status=update_job_status,
+        save_job_guideline=save_job_guideline,
+        audit_log=audit_log,
+    )
+
+    prior_findings = ""
+    prior_reports: list[dict] = []
+
+    stage_limits_payload = allocate_query_budget(
+        table_stats=[],
+        default_limits={
+            "schema": _VALIDATOR_TOOL_CALL_LIMIT,
+            "column": _VALIDATOR_TOOL_CALL_LIMIT,
+            "row": _VALIDATOR_TOOL_CALL_LIMIT,
+            "cross_row": _CROSS_ROW_TOOL_CALL_LIMIT,
+            "fix_planner": _FIX_PLANNER_TOOL_CALL_LIMIT,
+        },
+    )
+    stage_limits = stage_limits_payload.get("limits", {})
+
+    logger.info("Pipeline started with pipeline_run_id=%s database_id=%s", pipeline_run_id, database_id)
+
+    schema_guidelines = _generate_guidelines(
+        hooks=hooks,
+        generator=generator,
+        agent_key="schema_integrity_validator",
+        prior_findings=prior_findings,
+        step_name="guideline_gen_schema",
+        running_status="running_guideline_gen_schema",
+    )
+
+    schema_prompt = (
+        _inject_guidelines(schema_guidelines)
+        + "Perform schema integrity validation using live SELECT-only introspection. "
+        + _JSON_REPORT_CONTRACT
+        + "\n\nPopulate schema metrics exactly: total_tables, total_columns, tables_with_no_primary_key, "
+        + "missing_foreign_keys, constraint_violations, type_mismatches, nullable_violations."
+        + _PRIOR_REPORTS_SECTION
+        + _serialize_prior_reports(prior_reports)
+        + rules_section
+    )
+    schema_report = _run_validator_stage(
+        hooks=hooks,
+        step_name="schema_validation",
+        running_status="running_schema",
+        stage_gate_name="schema_validation",
+        agent_name="Schema Integrity Validator",
+        description=SCHEMA_DESCRIPTION,
+        instructions=SCHEMA_INSTRUCTIONS,
+        tool_call_limit=int(stage_limits.get("schema", _VALIDATOR_TOOL_CALL_LIMIT)),
+        prompt=schema_prompt,
+        report_builder=build_schema_report,
+        pipeline_run_id=pipeline_run_id,
+        database_id=database_id,
+        prior_reports=prior_reports,
+    )
+
+    stage_limits = _reallocate_limits_from_schema(schema_report, stage_limits)
+    prior_reports.append(clone_json(schema_report))
+    prior_findings = report_to_context_block(schema_report, "Schema Integrity Findings")
+
+    column_guidelines = _generate_guidelines(
+        hooks=hooks,
+        generator=generator,
+        agent_key="column_validator",
+        prior_findings=prior_findings,
+        step_name="guideline_gen_column",
+        running_status="running_guideline_gen_column",
+    )
+
+    column_prompt = (
+        _inject_guidelines(column_guidelines)
+        + "Perform column-level validation with structured findings only. "
+        + _JSON_REPORT_CONTRACT
+        + "\n\nPopulate column metrics exactly: total_columns_analyzed, duplicate_columns_found, "
+        + "constant_columns_found, high_null_ratio_columns, low_cardinality_anomalies, "
+        + "high_cardinality_anomalies, semantic_mismatches, domain_violations, "
+        + "distribution_anomalies, avg_column_quality_score, avg_column_confidence."
+        + "\n\n--- Schema Report (JSON) ---\n"
+        + json.dumps(schema_report, ensure_ascii=False, indent=2)
+        + _PRIOR_REPORTS_SECTION
+        + _serialize_prior_reports(prior_reports)
+        + rules_section
+    )
+    column_report = _run_validator_stage(
+        hooks=hooks,
+        step_name="column_validation",
+        running_status="running_column",
+        stage_gate_name="column_validation",
+        agent_name="Column Validator",
+        description=COLUMN_VALIDATOR_DESCRIPTION,
+        instructions=COLUMN_VALIDATOR_INSTRUCTIONS,
+        tool_call_limit=int(stage_limits.get("column", _VALIDATOR_TOOL_CALL_LIMIT)),
+        prompt=column_prompt,
+        report_builder=build_column_report,
+        pipeline_run_id=pipeline_run_id,
+        database_id=database_id,
+        prior_reports=prior_reports,
+    )
+    prior_reports.append(clone_json(column_report))
+    prior_findings += "\n\n" + report_to_context_block(column_report, "Column Findings")
+
+    row_guidelines = _generate_guidelines(
+        hooks=hooks,
+        generator=generator,
+        agent_key="row_level_validator",
+        prior_findings=prior_findings,
+        step_name="guideline_gen_row_level",
+        running_status="running_guideline_gen_row_level",
+    )
+
+    row_prompt = (
+        _inject_guidelines(row_guidelines)
+        + "Perform row-level validation and return structured JSON findings. "
+        + _JSON_REPORT_CONTRACT
+        + "\n\nPopulate row metrics exactly: total_rows_analyzed, rows_with_issues, rows_with_issues_ratio, "
+        + "format_violations, encoding_issues, hidden_null_count, outlier_rows, "
+        + "avg_row_quality_score, avg_row_confidence."
+        + _PRIOR_REPORTS_SECTION
+        + _serialize_prior_reports(prior_reports)
+        + rules_section
+    )
+    row_report = _run_validator_stage(
+        hooks=hooks,
+        step_name="row_level_validation",
+        running_status="running_row_level",
+        stage_gate_name="row_level_validation",
+        agent_name="Row Level Validator",
+        description=ROW_LEVEL_DESCRIPTION,
+        instructions=ROW_LEVEL_INSTRUCTIONS,
+        tool_call_limit=int(stage_limits.get("row", _VALIDATOR_TOOL_CALL_LIMIT)),
+        prompt=row_prompt,
+        report_builder=build_row_report,
+        pipeline_run_id=pipeline_run_id,
+        database_id=database_id,
+        prior_reports=prior_reports,
+    )
+    prior_reports.append(clone_json(row_report))
+    prior_findings += "\n\n" + report_to_context_block(row_report, "Row Level Findings")
+
+    cross_guidelines = _generate_guidelines(
+        hooks=hooks,
+        generator=generator,
+        agent_key="cross_row_validator",
+        prior_findings=prior_findings,
+        step_name="guideline_gen_cross_row",
+        running_status="running_guideline_gen_cross_row",
+    )
+
+    cross_prompt = (
+        _inject_guidelines(cross_guidelines)
+        + "Perform cross-row validation and return structured JSON findings. "
+        + _JSON_REPORT_CONTRACT
+        + "\n\nPopulate cross-row metrics exactly: total_row_pairs_analyzed, temporal_anomalies, sequential_breaks, "
+        + "cross_column_violations, row_pattern_anomalies, tables_with_cross_row_issues, avg_relationship_confidence."
+        + _PRIOR_REPORTS_SECTION
+        + _serialize_prior_reports(prior_reports)
+        + rules_section
+    )
+    cross_report = _run_validator_stage(
+        hooks=hooks,
+        step_name="cross_row_validation",
+        running_status="running_cross_row",
+        stage_gate_name="cross_row_validation",
+        agent_name="Cross Row Validator",
+        description=CROSS_ROW_DESCRIPTION,
+        instructions=CROSS_ROW_INSTRUCTIONS,
+        tool_call_limit=int(stage_limits.get("cross_row", _CROSS_ROW_TOOL_CALL_LIMIT)),
+        prompt=cross_prompt,
+        report_builder=build_cross_row_report,
+        pipeline_run_id=pipeline_run_id,
+        database_id=database_id,
+        prior_reports=prior_reports,
+    )
+    prior_reports.append(clone_json(cross_report))
+    prior_findings += "\n\n" + report_to_context_block(cross_report, "Cross Row Findings")
+
+    fix_guidelines = _generate_guidelines(
+        hooks=hooks,
+        generator=generator,
+        agent_key="data_fix_planner",
+        prior_findings=prior_findings,
+        step_name="guideline_gen_fix_planner",
+        running_status="running_guideline_gen_fix_planner",
+    )
+
+    fix_prompt = (
+        _inject_guidelines(fix_guidelines)
+        + "Generate fix planning output as structured JSON findings (one finding per fix card). "
+        + _JSON_REPORT_CONTRACT
+        + "\n\nPopulate fix planner metrics exactly: total_issues_received, fixes_generated, critical_fixes, "
+        + "high_fixes, medium_fixes, low_fixes, estimated_rows_affected, fix_confidence."
+        + "\n\nIssues identified in prior validation stages:"
+        + _extract_compact_findings(prior_reports)
+        + "\n\nFor each issue above, create a fix card with appropriate SQL remediation steps."
+        + rules_section
+    )
+    final_report = _run_fix_planner_stage(
+        hooks=hooks,
+        step_name="fix_planner",
+        running_status="running_fix_planner",
+        description=FIX_PLANNER_DESCRIPTION,
+        instructions=FIX_PLANNER_INSTRUCTIONS,
+        tool_call_limit=int(stage_limits.get("fix_planner", _FIX_PLANNER_TOOL_CALL_LIMIT)),
+        prompt=fix_prompt,
+        pipeline_run_id=pipeline_run_id,
+        database_id=database_id,
+        prior_reports=prior_reports,
+    )
+
+    hooks.run_step(
+        step="saving_guidelines",
+        running_status="saving_guidelines",
+        action=generator.save_guidelines,
+    )
+
+    confidence_score, data_quality_score = aggregate_pipeline_scores(
+        [schema_report, column_report, row_report, cross_report]
+    )
+
+    download_report_bundle = _build_download_report_bundle(
+        pipeline_run_id=pipeline_run_id,
+        database_id=database_id,
+        schema_report=schema_report,
+        column_report=column_report,
+        row_report=row_report,
+        cross_report=cross_report,
+        final_report=final_report,
+        confidence_score=confidence_score,
+        data_quality_score=data_quality_score,
+    )
+
+    report_artifact = {
+        "report_file_path": "",
+        "report_file_name": "",
+        "report_timestamp": final_report.get("run_timestamp"),
+        "report_database_id": final_report.get("database_id"),
+    }
+    try:
+        report_artifact = save_final_pipeline_report(download_report_bundle)
+    except Exception as exc:
+        logger.error("Failed to save final report file: %s", exc)
+        final_report["status"] = "partial"
+        final_report.setdefault("errors", []).append(f"report_save_failed: {exc}")
+
+    response = _build_final_response(
+        pipeline_run_id=pipeline_run_id,
+        database_id=database_id,
+        schema_report=schema_report,
+        column_report=column_report,
+        row_report=row_report,
+        cross_report=cross_report,
+        final_report=final_report,
+        confidence_score=confidence_score,
+        data_quality_score=data_quality_score,
+        report_artifact=report_artifact,
+    )
+    response["download_report_json"] = download_report_bundle
+    return response
