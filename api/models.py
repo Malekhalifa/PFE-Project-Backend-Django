@@ -12,6 +12,7 @@ the former MongoDB collections:
   AuditLog         ← audit_log  (was already here, unchanged)
 """
 import uuid
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
 
@@ -23,13 +24,16 @@ from django.conf import settings
 class Job(models.Model):
     """
     Tracks a single analysis/cleaning job.
-    Uses a UUID string as primary key to match the previous MongoDB _id pattern
-    so all existing views/tasks that do job['_id'] keep working via _to_dict().
     """
-    id = models.CharField(primary_key=True, max_length=36, default='')
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     # Ownership
-    user_id = models.CharField(max_length=36, db_index=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='jobs',
+        db_column='user_id',
+    )
 
     # File / connection metadata
     file_name = models.CharField(max_length=500, blank=True, default='')
@@ -48,9 +52,6 @@ class Job(models.Model):
     # Audit (matches MongoDB created_at / updated_at)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    # Cleaning report (legacy — stored directly on job)
-    cleaning_report = models.JSONField(null=True, blank=True)
 
     class Meta:
         db_table = 'jobs'
@@ -95,6 +96,7 @@ class CleaningResult(models.Model):
     mode = models.CharField(max_length=64, default='auto')
     rules_applied = models.JSONField(default=list)
     summary = models.JSONField(default=dict)
+    execution_log = models.JSONField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -203,15 +205,21 @@ def audit_log(
     """
     resolved_user_id = str(user_id).strip() if user_id else None
     if not resolved_user_id and job_id:
-        resolved_user_id = (
-            Job.objects
-            .filter(id=job_id)
-            .values_list('user_id', flat=True)
-            .first()
-        )
+        try:
+            normalized_job_id = uuid.UUID(str(job_id).strip())
+        except (ValueError, ValidationError, TypeError):
+            normalized_job_id = None
+
+        if normalized_job_id is not None:
+            resolved_user_id = (
+                Job.objects
+                .filter(id=normalized_job_id)
+                .values_list('user_id', flat=True)
+                .first()
+            )
 
     AuditLog.objects.create(
-        job_id=job_id,
+        job_id=str(job_id).strip() if job_id else None,
         user_id=resolved_user_id,
         event_type=event_type,
         payload=payload or {},

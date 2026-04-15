@@ -168,10 +168,10 @@ def execute_postgres_cleaning_task(self, job_id: str):
 
     Lifecycle
     ---------
-    1. Fetch the job from MongoDB (connection_string lives there).
+    1. Fetch the job from PostgreSQL (connection_string lives there).
     2. Set job status to "cleaning".
     3. Call run_cleaning_plan() from postgres_cleaning_service.
-    4. Persist the execution report under job["cleaning_report"] in MongoDB.
+    4. Persist the execution report under CleaningResult.execution_log.
     5. Set final status to "cleaning_completed" (all/partial success)
        or "cleaning_failed" (all tables failed).
     """
@@ -186,7 +186,7 @@ def execute_postgres_cleaning_task(self, job_id: str):
         # 1 – Retrieve the job document
         job = get_job(job_id)
         if not job:
-            raise ValueError(f"Job {job_id!r} not found in MongoDB.")
+            raise ValueError(f"Job {job_id!r} not found.")
 
         connection_string = job.get('connection_string')
         if not connection_string:

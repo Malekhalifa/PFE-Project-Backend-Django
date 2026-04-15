@@ -1060,7 +1060,7 @@ class JobsView(APIView):
         is_admin = request.user.role == 'admin'
 
         jobs = get_jobs_for_user(user_id, is_admin=is_admin)
-        job_ids = [j['_id'] for j in jobs]
+        job_ids = [j['id'] for j in jobs]
 
         user_map = {}
         if is_admin:
@@ -1081,14 +1081,14 @@ class JobsView(APIView):
 
         result = [
             {
-                '_id': j['_id'],
+                '_id': j['id'],
                 'file_name': j.get('file_name', 'unknown'),
                 'status': j.get('status'),
                 'mode': j.get('mode'),
                 'created_at': j.get('created_at'),
-                'has_analysis': j['_id'] in analysis_set,
-                'has_cleaning': j['_id'] in cleaning_set,
-                'has_chat': j['_id'] in chat_set,
+                'has_analysis': j['id'] in analysis_set,
+                'has_cleaning': j['id'] in cleaning_set,
+                'has_chat': j['id'] in chat_set,
                 **(
                     {
                         'owner_email': (
@@ -1153,7 +1153,7 @@ class JobsView(APIView):
                     pass
 
         # Audit log each deletion
-        owned_ids = [j['_id'] for j in deleted_jobs]
+        owned_ids = [j['id'] for j in deleted_jobs]
         for jid in owned_ids:
             audit_log(jid, 'JOB_DELETED', {'deleted_by': user_id}, user_id=user_id)
 
@@ -1189,7 +1189,7 @@ class ShareableView(APIView):
             open(cleaned_path, 'rb'),
             content_type='text/csv',
             as_attachment=True,
-            filename=f"{job['_id']}-cleaned.csv",
+            filename=f"{job['id']}-cleaned.csv",
         )
 
 
@@ -1574,7 +1574,7 @@ class AdminStatsView(APIView):
                 'mode': entry.mode,
                 'file_name': entry.file_name,
                 'updated_at': entry.updated_at.isoformat().replace('+00:00', 'Z') if entry.updated_at else None,
-                'user_email': active_user_emails.get(entry.user_id),
+                'user_email': active_user_emails.get(str(entry.user_id)),
             }
             for entry in active_jobs_sample
             if _is_active_job_status(entry.status)
@@ -1854,7 +1854,8 @@ class AdminAuditLogView(APIView):
             ]
             if matching_user_ids:
                 matching_job_ids = list(
-                    Job.objects.filter(user_id__in=matching_user_ids).values_list('id', flat=True)
+                    str(job_id)
+                    for job_id in Job.objects.filter(user_id__in=matching_user_ids).values_list('id', flat=True)
                 )
                 if matching_job_ids:
                     queryset = queryset.filter(job_id__in=matching_job_ids)
@@ -1869,7 +1870,7 @@ class AdminAuditLogView(APIView):
 
         row_job_ids = [entry.job_id for entry in rows if entry.job_id]
         job_owner_map = {
-            row['id']: row['user_id']
+            str(row['id']): str(row['user_id'])
             for row in Job.objects.filter(id__in=row_job_ids).values('id', 'user_id')
         }
         owner_user_ids = [uid for uid in set(job_owner_map.values()) if uid]
@@ -1881,7 +1882,7 @@ class AdminAuditLogView(APIView):
         items = []
         for entry in rows:
             payload = entry.payload if isinstance(entry.payload, dict) else {}
-            owner_user_id = job_owner_map.get(entry.job_id or '')
+            owner_user_id = job_owner_map.get(str(entry.job_id or ''))
             user_email = owner_email_map.get(owner_user_id or '')
             classification = _classify_audit_event(entry.event_type, payload) or 'unknown'
 
