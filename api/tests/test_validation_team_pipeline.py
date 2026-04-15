@@ -269,6 +269,10 @@ class ValidationTeamPipelineTests(unittest.TestCase):
         self.assertEqual(len(row_report["prior_reports"]), 2)
         self.assertEqual(len(cross_report["prior_reports"]), 3)
         self.assertEqual(len(final_report["prior_reports"]), 4)
+        for chained_report in final_report["prior_reports"]:
+            self.assertIn("summary", chained_report)
+            self.assertIn("findings", chained_report)
+            self.assertNotIn("prior_reports", chained_report)
 
         pipeline_run_id = schema_report["pipeline_run_id"]
         self.assertEqual(column_report["pipeline_run_id"], pipeline_run_id)
@@ -360,6 +364,104 @@ class ValidationTeamPipelineTests(unittest.TestCase):
         # Pipeline still progresses and emits final report.
         self.assertIn("data_fix_planner", reports)
         self.assertIn("report_file_path", result)
+
+    @patch("agents.validation_team.time.sleep", return_value=None)
+    @patch("services.report_service.save_final_pipeline_report")
+    @patch("agents.validation_team.DatabaseGuidelineGeneratorAgent")
+    @patch("agents.validation_team.Agent")
+    @patch("agents.validation_team.postgres_tool")
+    def test_pipeline_retries_transient_agent_runtime_error(
+        self,
+        mock_postgres_tool,
+        mock_agent_cls,
+        mock_generator_cls,
+        mock_save_report,
+        _mock_sleep,
+    ):
+        generator = mock_generator_cls.return_value
+        generator.generate.side_effect = [
+            "schema-guidelines",
+            "column-guidelines",
+            "row-guidelines",
+            "cross-guidelines",
+            "fix-guidelines",
+        ]
+
+        mock_save_report.return_value = {
+            "report_file_path": "/tmp/report_localhost_5432_db.json",
+            "report_file_name": "report_localhost_5432_db.json",
+            "report_timestamp": "2026-04-11T12:05:00Z",
+            "report_database_id": "localhost_5432_db",
+        }
+
+        schema_payload = {
+            "findings": [],
+            "metrics": {
+                "total_tables": 1,
+                "total_columns": 2,
+                "tables_with_no_primary_key": 0,
+                "missing_foreign_keys": 0,
+                "constraint_violations": 0,
+                "type_mismatches": 0,
+                "nullable_violations": 0,
+            },
+        }
+        column_payload = {
+            "findings": [],
+            "metrics": {
+                "total_columns_analyzed": 2,
+            },
+        }
+        row_payload = {
+            "findings": [],
+            "metrics": {
+                "total_rows_analyzed": 10,
+            },
+        }
+        cross_payload = {
+            "findings": [],
+            "metrics": {
+                "total_row_pairs_analyzed": 10,
+            },
+        }
+        fix_payload = {"findings": []}
+
+        schema_fail = MagicMock()
+        schema_fail.run.side_effect = RuntimeError("Gemini transient 429")
+
+        schema_success = MagicMock()
+        schema_success.run.return_value = SimpleNamespace(content=json.dumps(schema_payload))
+
+        column_success = MagicMock()
+        column_success.run.return_value = SimpleNamespace(content=json.dumps(column_payload))
+
+        row_success = MagicMock()
+        row_success.run.return_value = SimpleNamespace(content=json.dumps(row_payload))
+
+        cross_success = MagicMock()
+        cross_success.run.return_value = SimpleNamespace(content=json.dumps(cross_payload))
+
+        fix_success = MagicMock()
+        fix_success.run.return_value = SimpleNamespace(content=json.dumps(fix_payload))
+
+        mock_agent_cls.side_effect = [
+            schema_fail,
+            schema_success,
+            column_success,
+            row_success,
+            cross_success,
+            fix_success,
+        ]
+
+        result = orchestrator_workflow(
+            connection_string="postgresql://user:pass@localhost:5432/db",
+            domain_rules="",
+        )
+
+        self.assertEqual(mock_agent_cls.call_count, 6)
+        self.assertTrue(_mock_sleep.called)
+        self.assertIn("agent_reports", result)
+        self.assertIn("schema_integrity_validator", result["agent_reports"])
 
 
 if __name__ == "__main__":

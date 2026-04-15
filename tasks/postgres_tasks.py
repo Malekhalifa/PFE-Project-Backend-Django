@@ -1,4 +1,5 @@
 import logging
+import os
 import time
 from datetime import datetime, timedelta, timezone
 
@@ -24,6 +25,7 @@ from api.models import Job, audit_log
 from users.models import User
 
 _logger = logging.getLogger(__name__)
+_DEFAULT_POSTGRES_LLM_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-2.0-flash')
 
 
 def _safe_notify(func, *args):
@@ -49,7 +51,13 @@ def _get_job_user(job_id: str) -> User | None:
     return user
 
 @app.task(bind=True, max_retries=0, time_limit=1800) # 30 mins limit to give AI agents enough time
-def analyze_postgres_task(self, job_id: str, connection_string: str, domain_rules: list = None):
+def analyze_postgres_task(
+    self,
+    job_id: str,
+    connection_string: str,
+    domain_rules: list = None,
+    llm_model: str | None = None,
+):
     """
     Run PostgreSQL agentic analysis asynchronously using the Multi-Agent orchestrator.
 
@@ -63,9 +71,18 @@ def analyze_postgres_task(self, job_id: str, connection_string: str, domain_rule
     close_old_connections()
 
     update_job_status(job_id, 'running')
+    job_payload = get_job(job_id) or {}
+    resolved_llm_model = (
+        (job_payload.get('llm_model') if isinstance(job_payload, dict) else None)
+        or llm_model
+        or _DEFAULT_POSTGRES_LLM_MODEL
+    )
+    resolved_llm_model = str(resolved_llm_model).strip() or _DEFAULT_POSTGRES_LLM_MODEL
+
     audit_log(job_id, 'DB_ANALYSIS_STARTED', {
         'target': 'PostgreSQL Agentic Workflow',
         'status_code': 102,
+        'llm_model': resolved_llm_model,
     })
 
     job_user = _get_job_user(job_id)
@@ -77,7 +94,12 @@ def analyze_postgres_task(self, job_id: str, connection_string: str, domain_rule
         t0 = time.perf_counter()
 
         # Execute the AI Multi-Agent orchestration (job_id enables real-time progress updates)
-        raw_results = analyze_postgres_database(connection_string, custom_rules=domain_rules, job_id=job_id)
+        raw_results = analyze_postgres_database(
+            connection_string,
+            custom_rules=domain_rules,
+            job_id=job_id,
+            llm_model=resolved_llm_model,
+        )
 
         duration_ms = int((time.perf_counter() - t0) * 1000)
         completed_at = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
@@ -86,6 +108,7 @@ def analyze_postgres_task(self, job_id: str, connection_string: str, domain_rule
         raw_results['meta'] = {
             'job_id': job_id,
             'analysis_type': 'postgres_agentic',
+            'llm_model': resolved_llm_model,
             'started_at': started_at,
             'completed_at': completed_at,
             'duration_ms': duration_ms,

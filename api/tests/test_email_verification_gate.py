@@ -69,6 +69,69 @@ class EmailVerificationGateTests(unittest.TestCase):
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data.get('code'), 'email_not_verified')
 
+    @patch('api.views.audit_log')
+    @patch('api.views.analyze_postgres_task')
+    @patch('api.views.update_job_connection_string')
+    @patch('api.views.create_job', return_value='job-custom-model')
+    @patch('api.views.test_postgres_connection')
+    @patch('api.views.looks_like_postgres_dsn', return_value=True)
+    def test_analyze_postgres_accepts_custom_llm_model(
+        self,
+        _mock_looks_like_dsn,
+        _mock_test_connection,
+        mock_create_job,
+        _mock_update_connection,
+        mock_analyze_task,
+        _mock_audit_log,
+    ):
+        request = SimpleNamespace(
+            user=SimpleNamespace(id='user-1', email_verified=True),
+            data={
+                'connection_string': 'postgresql://demo:demo@localhost:5432/demo_db',
+                'llm_model': 'gemini-1.5-pro',
+            },
+        )
+
+        response = AnalyzePostgresView().post(request)
+
+        self.assertEqual(response.status_code, 200)
+        create_kwargs = mock_create_job.call_args.kwargs
+        self.assertEqual(create_kwargs.get('llm_model'), 'gemini-1.5-pro')
+
+        delay_kwargs = mock_analyze_task.delay.call_args.kwargs
+        self.assertEqual(delay_kwargs.get('llm_model'), 'gemini-1.5-pro')
+
+    @patch('api.views.audit_log')
+    @patch('api.views.analyze_postgres_task')
+    @patch('api.views.update_job_connection_string')
+    @patch('api.views.create_job', return_value='job-default-model')
+    @patch('api.views.test_postgres_connection')
+    @patch('api.views.looks_like_postgres_dsn', return_value=True)
+    def test_analyze_postgres_defaults_llm_model_when_missing(
+        self,
+        _mock_looks_like_dsn,
+        _mock_test_connection,
+        mock_create_job,
+        _mock_update_connection,
+        mock_analyze_task,
+        _mock_audit_log,
+    ):
+        request = SimpleNamespace(
+            user=SimpleNamespace(id='user-2', email_verified=True),
+            data={
+                'connection_string': 'postgresql://demo:demo@localhost:5432/demo_db',
+            },
+        )
+
+        response = AnalyzePostgresView().post(request)
+
+        self.assertEqual(response.status_code, 200)
+        create_kwargs = mock_create_job.call_args.kwargs
+        self.assertEqual(create_kwargs.get('llm_model'), 'gemini-2.0-flash')
+
+        delay_kwargs = mock_analyze_task.delay.call_args.kwargs
+        self.assertEqual(delay_kwargs.get('llm_model'), 'gemini-2.0-flash')
+
 
 if __name__ == '__main__':
     unittest.main()

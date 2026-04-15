@@ -52,7 +52,7 @@ from api.db import (
     get_job_guidelines,
 )
 from api.permissions import find_owned_job
-from api.serializers import CleanRequestSerializer, JobDeleteSerializer
+from api.serializers import AnalyzePostgresSerializer, CleanRequestSerializer, JobDeleteSerializer
 from agents.query_executor_agent import QueryExecutorAgent
 from agents.reporting import synthesize_fixes_from_prior_reports
 from services.analysis_service import compute_row_outliers, to_native
@@ -561,7 +561,7 @@ class TestPostgresConnectionView(APIView):
 class AnalyzePostgresView(APIView):
     """
     POST /api/analyze-postgres — start agentic analysis on a PostgreSQL database.
-    Body: { "connection_string": "...", "domain_rules": [...] }
+    Body: { "connection_string": "...", "domain_rules": [...], "llm_model": "..." }
     """
     permission_classes = [IsAuthenticated]
     throttle_classes = [AnalyzePostgresUserRateThrottle]
@@ -571,11 +571,13 @@ class AnalyzePostgresView(APIView):
         if unverified:
             return unverified
 
-        conn_str = request.data.get('connection_string')
-        domain_rules = request.data.get('domain_rules', [])
-        
-        if not conn_str:
-            return Response({'error': 'connection_string is required'}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = AnalyzePostgresSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        conn_str = serializer.validated_data['connection_string']
+        domain_rules = serializer.validated_data.get('domain_rules', [])
+        llm_model = serializer.validated_data.get('llm_model', 'gemini-2.0-flash').strip() or 'gemini-2.0-flash'
 
         # 1) Quick format check (pattern) to fail fast on obvious mistakes.
         if not looks_like_postgres_dsn(conn_str):
@@ -620,6 +622,7 @@ class AnalyzePostgresView(APIView):
             file_name="PostgreSQL Connection",
             file_path="postgres://<hidden>",
             mode="agentic_postgres",
+            llm_model=llm_model,
         )
 
         # Persist the DSN in the job document so the cleaning task
@@ -630,6 +633,7 @@ class AnalyzePostgresView(APIView):
             job_id=job_id,
             connection_string=conn_str,
             domain_rules=domain_rules,
+            llm_model=llm_model,
         )
 
         audit_log(job_id, 'DB_ANALYSIS_ENQUEUED', {}, user_id=user_id)
@@ -1242,6 +1246,7 @@ class PowerBIConfigView(APIView):
 
 AGENT_OS_BASE_URL = os.environ.get('AGENT_OS_URL', 'http://localhost:7777')
 AGENT_OS_TEAM_ID  = 'qualitylab-validation-team'
+_DEFAULT_CHAT_LLM_MODEL = 'gemini-2.0-flash'
 
 
 class AgentChatProxyView(APIView):
@@ -1251,7 +1256,7 @@ class AgentChatProxyView(APIView):
     Proxies a chat message from the Angular frontend to the AgentOS team
     running on port 7777.  Keeps CORS clean and adds JWT auth protection.
 
-    Body: { "message": str, "session_id": str, "job_id"?: str }
+    Body: { "message": str, "session_id": str, "job_id"?: str, "llm_model"?: str }
     Returns: { "content": str }
 
     When job_id is provided, the analysis results are fetched from MongoDB
@@ -1264,9 +1269,20 @@ class AgentChatProxyView(APIView):
         message    = request.data.get('message', '').strip()
         session_id = request.data.get('session_id', '')
         job_id     = request.data.get('job_id', '')
+        llm_model  = (request.data.get('llm_model') or '').strip()
+        resolved_llm_model = llm_model or _DEFAULT_CHAT_LLM_MODEL
 
         if not message:
             return Response({'error': 'message is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if job_id and not llm_model:
+            try:
+                job = get_job(job_id) or {}
+                job_llm_model = (job.get('llm_model') or '').strip()
+                if job_llm_model:
+                    resolved_llm_model = job_llm_model
+            except Exception:
+                pass
 
         # Build the message with analysis context if a job_id is provided
         enriched_message = message
@@ -1310,6 +1326,7 @@ class AgentChatProxyView(APIView):
                     'session_id': session_id,
                     'user_id':    str(request.user.id),
                     'stream':     'False',
+                    'llm_model':  resolved_llm_model,
                 },
                 timeout=120,   # agents can be slow
             )

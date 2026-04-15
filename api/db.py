@@ -44,6 +44,7 @@ _GUIDELINE_KEYS = [
     'cross_row_validator',
     'data_fix_planner',
 ]
+_DEFAULT_LLM_MODEL = 'gemini-2.0-flash'
 
 
 def _default_column_validator_analysis() -> dict[str, Any]:
@@ -112,6 +113,7 @@ def _job_to_dict(job: Job) -> dict:
         'connection_string': decrypted_connection_string,
         'status': job.status,
         'mode': job.mode,
+        'llm_model': job.llm_model,
         'share_token': job.share_token,
         'cleaning_report': job.cleaning_report,
         'created_at': job.created_at,
@@ -149,6 +151,7 @@ def create_job(
     file_name: str,
     file_path: str,
     mode: str = 'normal',
+    llm_model: str = _DEFAULT_LLM_MODEL,
 ) -> str:
     """Create a new job row. Returns the job_id (UUID string)."""
     job_id = str(uuid.uuid4())
@@ -158,6 +161,7 @@ def create_job(
         file_name=file_name,
         file_path=file_path,
         mode=mode,
+        llm_model=(llm_model or _DEFAULT_LLM_MODEL).strip() or _DEFAULT_LLM_MODEL,
         status='starting',
     )
     return job_id
@@ -179,7 +183,7 @@ def get_jobs_for_user(user_id: str, is_admin: bool = False) -> list[dict]:
     """
     qs = Job.objects.all() if is_admin else Job.objects.filter(user_id=user_id)
     qs = qs.order_by('-created_at').only(
-        'id', 'file_name', 'status', 'mode', 'created_at', 'user_id'
+        'id', 'file_name', 'status', 'mode', 'llm_model', 'created_at', 'user_id'
     )
     return [
         {
@@ -187,6 +191,7 @@ def get_jobs_for_user(user_id: str, is_admin: bool = False) -> list[dict]:
             'file_name': j.file_name,
             'status': j.status,
             'mode': j.mode,
+            'llm_model': j.llm_model,
             'created_at': j.created_at,
             'user_id': j.user_id,
         }

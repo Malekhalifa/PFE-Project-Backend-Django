@@ -5,7 +5,12 @@ from agents.validation_team import orchestrator_workflow
 logger = logging.getLogger(__name__)
 _NO_REPORT_GENERATED = "No report generated."
 
-def analyze_postgres_database(connection_string: str, custom_rules: List[Dict[str, Any]] = None, job_id: str = None) -> Dict[str, Any]:
+def analyze_postgres_database(
+    connection_string: str,
+    custom_rules: List[Dict[str, Any]] = None,
+    job_id: str = None,
+    llm_model: str | None = None,
+) -> Dict[str, Any]:
     """
     Service layer bridge between the Celery Tasks and the Multi-Agent orchestrator.
     Takes a list of standard custom rule definitions and formats them as a readable text string for the LLM agents.
@@ -14,6 +19,7 @@ def analyze_postgres_database(connection_string: str, custom_rules: List[Dict[st
         connection_string: The PostgreSQL dial URL
         custom_rules: Expected format: [{"description": "quota_free must be >= 0", "category": "BUDGET"}, ...]
         job_id: Optional job ID — passed to the orchestrator so it can emit per-agent progress statuses.
+        llm_model: Optional Gemini model id selected for this job.
     """
     try:
         # 1. Build the domain rules string for the LLM context
@@ -38,13 +44,19 @@ def analyze_postgres_database(connection_string: str, custom_rules: List[Dict[st
         logger.info("Triggering Agentic Workflow with connection string...")
         
         # 2. Block and run the LLMs
-        agent_reports = orchestrator_workflow(connection_string, domain_rules_text, job_id=job_id)
+        agent_reports = orchestrator_workflow(
+            connection_string,
+            domain_rules_text,
+            job_id=job_id,
+            llm_model=llm_model,
+        )
         
         # 3. Return the standardised dict — keys now come directly from the new agent output
         return {
             "status": "success",
             "pipeline_run_id": agent_reports.get("pipeline_run_id"),
             "database_id": agent_reports.get("database_id"),
+            "llm_model": agent_reports.get("llm_model") or llm_model,
             "schema_analysis":    agent_reports.get("schema_analysis",    {"report": _NO_REPORT_GENERATED}),
             "column_validator_analysis": agent_reports.get("column_validator_analysis", {
                 "agent": "ColumnValidatorAgent",
@@ -84,6 +96,7 @@ def analyze_postgres_database(connection_string: str, custom_rules: List[Dict[st
             "fixes": agent_reports.get("fixes", {"fixes": []}),
             "agent_reports": agent_reports.get("agent_reports", {}),
             "final_report": agent_reports.get("final_report", {}),
+            "download_report_json": agent_reports.get("download_report_json"),
             "confidence_score": agent_reports.get("confidence_score"),
             "data_quality_score": agent_reports.get("data_quality_score"),
             "report_file_path": agent_reports.get("report_file_path"),

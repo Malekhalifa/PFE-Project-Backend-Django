@@ -29,6 +29,7 @@ organically through their own tool calls.
 
 import os
 import sys
+from typing import Any
 
 # Allow running this file directly from the agents/ folder
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -60,7 +61,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-_GEMINI_MODEL_ID = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
+_DEFAULT_GEMINI_MODEL_ID = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
 _GEMINI_API_KEY  = os.environ.get("GEMINI_API_KEY", "")
 
 # ---------------------------------------------------------------------------
@@ -70,14 +71,46 @@ _GEMINI_API_KEY  = os.environ.get("GEMINI_API_KEY", "")
 _SESSION_DB = SqliteDb(db_file="tmp/agentos_sessions.db")
 
 
-def _model() -> Gemini:
+def _resolve_model_id(requested_model: str | None = None) -> str:
+    model_id = (requested_model or "").strip()
+    return model_id or _DEFAULT_GEMINI_MODEL_ID
+
+
+def _model(model_id: str | None = None) -> Gemini:
     return Gemini(
-        id=_GEMINI_MODEL_ID,
+        id=_resolve_model_id(model_id),
         api_key=_GEMINI_API_KEY or None,
         temperature=0,
         top_p=1,
         seed=7,
     )
+
+
+def _set_member_model(member: Agent | Team, model_id: str) -> None:
+    member.model = _model(model_id)
+    if isinstance(member, Team):
+        for nested_member in member.members:
+            _set_member_model(nested_member, model_id)
+
+
+def _apply_requested_llm_model(
+    team: Team,
+    llm_model: str | None = None,
+    model_id: str | None = None,
+    run_context: Any | None = None,
+    **_: Any,
+) -> None:
+    """Allow per-run Gemini model override coming from frontend chat calls."""
+    selected_model_id = _resolve_model_id(llm_model or model_id)
+    team.model = _model(selected_model_id)
+
+    for member in team.members:
+        _set_member_model(member, selected_model_id)
+
+    if run_context is not None:
+        metadata = dict(run_context.metadata or {})
+        metadata["llm_model"] = selected_model_id
+        run_context.metadata = metadata
 
 
 # Prepended to playground agents so they call connect_to_database first
@@ -215,6 +248,7 @@ validation_team = Team(
         "delegate only the relevant agent.",
         "You are database-agnostic — discover the schema first before running any checks.",
     ],
+    pre_hooks=[_apply_requested_llm_model],
     tools=_TOOLS,              # team leader also has direct tool access if needed
     db=_SESSION_DB,            # shared memory with sub-agents
     add_team_history_to_members=True,
