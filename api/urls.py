@@ -59,6 +59,8 @@ urlpatterns = [
     path('admin/audit-log/', views.AdminAuditLogView.as_view(), name='admin-audit-log'),
     path('admin/error-timeline/', views.AdminErrorTimelineView.as_view(), name='admin-error-timeline'),
     path('admin/test-email/', views.AdminTestEmailView.as_view(), name='admin-test-email'),
+    path('admin/users/', views.AdminUsersView.as_view(), name='admin-users'),
+    path('admin/users/<str:user_id>/', views.AdminUserDetailView.as_view(), name='admin-user-detail'),
 
     # AI-Generated Guidelines
     path('guidelines/<str:jobId>', views.GuidelinesView.as_view(), name='guidelines'),

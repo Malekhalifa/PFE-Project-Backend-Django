@@ -20,7 +20,7 @@ from typing import Any
 import pandas as pd
 from django.conf import settings
 from django.core.mail import send_mail
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.http import FileResponse
 from django.utils import timezone as dj_tz
 from django.utils.dateparse import parse_date, parse_datetime
@@ -1838,6 +1838,202 @@ class ExecuteFixView(APIView):
 # ──────────────────────────────────────────────
 # Admin APM Monitoring
 # ──────────────────────────────────────────────
+
+def _to_iso_utc(value: datetime | None) -> str | None:
+    if value is None:
+        return None
+
+    if dj_tz.is_naive(value):
+        value = value.replace(tzinfo=timezone.utc)
+
+    return value.astimezone(timezone.utc).isoformat().replace('+00:00', 'Z')
+
+
+def _serialize_admin_user(user: User, *, job_count: int = 0) -> dict[str, Any]:
+    first_name = str(getattr(user, 'first_name', '') or '').strip()
+    last_name = str(getattr(user, 'last_name', '') or '').strip()
+    full_name = f'{first_name} {last_name}'.strip()
+
+    return {
+        'id': str(user.id),
+        'email': user.email,
+        'username': user.username,
+        'first_name': first_name,
+        'last_name': last_name,
+        'full_name': full_name,
+        'role': user.role,
+        'is_staff': bool(user.is_staff),
+        'is_active': bool(user.is_active),
+        'email_verified': bool(getattr(user, 'email_verified', False)),
+        'date_joined': _to_iso_utc(user.date_joined),
+        'last_login': _to_iso_utc(user.last_login),
+        'job_count': int(job_count),
+    }
+
+
+class AdminUsersView(APIView):
+    """GET /api/admin/users/ — paginated admin user listing with filters."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        admin_error = _require_admin_staff(request)
+        if admin_error:
+            return admin_error
+
+        page = _coerce_int(request.query_params.get('page'), 1, minimum=1)
+        limit = _coerce_int(request.query_params.get('limit'), 25, minimum=1, maximum=100)
+
+        search = str(request.query_params.get('search') or '').strip()
+        role = str(request.query_params.get('role') or '').strip().lower()
+        status_filter = str(request.query_params.get('status') or '').strip().lower()
+
+        queryset = User.objects.all().order_by('-date_joined').only(
+            'id',
+            'email',
+            'username',
+            'first_name',
+            'last_name',
+            'role',
+            'is_staff',
+            'is_active',
+            'email_verified',
+            'date_joined',
+            'last_login',
+        )
+
+        if search:
+            queryset = queryset.filter(
+                Q(email__icontains=search)
+                | Q(username__icontains=search)
+                | Q(first_name__icontains=search)
+                | Q(last_name__icontains=search)
+            )
+
+        if role in {'admin', 'user'}:
+            queryset = queryset.filter(role=role)
+
+        if status_filter == 'active':
+            queryset = queryset.filter(is_active=True)
+        elif status_filter in {'disabled', 'inactive'}:
+            queryset = queryset.filter(is_active=False)
+
+        total = queryset.count()
+        offset = (page - 1) * limit
+        rows = list(queryset[offset:offset + limit])
+
+        user_ids = [str(user.id) for user in rows]
+        job_counts = {
+            str(entry['user_id']): int(entry['job_count'])
+            for entry in (
+                Job.objects
+                .filter(user_id__in=user_ids)
+                .values('user_id')
+                .annotate(job_count=Count('id'))
+            )
+        }
+
+        items = [
+            _serialize_admin_user(user, job_count=job_counts.get(str(user.id), 0))
+            for user in rows
+        ]
+
+        total_pages = max(1, math.ceil(total / limit)) if total else 1
+        return Response(
+            {
+                'items': items,
+                'page': page,
+                'limit': limit,
+                'total': total,
+                'total_pages': total_pages,
+            }
+        )
+
+
+class AdminUserDetailView(APIView):
+    """PATCH /api/admin/users/<user_id>/ — update role and/or active flag."""
+
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, user_id):
+        admin_error = _require_admin_staff(request)
+        if admin_error:
+            return admin_error
+
+        target_user = User.objects.filter(id=user_id).first()
+        if not target_user:
+            return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        updates: list[str] = []
+        role_error = self._apply_role_update(request=request, target_user=target_user, updates=updates)
+        if role_error:
+            return role_error
+
+        active_error = self._apply_active_update(request=request, target_user=target_user, updates=updates)
+        if active_error:
+            return active_error
+
+        if not updates:
+            return Response(
+                {'error': 'Provide at least one field to update: role or is_active.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        target_user.save(update_fields=sorted(set(updates)))
+        job_count = Job.objects.filter(user_id=str(target_user.id)).count()
+
+        audit_log(
+            '',
+            'ADMIN_USER_UPDATED',
+            {
+                'target_user_id': str(target_user.id),
+                'target_user_email': target_user.email,
+                'updated_fields': sorted(set(updates)),
+                'role': target_user.role,
+                'is_active': bool(target_user.is_active),
+                'status_code': 200,
+            },
+            user_id=str(request.user.id),
+        )
+
+        return Response({'user': _serialize_admin_user(target_user, job_count=job_count)})
+
+    def _apply_role_update(self, *, request, target_user: User, updates: list[str]) -> Response | None:
+        if 'role' not in request.data:
+            return None
+
+        role = str(request.data.get('role') or '').strip().lower()
+        if role not in {'admin', 'user'}:
+            return Response({'error': 'role must be either "admin" or "user".'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if str(target_user.id) == str(request.user.id) and role != 'admin':
+            return Response(
+                {'error': 'You cannot demote your own admin account.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        target_user.role = role
+        target_user.is_staff = role == 'admin'
+        updates.extend(['role', 'is_staff'])
+        return None
+
+    def _apply_active_update(self, *, request, target_user: User, updates: list[str]) -> Response | None:
+        if 'is_active' not in request.data:
+            return None
+
+        is_active_raw = request.data.get('is_active')
+        if not isinstance(is_active_raw, bool):
+            return Response({'error': 'is_active must be a boolean.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if str(target_user.id) == str(request.user.id) and is_active_raw is False:
+            return Response(
+                {'error': 'You cannot disable your own account.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        target_user.is_active = is_active_raw
+        updates.append('is_active')
+        return None
 
 class AdminStatsView(APIView):
     """GET /api/admin/stats/ — aggregate KPI cards and active-jobs snapshot."""

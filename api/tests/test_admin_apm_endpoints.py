@@ -18,6 +18,8 @@ from api.views import (
     AdminPipelinePerformanceView,
     AdminStatsView,
     AdminTestEmailView,
+    AdminUserDetailView,
+    AdminUsersView,
 )
 from users.models import User
 
@@ -90,6 +92,8 @@ class AdminApmEndpointTests(TestCase):
             request = self.factory.get(path, data=data or {})
         elif method == 'post':
             request = self.factory.post(path, data=data or {}, format='json')
+        elif method == 'patch':
+            request = self.factory.patch(path, data=data or {}, format='json')
         else:
             raise ValueError(f'Unsupported method: {method}')
 
@@ -103,6 +107,8 @@ class AdminApmEndpointTests(TestCase):
             ('get', '/api/admin/audit-log/', AdminAuditLogView.as_view(), None),
             ('get', '/api/admin/error-timeline/', AdminErrorTimelineView.as_view(), None),
             ('post', '/api/admin/test-email/', AdminTestEmailView.as_view(), {}),
+            ('get', '/api/admin/users/', AdminUsersView.as_view(), None),
+            ('patch', f'/api/admin/users/{self.staff_user.id}/', AdminUserDetailView.as_view(), {'role': 'admin'}),
         ]
 
         for method, path, view, payload in endpoints:
@@ -507,3 +513,93 @@ class AdminApmEndpointTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertFalse(response.data.get('ok'))
         self.assertEqual(response.data.get('code'), 'admin_email_missing')
+
+    def test_admin_users_list_supports_filters_and_job_counts(self):
+        target_user = self._build_user(
+            username='target_user',
+            email='target@example.com',
+            role='user',
+            is_staff=False,
+        )
+
+        self._create_job(user=target_user, status='completed')
+        self._create_job(user=target_user, status='failed')
+
+        request = self._auth_request(
+            method='get',
+            path='/api/admin/users/',
+            user=self.staff_user,
+            data={
+                'search': 'target',
+                'role': 'user',
+                'status': 'active',
+                'page': 1,
+                'limit': 10,
+            },
+        )
+        response = AdminUsersView.as_view()(request)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data.get('page'), 1)
+        self.assertEqual(response.data.get('limit'), 10)
+
+        items = response.data.get('items') or []
+        self.assertEqual(len(items), 1)
+
+        listed = items[0]
+        self.assertEqual(listed.get('id'), str(target_user.id))
+        self.assertEqual(listed.get('email'), target_user.email)
+        self.assertEqual(listed.get('role'), 'user')
+        self.assertTrue(listed.get('is_active'))
+        self.assertEqual(listed.get('job_count'), 2)
+
+    def test_admin_user_detail_updates_role_and_active_state(self):
+        target_user = self._build_user(
+            username='target_update',
+            email='target_update@example.com',
+            role='user',
+            is_staff=False,
+        )
+
+        request = self._auth_request(
+            method='patch',
+            path=f'/api/admin/users/{target_user.id}/',
+            user=self.staff_user,
+            data={'role': 'admin', 'is_active': False},
+        )
+        response = AdminUserDetailView.as_view()(request, user_id=str(target_user.id))
+
+        self.assertEqual(response.status_code, 200)
+        updated = response.data.get('user') or {}
+        self.assertEqual(updated.get('id'), str(target_user.id))
+        self.assertEqual(updated.get('role'), 'admin')
+        self.assertTrue(updated.get('is_staff'))
+        self.assertFalse(updated.get('is_active'))
+
+        target_user.refresh_from_db()
+        self.assertEqual(target_user.role, 'admin')
+        self.assertTrue(target_user.is_staff)
+        self.assertFalse(target_user.is_active)
+
+    def test_admin_user_detail_prevents_self_disable_or_self_demote(self):
+        disable_request = self._auth_request(
+            method='patch',
+            path=f'/api/admin/users/{self.staff_user.id}/',
+            user=self.staff_user,
+            data={'is_active': False},
+        )
+        disable_response = AdminUserDetailView.as_view()(disable_request, user_id=str(self.staff_user.id))
+
+        self.assertEqual(disable_response.status_code, 400)
+        self.assertIn('cannot disable', str(disable_response.data.get('error', '')).lower())
+
+        demote_request = self._auth_request(
+            method='patch',
+            path=f'/api/admin/users/{self.staff_user.id}/',
+            user=self.staff_user,
+            data={'role': 'user'},
+        )
+        demote_response = AdminUserDetailView.as_view()(demote_request, user_id=str(self.staff_user.id))
+
+        self.assertEqual(demote_response.status_code, 400)
+        self.assertIn('cannot demote', str(demote_response.data.get('error', '')).lower())
