@@ -1,6 +1,8 @@
 import unittest
+import threading
+from unittest.mock import patch
 
-from agents.tools import enforce_quality_gate
+from agents.tools import enforce_quality_gate, postgres_tool
 
 
 class QualityGateToolTests(unittest.TestCase):
@@ -83,6 +85,32 @@ class QualityGateToolTests(unittest.TestCase):
         self.assertIn("low_confidence", blocked_by_id["low_conf"])
         self.assertIn("missing_evidence_query", blocked_by_id["no_query"])
         self.assertIn("insufficient_evidence_rows", blocked_by_id["no_rows"])
+
+    @patch("agents.tools.test_postgres_connection", return_value=None)
+    def test_postgres_tool_connection_is_isolated_per_thread(self, _mock_test_connection):
+        results: dict[str, str | None] = {}
+        sync_point = threading.Barrier(2)
+
+        def _worker(name: str, dsn: str):
+            postgres_tool.connect(dsn)
+            sync_point.wait()
+            results[name] = postgres_tool.connection_string
+
+        t1 = threading.Thread(
+            target=_worker,
+            args=("first", "postgresql://u1:p1@host-a:5432/db_a"),
+        )
+        t2 = threading.Thread(
+            target=_worker,
+            args=("second", "postgresql://u2:p2@host-b:5432/db_b"),
+        )
+        t1.start()
+        t2.start()
+        t1.join()
+        t2.join()
+
+        self.assertEqual(results["first"], "postgresql://u1:p1@host-a:5432/db_a")
+        self.assertEqual(results["second"], "postgresql://u2:p2@host-b:5432/db_b")
 
 
 if __name__ == "__main__":

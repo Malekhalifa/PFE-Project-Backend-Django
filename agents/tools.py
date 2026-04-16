@@ -1,4 +1,5 @@
 import json
+import contextvars
 import logging
 import time
 import psycopg2
@@ -89,8 +90,8 @@ def _parse_rows_payload(payload: str) -> list[dict]:
 class PostgresTool:
     """
     Manages a PostgreSQL connection for the agent session.
-    The singleton instance is set up once per Celery task via connect(),
-    or dynamically from the playground chat via the connect_to_database tool.
+    A fresh instance is bound per execution context (thread/task) to avoid
+    connection-string leakage across concurrent jobs.
     """
 
     def __init__(self):
@@ -141,9 +142,40 @@ class PostgresTool:
 
 
 # ---------------------------------------------------------------------------
-# Module-level singleton – shared within a single execution context.
+# Context-local tool state + backward-compatible proxy.
 # ---------------------------------------------------------------------------
-postgres_tool = PostgresTool()
+_postgres_tool_ctx: contextvars.ContextVar[PostgresTool | None] = contextvars.ContextVar(
+    "postgres_tool_ctx",
+    default=None,
+)
+
+
+def _get_context_postgres_tool() -> PostgresTool:
+    tool = _postgres_tool_ctx.get()
+    if tool is None:
+        tool = PostgresTool()
+        _postgres_tool_ctx.set(tool)
+    return tool
+
+
+class _PostgresToolProxy:
+    """
+    Compatibility proxy that preserves `postgres_tool.connect(...)` and
+    `postgres_tool._run_query(...)` call sites while isolating state per context.
+    """
+
+    def connect(self, connection_string: str) -> None:
+        _get_context_postgres_tool().connect(connection_string)
+
+    def _run_query(self, query: str, limit: int = 100) -> str:
+        return _get_context_postgres_tool()._run_query(query, limit=limit)
+
+    @property
+    def connection_string(self) -> str | None:
+        return _get_context_postgres_tool().connection_string
+
+
+postgres_tool = _PostgresToolProxy()
 
 
 # ---------------------------------------------------------------------------
