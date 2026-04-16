@@ -100,11 +100,6 @@ Defined in `api/urls.py` under `/api`.
 - `GET /api/fixes/<job_id>/`
 - `POST /api/execute-fix/<job_id>/`
 
-### 5.4 Sharing and BI
-
-- `GET /api/share/<sharedToken>`
-- `GET /api/powerbi-config/<jobId>`
-
 ## 6. Async Processing (Celery)
 
 Long-running operations are asynchronous:

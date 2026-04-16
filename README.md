@@ -23,11 +23,11 @@ Important:
 ```text
 Browser (Angular SPA)
    -> Django API (auth + jobs + reports + chat + guidelines + fixes)
-	-> PostgreSQL (users, jobs, analysis, chat, guidelines, audit)
-	-> Redis (Celery broker/result backend)
-	-> Celery workers (async CSV/PG pipelines)
-	   -> Agents pipeline (guidelines + validators + fix planner)
-		-> Report artifacts (backend-django/reports)
+ -> PostgreSQL (users, jobs, analysis, chat, guidelines, audit)
+ -> Redis (Celery broker/result backend)
+ -> Celery workers (async CSV/PG pipelines)
+    -> Agents pipeline (guidelines + validators + fix planner)
+  -> Report artifacts (backend-django/reports)
 
 Optional developer path:
 AgentOS playground (port 7777) for interactive agent testing
@@ -60,27 +60,27 @@ The backend agent architecture includes seven distinct agent roles.
 Automated analysis pipeline (Celery):
 
 1) Database Guideline Generator Agent
-	-> generates database-specific instructions per stage
+ -> generates database-specific instructions per stage
 
 2) Schema Integrity Validator
-	-> structure constraints, PK/FK, nullability, schema quality
+ -> structure constraints, PK/FK, nullability, schema quality
 
 3) Column Validator
-	-> column-level quality, semantics, null/cardinality/distribution checks
+ -> column-level quality, semantics, null/cardinality/distribution checks
 
 4) Row-Level Logic Validator
-	-> per-row business-rule and format violations
+ -> per-row business-rule and format violations
 
 5) Cross-Row Validator
-	-> temporal, relational, and multi-row anomaly checks
+ -> temporal, relational, and multi-row anomaly checks
 
 6) Data Fix Planner
-	-> synthesizes findings into human-reviewable SQL fix cards
+ -> synthesizes findings into human-reviewable SQL fix cards
 
 Human-in-the-loop execution path:
 
 7) Query Executor Agent
-	-> executes approved fix-card SQL in one safe transaction
+ -> executes approved fix-card SQL in one safe transaction
 ```
 
 ### Pipeline Notes
@@ -157,8 +157,6 @@ Core data workflows (api/urls.py):
 - GET /api/guidelines/<jobId>
 - GET /api/fixes/<job_id>/
 - POST /api/execute-fix/<job_id>/
-- GET /api/share/<sharedToken>
-- GET /api/powerbi-config/<jobId>
 
 Health endpoint:
 
@@ -195,27 +193,27 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
-2. Install dependencies:
+1. Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Ensure PostgreSQL and Redis are running.
+1. Ensure PostgreSQL and Redis are running.
 
-4. Apply migrations:
+2. Apply migrations:
 
 ```bash
 python manage.py migrate
 ```
 
-5. Start API server:
+1. Start API server:
 
 ```bash
 python manage.py runserver 0.0.0.0:8000
 ```
 
-6. Start Celery worker (new terminal):
+1. Start Celery worker (new terminal):
 
 ```bash
 cd backend-django

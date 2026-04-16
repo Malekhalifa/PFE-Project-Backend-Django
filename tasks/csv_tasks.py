@@ -6,9 +6,9 @@ Instead of calling a separate FastAPI service, we invoke the analysis
 and cleaning functions directly within the Celery worker process.
 
 Each task:
-  1. Updates job status in MongoDB
+    1. Updates job status in PostgreSQL
   2. Calls the corresponding service function
-  3. Stores the result in MongoDB
+    3. Stores the result in PostgreSQL
   4. Updates final job status
   5. Writes audit log entries
 """
@@ -73,7 +73,7 @@ def analyze_csv_task(self, job_id, file_path, mode, options=None):
     Mirrors the Node.js analysisService.runAnalysis() flow:
       1. Set job status to 'running'
       2. Choose in-memory or streaming based on mode / file size
-      3. Store result in MongoDB
+        3. Store result in PostgreSQL
       4. Set job status to 'completed' or 'failed'
     """
     # Reset DB connections inherited from the parent process after fork.
@@ -123,7 +123,7 @@ def analyze_csv_task(self, job_id, file_path, mode, options=None):
             'duration_ms': duration_ms,
         }
 
-        # Store in MongoDB
+        # Store in PostgreSQL
         save_analysis_result(
             job_id=job_id,
             result=result,
@@ -156,7 +156,7 @@ def clean_csv_task(self, job_id, file_path, mode='auto', rules=None, options=Non
     Mirrors the Node.js cleaningService.runCleaning() flow:
       1. Set job status to 'cleaning'
       2. Call clean_csv() service
-      3. Store result in MongoDB
+        3. Store result in PostgreSQL
       4. Update job with cleaned file path
       5. Set job status to 'cleaned' or 'failed'
     """
@@ -183,7 +183,7 @@ def clean_csv_task(self, job_id, file_path, mode='auto', rules=None, options=Non
             options=options,
         )
 
-        # Store in MongoDB
+        # Store in PostgreSQL
         save_cleaning_result(
             job_id=job_id,
             mode=result['mode'],

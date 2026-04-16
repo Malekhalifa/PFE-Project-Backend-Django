@@ -44,7 +44,7 @@ def _normalize_throttle_rate(raw_value: str, default: str) -> str:
 
     return f'{int(requests_count)}/{period.lower()}'
 
-SECRET_KEY = env('SECRET_KEY', default='change-me-to-a-strong-random-secret')
+SECRET_KEY = env('SECRET_KEY', default='QualityLabSecretKey123!')
 DEBUG = env('DEBUG')
 PRODUCTION = env('PRODUCTION')
 JOB_CONNECTION_STRING_ENCRYPTION_KEY = env('JOB_CONNECTION_STRING_ENCRYPTION_KEY', default='')
@@ -67,11 +67,10 @@ ANON_RATE_LIMIT = _normalize_throttle_rate(
 ACCESS_TOKEN_LIFETIME_MINUTES = max(5, env.int('ACCESS_TOKEN_LIFETIME_MINUTES', default=60))
 REFRESH_TOKEN_LIFETIME_DAYS = max(1, env.int('REFRESH_TOKEN_LIFETIME_DAYS', default=7))
 ROTATE_REFRESH_TOKENS = env.bool('ROTATE_REFRESH_TOKENS', default=True)
-SHARE_TOKEN_TTL_HOURS = max(1, env.int('SHARE_TOKEN_TTL_HOURS', default=24))
 
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', 'testserver'])
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 if DEBUG:
-    ALLOWED_HOSTS = sorted(set(ALLOWED_HOSTS + ['localhost', '127.0.0.1', 'testserver']))
+    ALLOWED_HOSTS = sorted(set(ALLOWED_HOSTS + ['localhost', '127.0.0.1']))
 
 # ──────────────────────────────────────────────
 # Installed apps

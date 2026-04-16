@@ -1,7 +1,7 @@
 """
 Custom User model — stored in PostgreSQL via Django ORM.
 
-Mirrors the Node.js/Mongoose User schema:
+Mirrors the legacy Node.js user schema:
   - UUID primary key
   - email as the login identifier (USERNAME_FIELD)
   - role field: 'user' or 'admin'

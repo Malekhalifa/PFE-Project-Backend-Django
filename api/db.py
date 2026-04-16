@@ -114,8 +114,6 @@ def _serialize_job(job: Job) -> dict:
         'celery_task_id': job.celery_task_id,
         'mode': job.mode,
         'llm_model': job.llm_model,
-        'share_token': job.share_token,
-        'share_token_expires_at': job.share_token_expires_at,
         'created_at': job.created_at,
         'updated_at': job.updated_at,
     }
@@ -264,41 +262,6 @@ def update_job_cleaned_path(job_id: str, cleaned_file_path: str) -> None:
     Job.objects.filter(id=normalized_job_id).update(
         cleaned_file_path=cleaned_file_path, updated_at=dj_tz.now()
     )
-
-
-def update_job_share_token(
-    job_id: str,
-    share_token: str | None,
-    *,
-    expires_at: datetime | None = None,
-) -> None:
-    """Set or clear the share token for a job, including expiry metadata."""
-    normalized_job_id = _normalize_uuid(job_id)
-    if not normalized_job_id:
-        return
-
-    normalized_token = (share_token or '').strip() or None
-    resolved_expires_at = expires_at if normalized_token else None
-    Job.objects.filter(id=normalized_job_id).update(
-        share_token=normalized_token,
-        share_token_expires_at=resolved_expires_at,
-        updated_at=dj_tz.now(),
-    )
-
-
-def get_job_by_share_token(share_token: str) -> dict | None:
-    """Find a job by share token, honoring token expiration."""
-    token = (share_token or '').strip()
-    if not token:
-        return None
-
-    now = dj_tz.now()
-    job = (
-        Job.objects
-        .filter(share_token=token, share_token_expires_at__gt=now)
-        .first()
-    )
-    return _serialize_job(job) if job else None
 
 
 def update_job_connection_string(job_id: str, connection_string: str) -> None:

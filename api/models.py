@@ -1,8 +1,8 @@
 """
 PostgreSQL models for the api app.
 
-Replaces MongoDB collections entirely.  Each model corresponds to one of
-the former MongoDB collections:
+Replaces the legacy document-store layer entirely. Each model corresponds to
+one persisted runtime entity:
 
   Job              ← jobs
   AnalysisResult   ← analysis_results
@@ -47,11 +47,7 @@ class Job(models.Model):
     mode = models.CharField(max_length=64, default='normal')
     llm_model = models.CharField(max_length=128, default='gemini-2.0-flash')
 
-    # Power BI share
-    share_token = models.CharField(max_length=128, null=True, blank=True, db_index=True)
-    share_token_expires_at = models.DateTimeField(null=True, blank=True, db_index=True)
-
-    # Audit (matches MongoDB created_at / updated_at)
+    # Audit timestamps
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 

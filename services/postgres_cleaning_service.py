@@ -278,9 +278,9 @@ def run_cleaning_plan(connection_string: str, plan: dict) -> dict:
 
     Args:
         connection_string: The user's PostgreSQL DSN (e.g. postgresql://…).
-                           This is the connection stored in the MongoDB job document,
+                           This is the connection stored on the Job record,
                            NOT Django's own database.
-        plan: The cleaning_plan dict fetched from the MongoDB analysis result.
+        plan: The cleaning_plan dict fetched from the persisted analysis result.
               Expected shape: { "tables": [ { "table", "target_table", "actions" } ] }
 
     Returns:

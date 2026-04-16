@@ -9,7 +9,6 @@ enforce job ownership via find_owned_job().
 """
 import math
 import os
-import secrets
 import uuid
 import logging
 import json
@@ -46,9 +45,7 @@ from api.db import (
     get_chat_messages,
     save_chat_message,
     delete_jobs,
-    update_job_share_token,
     update_job_connection_string,
-    get_job_by_share_token,
     update_job_status,
     update_job_celery_task_id,
     get_job_guidelines,
@@ -101,26 +98,6 @@ def _require_verified_email(request) -> Response | None:
     if bool(getattr(request.user, 'email_verified', False)):
         return None
     return _email_not_verified_response()
-
-
-def _is_share_token_expired(job: dict | None) -> bool:
-    if not isinstance(job, dict):
-        return True
-
-    expires_at = job.get('share_token_expires_at')
-    if expires_at is None:
-        return True
-
-    if isinstance(expires_at, str):
-        parsed = parse_datetime(expires_at)
-        if parsed is None:
-            return True
-        expires_at = parsed
-
-    if dj_tz.is_naive(expires_at):
-        expires_at = expires_at.replace(tzinfo=timezone.utc)
-
-    return expires_at <= dj_tz.now()
 
 
 def _sanitize_for_json(obj):
@@ -539,7 +516,7 @@ class UploadView(APIView):
     """
     POST /api/upload — upload CSV file, create job.
 
-    Matches Node.js: saves file to uploads/, creates Job in MongoDB,
+    Matches Node.js: saves file to uploads/, creates Job in PostgreSQL,
     writes audit log, returns { job_id }.
     """
     permission_classes = [IsAuthenticated]
@@ -567,7 +544,7 @@ class UploadView(APIView):
         file_size = os.path.getsize(file_path)
         mode = 'large' if file_size > 50 * 1024 * 1024 else 'normal'  # 50MB threshold
 
-        # Create job in MongoDB
+        # Create job in PostgreSQL
         user_id = str(request.user.id)
         job_id = create_job(
             user_id=user_id,
@@ -1195,7 +1172,7 @@ class CleaningResultView(APIView):
             # and Chrome doesn't log a red console error
             return Response(None)
 
-        # Remove MongoDB's internal _id field before returning
+        # Drop legacy compatibility key if present.
         result.pop('_id', None)
         return Response(_sanitize_for_json(result))
 
@@ -1351,7 +1328,7 @@ class JobsView(APIView):
         user_id = str(request.user.id)
         is_admin = request.user.role == 'admin'
 
-        # Delete from MongoDB (with ownership enforcement)
+        # Delete from PostgreSQL (with ownership enforcement)
         deleted_jobs = delete_jobs(job_ids, user_id=user_id, is_admin=is_admin)
 
         if not deleted_jobs:
@@ -1446,89 +1423,6 @@ class JobDetailView(APIView):
 
 
 # ──────────────────────────────────────────────
-# Power BI Integration
-# ──────────────────────────────────────────────
-
-class ShareableView(APIView):
-    """
-    GET /api/share/<sharedToken> — download cleaned CSV file without authentication.
-    """
-    permission_classes = []  # Public endpoint
-
-    def get(self, request, sharedToken):
-        job = get_job_by_share_token(sharedToken)
-        if not job or not job.get('cleaned_file_path'):
-            return Response(
-                {'error': 'Invalid token or file not found'},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        cleaned_path = job['cleaned_file_path']
-        if not os.path.exists(cleaned_path):
-            return Response(
-                {'error': 'File missing on disk'},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        return FileResponse(
-            open(cleaned_path, 'rb'),
-            content_type='text/csv',
-            as_attachment=True,
-            filename=f"{job['id']}-cleaned.csv",
-        )
-
-
-class PowerBIConfigView(APIView):
-    """
-    GET /api/powerbi-config/<jobId> — get .pbids file content.
-    """
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, jobId):
-        job = find_owned_job(jobId, request.user)
-        if not job or not job.get('cleaned_file_path'):
-            return Response(
-                {'error': 'Cleaned file not found'},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        # Generate or reuse share token
-        share_token = job.get('share_token')
-        if not share_token or _is_share_token_expired(job):
-            share_token = secrets.token_urlsafe(32)
-            expires_at = dj_tz.now() + timedelta(
-                hours=max(1, int(getattr(settings, 'SHARE_TOKEN_TTL_HOURS', 24)))
-            )
-            update_job_share_token(jobId, share_token, expires_at=expires_at)
-
-        # Construct protocol and host
-        # Power BI typically needs an absolute URL
-        protocol = 'https' if request.is_secure() else 'http'
-        host = request.get_host()
-        share_url = f"{protocol}://{host}/api/share/{share_token}"
-
-        pbids_content = {
-            "version": "0.1",
-            "connections": [
-                {
-                    "details": {
-                        "protocol": "web",
-                        "address": {
-                            "url": share_url
-                        },
-                        "authentication": None,
-                        "query": None
-                    },
-                    "options": {},
-                    "mode": "Import"
-                }
-            ]
-        }
-
-        return Response(pbids_content)
-
-
-# ──────────────────────────────────────────────
 # AgentOS Chat Proxy
 # ──────────────────────────────────────────────
 
@@ -1547,7 +1441,7 @@ class AgentChatProxyView(APIView):
     Body: { "message": str, "session_id": str, "job_id"?: str, "llm_model"?: str }
     Returns: { "content": str }
 
-    When job_id is provided, the analysis results are fetched from MongoDB
+    When job_id is provided, the analysis results are fetched from PostgreSQL
     and injected as context so the agent can answer follow-up questions
     about the completed analysis.
     """
@@ -1623,7 +1517,7 @@ class AgentChatProxyView(APIView):
             data    = resp.json()
             content = data.get('content') or data.get('output') or str(data)
 
-            # Persist both messages to MongoDB
+            # Persist both messages to PostgreSQL
             if job_id:
                 user_id = str(request.user.id)
                 save_chat_message(job_id, user_id, 'user', message)

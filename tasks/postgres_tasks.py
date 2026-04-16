@@ -65,7 +65,7 @@ def analyze_postgres_task(
     Mirrors the lifecycle pattern of `analyze_csv_task`:
       1. Set job status to 'running'
       2. Trigger the AI agents via postgres_service
-      3. Store result in MongoDB
+        3. Store result in PostgreSQL
       4. Set job status to 'completed' or 'failed'
     """
     # Reset stale DB connections inherited from the parent after fork
@@ -120,7 +120,7 @@ def analyze_postgres_task(
             'duration_ms': duration_ms,
         }
 
-        # Store the AI-generated reports in MongoDB under this job
+        # Store the AI-generated reports in PostgreSQL under this job
         save_analysis_result(
             job_id=job_id,
             result=raw_results,

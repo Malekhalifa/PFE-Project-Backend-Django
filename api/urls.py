@@ -41,10 +41,6 @@ urlpatterns = [
     path('jobs/<str:job_id>/chat', views.JobChatView.as_view(), name='job-chat'),
     path('jobs/<str:job_id>/chat/', views.JobChatView.as_view(), name='job-chat-slash'),
 
-    # Power BI Integration
-    path('share/<str:sharedToken>', views.ShareableView.as_view(), name='share'),
-    path('powerbi-config/<str:jobId>', views.PowerBIConfigView.as_view(), name='powerbi-config'),
-
     # AgentOS chat proxy — forwards messages to the AgentOS team on port 7777
     path('agent-chat', views.AgentChatProxyView.as_view(), name='agent-chat'),
     path('chat-history/<str:jobId>', views.ChatHistoryView.as_view(), name='chat-history'),
