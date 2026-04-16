@@ -49,6 +49,7 @@ class Job(models.Model):
 
     # Power BI share
     share_token = models.CharField(max_length=128, null=True, blank=True, db_index=True)
+    share_token_expires_at = models.DateTimeField(null=True, blank=True, db_index=True)
 
     # Audit (matches MongoDB created_at / updated_at)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)

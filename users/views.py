@@ -10,6 +10,8 @@ POST /api/social-login    -> Google ID-token verification, set JWT cookie
 GET  /api/github/login    -> redirect to GitHub OAuth
 GET  /api/github/callback -> exchange code, set JWT cookie, redirect to frontend
 """
+import logging
+
 import requests as http_requests
 
 from django.conf import settings
@@ -23,6 +25,9 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 from .models import User
 from .serializers import RegisterSerializer, LoginSerializer, UserSerializer
+
+
+logger = logging.getLogger(__name__)
 
 
 def _set_jwt_cookie(response, user):
@@ -158,15 +163,13 @@ def _verify_google_token(id_token):
 
 def _exchange_github_code(code):
     """Exchange a GitHub OAuth code for an access token and return the user's email, or None."""
-    import json as _json, time as _time
-    _LOG = '/Users/m6l9k/Desktop/Projet_Fin_Etude/.cursor/debug.log'
-    def _dbg(loc, msg, data, hyp):
-        with open(_LOG, 'a') as f:
-            f.write(_json.dumps({"location": loc, "message": msg, "data": data, "timestamp": int(_time.time()*1000), "hypothesisId": hyp}) + "\n")
     try:
-        # region agent log
-        _dbg("views.py:_exchange_github_code:start", "GitHub code exchange starting", {"code_len": len(code) if code else 0, "github_key_set": bool(settings.SOCIAL_AUTH_GITHUB_KEY), "github_secret_set": bool(settings.SOCIAL_AUTH_GITHUB_SECRET)}, "H1")
-        # endregion
+        logger.debug(
+            'Starting GitHub OAuth code exchange (code_present=%s, key_set=%s, secret_set=%s)',
+            bool(code),
+            bool(settings.SOCIAL_AUTH_GITHUB_KEY),
+            bool(settings.SOCIAL_AUTH_GITHUB_SECRET),
+        )
         # Exchange code for access token
         token_resp = http_requests.post(
             'https://github.com/login/oauth/access_token',
@@ -178,14 +181,14 @@ def _exchange_github_code(code):
             headers={'Accept': 'application/json'},
             timeout=10,
         )
-        # region agent log
-        _dbg("views.py:_exchange_github_code:token_resp", "GitHub token response", {"status": token_resp.status_code, "body_keys": list(token_resp.json().keys()) if token_resp.status_code == 200 else token_resp.text[:200], "has_access_token": bool(token_resp.json().get('access_token')) if token_resp.status_code == 200 else False, "error": token_resp.json().get('error') if token_resp.status_code == 200 else None}, "H1")
-        # endregion
         if token_resp.status_code != 200:
+            logger.warning('GitHub token exchange failed with status=%s', token_resp.status_code)
             return None
 
-        access_token = token_resp.json().get('access_token')
+        token_payload = token_resp.json()
+        access_token = token_payload.get('access_token')
         if not access_token:
+            logger.warning('GitHub token exchange did not return access_token')
             return None
 
         # Fetch user emails from GitHub
@@ -197,33 +200,23 @@ def _exchange_github_code(code):
             },
             timeout=10,
         )
-        # region agent log
-        _dbg("views.py:_exchange_github_code:emails_resp", "GitHub emails response", {"status": emails_resp.status_code, "email_count": len(emails_resp.json()) if emails_resp.status_code == 200 else 0, "emails_preview": [{"email": e.get("email","?")[:3]+"...", "primary": e.get("primary"), "verified": e.get("verified")} for e in emails_resp.json()[:3]] if emails_resp.status_code == 200 else emails_resp.text[:200]}, "H2")
-        # endregion
         if emails_resp.status_code != 200:
+            logger.warning('GitHub email lookup failed with status=%s', emails_resp.status_code)
             return None
 
         # Find primary verified email
         emails = emails_resp.json()
         for entry in emails:
             if entry.get('primary') and entry.get('verified'):
-                # region agent log
-                _dbg("views.py:_exchange_github_code:found_email", "Found primary verified email", {"email_domain": entry['email'].split('@')[-1]}, "H2")
-                # endregion
                 return entry['email']
         # Fallback: first verified email
         for entry in emails:
             if entry.get('verified'):
                 return entry['email']
-
-        # region agent log
-        _dbg("views.py:_exchange_github_code:no_email", "No verified email found", {}, "H2")
-        # endregion
+        logger.info('GitHub user has no verified email addresses')
         return None
     except Exception as exc:
-        # region agent log
-        _dbg("views.py:_exchange_github_code:exception", "Exception in code exchange", {"error": str(exc), "type": type(exc).__name__}, "H5")
-        # endregion
+        logger.exception('GitHub OAuth code exchange failed: %s', exc)
         return None
 
 
@@ -296,37 +289,24 @@ class GitHubCallbackView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        import json as _json, time as _time
-        _LOG = '/Users/m6l9k/Desktop/Projet_Fin_Etude/.cursor/debug.log'
-        def _dbg(loc, msg, data, hyp):
-            with open(_LOG, 'a') as f:
-                f.write(_json.dumps({"location": loc, "message": msg, "data": data, "timestamp": int(_time.time()*1000), "hypothesisId": hyp}) + "\n")
-
         code = request.query_params.get('code')
         error = request.query_params.get('error')
         frontend = settings.FRONTEND_URL
 
-        # region agent log
-        _dbg("views.py:GitHubCallbackView:entry", "GitHub callback received", {"has_code": bool(code), "has_error": bool(error), "frontend_url": frontend}, "H3")
-        # endregion
+        logger.debug(
+            'GitHub callback received (has_code=%s, has_error=%s)',
+            bool(code),
+            bool(error),
+        )
 
         if error or not code:
             return redirect(f'{frontend}/#/login?error=github_denied')
 
         email = _exchange_github_code(code)
-        # region agent log
-        _dbg("views.py:GitHubCallbackView:after_exchange", "After code exchange", {"email_found": bool(email)}, "H3")
-        # endregion
         if not email:
             return redirect(f'{frontend}/#/login?error=github_failed')
 
         user = _get_or_create_social_user(email)
-        # region agent log
-        _dbg("views.py:GitHubCallbackView:user_created", "User ready for cookie", {"user_id": str(user.id), "user_email_domain": user.email.split('@')[-1]}, "H3")
-        # endregion
         response = redirect(f'{frontend}/#/')
         response = _set_jwt_cookie(response, user)
-        # region agent log
-        _dbg("views.py:GitHubCallbackView:cookie_set", "Redirect response with cookie", {"redirect_url": f'{frontend}/#/', "cookie_name": settings.JWT_COOKIE_NAME, "cookie_in_response": settings.JWT_COOKIE_NAME in response.cookies, "samesite": settings.JWT_COOKIE_SAMESITE, "secure": settings.JWT_COOKIE_SECURE, "httponly": settings.JWT_COOKIE_HTTPONLY, "path": settings.JWT_COOKIE_PATH}, "H4")
-        # endregion
         return response

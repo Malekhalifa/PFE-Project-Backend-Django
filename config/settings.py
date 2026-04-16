@@ -56,8 +56,22 @@ EXECUTE_FIX_RATE_LIMIT = _normalize_throttle_rate(
     env('EXECUTE_FIX_RATE_LIMIT', default='30/hour'),
     default='30/hour',
 )
+USER_RATE_LIMIT = _normalize_throttle_rate(
+    env('USER_RATE_LIMIT', default='1200/hour'),
+    default='1200/hour',
+)
+ANON_RATE_LIMIT = _normalize_throttle_rate(
+    env('ANON_RATE_LIMIT', default='120/hour'),
+    default='120/hour',
+)
+ACCESS_TOKEN_LIFETIME_MINUTES = max(5, env.int('ACCESS_TOKEN_LIFETIME_MINUTES', default=60))
+REFRESH_TOKEN_LIFETIME_DAYS = max(1, env.int('REFRESH_TOKEN_LIFETIME_DAYS', default=7))
+ROTATE_REFRESH_TOKENS = env.bool('ROTATE_REFRESH_TOKENS', default=True)
+SHARE_TOKEN_TTL_HOURS = max(1, env.int('SHARE_TOKEN_TTL_HOURS', default=24))
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', 'testserver'])
+if DEBUG:
+    ALLOWED_HOSTS = sorted(set(ALLOWED_HOSTS + ['localhost', '127.0.0.1', 'testserver']))
 
 # ──────────────────────────────────────────────
 # Installed apps
@@ -180,7 +194,13 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
     'DEFAULT_THROTTLE_RATES': {
+        'anon': ANON_RATE_LIMIT,
+        'user': USER_RATE_LIMIT,
         # Scoped in api.views via UserRateThrottle subclasses.
         'analyze_postgres': ANALYZE_POSTGRES_RATE_LIMIT,
         'execute_fix': EXECUTE_FIX_RATE_LIMIT,
@@ -193,9 +213,9 @@ REST_FRAMEWORK = {
 # ──────────────────────────────────────────────
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=7),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=14),
-    'ROTATE_REFRESH_TOKENS': False,
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=ACCESS_TOKEN_LIFETIME_MINUTES),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=REFRESH_TOKEN_LIFETIME_DAYS),
+    'ROTATE_REFRESH_TOKENS': ROTATE_REFRESH_TOKENS,
     'AUTH_HEADER_TYPES': ('Bearer',),
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'userId',
@@ -205,7 +225,7 @@ SIMPLE_JWT = {
 
 # Cookie settings — match Node.js httpOnly cookie behavior
 JWT_COOKIE_NAME = 'token'
-JWT_COOKIE_MAX_AGE = 7 * 24 * 3600  # 7 days
+JWT_COOKIE_MAX_AGE = ACCESS_TOKEN_LIFETIME_MINUTES * 60
 JWT_COOKIE_HTTPONLY = True
 JWT_COOKIE_SAMESITE = 'Lax'
 JWT_COOKIE_SECURE = PRODUCTION

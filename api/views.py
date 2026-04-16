@@ -61,6 +61,7 @@ from api.serializers import (
     CleanRequestSerializer,
     JobDeleteSerializer,
 )
+from api.fix_safety import validate_fix_queries
 from agents.query_executor_agent import QueryExecutorAgent
 from agents.reporting import synthesize_fixes_from_prior_reports
 from services.analysis_service import compute_row_outliers, to_native
@@ -100,6 +101,26 @@ def _require_verified_email(request) -> Response | None:
     if bool(getattr(request.user, 'email_verified', False)):
         return None
     return _email_not_verified_response()
+
+
+def _is_share_token_expired(job: dict | None) -> bool:
+    if not isinstance(job, dict):
+        return True
+
+    expires_at = job.get('share_token_expires_at')
+    if expires_at is None:
+        return True
+
+    if isinstance(expires_at, str):
+        parsed = parse_datetime(expires_at)
+        if parsed is None:
+            return True
+        expires_at = parsed
+
+    if dj_tz.is_naive(expires_at):
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+    return expires_at <= dj_tz.now()
 
 
 def _sanitize_for_json(obj):
@@ -1473,9 +1494,12 @@ class PowerBIConfigView(APIView):
 
         # Generate or reuse share token
         share_token = job.get('share_token')
-        if not share_token:
+        if not share_token or _is_share_token_expired(job):
             share_token = secrets.token_urlsafe(32)
-            update_job_share_token(jobId, share_token)
+            expires_at = dj_tz.now() + timedelta(
+                hours=max(1, int(getattr(settings, 'SHARE_TOKEN_TTL_HOURS', 24)))
+            )
+            update_job_share_token(jobId, share_token, expires_at=expires_at)
 
         # Construct protocol and host
         # Power BI typically needs an absolute URL
@@ -1761,6 +1785,21 @@ class ExecuteFixView(APIView):
                 {'detail': 'Each query must be a non-empty SQL string.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        try:
+            validate_fix_queries(queries)
+        except ValueError as exc:
+            audit_log(
+                job_id,
+                'FIX_EXECUTION_REJECTED',
+                {
+                    'query_count': len(queries),
+                    'error': str(exc),
+                    'status_code': 400,
+                },
+                user_id=str(request.user.id),
+            )
+            return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
         # 4 — Execute all queries via isolated execution agent
         execution_log = QueryExecutorAgent().execute(
