@@ -96,16 +96,6 @@ class CustomUserDetailsSerializer(UserDetailsSerializer):
     preferred_language = serializers.ChoiceField(required=False, choices=User.LANGUAGE_CHOICES)
     notifications_enabled = serializers.BooleanField(required=False)
     email_notifications_enabled = serializers.BooleanField(required=False)
-    webhook_url = serializers.URLField(required=False, allow_blank=True, allow_null=True, max_length=2048)
-    webhook_secret = serializers.CharField(
-        required=False,
-        write_only=True,
-        allow_blank=True,
-        allow_null=True,
-        trim_whitespace=True,
-        max_length=512,
-    )
-    has_webhook_secret = serializers.BooleanField(read_only=True)
     theme_preference = serializers.ChoiceField(required=False, choices=User.THEME_CHOICES)
 
     def validate_username(self, value):
@@ -130,24 +120,6 @@ class CustomUserDetailsSerializer(UserDetailsSerializer):
         # Strip but preserve user intent if they intentionally keep bio empty.
         return (value or '').strip()
 
-    def validate_webhook_url(self, value):
-        normalized = (value or '').strip()
-        return normalized or None
-
-    def update(self, instance, validated_data):
-        webhook_secret = validated_data.pop('webhook_secret', serializers.empty)
-        instance = super().update(instance, validated_data)
-
-        if webhook_secret is not serializers.empty:
-            secret = (webhook_secret or '').strip()
-            if secret:
-                instance.set_webhook_secret(secret)
-            else:
-                instance.clear_webhook_secret()
-            instance.save(update_fields=['webhook_secret_encrypted'])
-
-        return instance
-
     class Meta(UserDetailsSerializer.Meta):
         model = User
         fields = (
@@ -164,9 +136,6 @@ class CustomUserDetailsSerializer(UserDetailsSerializer):
             'preferred_language',
             'notifications_enabled',
             'email_notifications_enabled',
-            'webhook_url',
-            'webhook_secret',
-            'has_webhook_secret',
             'theme_preference',
             'last_login',
         )

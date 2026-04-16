@@ -16,7 +16,6 @@ class JobDetailViewTests(unittest.TestCase):
     def _request(self, user_id: str = 'user-1', role: str = 'user'):
         return SimpleNamespace(user=SimpleNamespace(id=user_id, role=role))
 
-    @patch('api.views.notify_job_webhook_event', return_value={'ok': True, 'status_code': 200})
     @patch('api.views.audit_log')
     @patch('api.views.update_job_celery_task_id')
     @patch('api.views.update_job_status')
@@ -29,7 +28,6 @@ class JobDetailViewTests(unittest.TestCase):
         mock_update_status,
         mock_update_task_id,
         mock_audit_log,
-        _mock_webhook,
     ):
         mock_find_owned_job.return_value = {
             'status': 'running',

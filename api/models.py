@@ -46,7 +46,6 @@ class Job(models.Model):
     celery_task_id = models.CharField(max_length=128, null=True, blank=True, db_index=True)
     mode = models.CharField(max_length=64, default='normal')
     llm_model = models.CharField(max_length=128, default='gemini-2.0-flash')
-    webhook_url_override = models.URLField(null=True, blank=True)
 
     # Power BI share
     share_token = models.CharField(max_length=128, null=True, blank=True, db_index=True)

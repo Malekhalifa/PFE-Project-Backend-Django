@@ -51,7 +51,6 @@ from api.db import (
     get_job_by_share_token,
     update_job_status,
     update_job_celery_task_id,
-    update_job_webhook_override,
     get_job_guidelines,
 )
 from api.permissions import find_owned_job
@@ -65,7 +64,7 @@ from api.serializers import (
 from agents.query_executor_agent import QueryExecutorAgent
 from agents.reporting import synthesize_fixes_from_prior_reports
 from services.analysis_service import compute_row_outliers, to_native
-from services.notification_service import notify_job_webhook_event, notify_user_fix_executed
+from services.notification_service import notify_user_fix_executed
 from services.postgres_connection import (
     looks_like_postgres_dsn,
     redact_postgres_dsn,
@@ -593,10 +592,6 @@ class AnalyzeView(APIView):
         if not start_serializer.is_valid():
             return Response(start_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        webhook_url = start_serializer.validated_data.get('webhook_url')
-        if webhook_url is not None:
-            update_job_webhook_override(jobId, webhook_url)
-
         # Dispatch Celery task (fire-and-forget)
         async_result = analyze_csv_task.delay(
             job_id=jobId,
@@ -671,7 +666,6 @@ class AnalyzePostgresView(APIView):
 
         conn_str = serializer.validated_data['connection_string']
         domain_rules = serializer.validated_data.get('domain_rules', [])
-        webhook_url = serializer.validated_data.get('webhook_url')
         llm_model = serializer.validated_data.get('llm_model', 'gemini-2.0-flash').strip() or 'gemini-2.0-flash'
 
         # 1) Quick format check (pattern) to fail fast on obvious mistakes.
@@ -718,7 +712,6 @@ class AnalyzePostgresView(APIView):
             file_path="postgres://<hidden>",
             mode="agentic_postgres",
             llm_model=llm_model,
-            webhook_url_override=webhook_url,
         )
 
         # Persist the DSN in the job document so the cleaning task
@@ -1418,27 +1411,6 @@ class JobDetailView(APIView):
         if revoke_error:
             audit_payload['revoke_error'] = revoke_error
         audit_log(job_id, 'JOB_CANCELLED', audit_payload, user_id=str(request.user.id))
-
-        callback = notify_job_webhook_event(
-            job_id=job_id,
-            event_type='job.cancelled',
-            status='CANCELLED',
-            payload={
-                'previous_status': current_status,
-                'task_id': task_id or None,
-            },
-        )
-        if isinstance(callback, dict):
-            callback_event = 'WEBHOOK_CALLBACK_SENT' if callback.get('ok') else 'WEBHOOK_CALLBACK_FAILED'
-            audit_log(
-                job_id,
-                callback_event,
-                {
-                    **callback,
-                    'event': 'job.cancelled',
-                },
-                user_id=str(request.user.id),
-            )
 
         response_payload = {
             'job_id': job_id,

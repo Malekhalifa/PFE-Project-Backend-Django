@@ -114,7 +114,6 @@ def _serialize_job(job: Job) -> dict:
         'celery_task_id': job.celery_task_id,
         'mode': job.mode,
         'llm_model': job.llm_model,
-        'webhook_url_override': job.webhook_url_override,
         'share_token': job.share_token,
         'created_at': job.created_at,
         'updated_at': job.updated_at,
@@ -166,7 +165,6 @@ def create_job(
     file_path: str,
     mode: str = 'normal',
     llm_model: str = _DEFAULT_LLM_MODEL,
-    webhook_url_override: str | None = None,
 ) -> str:
     """Create a new job row. Returns the job_id (UUID string)."""
     normalized_user_id = _normalize_uuid(user_id)
@@ -179,7 +177,6 @@ def create_job(
         file_path=file_path,
         mode=mode,
         llm_model=(llm_model or _DEFAULT_LLM_MODEL).strip() or _DEFAULT_LLM_MODEL,
-        webhook_url_override=(webhook_url_override or '').strip() or None,
         status='starting',
     )
     return str(job.id)
@@ -254,19 +251,6 @@ def update_job_celery_task_id(job_id: str, task_id: str | None) -> None:
     normalized_task_id = (task_id or '').strip() or None
     Job.objects.filter(id=normalized_job_id).update(
         celery_task_id=normalized_task_id,
-        updated_at=dj_tz.now(),
-    )
-
-
-def update_job_webhook_override(job_id: str, webhook_url: str | None) -> None:
-    """Set or clear the per-job webhook callback URL override."""
-    normalized_job_id = _normalize_uuid(job_id)
-    if not normalized_job_id:
-        return
-
-    normalized_url = (webhook_url or '').strip() or None
-    Job.objects.filter(id=normalized_job_id).update(
-        webhook_url_override=normalized_url,
         updated_at=dj_tz.now(),
     )
 

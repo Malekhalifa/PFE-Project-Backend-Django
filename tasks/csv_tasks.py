@@ -35,7 +35,7 @@ from api.db import (
 )
 from api.models import audit_log
 from users.models import User
-from services.notification_service import notify_job_webhook_event, notify_user_cleaning_done
+from services.notification_service import notify_user_cleaning_done
 
 
 logger = logging.getLogger(__name__)
@@ -138,20 +138,6 @@ def analyze_csv_task(self, job_id, file_path, mode, options=None):
             'status_code': 200,
         })
 
-        webhook_result = _safe_notify(
-            notify_job_webhook_event,
-            job_id=job_id,
-            event_type='job.completed',
-            status='completed',
-            payload={
-                'analysis_type': analysis_type,
-                'duration_ms': duration_ms,
-            },
-        )
-        if isinstance(webhook_result, dict):
-            event_type = 'WEBHOOK_CALLBACK_SENT' if webhook_result.get('ok') else 'WEBHOOK_CALLBACK_FAILED'
-            audit_log(job_id, event_type, webhook_result)
-
     except Exception as e:
         update_job_status(job_id, 'failed')
         update_job_celery_task_id(job_id, None)
@@ -159,19 +145,6 @@ def analyze_csv_task(self, job_id, file_path, mode, options=None):
             'error': str(e),
             'status_code': 500,
         })
-        webhook_result = _safe_notify(
-            notify_job_webhook_event,
-            job_id=job_id,
-            event_type='job.failed',
-            status='failed',
-            error=str(e),
-            payload={
-                'analysis_type': 'csv',
-            },
-        )
-        if isinstance(webhook_result, dict):
-            event_type = 'WEBHOOK_CALLBACK_SENT' if webhook_result.get('ok') else 'WEBHOOK_CALLBACK_FAILED'
-            audit_log(job_id, event_type, webhook_result)
         raise
 
 

@@ -9,7 +9,6 @@ from django.utils import timezone as dj_tz
 from config.celery import app
 from services.postgres_service import analyze_postgres_database
 from services.notification_service import (
-    notify_job_webhook_event,
     notify_admin_job_failed,
     notify_admin_job_stuck,
     notify_user_analysis_started,
@@ -140,21 +139,6 @@ def analyze_postgres_task(
         if refreshed_job_user and bool(getattr(refreshed_job_user, 'email_notifications_enabled', True)):
             _safe_notify(notify_user_analysis_results_ready, refreshed_job_user.email, job_id)
 
-        webhook_result = _safe_notify(
-            notify_job_webhook_event,
-            job_id=job_id,
-            event_type='job.completed',
-            status='completed',
-            payload={
-                'analysis_type': 'postgres_agentic',
-                'duration_ms': duration_ms,
-                'llm_model': resolved_llm_model,
-            },
-        )
-        if isinstance(webhook_result, dict):
-            event_type = 'WEBHOOK_CALLBACK_SENT' if webhook_result.get('ok') else 'WEBHOOK_CALLBACK_FAILED'
-            audit_log(job_id, event_type, webhook_result)
-
     except Exception as e:
         failed_at_step = 'unknown'
         try:
@@ -168,21 +152,6 @@ def analyze_postgres_task(
             'error': str(e),
             'status_code': 500,
         })
-        webhook_result = _safe_notify(
-            notify_job_webhook_event,
-            job_id=job_id,
-            event_type='job.failed',
-            status='failed',
-            error=str(e),
-            payload={
-                'failed_at_step': failed_at_step,
-                'analysis_type': 'postgres_agentic',
-                'llm_model': resolved_llm_model,
-            },
-        )
-        if isinstance(webhook_result, dict):
-            event_type = 'WEBHOOK_CALLBACK_SENT' if webhook_result.get('ok') else 'WEBHOOK_CALLBACK_FAILED'
-            audit_log(job_id, event_type, webhook_result)
         _safe_notify(notify_admin_job_failed, job_id, failed_at_step, str(e))
         raise
 

@@ -13,8 +13,6 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-from .webhook_secret_crypto import decrypt_webhook_secret, encrypt_webhook_secret
-
 
 class User(AbstractUser):
     LANGUAGE_CHOICES = [
@@ -43,8 +41,6 @@ class User(AbstractUser):
     preferred_language = models.CharField(max_length=2, choices=LANGUAGE_CHOICES, default='en')
     notifications_enabled = models.BooleanField(default=True)
     email_notifications_enabled = models.BooleanField(default=True)
-    webhook_url = models.URLField(null=True, blank=True)
-    webhook_secret_encrypted = models.TextField(blank=True, default='')
     theme_preference = models.CharField(max_length=10, choices=THEME_CHOICES, default='system')
     session_version = models.PositiveIntegerField(default=0)
 
@@ -56,22 +52,6 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
-
-    @property
-    def has_webhook_secret(self) -> bool:
-        return bool((self.webhook_secret_encrypted or '').strip())
-
-    def set_webhook_secret(self, secret: str) -> None:
-        self.webhook_secret_encrypted = encrypt_webhook_secret(secret)
-
-    def clear_webhook_secret(self) -> None:
-        self.webhook_secret_encrypted = ''
-
-    def get_webhook_secret(self) -> str:
-        raw = (self.webhook_secret_encrypted or '').strip()
-        if not raw:
-            return ''
-        return decrypt_webhook_secret(raw)
 
 
 class EmailVerificationChallenge(models.Model):
