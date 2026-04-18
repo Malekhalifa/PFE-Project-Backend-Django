@@ -90,6 +90,7 @@ _JSON_REPORT_CONTRACT = (
     "Return ONLY valid JSON with top-level fields: pipeline_run_id, database_id, run_timestamp, "
     "agent, summary, metrics, findings, prior_reports. findings must be an array. "
     "Use issue severities exactly: critical|high|medium|low. "
+    "Each finding should include clear problem description, impact_estimate, remediation_hint, and evidence when available. "
     "If execution is incomplete, include status='partial' and still return collected metrics/findings."
 )
 
@@ -726,6 +727,7 @@ def orchestrator_workflow(
         _inject_guidelines(schema_guidelines)
         + "Perform schema integrity validation using live SELECT-only introspection. "
         + _JSON_REPORT_CONTRACT
+        + "\n\nFor every finding, provide concrete structural impact and actionable remediation guidance."
         + "\n\nPopulate schema metrics exactly: total_tables, total_columns, tables_with_no_primary_key, "
         + "missing_foreign_keys, constraint_violations, type_mismatches, nullable_violations."
         + _PRIOR_REPORTS_SECTION
@@ -765,6 +767,7 @@ def orchestrator_workflow(
         _inject_guidelines(column_guidelines)
         + "Perform column-level validation with structured findings only. "
         + _JSON_REPORT_CONTRACT
+        + "\n\nFor every finding, include business impact, remediation_hint, and evidence sampled from executed queries."
         + "\n\nPopulate column metrics exactly: total_columns_analyzed, duplicate_columns_found, "
         + "constant_columns_found, high_null_ratio_columns, low_cardinality_anomalies, "
         + "high_cardinality_anomalies, semantic_mismatches, domain_violations, "
@@ -806,6 +809,7 @@ def orchestrator_workflow(
         _inject_guidelines(row_guidelines)
         + "Perform row-level validation and return structured JSON findings. "
         + _JSON_REPORT_CONTRACT
+        + "\n\nFor every finding, include practical remediation_hint and explain likely downstream impact."
         + "\n\nPopulate row metrics exactly: total_rows_analyzed, rows_with_issues, rows_with_issues_ratio, "
         + "format_violations, encoding_issues, hidden_null_count, outlier_rows, "
         + "avg_row_quality_score, avg_row_confidence."
@@ -844,6 +848,7 @@ def orchestrator_workflow(
         _inject_guidelines(cross_guidelines)
         + "Perform cross-row validation and return structured JSON findings. "
         + _JSON_REPORT_CONTRACT
+        + "\n\nFor every finding, include impact_estimate and remediation_hint grounded in observed relationships."
         + "\n\nPopulate cross-row metrics exactly: total_row_pairs_analyzed, temporal_anomalies, sequential_breaks, "
         + "cross_column_violations, row_pattern_anomalies, tables_with_cross_row_issues, avg_relationship_confidence."
         + _PRIOR_REPORTS_SECTION
@@ -881,6 +886,7 @@ def orchestrator_workflow(
         _inject_guidelines(fix_guidelines)
         + "Generate fix planning output as structured JSON findings (one finding per fix card). "
         + _JSON_REPORT_CONTRACT
+        + "\n\nInclude clear plain-language problem statements and operational impact for each fix card."
         + "\n\nPopulate fix planner metrics exactly: total_issues_received, fixes_generated, critical_fixes, "
         + "high_fixes, medium_fixes, low_fixes, estimated_rows_affected, fix_confidence."
         + "\n\nIssues identified in prior validation stages:"

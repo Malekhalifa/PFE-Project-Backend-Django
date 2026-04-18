@@ -9,6 +9,7 @@ import django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 django.setup()
 
+from agents.reporting import report_to_markdown
 from agents.validation_team import _parse_column_report, orchestrator_workflow
 
 
@@ -62,6 +63,47 @@ class ValidationTeamPipelineTests(unittest.TestCase):
         self.assertEqual(parsed["error"], "invalid_column_validator_json")
         self.assertIn("not-json", parsed["raw"])
         self.assertIn("invalid_column_validator_json", text)
+
+    def test_report_to_markdown_lists_all_findings(self):
+        findings = []
+        for idx in range(25):
+            findings.append(
+                {
+                    "table": f"users_{idx}",
+                    "confidence": 0.81,
+                    "issues": [
+                        {
+                            "type": "quality_issue",
+                            "severity": "high",
+                            "description": f"issue_{idx}",
+                        }
+                    ],
+                }
+            )
+
+        report = {
+            "summary": {
+                "total_items_analyzed": 25,
+                "items_passed": 0,
+                "items_flagged": 25,
+                "critical_issues": 0,
+                "high_issues": 25,
+                "medium_issues": 0,
+                "low_issues": 0,
+                "overall_quality_score": 45.0,
+                "overall_confidence": 0.81,
+                "flagged_tables": [f"users_{idx}" for idx in range(25)],
+            },
+            "metrics": {
+                "total_columns_analyzed": 25,
+            },
+            "findings": findings,
+        }
+
+        markdown = report_to_markdown(report, "Column Validator Report")
+        self.assertIn("### Findings (25)", markdown)
+        self.assertIn("#### 25. users_24 [HIGH]", markdown)
+        self.assertNotIn("... and", markdown)
 
     @patch("services.report_service.save_final_pipeline_report")
     @patch("agents.validation_team.DatabaseGuidelineGeneratorAgent")

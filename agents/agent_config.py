@@ -39,6 +39,7 @@ COMMON_RULES = [
 GLOBAL_POLICY_RULES = [
     "If a required table or column is missing, return an explicit N/A finding that lists missing objects.",
     "Every finding should include evidence with fields: evidence.query, evidence.row_count, evidence.sample.",
+    "Every finding should include a concise impact_estimate and an actionable remediation_hint.",
     "Every finding should include confidence_overall (0.0-1.0). If confidence is split, include confidence_data, confidence_logic, and confidence_execution.",
     "Never invent table or column names that were not observed in schema discovery.",
     "If tool budget is near limit, prioritize highest-impact checks and return status='partial' with skipped_checks.",

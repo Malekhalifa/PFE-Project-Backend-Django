@@ -166,7 +166,7 @@ column_agent = Agent(
     add_history_to_context=True,
     num_history_runs=3,
     add_datetime_to_context=True,
-    markdown=False,
+    markdown=True,
 )
 
 # ---------------------------------------------------------------------------
@@ -244,6 +244,11 @@ validation_team = Team(
         "  4. Pass schema+column+row findings to the Cross-Row Validator for multi-row checks.",
         "Finally, synthesise all four reports into a single, well-structured markdown document "
         "with sections: ## Schema Issues, ## Column Issues, ## Row-Level Issues, ## Cross-Row Issues.",
+        "Every final answer must be valid GitHub-flavored Markdown.",
+        "Keep tone professional, friendly, and solution-oriented.",
+        "When discussing problems, always include concise sections for Problem, Impact, and Recommendation.",
+        "Close each response with a short Next Steps section.",
+        "Do not return raw JSON unless the user explicitly asks for JSON output.",
         "If the user asks about only one aspect (e.g. 'check only the schema'), "
         "delegate only the relevant agent.",
         "You are database-agnostic — discover the schema first before running any checks.",
@@ -252,7 +257,7 @@ validation_team = Team(
     tools=_TOOLS,              # team leader also has direct tool access if needed
     db=_SESSION_DB,            # shared memory with sub-agents
     add_team_history_to_members=True,
-    show_members_responses=True,
+    show_members_responses=False,
     add_datetime_to_context=True,
     markdown=True,
 )

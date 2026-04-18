@@ -12,6 +12,7 @@ import os
 import uuid
 import logging
 import json
+import re
 import requests as http_requests
 from datetime import datetime, time, timedelta, timezone
 from typing import Any
@@ -506,6 +507,85 @@ def _extract_pipeline_run_id(result_payload: dict | None) -> str | None:
             return nested
 
     return None
+
+
+_CHAT_MARKDOWN_STYLE_DIRECTIVE = (
+    "[RESPONSE STYLE]\n"
+    "Respond in GitHub-flavored Markdown only.\n"
+    "Tone: professional, friendly, and practical.\n"
+    "For problem discussions, include short sections for Problem, Impact, and Recommendation.\n"
+    "Use headings and bullet points when useful.\n"
+    "Do not output raw JSON unless explicitly requested by the user."
+)
+
+_MARKDOWN_BLOCK_RE = re.compile(r"(?m)^\s*(#{1,6}\s|[-*+]\s|\d+\.\s|>\s|```)")
+
+
+def _looks_like_markdown(text: str) -> bool:
+    candidate = text or ""
+    if not candidate:
+        return False
+    if _MARKDOWN_BLOCK_RE.search(candidate):
+        return True
+    return "**" in candidate or "`" in candidate
+
+
+def _build_agent_markdown_prompt(*, message: str, analysis_context: str = "") -> str:
+    blocks = [_CHAT_MARKDOWN_STYLE_DIRECTIVE]
+
+    if analysis_context:
+        blocks.append(
+            "[CONTEXT: The following analysis was already completed for this database. "
+            "Use it to answer the user's question. Do NOT ask for a connection string again.]\n\n"
+            f"{analysis_context}"
+        )
+
+    blocks.append(f"[USER QUESTION]\n{message}")
+    return "\n\n---\n\n".join(blocks)
+
+
+def _normalize_agent_markdown_response(raw_content: Any) -> str:
+    text = str(raw_content or "").replace("\r\n", "\n").strip()
+    if not text:
+        return (
+            "## Response Update\n\n"
+            "I could not generate a detailed answer in this attempt.\n\n"
+            "- **Problem:** The agent response was empty.\n"
+            "- **Impact:** No actionable guidance was returned.\n"
+            "- **Recommendation:** Please retry with a more specific question."
+        )
+
+    if _looks_like_markdown(text):
+        return text
+
+    lines = [line.strip() for line in text.split("\n") if line.strip()]
+    if not lines:
+        return (
+            "## Response Update\n\n"
+            "I could not generate a detailed answer in this attempt.\n\n"
+            "- **Problem:** The agent response was empty.\n"
+            "- **Impact:** No actionable guidance was returned.\n"
+            "- **Recommendation:** Please retry with a more specific question."
+        )
+
+    if len(lines) == 1:
+        return (
+            "## Response Update\n\n"
+            f"{lines[0]}\n\n"
+            "- **Problem:** The source response was plain text.\n"
+            "- **Impact:** Structure may be harder to scan quickly.\n"
+            "- **Recommendation:** Ask a focused follow-up if you want a step-by-step breakdown."
+        )
+
+    key_points = "\n".join(f"- {line}" for line in lines)
+    return (
+        "## Response Update\n\n"
+        "### Key Points\n"
+        f"{key_points}\n\n"
+        "- **Problem:** The source response was plain text.\n"
+        "- **Impact:** Formatting consistency can be reduced across the conversation.\n"
+        "- **Recommendation:** The response has been normalized to Markdown for readability."
+    )
 
 
 # ──────────────────────────────────────────────
@@ -1467,7 +1547,7 @@ class AgentChatProxyView(APIView):
                 pass
 
         # Build the message with analysis context if a job_id is provided
-        enriched_message = message
+        analysis_context = ''
         if job_id:
             try:
                 analysis = get_analysis_result(job_id)
@@ -1487,16 +1567,14 @@ class AgentChatProxyView(APIView):
                     if result.get('cross_row_analysis', {}).get('report'):
                         context_parts.append(f"## Cross-Row Analysis Report\n{result['cross_row_analysis']['report']}")
                     if context_parts:
-                        context = '\n\n---\n\n'.join(context_parts)
-                        enriched_message = (
-                            f"[CONTEXT: The following analysis was already completed for this database. "
-                            f"Use it to answer the user's question. Do NOT ask for a connection string again.]\n\n"
-                            f"{context}\n\n"
-                            f"---\n\n"
-                            f"[USER QUESTION]: {message}"
-                        )
+                        analysis_context = '\n\n---\n\n'.join(context_parts)
             except Exception:
                 pass  # Fall back to raw message if context fetch fails
+
+        enriched_message = _build_agent_markdown_prompt(
+            message=message,
+            analysis_context=analysis_context,
+        )
 
         url = f'{AGENT_OS_BASE_URL}/teams/{AGENT_OS_TEAM_ID}/runs'
 
@@ -1514,8 +1592,9 @@ class AgentChatProxyView(APIView):
             )
             resp.raise_for_status()
 
-            data    = resp.json()
-            content = data.get('content') or data.get('output') or str(data)
+            data = resp.json()
+            raw_content = data.get('content') or data.get('output') or str(data)
+            content = _normalize_agent_markdown_response(raw_content)
 
             # Persist both messages to PostgreSQL
             if job_id:
@@ -1523,21 +1602,42 @@ class AgentChatProxyView(APIView):
                 save_chat_message(job_id, user_id, 'user', message)
                 save_chat_message(job_id, user_id, 'agent', content)
 
-            return Response({'content': content})
+            return Response({'content': content, 'format': 'markdown'})
 
         except http_requests.exceptions.ConnectionError:
             return Response(
-                {'error': 'AgentOS server is not running. Start it with: python agents/agent_os.py'},
+                {
+                    'error': (
+                        "## AgentOS Unavailable\n\n"
+                        "- **Problem:** The AgentOS server is unreachable.\n"
+                        "- **Impact:** Follow-up assistant responses cannot be generated right now.\n"
+                        "- **Recommendation:** Start the AgentOS server with python agents/agent_os.py and retry."
+                    )
+                },
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
         except http_requests.exceptions.Timeout:
             return Response(
-                {'error': 'Agent timed out. The database query may be too complex.'},
+                {
+                    'error': (
+                        "## Agent Timeout\n\n"
+                        "- **Problem:** The agent request exceeded the response timeout.\n"
+                        "- **Impact:** No complete answer was produced for this question.\n"
+                        "- **Recommendation:** Narrow the question scope and retry."
+                    )
+                },
                 status=status.HTTP_504_GATEWAY_TIMEOUT,
             )
         except Exception as exc:
             return Response(
-                {'error': f'Agent error: {exc}'},
+                {
+                    'error': (
+                        "## Agent Request Failed\n\n"
+                        f"- **Problem:** {str(exc).strip() or 'Unknown proxy error.'}\n"
+                        "- **Impact:** The assistant could not return a follow-up response.\n"
+                        "- **Recommendation:** Retry the request. If it persists, review AgentOS server logs."
+                    )
+                },
                 status=status.HTTP_502_BAD_GATEWAY,
             )
 
@@ -1569,11 +1669,16 @@ class JobChatView(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+        role = serializer.validated_data['role']
+        content = serializer.validated_data['content']
+        if role == 'agent':
+            content = _normalize_agent_markdown_response(content)
+
         save_chat_message(
             job_id,
             str(request.user.id),
-            serializer.validated_data['role'],
-            serializer.validated_data['content'],
+            role,
+            content,
         )
         return Response({'ok': True})
 

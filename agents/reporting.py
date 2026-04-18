@@ -963,38 +963,162 @@ def build_fix_planner_report(
     return report
 
 
+def _humanize_metric_key(key: str) -> str:
+    return str(key or "").replace("_", " ").strip().capitalize()
+
+
+def _truncate_for_markdown(value: Any, *, max_chars: int = 320) -> str:
+    text = str(value or "").replace("\n", " ").strip()
+    if len(text) <= max_chars:
+        return text
+    return f"{text[:max_chars - 3].rstrip()}..."
+
+
+def _format_evidence_lines(evidence: dict[str, Any]) -> list[str]:
+    evidence_dict = _as_dict(evidence)
+    if not evidence_dict:
+        return []
+
+    lines: list[str] = []
+
+    query = evidence_dict.get("query")
+    if query:
+        lines.append(f"  - Query: `{_truncate_for_markdown(query, max_chars=500)}`")
+
+    row_count = evidence_dict.get("row_count")
+    if row_count is not None:
+        lines.append(f"  - Row count: {row_count}")
+
+    sample = evidence_dict.get("sample")
+    if sample not in (None, "", [], {}):
+        try:
+            serialized = json.dumps(sample, ensure_ascii=False)
+        except Exception:
+            serialized = str(sample)
+        lines.append(f"  - Sample: `{_truncate_for_markdown(serialized, max_chars=500)}`")
+
+    return lines
+
+
+def _resolve_primary_issue(finding: dict[str, Any]) -> dict[str, Any]:
+    issues = _extract_item_issues(finding)
+    if issues:
+        return issues[0]
+    return {
+        "severity": normalize_severity(finding.get("severity")),
+        "description": finding.get("description") or finding.get("problem") or "Issue detected",
+    }
+
+
+def _severity_label(value: Any) -> str:
+    return normalize_severity(value).upper()
+
+
 def report_to_markdown(report: dict[str, Any], title: str) -> str:
     summary = _as_dict(report.get("summary"))
+    metrics = _as_dict(report.get("metrics"))
     findings = [f for f in _as_list(report.get("findings")) if isinstance(f, dict)]
+    status_value = str(report.get("status") or "completed").strip().lower()
+    flagged_tables = [str(t) for t in _as_list(summary.get("flagged_tables")) if str(t).strip()]
+    errors = [str(e).strip() for e in _as_list(report.get("errors")) if str(e).strip()]
 
     lines = [
         f"## {title}",
+        "",
+        "### Executive Summary",
+        f"- Status: {status_value}",
         f"- Total analyzed: {summary.get('total_items_analyzed', 0)}",
         f"- Passed: {summary.get('items_passed', 0)}",
         f"- Flagged: {summary.get('items_flagged', 0)}",
-        f"- Severity: critical={summary.get('critical_issues', 0)}, high={summary.get('high_issues', 0)}, medium={summary.get('medium_issues', 0)}, low={summary.get('low_issues', 0)}",
+        (
+            "- Severity split: "
+            f"critical={summary.get('critical_issues', 0)}, "
+            f"high={summary.get('high_issues', 0)}, "
+            f"medium={summary.get('medium_issues', 0)}, "
+            f"low={summary.get('low_issues', 0)}"
+        ),
         f"- Quality score: {summary.get('overall_quality_score', 0)} / 100",
         f"- Confidence: {summary.get('overall_confidence', 0)}",
     ]
 
+    if flagged_tables:
+        lines.append(f"- Flagged tables: {', '.join(sorted(set(flagged_tables)))}")
+
+    if errors:
+        lines.append("")
+        lines.append("### Partial-Run Notes")
+        for err in errors:
+            lines.append(f"- {err}")
+
+    if metrics:
+        lines.append("")
+        lines.append("### Metrics")
+        for key in sorted(metrics.keys()):
+            lines.append(f"- {_humanize_metric_key(key)}: {metrics.get(key)}")
+
     if findings:
-        lines.append("\n### Findings")
-        for idx, finding in enumerate(findings[:20], start=1):
+        lines.append("")
+        lines.append(f"### Findings ({len(findings)})")
+        for idx, finding in enumerate(findings, start=1):
             table_name = _pick_table_name(finding) or "unknown_table"
             issues = _extract_item_issues(finding)
-            if issues:
-                issue = issues[0]
-                description = issue.get("description") or issue.get("type") or "Issue detected"
-                severity = normalize_severity(issue.get("severity"))
-            else:
-                description = finding.get("description") or finding.get("problem") or "Item reviewed"
-                severity = normalize_severity(finding.get("severity"))
-            lines.append(f"{idx}. [{severity}] {table_name}: {description}")
+            primary_issue = _resolve_primary_issue(finding)
+            severity = _severity_label(primary_issue.get("severity"))
+            description = primary_issue.get("description") or primary_issue.get("type") or "Issue detected"
+            recommendation = (
+                finding.get("remediation_hint")
+                or primary_issue.get("remediation")
+                or finding.get("fix")
+                or "Review this item and apply the safest corrective action."
+            )
 
-        if len(findings) > 20:
-            lines.append(f"... and {len(findings) - 20} more findings")
+            lines.append("")
+            lines.append(f"#### {idx}. {table_name} [{severity}]")
+            lines.append(f"- Problem: {description}")
+
+            confidence = finding.get("confidence")
+            if confidence is not None:
+                lines.append(f"- Confidence: {confidence}")
+
+            column_name = finding.get("column")
+            if column_name:
+                lines.append(f"- Column: {column_name}")
+
+            row_identifier = finding.get("row_id") or finding.get("row_identifier")
+            if row_identifier:
+                lines.append(f"- Row identifier: {row_identifier}")
+
+            lines.append(f"- Recommendation: {recommendation}")
+
+            if issues:
+                lines.append("- Detailed issues:")
+                for issue in issues:
+                    issue_sev = _severity_label(issue.get("severity"))
+                    issue_desc = issue.get("description") or issue.get("type") or "Issue detected"
+                    lines.append(f"  - [{issue_sev}] {issue_desc}")
+
+            evidence = _as_dict(primary_issue.get("evidence"))
+            if not evidence:
+                evidence = _as_dict(finding.get("evidence"))
+            evidence_lines = _format_evidence_lines(evidence)
+            if evidence_lines:
+                lines.append("- Evidence:")
+                lines.extend(evidence_lines)
+
+            sql_queries = [str(q).strip() for q in _as_list(finding.get("queries")) if str(q).strip()]
+            if sql_queries:
+                lines.append("- Proposed SQL:")
+                for query in sql_queries:
+                    lines.append("```sql")
+                    lines.append(query)
+                    lines.append("```")
+
+            explanation = str(finding.get("explanation") or "").strip()
+            if explanation:
+                lines.append(f"- Explanation: {_truncate_for_markdown(explanation, max_chars=500)}")
     else:
-        lines.append("\nNo issues were found by this agent.")
+        lines.append("")
+        lines.append("No issues were found by this agent.")
 
     return "\n".join(lines)
 

@@ -76,7 +76,7 @@ class AnalyzeCsvStartSerializer(serializers.Serializer):
 
 class ChatMessageCreateSerializer(serializers.Serializer):
     role = serializers.ChoiceField(choices=['user', 'agent'])
-    content = serializers.CharField(required=True, allow_blank=False, max_length=20000)
+    content = serializers.CharField(required=True, allow_blank=False, max_length=60000)
 
     def validate_content(self, value: str) -> str:
         normalized = (value or '').strip()

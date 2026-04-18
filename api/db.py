@@ -187,10 +187,53 @@ def get_job(job_id: str) -> dict | None:
     if not normalized_job_id:
         return None
 
-    try:
-        return _serialize_job(Job.objects.get(id=normalized_job_id))
-    except Job.DoesNotExist:
+    # Use an explicit projection to avoid selecting removed/legacy columns.
+    row = (
+        Job.objects
+        .filter(id=normalized_job_id)
+        .values(
+            'id',
+            'user_id',
+            'file_name',
+            'file_path',
+            'cleaned_file_path',
+            'connection_string',
+            'status',
+            'celery_task_id',
+            'mode',
+            'llm_model',
+            'created_at',
+            'updated_at',
+        )
+        .first()
+    )
+    if not row:
         return None
+
+    encrypted_connection_string = row.get('connection_string')
+    if encrypted_connection_string:
+        try:
+            decrypted_connection_string = decrypt_connection_string(encrypted_connection_string)
+        except ValueError:
+            logger.exception('Failed to decrypt connection string for job %s', row.get('id'))
+            decrypted_connection_string = None
+    else:
+        decrypted_connection_string = None
+
+    return {
+        'id': str(row.get('id')),
+        'user_id': str(row.get('user_id')) if row.get('user_id') else None,
+        'file_name': row.get('file_name') or '',
+        'file_path': row.get('file_path') or '',
+        'cleaned_file_path': row.get('cleaned_file_path'),
+        'connection_string': decrypted_connection_string,
+        'status': row.get('status') or '',
+        'celery_task_id': row.get('celery_task_id'),
+        'mode': row.get('mode') or 'normal',
+        'llm_model': row.get('llm_model') or _DEFAULT_LLM_MODEL,
+        'created_at': row.get('created_at'),
+        'updated_at': row.get('updated_at'),
+    }
 
 
 def get_jobs_for_user(user_id: str, is_admin: bool = False) -> list[dict]:
