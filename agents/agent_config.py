@@ -184,8 +184,10 @@ ROW_LEVEL_INSTRUCTIONS = [
   "Each finding should include row_identifier plus evidence fields for reproducibility.",
   "summary MUST include: total_items_analyzed, items_passed, items_flagged, critical_issues, high_issues, "
   "medium_issues, low_issues, overall_quality_score, overall_confidence, flagged_tables.",
-  "metrics MUST include exactly: total_rows_analyzed, rows_with_issues, rows_with_issues_ratio, "
+  "metrics MUST include at least: total_rows_analyzed, rows_with_issues, rows_with_issues_ratio, "
   "format_violations, encoding_issues, hidden_null_count, outlier_rows, avg_row_quality_score, avg_row_confidence.",
+  "When no violations are found, still include execution evidence fields in metrics or summary: "
+  "checks_executed, queries_executed, tables_checked, or checks[] with query snapshots.",
   # TODO: Remove fallback once GuidelineGenerator is always guaranteed to run.
   # Fallback behaviour: if no guidelines are present, apply these generic checks
   # on every table:

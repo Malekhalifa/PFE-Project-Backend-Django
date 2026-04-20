@@ -6,14 +6,19 @@ from django.conf import settings
 from django.test import TestCase
 from rest_framework.response import Response
 from rest_framework.test import APIRequestFactory, force_authenticate
-from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
 from users.backends import CookieJWTAuthentication
 from users.dj_rest_auth_serializers import CustomUserDetailsSerializer
-from users.dj_rest_auth_views import CustomUserDetailsView, LogoutAllDevicesView, _set_jwt_cookie
+from users.dj_rest_auth_views import (
+    CustomUserDetailsView,
+    LogoutAllDevicesView,
+    TokenRefreshCookieView,
+    _set_jwt_cookie,
+)
 from users.models import User
 
 
@@ -86,6 +91,8 @@ class AccountManagementTests(TestCase):
         self.assertEqual(self.user.session_version, 6)
         self.assertIn(settings.JWT_COOKIE_NAME, response.cookies)
         self.assertEqual(response.cookies[settings.JWT_COOKIE_NAME]['max-age'], 0)
+        self.assertIn(settings.JWT_REFRESH_COOKIE_NAME, response.cookies)
+        self.assertEqual(response.cookies[settings.JWT_REFRESH_COOKIE_NAME]['max-age'], 0)
 
     def test_set_jwt_cookie_includes_session_version_claim(self):
         self.user.session_version = 3
@@ -96,8 +103,55 @@ class AccountManagementTests(TestCase):
 
         token_value = response.cookies[settings.JWT_COOKIE_NAME].value
         decoded = AccessToken(token_value)
+        refresh_value = response.cookies[settings.JWT_REFRESH_COOKIE_NAME].value
+        decoded_refresh = RefreshToken(refresh_value)
 
         self.assertEqual(decoded.get('sv'), 3)
+        self.assertEqual(decoded_refresh.get('sv'), 3)
+
+    def test_token_refresh_endpoint_reissues_access_cookie(self):
+        self.user.session_version = 2
+        self.user.save(update_fields=['session_version'])
+
+        refresh = RefreshToken.for_user(self.user)
+        refresh['role'] = self.user.role
+        refresh['sv'] = 2
+
+        view = TokenRefreshCookieView.as_view()
+        request = self.factory.post('/api/token/refresh', {}, format='json')
+        request.COOKIES[settings.JWT_REFRESH_COOKIE_NAME] = str(refresh)
+
+        response = view(request)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data.get('code'), 'token_refreshed')
+        self.assertIn(settings.JWT_COOKIE_NAME, response.cookies)
+        self.assertIn(settings.JWT_REFRESH_COOKIE_NAME, response.cookies)
+
+        access_value = response.cookies[settings.JWT_COOKIE_NAME].value
+        decoded_access = AccessToken(access_value)
+        self.assertEqual(decoded_access.get('sv'), 2)
+
+    def test_token_refresh_endpoint_rejects_stale_session_cookie(self):
+        self.user.session_version = 5
+        self.user.save(update_fields=['session_version'])
+
+        stale_refresh = RefreshToken.for_user(self.user)
+        stale_refresh['role'] = self.user.role
+        stale_refresh['sv'] = 4
+
+        view = TokenRefreshCookieView.as_view()
+        request = self.factory.post('/api/token/refresh', {}, format='json')
+        request.COOKIES[settings.JWT_REFRESH_COOKIE_NAME] = str(stale_refresh)
+
+        response = view(request)
+
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.data.get('code'), 'session_expired')
+        self.assertIn(settings.JWT_COOKIE_NAME, response.cookies)
+        self.assertEqual(response.cookies[settings.JWT_COOKIE_NAME]['max-age'], 0)
+        self.assertIn(settings.JWT_REFRESH_COOKIE_NAME, response.cookies)
+        self.assertEqual(response.cookies[settings.JWT_REFRESH_COOKIE_NAME]['max-age'], 0)
 
     def test_cookie_authentication_rejects_stale_session_token(self):
         self.user.session_version = 4

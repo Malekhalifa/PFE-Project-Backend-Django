@@ -17,7 +17,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.test import APIRequestFactory
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
@@ -89,9 +90,21 @@ def _trigger_verification_email(request, user, *, is_resend: bool) -> dict:
         }
 
 
-def _set_jwt_cookie(response, user):
-    """Create a JWT access token and set it as an httpOnly cookie."""
-    token = AccessToken.for_user(user)
+def _build_refresh_token(user) -> RefreshToken:
+    """Create a refresh token carrying custom claims used by the app."""
+    refresh = RefreshToken.for_user(user)
+    refresh['role'] = user.role
+    refresh['sv'] = int(getattr(user, 'session_version', 0))
+    return refresh
+
+
+def _set_jwt_cookie(response, user, *, refresh_token: RefreshToken | None = None):
+    """Set both access + refresh JWT cookies for cookie-based auth."""
+    resolved_refresh = refresh_token or _build_refresh_token(user)
+    resolved_refresh['role'] = user.role
+    resolved_refresh['sv'] = int(getattr(user, 'session_version', 0))
+
+    token = resolved_refresh.access_token
     token['role'] = user.role
     token['sv'] = int(getattr(user, 'session_version', 0))
 
@@ -104,6 +117,16 @@ def _set_jwt_cookie(response, user):
         max_age=settings.JWT_COOKIE_MAX_AGE,
         path=settings.JWT_COOKIE_PATH,
     )
+
+    response.set_cookie(
+        key=settings.JWT_REFRESH_COOKIE_NAME,
+        value=str(resolved_refresh),
+        httponly=settings.JWT_REFRESH_COOKIE_HTTPONLY,
+        secure=settings.JWT_REFRESH_COOKIE_SECURE,
+        samesite=settings.JWT_REFRESH_COOKIE_SAMESITE,
+        max_age=settings.JWT_REFRESH_COOKIE_MAX_AGE,
+        path=settings.JWT_REFRESH_COOKIE_PATH,
+    )
     return response
 
 
@@ -111,6 +134,10 @@ def _clear_jwt_cookie(response):
     response.delete_cookie(
         key=settings.JWT_COOKIE_NAME,
         path=settings.JWT_COOKIE_PATH,
+    )
+    response.delete_cookie(
+        key=settings.JWT_REFRESH_COOKIE_NAME,
+        path=settings.JWT_REFRESH_COOKIE_PATH,
     )
     return response
 
@@ -295,6 +322,7 @@ class CustomLoginView(LoginView):
 
     def get_response(self):
         response = super().get_response()
+        response = _set_jwt_cookie(response, self.user)
         response.data = {'user': UserSerializer(self.user).data}
         is_verified = bool(getattr(self.user, 'email_verified', False))
         response.data['email_verification_required'] = not is_verified
@@ -316,7 +344,7 @@ class CustomLogoutView(LogoutView):
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
         response.data = {'message': 'Logged out'}
-        return response
+        return _clear_jwt_cookie(response)
 
 
 class CustomUserDetailsView(UserDetailsView):
@@ -402,6 +430,70 @@ class LogoutAllDevicesView(APIView):
             }
         )
         return _clear_jwt_cookie(response)
+
+
+class TokenRefreshCookieView(APIView):
+    """POST /api/token/refresh — mint a fresh access token from refresh cookie."""
+    permission_classes = [AllowAny]
+
+    @staticmethod
+    def _resolve_user_from_refresh(refresh: RefreshToken) -> User:
+        user_id_claim = settings.SIMPLE_JWT.get('USER_ID_CLAIM', 'user_id')
+        raw_user_id = refresh.get(user_id_claim)
+        if raw_user_id is None:
+            raw_user_id = refresh.get('user_id')
+        if raw_user_id is None:
+            raise TokenError('Refresh token is missing user identity.')
+
+        user = User.objects.filter(pk=raw_user_id).first()
+        if user is None:
+            raise TokenError('Refresh token user does not exist.')
+
+        token_session_version = int(refresh.get('sv', 0))
+        user_session_version = int(getattr(user, 'session_version', 0))
+        if token_session_version != user_session_version:
+            raise TokenError('Session has been revoked. Please sign in again.')
+
+        if not bool(getattr(user, 'is_active', True)):
+            raise TokenError('User is inactive.')
+
+        return user
+
+    def post(self, request):
+        raw_refresh = request.COOKIES.get(settings.JWT_REFRESH_COOKIE_NAME)
+        if not raw_refresh:
+            response = Response(
+                {
+                    'error': 'Refresh token is missing.',
+                    'code': 'refresh_token_missing',
+                },
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+            return _clear_jwt_cookie(response)
+
+        try:
+            incoming_refresh = RefreshToken(raw_refresh)
+            user = self._resolve_user_from_refresh(incoming_refresh)
+
+            rotate_refresh = bool(settings.SIMPLE_JWT.get('ROTATE_REFRESH_TOKENS', False))
+            refresh_to_set = _build_refresh_token(user) if rotate_refresh else incoming_refresh
+
+            response = Response(
+                {
+                    'message': 'Session refreshed.',
+                    'code': 'token_refreshed',
+                }
+            )
+            return _set_jwt_cookie(response, user, refresh_token=refresh_to_set)
+        except (TokenError, ValueError, TypeError):
+            response = Response(
+                {
+                    'error': 'Session expired. Please sign in again.',
+                    'code': 'session_expired',
+                },
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+            return _clear_jwt_cookie(response)
 
 
 class GoogleSocialLoginView(SocialLoginView):

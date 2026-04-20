@@ -602,6 +602,8 @@ def build_column_report(
     summary = _compute_summary(findings, total_items_analyzed=total_columns, default_confidence=metrics["avg_column_confidence"])
 
     partial_errors = [e for e in (runtime_error, parse_error) if e]
+    if parse_error and "invalid_json_payload" not in partial_errors:
+        partial_errors = ["invalid_json_payload", *partial_errors]
 
     return _base_report(
         pipeline_run_id=pipeline_run_id,
@@ -655,6 +657,36 @@ def build_row_report(
     avg_row_quality = 100.0 if not row_scores else (sum(row_scores) / float(len(row_scores)))
     avg_row_conf = 0.73 if not row_confidences else (sum(row_confidences) / float(len(row_confidences)))
 
+    def _row_has_execution_evidence() -> bool:
+        signal_keys = (
+            "checks_executed",
+            "rules_executed",
+            "queries_executed",
+            "tables_checked",
+            "tables_scanned",
+            "rules_checked",
+        )
+        for container in (payload, metrics_input, summary_input):
+            if not isinstance(container, dict):
+                continue
+            for key in signal_keys:
+                if _as_int(container.get(key), 0) > 0:
+                    return True
+            checks_value = container.get("checks")
+            if isinstance(checks_value, list) and checks_value:
+                return True
+            evidence_queries = container.get("evidence_queries")
+            if isinstance(evidence_queries, list) and evidence_queries:
+                return True
+        return False
+
+    missing_row_evidence_marker: str | None = None
+    avg_row_conf_metric = _coalesce_float(avg_row_conf, metrics_input.get("avg_row_confidence"), avg_row_conf)
+    if total_rows > 0 and not findings and not _row_has_execution_evidence():
+        # When no finding-level evidence exists, avoid reporting unwarranted certainty.
+        avg_row_conf_metric = min(avg_row_conf_metric, 0.73)
+        missing_row_evidence_marker = "row_validator_no_findings_or_execution_evidence"
+
     metrics = {
         "total_rows_analyzed": int(total_rows),
         "rows_with_issues": int(_coalesce_int(rows_with_issues, metrics_input.get("rows_with_issues"), rows_with_issues)),
@@ -668,12 +700,12 @@ def build_row_report(
         "hidden_null_count": int(_coalesce_int(hidden_null_count, metrics_input.get("hidden_null_count"), hidden_null_count)),
         "outlier_rows": int(_coalesce_int(outlier_rows, metrics_input.get("outlier_rows"), outlier_rows)),
         "avg_row_quality_score": round(_coalesce_float(avg_row_quality, metrics_input.get("avg_row_quality_score"), avg_row_quality), 2),
-        "avg_row_confidence": round(_coalesce_float(avg_row_conf, metrics_input.get("avg_row_confidence"), avg_row_conf), 4),
+        "avg_row_confidence": round(avg_row_conf_metric, 4),
     }
 
     summary = _compute_summary(findings, total_items_analyzed=total_rows, default_confidence=metrics["avg_row_confidence"])
 
-    partial_errors = [e for e in (runtime_error, parse_error) if e]
+    partial_errors = [e for e in (runtime_error, parse_error, missing_row_evidence_marker) if e]
 
     return _base_report(
         pipeline_run_id=pipeline_run_id,
@@ -739,6 +771,8 @@ def build_cross_row_report(
     summary = _compute_summary(findings, total_items_analyzed=total_pairs, default_confidence=metrics["avg_relationship_confidence"])
 
     partial_errors = [e for e in (runtime_error, parse_error) if e]
+    if parse_error and "invalid_json_payload" not in partial_errors:
+        partial_errors = ["invalid_json_payload", *partial_errors]
 
     return _base_report(
         pipeline_run_id=pipeline_run_id,

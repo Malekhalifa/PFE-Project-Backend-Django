@@ -1,0 +1,1400 @@
+{
+  "pipeline_run_id": "cbc04864-e7ba-4d1d-89e3-c46d14819a50",
+  "database_id": "localhost_5432_easybulk",
+  "llm_model": "gemini-2.5-flash",
+  "run_timestamp": "2026-04-20T21:48:31.396047Z",
+  "summary": {
+    "confidence_score": 38,
+    "data_quality_score": 99
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "cbc04864-e7ba-4d1d-89e3-c46d14819a50",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-20T21:40:32.565547Z",
+      "agent": "SchemaIntegrityValidator",
+      "summary": {
+        "total_items_analyzed": 108,
+        "items_passed": 108,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 0.72,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "total_tables": 54,
+        "total_columns": 54,
+        "tables_with_no_primary_key": 0,
+        "missing_foreign_keys": 0,
+        "constraint_violations": 0,
+        "type_mismatches": 0,
+        "nullable_violations": 0
+      },
+      "findings": [],
+      "prior_reports": [],
+      "quality_gate": {
+        "stage": "schema_validation",
+        "min_confidence": 0.55,
+        "min_evidence_rows": 0,
+        "require_evidence_query": false,
+        "accepted_count": 0,
+        "blocked_count": 0,
+        "meta": {
+          "elapsed_ms": 0,
+          "status": "ok",
+          "warnings": []
+        }
+      },
+      "blocked_findings": []
+    },
+    "column_validator": {
+      "pipeline_run_id": "cbc04864-e7ba-4d1d-89e3-c46d14819a50",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-20T21:43:18.678359Z",
+      "agent": "ColumnValidatorAgent",
+      "summary": {
+        "total_items_analyzed": 62,
+        "items_passed": 47,
+        "items_flagged": 15,
+        "critical_issues": 3,
+        "high_issues": 4,
+        "medium_issues": 6,
+        "low_issues": 2,
+        "overall_quality_score": 95.71,
+        "overall_confidence": 0.8056,
+        "flagged_tables": [
+          "budget_history",
+          "campagne",
+          "campaign_spool_state",
+          "campaign_type_permission",
+          "groupe",
+          "request_api",
+          "rev_info",
+          "smsc_routing_rule",
+          "user_mission"
+        ]
+      },
+      "metrics": {
+        "total_columns_analyzed": 62,
+        "duplicate_columns_found": 0,
+        "constant_columns_found": 5,
+        "high_null_ratio_columns": 4,
+        "low_cardinality_anomalies": 5,
+        "high_cardinality_anomalies": 0,
+        "semantic_mismatches": 1,
+        "domain_violations": 0,
+        "distribution_anomalies": 0,
+        "avg_column_quality_score": 85.0,
+        "avg_column_confidence": 0.85
+      },
+      "findings": [
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "quality_score": 70,
+          "confidence": 0.9,
+          "status": "flagged",
+          "issues": [
+            {
+              "severity": "high",
+              "description": "High null ratio detected: 88.89% of 'admin_id' values are NULL. This indicates that the 'admin_id' relationship is largely optional or incomplete.",
+              "impact_estimate": "High nullability in a foreign key column can lead to incomplete data relationships, difficulties in reporting, and potential issues in applications expecting linked 'admin' data. It might also indicate that the 'admin' concept is not consistently applied or required.",
+              "remediation_hint": "Review business requirements for 'admin_id'. If it should be mandatory, investigate data ingestion processes for missing values. If optional, consider if this high null ratio is expected and document it, or explore if a default 'admin' can be assigned.",
+              "confidence_overall": 0.9
+            }
+          ],
+          "metrics": {
+            "null_ratio": 0.8889,
+            "distinct_ratio": null,
+            "dominant_value_ratio": null,
+            "inferred_type_distribution": null,
+            "domain_consistency": null
+          },
+          "evidence": {
+            "query": "SELECT COUNT(*) AS total_rows, SUM(CASE WHEN admin_id IS NULL THEN 1 ELSE 0 END) AS null_rows, (SUM(CASE WHEN admin_id IS NULL THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) AS null_percentage FROM groupe",
+            "row_count": 9,
+            "sample": [
+              {
+                "total_rows": 9,
+                "null_rows": 8,
+                "null_percentage": "88.8888888888888889"
+              }
+            ]
+          }
+        },
+        {
+          "table": "smsc_routing_rule",
+          "column": "expediteur_id",
+          "quality_score": 70,
+          "confidence": 0.9,
+          "status": "flagged",
+          "issues": [
+            {
+              "severity": "high",
+              "description": "High null ratio detected: 85.71% of 'expediteur_id' values are NULL. This indicates that the 'expediteur_id' relationship is largely optional or incomplete.",
+              "impact_estimate": "High nullability in a foreign key column can lead to incomplete data relationships, difficulties in routing, and potential issues in applications expecting linked 'expediteur' data. It might indicate that routing rules are often not tied to a specific sender.",
+              "remediation_hint": "Review business requirements for 'expediteur_id'. If it should be mandatory, investigate data ingestion processes for missing values. If optional, consider if this high null ratio is expected and document it, or explore if a default 'expediteur' can be assigned.",
+              "confidence_overall": 0.9
+            }
+          ],
+          "metrics": {
+            "null_ratio": 0.8571,
+            "distinct_ratio": null,
+            "dominant_value_ratio": null,
+            "inferred_type_distribution": null,
+            "domain_consistency": null
+          },
+          "evidence": {
+            "query": "SELECT COUNT(*) AS total_rows, SUM(CASE WHEN expediteur_id IS NULL THEN 1 ELSE 0 END) AS null_rows, (SUM(CASE WHEN expediteur_id IS NULL THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) AS null_percentage FROM smsc_routing_rule",
+            "row_count": 7,
+            "sample": [
+              {
+                "total_rows": 7,
+                "null_rows": 6,
+                "null_percentage": "85.7142857142857143"
+              }
+            ]
+          }
+        },
+        {
+          "table": "smsc_routing_rule",
+          "column": "groupe_id",
+          "quality_score": 70,
+          "confidence": 0.9,
+          "status": "flagged",
+          "issues": [
+            {
+              "severity": "high",
+              "description": "High null ratio detected: 85.71% of 'groupe_id' values are NULL. This indicates that the 'groupe_id' relationship is largely optional or incomplete.",
+              "impact_estimate": "High nullability in a foreign key column can lead to incomplete data relationships, difficulties in routing, and potential issues in applications expecting linked 'groupe' data. It might indicate that routing rules are often not tied to a specific group.",
+              "remediation_hint": "Review business requirements for 'groupe_id'. If it should be mandatory, investigate data ingestion processes for missing values. If optional, consider if this high null ratio is expected and document it, or explore if a default 'groupe' can be assigned.",
+              "confidence_overall": 0.9
+            }
+          ],
+          "metrics": {
+            "null_ratio": 0.8571,
+            "distinct_ratio": null,
+            "dominant_value_ratio": null,
+            "inferred_type_distribution": null,
+            "domain_consistency": null
+          },
+          "evidence": {
+            "query": "SELECT COUNT(*) AS total_rows, SUM(CASE WHEN groupe_id IS NULL THEN 1 ELSE 0 END) AS null_rows, (SUM(CASE WHEN groupe_id IS NULL THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) AS null_percentage FROM smsc_routing_rule",
+            "row_count": 7,
+            "sample": [
+              {
+                "total_rows": 7,
+                "null_rows": 6,
+                "null_percentage": "85.7142857142857143"
+              }
+            ]
+          }
+        },
+        {
+          "table": "user_mission",
+          "column": "groupe_id",
+          "quality_score": 85,
+          "confidence": 0.9,
+          "status": "flagged",
+          "issues": [
+            {
+              "severity": "medium",
+              "description": "High null ratio detected: 50.00% of 'groupe_id' values are NULL. This indicates that the 'groupe_id' relationship is significantly optional or incomplete.",
+              "impact_estimate": "Significant nullability in a foreign key column can lead to incomplete data relationships, difficulties in reporting on user missions by group, and potential issues in applications expecting linked 'groupe' data.",
+              "remediation_hint": "Review business requirements for 'groupe_id'. If it should be more consistently populated, investigate data ingestion processes. If optional, consider if this null ratio is expected and document it.",
+              "confidence_overall": 0.9
+            }
+          ],
+          "metrics": {
+            "null_ratio": 0.5,
+            "distinct_ratio": null,
+            "dominant_value_ratio": null,
+            "inferred_type_distribution": null,
+            "domain_consistency": null
+          },
+          "evidence": {
+            "query": "SELECT COUNT(*) AS total_rows, SUM(CASE WHEN groupe_id IS NULL THEN 1 ELSE 0 END) AS null_rows, (SUM(CASE WHEN groupe_id IS NULL THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) AS null_percentage FROM user_mission",
+            "row_count": 8,
+            "sample": [
+              {
+                "total_rows": 8,
+                "null_rows": 4,
+                "null_percentage": "50.0000000000000000"
+              }
+            ]
+          }
+        },
+        {
+          "table": "campagne",
+          "column": "deactivated_by_group",
+          "quality_score": 85,
+          "confidence": 0.9,
+          "status": "flagged",
+          "issues": [
+            {
+              "severity": "medium",
+              "description": "Column 'deactivated_by_group' is constant with 100% of values being 'false'. This might indicate an issue with data population, an unused column, or an over-normalized design if the column is intended to vary.",
+              "impact_estimate": "A constant column provides no discriminatory information, potentially leading to inefficient queries or misleading assumptions about data variability. If this column is meant to track deactivation, its constant 'false' value suggests no campaigns are ever deactivated by group.",
+              "remediation_hint": "Verify if 'deactivated_by_group' is intended to be constant. If not, investigate data ingestion or application logic. If it is, consider removing the column if it serves no purpose, or re-evaluate its necessity.",
+              "confidence_overall": 0.9
+            }
+          ],
+          "metrics": {
+            "null_ratio": 0.0,
+            "distinct_ratio": 0.11,
+            "dominant_value_ratio": 1.0,
+            "inferred_type_distribution": {
+              "boolean": 1.0
+            },
+            "domain_consistency": 1.0
+          },
+          "evidence": {
+            "query": "SELECT deactivated_by_group, COUNT(*), COUNT(*) * 100.0 / (SELECT COUNT(*) FROM campagne) AS percentage FROM campagne GROUP BY deactivated_by_group",
+            "row_count": 9,
+            "sample": [
+              {
+                "deactivated_by_group": false,
+                "count": 9,
+                "percentage": "100.0000000000000000"
+              }
+            ]
+          }
+        },
+        {
+          "table": "campagne",
+          "column": "me_only",
+          "quality_score": 85,
+          "confidence": 0.9,
+          "status": "flagged",
+          "issues": [
+            {
+              "severity": "medium",
+              "description": "Column 'me_only' is constant with 100% of values being 'false'. This might indicate an issue with data population, an unused column, or an over-normalized design if the column is intended to vary.",
+              "impact_estimate": "A constant column provides no discriminatory information, potentially leading to inefficient queries or misleading assumptions about data variability. If this column is meant to indicate 'me only' campaigns, its constant 'false' value suggests no such campaigns exist.",
+              "remediation_hint": "Verify if 'me_only' is intended to be constant. If not, investigate data ingestion or application logic. If it is, consider removing the column if it serves no purpose, or re-evaluate its necessity.",
+              "confidence_overall": 0.9
+            }
+          ],
+          "metrics": {
+            "null_ratio": 0.0,
+            "distinct_ratio": 0.11,
+            "dominant_value_ratio": 1.0,
+            "inferred_type_distribution": {
+              "boolean": 1.0
+            },
+            "domain_consistency": 1.0
+          },
+          "evidence": {
+            "query": "SELECT me_only, COUNT(*), COUNT(*) * 100.0 / (SELECT COUNT(*) FROM campagne) AS percentage FROM campagne GROUP BY me_only",
+            "row_count": 9,
+            "sample": [
+              {
+                "me_only": false,
+                "count": 9,
+                "percentage": "100.0000000000000000"
+              }
+            ]
+          }
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "is_full",
+          "quality_score": 85,
+          "confidence": 0.9,
+          "status": "flagged",
+          "issues": [
+            {
+              "severity": "medium",
+              "description": "Column 'is_full' is constant with 100% of values being 'false'. This might indicate an issue with data population, an unused column, or an over-normalized design if the column is intended to vary.",
+              "impact_estimate": "A constant column provides no discriminatory information, potentially leading to inefficient queries or misleading assumptions about data variability. If this column is meant to indicate a full spool state, its constant 'false' value suggests the spool is never full.",
+              "remediation_hint": "Verify if 'is_full' is intended to be constant. If not, investigate data ingestion or application logic. If it is, consider removing the column if it serves no purpose, or re-evaluate its necessity.",
+              "confidence_overall": 0.9
+            }
+          ],
+          "metrics": {
+            "null_ratio": 0.0,
+            "distinct_ratio": 0.14,
+            "dominant_value_ratio": 1.0,
+            "inferred_type_distribution": {
+              "boolean": 1.0
+            },
+            "domain_consistency": 1.0
+          },
+          "evidence": {
+            "query": "SELECT is_full, COUNT(*), COUNT(*) * 100.0 / (SELECT COUNT(*) FROM campaign_spool_state) AS percentage FROM campaign_spool_state GROUP BY is_full",
+            "row_count": 7,
+            "sample": [
+              {
+                "is_full": false,
+                "count": 7,
+                "percentage": "100.0000000000000000"
+              }
+            ]
+          }
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "queued_max_size_reached",
+          "quality_score": 85,
+          "confidence": 0.9,
+          "status": "flagged",
+          "issues": [
+            {
+              "severity": "medium",
+              "description": "Column 'queued_max_size_reached' is constant with 100% of values being 'false'. This might indicate an issue with data population, an unused column, or an over-normalized design if the column is intended to vary.",
+              "impact_estimate": "A constant column provides no discriminatory information, potentially leading to inefficient queries or misleading assumptions about data variability. If this column is meant to indicate a reached max queue size, its constant 'false' value suggests this never happens.",
+              "remediation_hint": "Verify if 'queued_max_size_reached' is intended to be constant. If not, investigate data ingestion or application logic. If it is, consider removing the column if it serves no purpose, or re-evaluate its necessity.",
+              "confidence_overall": 0.9
+            }
+          ],
+          "metrics": {
+            "null_ratio": 0.0,
+            "distinct_ratio": 0.14,
+            "dominant_value_ratio": 1.0,
+            "inferred_type_distribution": {
+              "boolean": 1.0
+            },
+            "domain_consistency": 1.0
+          },
+          "evidence": {
+            "query": "SELECT queued_max_size_reached, COUNT(*), COUNT(*) * 100.0 / (SELECT COUNT(*) FROM campaign_spool_state) AS percentage FROM campaign_spool_state GROUP BY queued_max_size_reached",
+            "row_count": 7,
+            "sample": [
+              {
+                "queued_max_size_reached": false,
+                "count": 7,
+                "percentage": "100.0000000000000000"
+              }
+            ]
+          }
+        },
+        {
+          "table": "campaign_type_permission",
+          "column": "enabled",
+          "quality_score": 85,
+          "confidence": 0.9,
+          "status": "flagged",
+          "issues": [
+            {
+              "severity": "medium",
+              "description": "Column 'enabled' is constant with 100% of values being 'true'. This might indicate an issue with data population, an unused column, or an over-normalized design if the column is intended to vary.",
+              "impact_estimate": "A constant column provides no discriminatory information, potentially leading to inefficient queries or misleading assumptions about data variability. If this column is meant to indicate enabled permissions, its constant 'true' value suggests all permissions are always enabled.",
+              "remediation_hint": "Verify if 'enabled' is intended to be constant. If not, investigate data ingestion or application logic. If it is, consider removing the column if it serves no purpose, or re-evaluate its necessity.",
+              "confidence_overall": 0.9
+            }
+          ],
+          "metrics": {
+            "null_ratio": 0.0,
+            "distinct_ratio": 0.05,
+            "dominant_value_ratio": 1.0,
+            "inferred_type_distribution": {
+              "boolean": 1.0
+            },
+            "domain_consistency": 1.0
+          },
+          "evidence": {
+            "query": "SELECT enabled, COUNT(*), COUNT(*) * 100.0 / (SELECT COUNT(*) FROM campaign_type_permission) AS percentage FROM campaign_type_permission GROUP BY enabled",
+            "row_count": 18,
+            "sample": [
+              {
+                "enabled": true,
+                "count": 18,
+                "percentage": "100.0000000000000000"
+              }
+            ]
+          }
+        },
+        {
+          "table": "rev_info",
+          "column": "keycloak_id",
+          "quality_score": 70,
+          "confidence": 0.9,
+          "status": "flagged",
+          "issues": [
+            {
+              "severity": "high",
+              "description": "Semantic mismatch: 'keycloak_id' contains values like 'SYSTEM' which do not conform to the expected UUID or similar identifier format.",
+              "impact_estimate": "Inconsistent formatting of identifiers can lead to failures in systems expecting a specific format (e.g., UUID parsing), difficulties in joining data, and reduced data integrity. It suggests that some entries are system-generated or placeholders rather than actual Keycloak IDs.",
+              "remediation_hint": "Investigate the source of 'SYSTEM' values. If these are valid system-level entries, consider if a separate column or a different data type is more appropriate, or if the validation rule needs to accommodate these exceptions. If they are errors, correct the data at the source.",
+              "confidence_overall": 0.9
+            }
+          ],
+          "metrics": {
+            "null_ratio": 0.0,
+            "distinct_ratio": null,
+            "dominant_value_ratio": null,
+            "inferred_type_distribution": {
+              "text": 1.0
+            },
+            "domain_consistency": 0.0
+          },
+          "evidence": {
+            "query": "SELECT keycloak_id FROM rev_info WHERE keycloak_id !~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' LIMIT 10",
+            "row_count": 7,
+            "sample": [
+              {
+                "keycloak_id": "SYSTEM"
+              },
+              {
+                "keycloak_id": "SYSTEM"
+              },
+              {
+                "keycloak_id": "SYSTEM"
+              },
+              {
+                "keycloak_id": "SYSTEM"
+              },
+              {
+                "keycloak_id": "SYSTEM"
+              },
+              {
+                "keycloak_id": "SYSTEM"
+              },
+              {
+                "keycloak_id": "SYSTEM"
+              }
+            ]
+          }
+        }
+      ],
+      "prior_reports": [
+        {
+          "pipeline_run_id": "cbc04864-e7ba-4d1d-89e3-c46d14819a50",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-20T21:40:32.565547Z",
+          "agent": "SchemaIntegrityValidator",
+          "status": null,
+          "summary": {
+            "total_items_analyzed": 108,
+            "items_passed": 108,
+            "items_flagged": 0,
+            "critical_issues": 0,
+            "high_issues": 0,
+            "medium_issues": 0,
+            "low_issues": 0,
+            "overall_quality_score": 100.0,
+            "overall_confidence": 0.72,
+            "flagged_tables": []
+          },
+          "findings": [],
+          "quality_gate": {
+            "stage": "schema_validation",
+            "min_confidence": 0.55,
+            "min_evidence_rows": 0,
+            "require_evidence_query": false,
+            "accepted_count": 0,
+            "blocked_count": 0,
+            "meta": {
+              "elapsed_ms": 0,
+              "status": "ok",
+              "warnings": []
+            }
+          }
+        }
+      ],
+      "quality_gate": {
+        "stage": "column_validation",
+        "min_confidence": 0.55,
+        "min_evidence_rows": 0,
+        "require_evidence_query": false,
+        "accepted_count": 10,
+        "blocked_count": 5,
+        "meta": {
+          "elapsed_ms": 12,
+          "status": "partial",
+          "warnings": []
+        }
+      },
+      "blocked_findings": [
+        {
+          "id": "idx_0",
+          "reason": "low_confidence:0.5000"
+        },
+        {
+          "id": "idx_1",
+          "reason": "low_confidence:0.5000"
+        },
+        {
+          "id": "idx_12",
+          "reason": "low_confidence:0.0000"
+        },
+        {
+          "id": "idx_13",
+          "reason": "low_confidence:0.0000"
+        },
+        {
+          "id": "idx_14",
+          "reason": "low_confidence:0.0000"
+        }
+      ],
+      "status": "partial",
+      "errors": [
+        "quality_gate_blocked_low_evidence_or_low_confidence_findings"
+      ]
+    },
+    "row_level_validator": {
+      "pipeline_run_id": "cbc04864-e7ba-4d1d-89e3-c46d14819a50",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-20T21:45:23.004969Z",
+      "agent": "RowLevelValidator",
+      "summary": {
+        "total_items_analyzed": 0,
+        "items_passed": 0,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 0.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "total_rows_analyzed": 0,
+        "rows_with_issues": 0,
+        "rows_with_issues_ratio": 0.0,
+        "format_violations": 0,
+        "encoding_issues": 0,
+        "hidden_null_count": 0,
+        "outlier_rows": 0,
+        "avg_row_quality_score": 0.0,
+        "avg_row_confidence": 0.0
+      },
+      "findings": [],
+      "prior_reports": [
+        {
+          "pipeline_run_id": "cbc04864-e7ba-4d1d-89e3-c46d14819a50",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-20T21:40:32.565547Z",
+          "agent": "SchemaIntegrityValidator",
+          "status": null,
+          "summary": {
+            "total_items_analyzed": 108,
+            "items_passed": 108,
+            "items_flagged": 0,
+            "critical_issues": 0,
+            "high_issues": 0,
+            "medium_issues": 0,
+            "low_issues": 0,
+            "overall_quality_score": 100.0,
+            "overall_confidence": 0.72,
+            "flagged_tables": []
+          },
+          "findings": [],
+          "quality_gate": {
+            "stage": "schema_validation",
+            "min_confidence": 0.55,
+            "min_evidence_rows": 0,
+            "require_evidence_query": false,
+            "accepted_count": 0,
+            "blocked_count": 0,
+            "meta": {
+              "elapsed_ms": 0,
+              "status": "ok",
+              "warnings": []
+            }
+          }
+        },
+        {
+          "pipeline_run_id": "cbc04864-e7ba-4d1d-89e3-c46d14819a50",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-20T21:43:18.678359Z",
+          "agent": "ColumnValidatorAgent",
+          "status": "partial",
+          "summary": {
+            "total_items_analyzed": 62,
+            "items_passed": 47,
+            "items_flagged": 15,
+            "critical_issues": 3,
+            "high_issues": 4,
+            "medium_issues": 6,
+            "low_issues": 2,
+            "overall_quality_score": 95.71,
+            "overall_confidence": 0.8056,
+            "flagged_tables": [
+              "budget_history",
+              "campagne",
+              "campaign_spool_state",
+              "campaign_type_permission",
+              "groupe",
+              "request_api",
+              "rev_info",
+              "smsc_routing_rule",
+              "user_mission"
+            ]
+          },
+          "findings": [
+            {
+              "table": "groupe",
+              "column": "admin_id",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "smsc_routing_rule",
+              "column": "expediteur_id",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "smsc_routing_rule",
+              "column": "groupe_id",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "user_mission",
+              "column": "groupe_id",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "campagne",
+              "column": "deactivated_by_group",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "campagne",
+              "column": "me_only",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "campaign_spool_state",
+              "column": "is_full",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "campaign_spool_state",
+              "column": "queued_max_size_reached",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "campaign_type_permission",
+              "column": "enabled",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "rev_info",
+              "column": "keycloak_id",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            }
+          ],
+          "quality_gate": {
+            "stage": "column_validation",
+            "min_confidence": 0.55,
+            "min_evidence_rows": 0,
+            "require_evidence_query": false,
+            "accepted_count": 10,
+            "blocked_count": 5,
+            "meta": {
+              "elapsed_ms": 12,
+              "status": "partial",
+              "warnings": []
+            }
+          },
+          "errors": [
+            "quality_gate_blocked_low_evidence_or_low_confidence_findings"
+          ]
+        }
+      ],
+      "quality_gate": {
+        "stage": "row_level_validation",
+        "min_confidence": 0.55,
+        "min_evidence_rows": 0,
+        "require_evidence_query": false,
+        "accepted_count": 0,
+        "blocked_count": 0,
+        "meta": {
+          "elapsed_ms": 0,
+          "status": "ok",
+          "warnings": []
+        }
+      },
+      "blocked_findings": []
+    },
+    "cross_row_validator": {
+      "pipeline_run_id": "cbc04864-e7ba-4d1d-89e3-c46d14819a50",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-20T21:47:12.281205Z",
+      "agent": "CrossRowValidator",
+      "summary": {
+        "total_items_analyzed": 0,
+        "items_passed": 0,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 0.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "total_row_pairs_analyzed": 0,
+        "temporal_anomalies": 0,
+        "sequential_breaks": 0,
+        "cross_column_violations": 0,
+        "row_pattern_anomalies": 0,
+        "tables_with_cross_row_issues": 0,
+        "avg_relationship_confidence": 0.0
+      },
+      "findings": [],
+      "prior_reports": [
+        {
+          "pipeline_run_id": "cbc04864-e7ba-4d1d-89e3-c46d14819a50",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-20T21:40:32.565547Z",
+          "agent": "SchemaIntegrityValidator",
+          "status": null,
+          "summary": {
+            "total_items_analyzed": 108,
+            "items_passed": 108,
+            "items_flagged": 0,
+            "critical_issues": 0,
+            "high_issues": 0,
+            "medium_issues": 0,
+            "low_issues": 0,
+            "overall_quality_score": 100.0,
+            "overall_confidence": 0.72,
+            "flagged_tables": []
+          },
+          "findings": [],
+          "quality_gate": {
+            "stage": "schema_validation",
+            "min_confidence": 0.55,
+            "min_evidence_rows": 0,
+            "require_evidence_query": false,
+            "accepted_count": 0,
+            "blocked_count": 0,
+            "meta": {
+              "elapsed_ms": 0,
+              "status": "ok",
+              "warnings": []
+            }
+          }
+        },
+        {
+          "pipeline_run_id": "cbc04864-e7ba-4d1d-89e3-c46d14819a50",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-20T21:43:18.678359Z",
+          "agent": "ColumnValidatorAgent",
+          "status": "partial",
+          "summary": {
+            "total_items_analyzed": 62,
+            "items_passed": 47,
+            "items_flagged": 15,
+            "critical_issues": 3,
+            "high_issues": 4,
+            "medium_issues": 6,
+            "low_issues": 2,
+            "overall_quality_score": 95.71,
+            "overall_confidence": 0.8056,
+            "flagged_tables": [
+              "budget_history",
+              "campagne",
+              "campaign_spool_state",
+              "campaign_type_permission",
+              "groupe",
+              "request_api",
+              "rev_info",
+              "smsc_routing_rule",
+              "user_mission"
+            ]
+          },
+          "findings": [
+            {
+              "table": "groupe",
+              "column": "admin_id",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "smsc_routing_rule",
+              "column": "expediteur_id",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "smsc_routing_rule",
+              "column": "groupe_id",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "user_mission",
+              "column": "groupe_id",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "campagne",
+              "column": "deactivated_by_group",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "campagne",
+              "column": "me_only",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "campaign_spool_state",
+              "column": "is_full",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "campaign_spool_state",
+              "column": "queued_max_size_reached",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "campaign_type_permission",
+              "column": "enabled",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "rev_info",
+              "column": "keycloak_id",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            }
+          ],
+          "quality_gate": {
+            "stage": "column_validation",
+            "min_confidence": 0.55,
+            "min_evidence_rows": 0,
+            "require_evidence_query": false,
+            "accepted_count": 10,
+            "blocked_count": 5,
+            "meta": {
+              "elapsed_ms": 12,
+              "status": "partial",
+              "warnings": []
+            }
+          },
+          "errors": [
+            "quality_gate_blocked_low_evidence_or_low_confidence_findings"
+          ]
+        },
+        {
+          "pipeline_run_id": "cbc04864-e7ba-4d1d-89e3-c46d14819a50",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-20T21:45:23.004969Z",
+          "agent": "RowLevelValidator",
+          "status": null,
+          "summary": {
+            "total_items_analyzed": 0,
+            "items_passed": 0,
+            "items_flagged": 0,
+            "critical_issues": 0,
+            "high_issues": 0,
+            "medium_issues": 0,
+            "low_issues": 0,
+            "overall_quality_score": 100.0,
+            "overall_confidence": 0.0,
+            "flagged_tables": []
+          },
+          "findings": [],
+          "quality_gate": {
+            "stage": "row_level_validation",
+            "min_confidence": 0.55,
+            "min_evidence_rows": 0,
+            "require_evidence_query": false,
+            "accepted_count": 0,
+            "blocked_count": 0,
+            "meta": {
+              "elapsed_ms": 0,
+              "status": "ok",
+              "warnings": []
+            }
+          }
+        }
+      ],
+      "quality_gate": {
+        "stage": "cross_row_validation",
+        "min_confidence": 0.55,
+        "min_evidence_rows": 0,
+        "require_evidence_query": false,
+        "accepted_count": 0,
+        "blocked_count": 0,
+        "meta": {
+          "elapsed_ms": 0,
+          "status": "ok",
+          "warnings": []
+        }
+      },
+      "blocked_findings": []
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "cbc04864-e7ba-4d1d-89e3-c46d14819a50",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-20T21:48:31.396047Z",
+      "agent": "DataFixPlanner",
+      "summary": {
+        "total_items_analyzed": 15,
+        "items_passed": 2,
+        "items_flagged": 13,
+        "critical_issues": 1,
+        "high_issues": 7,
+        "medium_issues": 6,
+        "low_issues": 0,
+        "overall_quality_score": 84.67,
+        "overall_confidence": 0.92,
+        "flagged_tables": [
+          "campagne",
+          "campagne_contacts",
+          "campaign_spool_state",
+          "campaign_type_permission",
+          "groupe",
+          "mailjet_email",
+          "rev_info",
+          "smsc_routing_rule",
+          "user_mission",
+          "user_roles"
+        ]
+      },
+      "metrics": {
+        "total_issues_received": 15,
+        "fixes_generated": 13,
+        "critical_fixes": 1,
+        "high_fixes": 7,
+        "medium_fixes": 6,
+        "low_fixes": 0,
+        "estimated_rows_affected": 105,
+        "fix_confidence": 0.92
+      },
+      "findings": [
+        {
+          "id": "fix_001",
+          "table": "groupe",
+          "target_table": "groupe_clean",
+          "problem": "The 'admin_id' column in the 'groupe' table has a very high percentage (88.89%) of NULL values, indicating potential incomplete data or missing relationships to an administrator.",
+          "fix": "Identify and flag rows with NULL 'admin_id' for manual review or populate with a default administrator ID.",
+          "severity": "high",
+          "confidence": 0.95,
+          "estimated_rows_affected": 10,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS groupe_clean (LIKE groupe INCLUDING ALL);",
+            "INSERT INTO groupe_clean SELECT * FROM groupe ON CONFLICT DO NOTHING;",
+            "UPDATE groupe_clean SET admin_id = '00000000-0000-0000-0000-000000000001' WHERE admin_id IS NULL;"
+          ],
+          "explanation": "This fix first ensures a clean shadow table exists and is populated. Then, it updates rows in 'groupe_clean' where 'admin_id' is NULL, assigning a placeholder UUID. This addresses the high null ratio, but the placeholder '00000000-0000-0000-0000-000000000001' should be replaced with a valid, business-approved default administrator ID after human review to maintain data integrity and referential consistency."
+        },
+        {
+          "id": "fix_002",
+          "table": "smsc_routing_rule",
+          "target_table": "smsc_routing_rule_clean",
+          "problem": "The 'expediteur_id' column in 'smsc_routing_rule' has a high percentage (85.71%) of NULL values, suggesting incomplete routing rule definitions or missing sender information.",
+          "fix": "Identify and flag rows with NULL 'expediteur_id' for manual review or populate with a default sender ID.",
+          "severity": "high",
+          "confidence": 0.95,
+          "estimated_rows_affected": 10,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS smsc_routing_rule_clean (LIKE smsc_routing_rule INCLUDING ALL);",
+            "INSERT INTO smsc_routing_rule_clean SELECT * FROM smsc_routing_rule ON CONFLICT DO NOTHING;",
+            "UPDATE smsc_routing_rule_clean SET expediteur_id = '00000000-0000-0000-0000-000000000002' WHERE expediteur_id IS NULL;"
+          ],
+          "explanation": "This fix ensures a clean shadow table exists and is populated. It then updates rows in 'smsc_routing_rule_clean' where 'expediteur_id' is NULL, assigning a placeholder UUID. This addresses the high null ratio, but the placeholder '00000000-0000-0000-0000-000000000002' should be replaced with a valid, business-approved default sender ID after human review to maintain data integrity and referential consistency."
+        },
+        {
+          "id": "fix_003",
+          "table": "smsc_routing_rule",
+          "target_table": "smsc_routing_rule_clean",
+          "problem": "The 'groupe_id' column in 'smsc_routing_rule' has a high percentage (85.71%) of NULL values, indicating incomplete routing rule definitions or missing group associations.",
+          "fix": "Identify and flag rows with NULL 'groupe_id' for manual review or populate with a default group ID.",
+          "severity": "high",
+          "confidence": 0.95,
+          "estimated_rows_affected": 10,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS smsc_routing_rule_clean (LIKE smsc_routing_rule INCLUDING ALL);",
+            "INSERT INTO smsc_routing_rule_clean SELECT * FROM smsc_routing_rule ON CONFLICT DO NOTHING;",
+            "UPDATE smsc_routing_rule_clean SET groupe_id = '00000000-0000-0000-0000-000000000003' WHERE groupe_id IS NULL;"
+          ],
+          "explanation": "This fix ensures a clean shadow table exists and is populated. It then updates rows in 'smsc_routing_rule_clean' where 'groupe_id' is NULL, assigning a placeholder UUID. This addresses the high null ratio, but the placeholder '00000000-0000-0000-0000-000000000003' should be replaced with a valid, business-approved default group ID after human review to maintain data integrity and referential consistency."
+        },
+        {
+          "id": "fix_004",
+          "table": "user_mission",
+          "target_table": "user_mission_clean",
+          "problem": "The 'groupe_id' column in 'user_mission' has a significant percentage (50.00%) of NULL values, suggesting incomplete user mission assignments or missing group associations.",
+          "fix": "Identify and flag rows with NULL 'groupe_id' for manual review or populate with a default group ID.",
+          "severity": "high",
+          "confidence": 0.95,
+          "estimated_rows_affected": 10,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS user_mission_clean (LIKE user_mission INCLUDING ALL);",
+            "INSERT INTO user_mission_clean SELECT * FROM user_mission ON CONFLICT DO NOTHING;",
+            "UPDATE user_mission_clean SET groupe_id = '00000000-0000-0000-0000-000000000004' WHERE groupe_id IS NULL;"
+          ],
+          "explanation": "This fix ensures a clean shadow table exists and is populated. It then updates rows in 'user_mission_clean' where 'groupe_id' is NULL, assigning a placeholder UUID. This addresses the high null ratio, but the placeholder '00000000-0000-0000-0000-000000000004' should be replaced with a valid, business-approved default group ID after human review to maintain data integrity and referential consistency."
+        },
+        {
+          "id": "fix_005",
+          "table": "campagne",
+          "target_table": "campagne_clean",
+          "problem": "The 'deactivated_by_group' column in the 'campagne' table is always 'false', suggesting it might be unused or incorrectly populated.",
+          "fix": "Drop the 'deactivated_by_group' column if confirmed to be unused or always constant by business stakeholders.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 1,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS campagne_clean (LIKE campagne INCLUDING ALL);",
+            "INSERT INTO campagne_clean SELECT * FROM campagne ON CONFLICT DO NOTHING;",
+            "ALTER TABLE campagne_clean DROP COLUMN deactivated_by_group;"
+          ],
+          "explanation": "This fix ensures a clean shadow table exists and is populated. It then removes the 'deactivated_by_group' column from 'campagne_clean'. This action should only be taken after confirming with business stakeholders that the column is indeed unused and not expected to vary, to avoid data loss or application errors."
+        },
+        {
+          "id": "fix_006",
+          "table": "campagne",
+          "target_table": "campagne_clean",
+          "problem": "The 'me_only' column in the 'campagne' table is always 'false', suggesting it might be unused or incorrectly populated.",
+          "fix": "Drop the 'me_only' column if confirmed to be unused or always constant by business stakeholders.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 1,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS campagne_clean (LIKE campagne INCLUDING ALL);",
+            "INSERT INTO campagne_clean SELECT * FROM campagne ON CONFLICT DO NOTHING;",
+            "ALTER TABLE campagne_clean DROP COLUMN me_only;"
+          ],
+          "explanation": "This fix ensures a clean shadow table exists and is populated. It then removes the 'me_only' column from 'campagne_clean'. This action should only be taken after confirming with business stakeholders that the column is indeed unused and not expected to vary, to avoid data loss or application errors."
+        },
+        {
+          "id": "fix_007",
+          "table": "campaign_spool_state",
+          "target_table": "campaign_spool_state_clean",
+          "problem": "The 'is_full' column in the 'campaign_spool_state' table is always 'false', suggesting it might be unused or incorrectly populated.",
+          "fix": "Drop the 'is_full' column if confirmed to be unused or always constant by business stakeholders.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 1,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS campaign_spool_state_clean (LIKE campaign_spool_state INCLUDING ALL);",
+            "INSERT INTO campaign_spool_state_clean SELECT * FROM campaign_spool_state ON CONFLICT DO NOTHING;",
+            "ALTER TABLE campaign_spool_state_clean DROP COLUMN is_full;"
+          ],
+          "explanation": "This fix ensures a clean shadow table exists and is populated. It then removes the 'is_full' column from 'campaign_spool_state_clean'. This action should only be taken after confirming with business stakeholders that the column is indeed unused and not expected to vary, to avoid data loss or application errors."
+        },
+        {
+          "id": "fix_008",
+          "table": "campaign_spool_state",
+          "target_table": "campaign_spool_state_clean",
+          "problem": "The 'queued_max_size_reached' column in the 'campaign_spool_state' table is always 'false', suggesting it might be unused or incorrectly populated.",
+          "fix": "Drop the 'queued_max_size_reached' column if confirmed to be unused or always constant by business stakeholders.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 1,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS campaign_spool_state_clean (LIKE campaign_spool_state INCLUDING ALL);",
+            "INSERT INTO campaign_spool_state_clean SELECT * FROM campaign_spool_state ON CONFLICT DO NOTHING;",
+            "ALTER TABLE campaign_spool_state_clean DROP COLUMN queued_max_size_reached;"
+          ],
+          "explanation": "This fix ensures a clean shadow table exists and is populated. It then removes the 'queued_max_size_reached' column from 'campaign_spool_state_clean'. This action should only be taken after confirming with business stakeholders that the column is indeed unused and not expected to vary, to avoid data loss or application errors."
+        },
+        {
+          "id": "fix_009",
+          "table": "campaign_type_permission",
+          "target_table": "campaign_type_permission_clean",
+          "problem": "The 'enabled' column in the 'campaign_type_permission' table is always 'true', suggesting it might be unused or incorrectly populated.",
+          "fix": "Drop the 'enabled' column if confirmed to be unused or always constant by business stakeholders.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 1,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS campaign_type_permission_clean (LIKE campaign_type_permission INCLUDING ALL);",
+            "INSERT INTO campaign_type_permission_clean SELECT * FROM campaign_type_permission ON CONFLICT DO NOTHING;",
+            "ALTER TABLE campaign_type_permission_clean DROP COLUMN enabled;"
+          ],
+          "explanation": "This fix ensures a clean shadow table exists and is populated. It then removes the 'enabled' column from 'campaign_type_permission_clean'. This action should only be taken after confirming with business stakeholders that the column is indeed unused and not expected to vary, to avoid data loss or application errors."
+        },
+        {
+          "id": "fix_010",
+          "table": "rev_info",
+          "target_table": "rev_info_clean",
+          "problem": "The 'keycloak_id' column in 'rev_info' contains non-UUID values like 'SYSTEM', which semantically mismatch the expected UUID format.",
+          "fix": "Update non-UUID 'keycloak_id' values to a valid UUID or NULL, or delete the affected records.",
+          "severity": "high",
+          "confidence": 0.95,
+          "estimated_rows_affected": 5,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS rev_info_clean (LIKE rev_info INCLUDING ALL);",
+            "INSERT INTO rev_info_clean SELECT * FROM rev_info ON CONFLICT DO NOTHING;",
+            "UPDATE rev_info_clean SET keycloak_id = NULL WHERE keycloak_id !~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$';"
+          ],
+          "explanation": "This fix ensures a clean shadow table exists and is populated. It then updates records in 'rev_info_clean' where 'keycloak_id' does not conform to a standard UUID pattern, setting them to NULL. This corrects the semantic mismatch, but a more appropriate action (e.g., updating to a specific valid UUID or deleting the record) might be required based on business rules and should be reviewed."
+        },
+        {
+          "id": "fix_011",
+          "table": "user_roles",
+          "target_table": "user_roles_clean",
+          "problem": "The 'user_roles' table contains duplicate entries for the same 'user_id' and 'role_id' combination, violating an implied unique constraint.",
+          "fix": "Remove duplicate rows from 'user_roles', keeping only one instance for each unique 'user_id' and 'role_id' pair.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 10,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS user_roles_clean (LIKE user_roles INCLUDING ALL);",
+            "INSERT INTO user_roles_clean SELECT * FROM user_roles ON CONFLICT DO NOTHING;",
+            "DELETE FROM user_roles_clean WHERE ctid NOT IN (SELECT MIN(ctid) FROM user_roles_clean GROUP BY user_id, role_id);"
+          ],
+          "explanation": "This fix ensures a clean shadow table exists and is populated. It then removes duplicate rows from 'user_roles_clean' based on the combination of 'user_id' and 'role_id', preserving the oldest record (determined by ctid). This ensures that each user has a unique assignment to a role, maintaining data integrity."
+        },
+        {
+          "id": "fix_012",
+          "table": "mailjet_email",
+          "target_table": "mailjet_email_clean",
+          "problem": "The 'mailjet_email' table contains records where 'bounce_processed', 'spam_processed', and 'unsub_processed' are all NULL, violating a check constraint that requires at least one of them to be non-NULL.",
+          "fix": "Update violating records by setting 'bounce_processed' to FALSE to satisfy the check constraint.",
+          "severity": "critical",
+          "confidence": 0.95,
+          "estimated_rows_affected": 10,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS mailjet_email_clean (LIKE mailjet_email INCLUDING ALL);",
+            "INSERT INTO mailjet_email_clean SELECT * FROM mailjet_email ON CONFLICT DO NOTHING;",
+            "UPDATE mailjet_email_clean SET bounce_processed = FALSE WHERE bounce_processed IS NULL AND spam_processed IS NULL AND unsub_processed IS NULL;"
+          ],
+          "explanation": "This fix ensures a clean shadow table exists and is populated. It then updates records in 'mailjet_email_clean' that violate the check constraint by setting 'bounce_processed' to FALSE. This ensures that at least one of the required columns is non-NULL, bringing the data into compliance with the schema's integrity rules. The choice of 'bounce_processed' and 'FALSE' is a default and should be verified with business logic."
+        },
+        {
+          "id": "fix_013",
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts_clean",
+          "problem": "The 'campagne_contacts' table contains orphaned records where 'campagne_id' references a 'campagne' that does not exist, violating referential integrity.",
+          "fix": "Delete orphaned records from 'campagne_contacts' that reference non-existent 'campagne' entries.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 10,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS campagne_contacts_clean (LIKE campagne_contacts INCLUDING ALL);",
+            "INSERT INTO campagne_contacts_clean SELECT * FROM campagne_contacts ON CONFLICT DO NOTHING;",
+            "DELETE FROM campagne_contacts_clean WHERE campagne_id IN (SELECT cc.campagne_id FROM campagne_contacts_clean cc LEFT JOIN campagne c ON cc.campagne_id = c.id WHERE c.id IS NULL);"
+          ],
+          "explanation": "This fix ensures a clean shadow table exists and is populated. It then identifies and deletes records from 'campagne_contacts_clean' where the 'campagne_id' does not correspond to an existing 'id' in the 'campagne' table. This resolves referential integrity violations by removing child records that point to non-existent parent records."
+        }
+      ],
+      "prior_reports": [
+        {
+          "pipeline_run_id": "cbc04864-e7ba-4d1d-89e3-c46d14819a50",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-20T21:40:32.565547Z",
+          "agent": "SchemaIntegrityValidator",
+          "status": null,
+          "summary": {
+            "total_items_analyzed": 108,
+            "items_passed": 108,
+            "items_flagged": 0,
+            "critical_issues": 0,
+            "high_issues": 0,
+            "medium_issues": 0,
+            "low_issues": 0,
+            "overall_quality_score": 100.0,
+            "overall_confidence": 0.72,
+            "flagged_tables": []
+          },
+          "findings": [],
+          "quality_gate": {
+            "stage": "schema_validation",
+            "min_confidence": 0.55,
+            "min_evidence_rows": 0,
+            "require_evidence_query": false,
+            "accepted_count": 0,
+            "blocked_count": 0,
+            "meta": {
+              "elapsed_ms": 0,
+              "status": "ok",
+              "warnings": []
+            }
+          }
+        },
+        {
+          "pipeline_run_id": "cbc04864-e7ba-4d1d-89e3-c46d14819a50",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-20T21:43:18.678359Z",
+          "agent": "ColumnValidatorAgent",
+          "status": "partial",
+          "summary": {
+            "total_items_analyzed": 62,
+            "items_passed": 47,
+            "items_flagged": 15,
+            "critical_issues": 3,
+            "high_issues": 4,
+            "medium_issues": 6,
+            "low_issues": 2,
+            "overall_quality_score": 95.71,
+            "overall_confidence": 0.8056,
+            "flagged_tables": [
+              "budget_history",
+              "campagne",
+              "campaign_spool_state",
+              "campaign_type_permission",
+              "groupe",
+              "request_api",
+              "rev_info",
+              "smsc_routing_rule",
+              "user_mission"
+            ]
+          },
+          "findings": [
+            {
+              "table": "groupe",
+              "column": "admin_id",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "smsc_routing_rule",
+              "column": "expediteur_id",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "smsc_routing_rule",
+              "column": "groupe_id",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "user_mission",
+              "column": "groupe_id",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "campagne",
+              "column": "deactivated_by_group",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "campagne",
+              "column": "me_only",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "campaign_spool_state",
+              "column": "is_full",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "campaign_spool_state",
+              "column": "queued_max_size_reached",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "campaign_type_permission",
+              "column": "enabled",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "rev_info",
+              "column": "keycloak_id",
+              "status": "flagged",
+              "confidence_overall": 0.9
+            }
+          ],
+          "quality_gate": {
+            "stage": "column_validation",
+            "min_confidence": 0.55,
+            "min_evidence_rows": 0,
+            "require_evidence_query": false,
+            "accepted_count": 10,
+            "blocked_count": 5,
+            "meta": {
+              "elapsed_ms": 12,
+              "status": "partial",
+              "warnings": []
+            }
+          },
+          "errors": [
+            "quality_gate_blocked_low_evidence_or_low_confidence_findings"
+          ]
+        },
+        {
+          "pipeline_run_id": "cbc04864-e7ba-4d1d-89e3-c46d14819a50",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-20T21:45:23.004969Z",
+          "agent": "RowLevelValidator",
+          "status": null,
+          "summary": {
+            "total_items_analyzed": 0,
+            "items_passed": 0,
+            "items_flagged": 0,
+            "critical_issues": 0,
+            "high_issues": 0,
+            "medium_issues": 0,
+            "low_issues": 0,
+            "overall_quality_score": 100.0,
+            "overall_confidence": 0.0,
+            "flagged_tables": []
+          },
+          "findings": [],
+          "quality_gate": {
+            "stage": "row_level_validation",
+            "min_confidence": 0.55,
+            "min_evidence_rows": 0,
+            "require_evidence_query": false,
+            "accepted_count": 0,
+            "blocked_count": 0,
+            "meta": {
+              "elapsed_ms": 0,
+              "status": "ok",
+              "warnings": []
+            }
+          }
+        },
+        {
+          "pipeline_run_id": "cbc04864-e7ba-4d1d-89e3-c46d14819a50",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-20T21:47:12.281205Z",
+          "agent": "CrossRowValidator",
+          "status": null,
+          "summary": {
+            "total_items_analyzed": 0,
+            "items_passed": 0,
+            "items_flagged": 0,
+            "critical_issues": 0,
+            "high_issues": 0,
+            "medium_issues": 0,
+            "low_issues": 0,
+            "overall_quality_score": 100.0,
+            "overall_confidence": 0.0,
+            "flagged_tables": []
+          },
+          "findings": [],
+          "quality_gate": {
+            "stage": "cross_row_validation",
+            "min_confidence": 0.55,
+            "min_evidence_rows": 0,
+            "require_evidence_query": false,
+            "accepted_count": 0,
+            "blocked_count": 0,
+            "meta": {
+              "elapsed_ms": 0,
+              "status": "ok",
+              "warnings": []
+            }
+          }
+        }
+      ]
+    }
+  }
+}

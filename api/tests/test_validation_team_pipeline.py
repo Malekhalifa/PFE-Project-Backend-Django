@@ -9,11 +9,37 @@ import django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 django.setup()
 
-from agents.reporting import report_to_markdown
+from agents.reporting import report_to_markdown, build_row_report
 from agents.validation_team import _parse_column_report, orchestrator_workflow
 
 
 class ValidationTeamPipelineTests(unittest.TestCase):
+    def test_build_row_report_caps_confidence_without_findings_evidence(self):
+        raw = json.dumps(
+            {
+                "findings": [],
+                "metrics": {
+                    "total_rows_analyzed": 13,
+                    "rows_with_issues": 0,
+                    "avg_row_quality_score": 100.0,
+                    "avg_row_confidence": 1.0,
+                },
+            }
+        )
+
+        report = build_row_report(
+            raw,
+            pipeline_run_id="run_test_1",
+            database_id="db_test",
+            prior_reports=[],
+        )
+
+        self.assertEqual(report["metrics"]["total_rows_analyzed"], 13)
+        self.assertEqual(report["metrics"]["avg_row_confidence"], 0.73)
+        self.assertEqual(report["summary"]["overall_confidence"], 0.73)
+        self.assertEqual(report.get("status"), "partial")
+        self.assertIn("row_validator_no_findings_or_execution_evidence", report.get("errors", []))
+
     def test_parse_column_report_accepts_fenced_json(self):
         raw = """```json
 {
@@ -344,10 +370,12 @@ class ValidationTeamPipelineTests(unittest.TestCase):
     @patch("services.report_service.save_final_pipeline_report")
     @patch("agents.validation_team.DatabaseGuidelineGeneratorAgent")
     @patch("agents.validation_team.Agent")
+    @patch("agents.validation_team.execute_pg_query")
     @patch("agents.validation_team.postgres_tool")
     def test_pipeline_marks_partial_when_output_invalid(
         self,
         mock_postgres_tool,
+        mock_execute_pg_query,
         mock_agent_cls,
         mock_generator_cls,
         mock_save_report,
@@ -388,6 +416,8 @@ class ValidationTeamPipelineTests(unittest.TestCase):
             SimpleNamespace(content=json.dumps(fix_payload)),
         ]
 
+        mock_execute_pg_query.return_value = "Database Error: not connected"
+
         agent_instances = []
         for response in responses:
             instance = MagicMock()
@@ -406,6 +436,226 @@ class ValidationTeamPipelineTests(unittest.TestCase):
         # Pipeline still progresses and emits final report.
         self.assertIn("data_fix_planner", reports)
         self.assertIn("report_file_path", result)
+
+    @patch("services.report_service.save_final_pipeline_report")
+    @patch("agents.validation_team.DatabaseGuidelineGeneratorAgent")
+    @patch("agents.validation_team.Agent")
+    @patch("agents.validation_team.execute_pg_query")
+    @patch("agents.validation_team.postgres_tool")
+    def test_pipeline_recovers_empty_schema_metrics_with_live_baseline(
+        self,
+        mock_postgres_tool,
+        mock_execute_pg_query,
+        mock_agent_cls,
+        mock_generator_cls,
+        mock_save_report,
+    ):
+        generator = mock_generator_cls.return_value
+        generator.generate.side_effect = [
+            "schema-guidelines",
+            "column-guidelines",
+            "row-guidelines",
+            "cross-guidelines",
+            "fix-guidelines",
+        ]
+
+        mock_save_report.return_value = {
+            "report_file_path": "/tmp/report_localhost_5432_db.json",
+            "report_file_name": "report_localhost_5432_db.json",
+            "report_timestamp": "2026-04-11T12:05:00Z",
+            "report_database_id": "localhost_5432_db",
+        }
+
+        schema_payload = {
+            "findings": [],
+            "metrics": {
+                "total_tables": 0,
+                "total_columns": 0,
+                "tables_with_no_primary_key": 0,
+                "missing_foreign_keys": 0,
+                "constraint_violations": 0,
+                "type_mismatches": 0,
+                "nullable_violations": 0,
+            },
+            "summary": {
+                "total_items_analyzed": 0,
+                "items_passed": 0,
+                "items_flagged": 0,
+                "critical_issues": 0,
+                "high_issues": 0,
+                "medium_issues": 0,
+                "low_issues": 0,
+                "overall_quality_score": 100,
+                "overall_confidence": 0.72,
+                "flagged_tables": [],
+            },
+        }
+        column_payload = {
+            "findings": [],
+            "metrics": {"total_columns_analyzed": 1},
+        }
+        row_payload = {
+            "findings": [],
+            "metrics": {"total_rows_analyzed": 1},
+        }
+        cross_payload = {
+            "findings": [],
+            "metrics": {"total_row_pairs_analyzed": 1},
+        }
+        fix_payload = {
+            "findings": [],
+        }
+
+        responses = [
+            SimpleNamespace(content=json.dumps(schema_payload)),
+            SimpleNamespace(content=json.dumps(column_payload)),
+            SimpleNamespace(content=json.dumps(row_payload)),
+            SimpleNamespace(content=json.dumps(cross_payload)),
+            SimpleNamespace(content=json.dumps(fix_payload)),
+        ]
+
+        agent_instances = []
+        for response in responses:
+            instance = MagicMock()
+            instance.run.return_value = response
+            agent_instances.append(instance)
+        mock_agent_cls.side_effect = agent_instances
+
+        def _baseline_counts(query: str) -> str:
+            if "FROM information_schema.tables t" in query and "PRIMARY KEY" in query:
+                return json.dumps([{"cnt": 4}])
+            if "FROM information_schema.tables" in query and "COUNT" in query and "table_type = 'BASE TABLE'" in query:
+                return json.dumps([{"cnt": 94}])
+            if "FROM information_schema.columns" in query and "COUNT" in query:
+                return json.dumps([{"cnt": 612}])
+            return json.dumps([{"cnt": 0}])
+
+        mock_execute_pg_query.side_effect = _baseline_counts
+
+        result = orchestrator_workflow(
+            connection_string="postgresql://user:pass@localhost:5432/db",
+            domain_rules="",
+        )
+
+        schema_report = result["agent_reports"]["schema_integrity_validator"]
+        self.assertEqual(schema_report["status"], "partial")
+        self.assertIn("schema_agent_returned_empty_output_for_non_empty_database", schema_report["errors"])
+        self.assertEqual(schema_report["metrics"]["total_tables"], 94)
+        self.assertEqual(schema_report["metrics"]["total_columns"], 612)
+        self.assertEqual(schema_report["metrics"]["tables_with_no_primary_key"], 4)
+        self.assertEqual(schema_report["summary"]["total_items_analyzed"], 94)
+
+    @patch("services.report_service.save_final_pipeline_report")
+    @patch("agents.validation_team.DatabaseGuidelineGeneratorAgent")
+    @patch("agents.validation_team.Agent")
+    @patch("agents.validation_team.execute_pg_query")
+    @patch("agents.validation_team.postgres_tool")
+    def test_pipeline_recalibrates_row_totals_for_overconfident_empty_row_report(
+        self,
+        mock_postgres_tool,
+        mock_execute_pg_query,
+        mock_agent_cls,
+        mock_generator_cls,
+        mock_save_report,
+    ):
+        generator = mock_generator_cls.return_value
+        generator.generate.side_effect = [
+            "schema-guidelines",
+            "column-guidelines",
+            "row-guidelines",
+            "cross-guidelines",
+            "fix-guidelines",
+        ]
+
+        mock_save_report.return_value = {
+            "report_file_path": "/tmp/report_localhost_5432_db.json",
+            "report_file_name": "report_localhost_5432_db.json",
+            "report_timestamp": "2026-04-11T12:05:00Z",
+            "report_database_id": "localhost_5432_db",
+        }
+
+        schema_payload = {
+            "findings": [
+                {
+                    "table": "users",
+                    "issues": [
+                        {
+                            "type": "missing_primary_key",
+                            "severity": "high",
+                            "description": "users has no PK",
+                        }
+                    ],
+                    "confidence": 0.88,
+                }
+            ],
+            "metrics": {
+                "total_tables": 2,
+                "total_columns": 7,
+                "tables_with_no_primary_key": 1,
+                "missing_foreign_keys": 0,
+                "constraint_violations": 0,
+                "type_mismatches": 0,
+                "nullable_violations": 0,
+            },
+        }
+        column_payload = {
+            "findings": [],
+            "metrics": {"total_columns_analyzed": 1},
+        }
+        row_payload = {
+            "findings": [],
+            "metrics": {
+                "total_rows_analyzed": 15,
+                "rows_with_issues": 0,
+                "rows_with_issues_ratio": 0.0,
+                "format_violations": 0,
+                "encoding_issues": 0,
+                "hidden_null_count": 0,
+                "outlier_rows": 0,
+                "avg_row_quality_score": 100.0,
+                "avg_row_confidence": 1.0,
+                "queries_executed": 12,
+            },
+        }
+        cross_payload = {
+            "findings": [],
+            "metrics": {"total_row_pairs_analyzed": 1},
+        }
+        fix_payload = {"findings": []}
+
+        responses = [
+            SimpleNamespace(content=json.dumps(schema_payload)),
+            SimpleNamespace(content=json.dumps(column_payload)),
+            SimpleNamespace(content=json.dumps(row_payload)),
+            SimpleNamespace(content=json.dumps(cross_payload)),
+            SimpleNamespace(content=json.dumps(fix_payload)),
+        ]
+
+        agent_instances = []
+        for response in responses:
+            instance = MagicMock()
+            instance.run.return_value = response
+            agent_instances.append(instance)
+        mock_agent_cls.side_effect = agent_instances
+
+        def _row_baseline(query: str) -> str:
+            if "query_to_xml" in query and "pg_stat_user_tables" in query:
+                return json.dumps([{"cnt": 2500}])
+            return json.dumps([{"cnt": 0}])
+
+        mock_execute_pg_query.side_effect = _row_baseline
+
+        result = orchestrator_workflow(
+            connection_string="postgresql://user:pass@localhost:5432/db",
+            domain_rules="",
+        )
+
+        row_report = result["agent_reports"]["row_level_validator"]
+        self.assertEqual(row_report["status"], "partial")
+        self.assertIn("row_total_rows_recalibrated_from_live_database", row_report["errors"])
+        self.assertEqual(row_report["metrics"]["total_rows_analyzed"], 2500)
+        self.assertEqual(row_report["metrics"]["rows_with_issues_ratio"], 0.0)
+        self.assertEqual(row_report["summary"]["total_items_analyzed"], 2500)
 
     @patch("agents.validation_team.time.sleep", return_value=None)
     @patch("services.report_service.save_final_pipeline_report")

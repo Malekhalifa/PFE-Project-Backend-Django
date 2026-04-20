@@ -61,9 +61,15 @@ logger = logging.getLogger(__name__)
 
 _GEMINI_MODEL_ID = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
 _GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
-_VALIDATOR_TOOL_CALL_LIMIT = int(os.environ.get("VALIDATOR_TOOL_CALL_LIMIT", "40"))
-_CROSS_ROW_TOOL_CALL_LIMIT = int(os.environ.get("CROSS_ROW_TOOL_CALL_LIMIT", "60"))
-_FIX_PLANNER_TOOL_CALL_LIMIT = int(os.environ.get("FIX_PLANNER_TOOL_CALL_LIMIT", "30"))
+_LEGACY_VALIDATOR_TOOL_CALL_LIMIT = int(os.environ.get("VALIDATOR_TOOL_CALL_LIMIT", "40000"))
+_SCHEMA_TOOL_CALL_LIMIT = int(os.environ.get("SCHEMA_TOOL_CALL_LIMIT", str(_LEGACY_VALIDATOR_TOOL_CALL_LIMIT)))
+_COLUMN_TOOL_CALL_LIMIT = int(os.environ.get("COLUMN_TOOL_CALL_LIMIT", str(_LEGACY_VALIDATOR_TOOL_CALL_LIMIT)))
+_ROW_TOOL_CALL_LIMIT = int(os.environ.get("ROW_TOOL_CALL_LIMIT", str(_LEGACY_VALIDATOR_TOOL_CALL_LIMIT)))
+_CROSS_ROW_TOOL_CALL_LIMIT = int(os.environ.get("CROSS_ROW_TOOL_CALL_LIMIT", "60000"))
+_FIX_PLANNER_TOOL_CALL_LIMIT = int(os.environ.get("FIX_PLANNER_TOOL_CALL_LIMIT", "30000"))
+_PIPELINE_PRIOR_REPORTS_MAX_CHARS = max(2_000, int(os.environ.get("PIPELINE_PRIOR_REPORTS_MAX_CHARS", "24000")))
+_PIPELINE_PRIOR_REPORT_FINDINGS_LIMIT = max(1, int(os.environ.get("PIPELINE_PRIOR_REPORT_FINDINGS_LIMIT", "12")))
+_PIPELINE_PRIOR_FINDING_TEXT_MAX_CHARS = max(60, int(os.environ.get("PIPELINE_PRIOR_FINDING_TEXT_MAX_CHARS", "220")))
 _PIPELINE_STEP_MAX_RETRIES = max(0, int(os.environ.get("PIPELINE_STEP_MAX_RETRIES", "2")))
 _PIPELINE_STEP_RETRY_BASE_DELAY_SECONDS = max(
     0.0,
@@ -212,7 +218,66 @@ def _inject_guidelines(guidelines: str) -> str:
 def _serialize_prior_reports(prior_reports: list[dict]) -> str:
     if not prior_reports:
         return "[]"
-    return json.dumps(prior_reports, ensure_ascii=False, indent=2)
+    serialized = json.dumps(prior_reports, ensure_ascii=False, separators=(",", ":"))
+    if len(serialized) <= _PIPELINE_PRIOR_REPORTS_MAX_CHARS:
+        return serialized
+
+    fallback_payload = [
+        {
+            "notice": "prior_reports_context_truncated",
+            "total_reports": len(prior_reports),
+            "max_chars": _PIPELINE_PRIOR_REPORTS_MAX_CHARS,
+        }
+    ]
+    return json.dumps(fallback_payload, ensure_ascii=False, separators=(",", ":"))
+
+
+def _truncate_context_text(value: object, *, max_chars: int) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    if len(text) <= max_chars:
+        return text
+    return text[: max_chars - 3] + "..."
+
+
+def _compact_finding_context(finding: dict) -> dict:
+    if not isinstance(finding, dict):
+        return {}
+
+    compact: dict = {}
+    for key in ("issue_id", "table", "column", "severity", "status"):
+        value = finding.get(key)
+        if value not in (None, ""):
+            compact[key] = value
+
+    primary_description = finding.get("problem_description") or finding.get("description") or finding.get("problem")
+    primary_description = _truncate_context_text(
+        primary_description,
+        max_chars=_PIPELINE_PRIOR_FINDING_TEXT_MAX_CHARS,
+    )
+    if primary_description:
+        compact["problem_description"] = primary_description
+
+    impact_estimate = _truncate_context_text(
+        finding.get("impact_estimate"),
+        max_chars=_PIPELINE_PRIOR_FINDING_TEXT_MAX_CHARS,
+    )
+    if impact_estimate:
+        compact["impact_estimate"] = impact_estimate
+
+    remediation_hint = _truncate_context_text(
+        finding.get("remediation_hint"),
+        max_chars=_PIPELINE_PRIOR_FINDING_TEXT_MAX_CHARS,
+    )
+    if remediation_hint:
+        compact["remediation_hint"] = remediation_hint
+
+    confidence = finding.get("confidence_overall", finding.get("confidence"))
+    if confidence is not None:
+        compact["confidence_overall"] = confidence
+
+    return compact
 
 
 def _extract_compact_findings(prior_reports: list[dict]) -> str:
@@ -266,6 +331,13 @@ def _compact_report_context(report: dict) -> dict:
     if not isinstance(report, dict):
         return {}
 
+    findings_input = report.get("findings") if isinstance(report.get("findings"), list) else []
+    compact_findings = []
+    for finding in findings_input[:_PIPELINE_PRIOR_REPORT_FINDINGS_LIMIT]:
+        compact_finding = _compact_finding_context(finding)
+        if compact_finding:
+            compact_findings.append(compact_finding)
+
     compact_report = {
         "pipeline_run_id": report.get("pipeline_run_id"),
         "database_id": report.get("database_id"),
@@ -273,8 +345,14 @@ def _compact_report_context(report: dict) -> dict:
         "agent": report.get("agent"),
         "status": report.get("status"),
         "summary": clone_json(report.get("summary") if isinstance(report.get("summary"), dict) else {}),
-        "findings": clone_json(report.get("findings") if isinstance(report.get("findings"), list) else []),
+        "findings": compact_findings,
     }
+
+    if len(findings_input) > len(compact_findings):
+        compact_report["context_truncation"] = {
+            "findings_kept": len(compact_findings),
+            "findings_total": len(findings_input),
+        }
 
     if isinstance(report.get("quality_gate"), dict):
         compact_report["quality_gate"] = clone_json(report.get("quality_gate"))
@@ -485,6 +563,296 @@ def _generate_guidelines(
     return guidelines
 
 
+def _extract_count_value(query_output: str) -> int | None:
+    parsed, _ = parse_json_payload(query_output)
+    if not isinstance(parsed, list) or not parsed:
+        return None
+
+    first_row = parsed[0]
+    if not isinstance(first_row, dict) or not first_row:
+        return None
+
+    for key in ("cnt", "count", "total"):
+        if key in first_row:
+            try:
+                return int(first_row.get(key))
+            except Exception:
+                return None
+
+    if len(first_row) == 1:
+        try:
+            return int(next(iter(first_row.values())))
+        except Exception:
+            return None
+
+    return None
+
+
+def _probe_schema_baseline_counts() -> dict[str, int] | None:
+    total_tables = _extract_count_value(
+        execute_pg_query(
+            "SELECT COUNT(*)::int AS cnt "
+            "FROM information_schema.tables "
+            "WHERE table_schema = 'public' AND table_type = 'BASE TABLE'"
+        )
+    )
+    total_columns = _extract_count_value(
+        execute_pg_query(
+            "SELECT COUNT(*)::int AS cnt "
+            "FROM information_schema.columns "
+            "WHERE table_schema = 'public'"
+        )
+    )
+    tables_with_no_pk = _extract_count_value(
+        execute_pg_query(
+            "SELECT COUNT(*)::int AS cnt "
+            "FROM information_schema.tables t "
+            "WHERE t.table_schema = 'public' AND t.table_type = 'BASE TABLE' "
+            "AND NOT EXISTS ("
+            "  SELECT 1 "
+            "  FROM information_schema.table_constraints tc "
+            "  WHERE tc.table_schema = t.table_schema "
+            "    AND tc.table_name = t.table_name "
+            "    AND tc.constraint_type = 'PRIMARY KEY'"
+            ")"
+        )
+    )
+
+    if total_tables is None or total_columns is None or tables_with_no_pk is None:
+        return None
+
+    return {
+        "total_tables": max(total_tables, 0),
+        "total_columns": max(total_columns, 0),
+        "tables_with_no_primary_key": max(tables_with_no_pk, 0),
+    }
+
+
+def _is_effectively_empty_schema_report(report: dict) -> bool:
+    if not isinstance(report, dict):
+        return False
+
+    metrics = report.get("metrics") if isinstance(report.get("metrics"), dict) else {}
+    summary = report.get("summary") if isinstance(report.get("summary"), dict) else {}
+    findings = report.get("findings") if isinstance(report.get("findings"), list) else []
+
+    def _as_non_negative_int(value: object) -> int:
+        try:
+            return max(int(value or 0), 0)
+        except Exception:
+            return 0
+
+    total_tables = _as_non_negative_int(metrics.get("total_tables"))
+    total_columns = _as_non_negative_int(metrics.get("total_columns"))
+    total_items = _as_non_negative_int(summary.get("total_items_analyzed"))
+
+    return total_tables == 0 and total_columns == 0 and total_items == 0 and len(findings) == 0
+
+
+def _repair_empty_schema_report(report: dict) -> dict:
+    if not _is_effectively_empty_schema_report(report):
+        return report
+
+    baseline = _probe_schema_baseline_counts()
+    if not baseline or baseline.get("total_tables", 0) <= 0:
+        return report
+
+    repaired = clone_json(report)
+    metrics = repaired.get("metrics") if isinstance(repaired.get("metrics"), dict) else {}
+    summary = repaired.get("summary") if isinstance(repaired.get("summary"), dict) else {}
+
+    def _safe_int(value: object) -> int:
+        try:
+            return int(value or 0)
+        except Exception:
+            return 0
+
+    metrics["total_tables"] = max(_safe_int(metrics.get("total_tables")), int(baseline["total_tables"]))
+    metrics["total_columns"] = max(_safe_int(metrics.get("total_columns")), int(baseline["total_columns"]))
+    metrics["tables_with_no_primary_key"] = max(
+        _safe_int(metrics.get("tables_with_no_primary_key")),
+        int(baseline["tables_with_no_primary_key"]),
+    )
+
+    metrics["missing_foreign_keys"] = max(_safe_int(metrics.get("missing_foreign_keys")), 0)
+    metrics["constraint_violations"] = max(_safe_int(metrics.get("constraint_violations")), 0)
+    metrics["type_mismatches"] = max(_safe_int(metrics.get("type_mismatches")), 0)
+    metrics["nullable_violations"] = max(_safe_int(metrics.get("nullable_violations")), 0)
+
+    summary["total_items_analyzed"] = max(
+        _safe_int(summary.get("total_items_analyzed")),
+        _safe_int(metrics.get("total_tables")),
+    )
+
+    marker = "schema_agent_returned_empty_output_for_non_empty_database"
+    existing_errors = repaired.get("errors") if isinstance(repaired.get("errors"), list) else []
+    if marker not in existing_errors:
+        existing_errors.append(marker)
+
+    repaired["metrics"] = metrics
+    repaired["summary"] = summary
+    repaired["errors"] = existing_errors
+    repaired["status"] = "partial"
+    return repaired
+
+
+def _probe_total_public_rows() -> int | None:
+    exact_total = _extract_count_value(
+        execute_pg_query(
+            "SELECT COALESCE(SUM(row_count), 0)::bigint AS cnt "
+            "FROM ("
+            "  SELECT COALESCE((xpath('/row/cnt/text()', query_to_xml("
+            "    format('SELECT COUNT(*) AS cnt FROM %I.%I', schemaname, relname),"
+            "    true, true, ''"
+            "  )))[1]::text::bigint, 0) AS row_count "
+            "  FROM pg_catalog.pg_stat_user_tables "
+            "  WHERE schemaname = 'public'"
+            ") counted"
+        )
+    )
+    if exact_total is not None:
+        return max(exact_total, 0)
+
+    estimated_total = _extract_count_value(
+        execute_pg_query(
+            "SELECT COALESCE(SUM(n_live_tup)::bigint, 0) AS cnt "
+            "FROM pg_catalog.pg_stat_user_tables "
+            "WHERE schemaname = 'public'"
+        )
+    )
+    if estimated_total is None:
+        return None
+    return max(estimated_total, 0)
+
+
+def _report_findings_count(report: dict) -> int:
+    if not isinstance(report, dict):
+        return 0
+    findings = report.get("findings")
+    if not isinstance(findings, list):
+        return 0
+    return len([item for item in findings if isinstance(item, dict)])
+
+
+def _report_metric_int(report: dict, metric_key: str) -> int:
+    if not isinstance(report, dict):
+        return 0
+    metrics = report.get("metrics") if isinstance(report.get("metrics"), dict) else {}
+    summary = report.get("summary") if isinstance(report.get("summary"), dict) else {}
+
+    raw = metrics.get(metric_key)
+    if raw is None:
+        raw = summary.get("total_items_analyzed")
+
+    try:
+        return max(int(raw or 0), 0)
+    except Exception:
+        return 0
+
+
+def _needs_low_coverage_retry(step_name: str, report: dict) -> bool:
+    if step_name not in {"row_level_validation", "cross_row_validation"}:
+        return False
+    if not isinstance(report, dict):
+        return False
+
+    findings_count = _report_findings_count(report)
+    if findings_count > 0:
+        return False
+
+    total_rows = _probe_total_public_rows()
+    if total_rows is None or total_rows <= 0:
+        return False
+
+    if step_name == "row_level_validation":
+        analyzed = _report_metric_int(report, "total_rows_analyzed")
+        return analyzed <= 0
+
+    analyzed_pairs = _report_metric_int(report, "total_row_pairs_analyzed")
+    return total_rows > 1 and analyzed_pairs <= 0
+
+
+def _mark_low_coverage_partial(step_name: str, report: dict) -> dict:
+    if step_name not in {"row_level_validation", "cross_row_validation"}:
+        return report
+    if not isinstance(report, dict):
+        return report
+
+    total_rows = _probe_total_public_rows()
+    if total_rows is None or total_rows <= 0:
+        return report
+
+    if step_name == "row_level_validation":
+        analyzed = _report_metric_int(report, "total_rows_analyzed")
+        if analyzed > 0:
+            return report
+        marker = "row_validator_low_coverage_on_non_empty_database"
+    else:
+        analyzed = _report_metric_int(report, "total_row_pairs_analyzed")
+        if total_rows <= 1 or analyzed > 0:
+            return report
+        marker = "cross_row_validator_low_coverage_on_non_empty_database"
+
+    patched = clone_json(report)
+    patched["status"] = "partial"
+    errors = patched.get("errors") if isinstance(patched.get("errors"), list) else []
+    if marker not in errors:
+        errors.append(marker)
+    patched["errors"] = errors
+    return patched
+
+
+def _repair_suspicious_row_totals(report: dict) -> dict:
+    if not isinstance(report, dict):
+        return report
+
+    metrics = report.get("metrics") if isinstance(report.get("metrics"), dict) else {}
+    summary = report.get("summary") if isinstance(report.get("summary"), dict) else {}
+    def _safe_int(value: object) -> int:
+        try:
+            return int(value or 0)
+        except Exception:
+            return 0
+
+    reported_total = _safe_int(metrics.get("total_rows_analyzed"))
+    if reported_total <= 0:
+        reported_total = _safe_int(summary.get("total_items_analyzed"))
+
+    if reported_total <= 0:
+        return report
+
+    baseline_total = _probe_total_public_rows()
+    if baseline_total is None or baseline_total <= 0 or baseline_total == reported_total:
+        return report
+
+    repaired = clone_json(report)
+    repaired_metrics = repaired.get("metrics") if isinstance(repaired.get("metrics"), dict) else {}
+    repaired_summary = repaired.get("summary") if isinstance(repaired.get("summary"), dict) else {}
+
+    rows_with_issues = max(_safe_int(repaired_metrics.get("rows_with_issues")), 0)
+
+    repaired_metrics["total_rows_analyzed"] = int(baseline_total)
+    repaired_metrics["rows_with_issues_ratio"] = round(
+        (rows_with_issues / baseline_total) if baseline_total > 0 else 0.0,
+        4,
+    )
+
+    items_flagged = max(_safe_int(repaired_summary.get("items_flagged")), 0)
+    repaired_summary["total_items_analyzed"] = int(baseline_total)
+    repaired_summary["items_passed"] = max(int(baseline_total) - items_flagged, 0)
+
+    marker = "row_total_rows_recalibrated_from_live_database"
+    existing_errors = repaired.get("errors") if isinstance(repaired.get("errors"), list) else []
+    if marker not in existing_errors:
+        existing_errors.append(marker)
+
+    repaired["metrics"] = repaired_metrics
+    repaired["summary"] = repaired_summary
+    repaired["errors"] = existing_errors
+    repaired["status"] = "partial"
+    return repaired
+
+
 def _run_validator_stage(
     *,
     hooks: _PipelineHooks,
@@ -501,6 +869,19 @@ def _run_validator_stage(
     database_id: str,
     prior_reports: list[dict],
 ) -> dict:
+    def _should_retry_invalid_json_report(report: dict) -> bool:
+        if step_name not in {"column_validation", "cross_row_validation"}:
+            return False
+        if not isinstance(report, dict):
+            return False
+
+        findings = report.get("findings") if isinstance(report.get("findings"), list) else []
+        if findings:
+            return False
+
+        errors = report.get("errors") if isinstance(report.get("errors"), list) else []
+        return "invalid_json_payload" in errors
+
     def _action() -> dict:
         agent = Agent(
             name=agent_name,
@@ -523,7 +904,66 @@ def _run_validator_stage(
             prior_reports=prior_reports,
             runtime_error=runtime_error,
         )
-        return _apply_quality_gate(report, step_name)
+
+        if _should_retry_invalid_json_report(report):
+            logger.warning(
+                "Validator agent '%s' returned invalid JSON; retrying once with stricter JSON reminder.",
+                agent_name,
+            )
+            retry_prompt = (
+                prompt
+                + "\n\nIMPORTANT: Your previous response was invalid JSON. "
+                + "Retry now and return ONLY valid JSON matching the required contract. "
+                + "No markdown fences, no commentary, no extra text."
+            )
+            retry_raw, retry_runtime_error = _run_agent(agent, retry_prompt)
+            if retry_runtime_error:
+                logger.warning("Validator agent '%s' retry failed: %s", agent_name, retry_runtime_error)
+            else:
+                retry_report = report_builder(
+                    retry_raw,
+                    pipeline_run_id=pipeline_run_id,
+                    database_id=database_id,
+                    prior_reports=prior_reports,
+                    runtime_error=None,
+                )
+                if not _should_retry_invalid_json_report(retry_report):
+                    report = retry_report
+
+        if _needs_low_coverage_retry(step_name, report):
+            logger.warning(
+                "Validator agent '%s' returned low-coverage output on non-empty DB; retrying with explicit coverage constraints.",
+                agent_name,
+            )
+            coverage_retry_prompt = (
+                prompt
+                + "\n\nIMPORTANT COVERAGE REQUIREMENT: The database is non-empty. "
+                + "You MUST execute concrete SELECT checks and include non-zero coverage metrics "
+                + "(total_rows_analyzed for row-level, total_row_pairs_analyzed for cross-row) OR return status='partial' "
+                + "with explicit skipped_checks and execution constraints. "
+                + "Do not return status='completed' with zero analyzed items on a non-empty database."
+            )
+            coverage_raw, coverage_runtime_error = _run_agent(agent, coverage_retry_prompt)
+            if coverage_runtime_error:
+                logger.warning("Validator agent '%s' low-coverage retry failed: %s", agent_name, coverage_runtime_error)
+            else:
+                coverage_report = report_builder(
+                    coverage_raw,
+                    pipeline_run_id=pipeline_run_id,
+                    database_id=database_id,
+                    prior_reports=prior_reports,
+                    runtime_error=None,
+                )
+                if not _needs_low_coverage_retry(step_name, coverage_report):
+                    report = coverage_report
+
+        if step_name == "schema_validation":
+            report = _repair_empty_schema_report(report)
+        elif step_name == "row_level_validation":
+            report = _repair_suspicious_row_totals(report)
+        report = _apply_quality_gate(report, step_name)
+        report = _mark_low_coverage_partial(step_name, report)
+        return report
 
     return hooks.run_step(step=step_name, running_status=running_status, action=_action)
 
@@ -698,9 +1138,9 @@ def orchestrator_workflow(
     stage_limits_payload = allocate_query_budget(
         table_stats=[],
         default_limits={
-            "schema": _VALIDATOR_TOOL_CALL_LIMIT,
-            "column": _VALIDATOR_TOOL_CALL_LIMIT,
-            "row": _VALIDATOR_TOOL_CALL_LIMIT,
+            "schema": _SCHEMA_TOOL_CALL_LIMIT,
+            "column": _COLUMN_TOOL_CALL_LIMIT,
+            "row": _ROW_TOOL_CALL_LIMIT,
             "cross_row": _CROSS_ROW_TOOL_CALL_LIMIT,
             "fix_planner": _FIX_PLANNER_TOOL_CALL_LIMIT,
         },
@@ -741,7 +1181,7 @@ def orchestrator_workflow(
         agent_name="Schema Integrity Validator",
         description=SCHEMA_DESCRIPTION,
         instructions=SCHEMA_INSTRUCTIONS,
-        tool_call_limit=int(stage_limits.get("schema", _VALIDATOR_TOOL_CALL_LIMIT)),
+        tool_call_limit=int(stage_limits.get("schema", _SCHEMA_TOOL_CALL_LIMIT)),
         model_id=resolved_model_id,
         prompt=schema_prompt,
         report_builder=build_schema_report,
@@ -772,8 +1212,7 @@ def orchestrator_workflow(
         + "constant_columns_found, high_null_ratio_columns, low_cardinality_anomalies, "
         + "high_cardinality_anomalies, semantic_mismatches, domain_violations, "
         + "distribution_anomalies, avg_column_quality_score, avg_column_confidence."
-        + "\n\n--- Schema Report (JSON) ---\n"
-        + json.dumps(schema_report, ensure_ascii=False, indent=2)
+        + "\n\nLeverage prior schema findings from the prior_reports section to focus validation."
         + _PRIOR_REPORTS_SECTION
         + _serialize_prior_reports(prior_reports)
         + rules_section
@@ -785,7 +1224,7 @@ def orchestrator_workflow(
         agent_name="Column Validator",
         description=COLUMN_VALIDATOR_DESCRIPTION,
         instructions=COLUMN_VALIDATOR_INSTRUCTIONS,
-        tool_call_limit=int(stage_limits.get("column", _VALIDATOR_TOOL_CALL_LIMIT)),
+        tool_call_limit=int(stage_limits.get("column", _COLUMN_TOOL_CALL_LIMIT)),
         model_id=resolved_model_id,
         prompt=column_prompt,
         report_builder=build_column_report,
@@ -810,9 +1249,13 @@ def orchestrator_workflow(
         + "Perform row-level validation and return structured JSON findings. "
         + _JSON_REPORT_CONTRACT
         + "\n\nFor every finding, include practical remediation_hint and explain likely downstream impact."
-        + "\n\nPopulate row metrics exactly: total_rows_analyzed, rows_with_issues, rows_with_issues_ratio, "
+        + "\n\nPopulate row metrics with at least: total_rows_analyzed, rows_with_issues, rows_with_issues_ratio, "
         + "format_violations, encoding_issues, hidden_null_count, outlier_rows, "
         + "avg_row_quality_score, avg_row_confidence."
+        + " When no violations are found, include execution evidence fields "
+        + "(checks_executed, queries_executed, tables_checked, or checks[] with query snapshots)."
+        + " Never return status='completed' with total_rows_analyzed=0 when the public schema has rows. "
+        + "If coverage is constrained, return status='partial' and include skipped_checks with reason."
         + _PRIOR_REPORTS_SECTION
         + _serialize_prior_reports(prior_reports)
         + rules_section
@@ -824,7 +1267,7 @@ def orchestrator_workflow(
         agent_name="Row Level Validator",
         description=ROW_LEVEL_DESCRIPTION,
         instructions=ROW_LEVEL_INSTRUCTIONS,
-        tool_call_limit=int(stage_limits.get("row", _VALIDATOR_TOOL_CALL_LIMIT)),
+        tool_call_limit=int(stage_limits.get("row", _ROW_TOOL_CALL_LIMIT)),
         model_id=resolved_model_id,
         prompt=row_prompt,
         report_builder=build_row_report,
@@ -851,6 +1294,8 @@ def orchestrator_workflow(
         + "\n\nFor every finding, include impact_estimate and remediation_hint grounded in observed relationships."
         + "\n\nPopulate cross-row metrics exactly: total_row_pairs_analyzed, temporal_anomalies, sequential_breaks, "
         + "cross_column_violations, row_pattern_anomalies, tables_with_cross_row_issues, avg_relationship_confidence."
+        + " Never return status='completed' with total_row_pairs_analyzed=0 when the public schema has multiple rows. "
+        + "If coverage is constrained, return status='partial' and include skipped_checks with reason."
         + _PRIOR_REPORTS_SECTION
         + _serialize_prior_reports(prior_reports)
         + rules_section

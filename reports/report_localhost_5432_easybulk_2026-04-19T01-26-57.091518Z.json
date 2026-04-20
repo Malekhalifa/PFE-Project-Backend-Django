@@ -1,0 +1,2319 @@
+{
+  "pipeline_run_id": "9faea20b-a773-4989-bb9b-0ca959218c8a",
+  "database_id": "localhost_5432_easybulk",
+  "llm_model": "gemini-2.0-flash",
+  "run_timestamp": "2026-04-19T01:26:57.091518Z",
+  "summary": {
+    "confidence_score": 86,
+    "data_quality_score": 94
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "9faea20b-a773-4989-bb9b-0ca959218c8a",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-19T01:23:32.569311Z",
+      "agent": "SchemaIntegrityValidator",
+      "summary": {
+        "total_items_analyzed": 50,
+        "items_passed": 35,
+        "items_flagged": 15,
+        "critical_issues": 3,
+        "high_issues": 2,
+        "medium_issues": 5,
+        "low_issues": 5,
+        "overall_quality_score": 95.5,
+        "overall_confidence": 0.72,
+        "flagged_tables": [
+          "auth_group_permissions",
+          "auth_user",
+          "auth_user_groups",
+          "auth_user_user_permissions",
+          "campagne",
+          "cleaning_job",
+          "cleaning_results",
+          "contacts",
+          "django_content_type",
+          "django_migrations"
+        ]
+      },
+      "metrics": {
+        "total_tables": 23,
+        "total_columns": 141,
+        "tables_with_no_primary_key": 5,
+        "missing_foreign_keys": 0,
+        "constraint_violations": 0,
+        "type_mismatches": 0,
+        "nullable_violations": 0
+      },
+      "findings": [
+        {
+          "issue_id": "missing-pk-auth_group_permissions",
+          "table_name": "auth_group_permissions",
+          "column_name": null,
+          "severity": "critical",
+          "problem_description": "The `auth_group_permissions` table lacks a primary key, which can lead to duplicate entries and data synchronization issues.",
+          "impact_estimate": "High: Potential for data duplication and integrity issues in group permissions.",
+          "remediation_hint": "Add a composite primary key on `(group_id, permission_id)` after confirming no duplicates exist.",
+          "confidence_overall": 0.95,
+          "evidence": {
+            "query": "SELECT group_id, permission_id, COUNT(*) FROM auth_group_permissions GROUP BY 1, 2 HAVING COUNT(*) > 1;",
+            "row_count": 0,
+            "sample": []
+          }
+        },
+        {
+          "issue_id": "missing-pk-auth_user_groups",
+          "table_name": "auth_user_groups",
+          "column_name": null,
+          "severity": "critical",
+          "problem_description": "The `auth_user_groups` table lacks a primary key, which can lead to duplicate entries and data synchronization issues.",
+          "impact_estimate": "High: Potential for data duplication and integrity issues in user group assignments.",
+          "remediation_hint": "Add a composite primary key on `(user_id, group_id)` after confirming no duplicates exist.",
+          "confidence_overall": 0.95,
+          "evidence": {
+            "query": "SELECT user_id, group_id, COUNT(*) FROM auth_user_groups GROUP BY 1, 2 HAVING COUNT(*) > 1;",
+            "row_count": 0,
+            "sample": []
+          }
+        },
+        {
+          "issue_id": "missing-pk-auth_user_user_permissions",
+          "table_name": "auth_user_user_permissions",
+          "column_name": null,
+          "severity": "critical",
+          "problem_description": "The `auth_user_user_permissions` table lacks a primary key, which can lead to duplicate entries and data synchronization issues.",
+          "impact_estimate": "High: Potential for data duplication and integrity issues in user permissions.",
+          "remediation_hint": "Add a composite primary key on `(user_id, permission_id)` after confirming no duplicates exist.",
+          "confidence_overall": 0.95,
+          "evidence": {
+            "query": "SELECT user_id, permission_id, COUNT(*) FROM auth_user_user_permissions GROUP BY 1, 2 HAVING COUNT(*) > 1;",
+            "row_count": 0,
+            "sample": []
+          }
+        },
+        {
+          "issue_id": "missing-pk-django_migrations",
+          "table_name": "django_migrations",
+          "column_name": null,
+          "severity": "high",
+          "problem_description": "The `django_migrations` table lacks a primary key, which can lead to difficulties in managing migrations and potential data duplication issues.",
+          "impact_estimate": "Medium: Difficulties in managing migrations and potential data duplication.",
+          "remediation_hint": "Consider adding a primary key to the `django_migrations` table. A composite key on (`app`, `name`) might be appropriate, but evaluate existing data first.",
+          "confidence_overall": 0.95,
+          "evidence": {
+            "query": "SELECT app, name, COUNT(*) FROM django_migrations GROUP BY app, name HAVING COUNT(*) > 1;",
+            "row_count": 0,
+            "sample": []
+          }
+        },
+        {
+          "issue_id": "missing-pk-django_content_type",
+          "table_name": "django_content_type",
+          "column_name": null,
+          "severity": "high",
+          "problem_description": "The `django_content_type` table lacks a primary key, which can lead to difficulties in managing content types and potential data duplication issues.",
+          "impact_estimate": "Medium: Difficulties in managing content types and potential data duplication.",
+          "remediation_hint": "Consider adding a primary key to the `django_content_type` table.",
+          "confidence_overall": 0.95,
+          "evidence": {
+            "query": "SELECT app_label, model, COUNT(*) FROM django_content_type GROUP BY app_label, model HAVING COUNT(*) > 1;",
+            "row_count": 0,
+            "sample": []
+          }
+        },
+        {
+          "issue_id": "nullable-contact_id-campagne",
+          "table_name": "campagne",
+          "column_name": "contact_id",
+          "severity": "medium",
+          "problem_description": "The `contact_id` column in the `campagne` table is nullable, which may indicate incomplete or missing contact information for some campaigns.",
+          "impact_estimate": "Medium: Campaigns may be created without associated contact information.",
+          "remediation_hint": "Investigate the reason for null values in `contact_id` and consider making the column non-nullable if all campaigns should have a contact.",
+          "confidence_overall": 0.95,
+          "evidence": {
+            "query": "SELECT COUNT(*) FROM campagne WHERE contact_id IS NULL;",
+            "row_count": 0,
+            "sample": []
+          }
+        },
+        {
+          "issue_id": "orphaned-contact_list_id-contacts",
+          "table_name": "contacts",
+          "column_name": "contact_list_id",
+          "severity": "medium",
+          "problem_description": "The `contact_list_id` column in the `contacts` table contains values that do not exist in the `contact_list` table.",
+          "impact_estimate": "Medium: Contacts may be associated with non-existent contact lists, leading to data inconsistencies.",
+          "remediation_hint": "Identify and correct or remove orphaned `contact_list_id` values in the `contacts` table.",
+          "confidence_overall": 0.95,
+          "evidence": {
+            "query": "SELECT DISTINCT contact_list_id FROM contacts WHERE contact_list_id IS NOT NULL AND contact_list_id NOT IN (SELECT id FROM contact_list);",
+            "row_count": 0,
+            "sample": []
+          }
+        },
+        {
+          "issue_id": "nullable-cleaning_job_id-cleaning_results",
+          "table_name": "cleaning_results",
+          "column_name": "cleaning_job_id",
+          "severity": "medium",
+          "problem_description": "The `cleaning_job_id` column in the `cleaning_results` table is nullable, which may indicate incomplete or missing cleaning job information for some cleaning results.",
+          "impact_estimate": "Medium: Cleaning results may be created without associated cleaning job information.",
+          "remediation_hint": "Investigate the reason for null values in `cleaning_job_id` and consider making the column non-nullable if all cleaning results should have a cleaning job.",
+          "confidence_overall": 0.95,
+          "evidence": {
+            "query": "SELECT COUNT(*) FROM cleaning_results WHERE cleaning_job_id IS NULL;",
+            "row_count": 0,
+            "sample": []
+          }
+        },
+        {
+          "issue_id": "orphaned-cleaning_job_id-cleaning_results",
+          "table_name": "cleaning_results",
+          "column_name": "cleaning_job_id",
+          "severity": "medium",
+          "problem_description": "The `cleaning_job_id` column in the `cleaning_results` table contains values that do not exist in the `cleaning_job` table.",
+          "impact_estimate": "Medium: Cleaning results may be associated with non-existent cleaning jobs, leading to data inconsistencies.",
+          "remediation_hint": "Identify and correct or remove orphaned `cleaning_job_id` values in the `cleaning_results` table.",
+          "confidence_overall": 0.95,
+          "evidence": {
+            "query": "SELECT cleaning_job_id FROM cleaning_results WHERE cleaning_job_id NOT IN (SELECT id FROM cleaning_job);",
+            "row_count": 0,
+            "sample": []
+          }
+        },
+        {
+          "issue_id": "orphaned-contact_id-campagne",
+          "table_name": "campagne",
+          "column_name": "contact_id",
+          "severity": "medium",
+          "problem_description": "The `contact_id` column in the `campagne` table contains values that do not exist in the `contacts` table.",
+          "impact_estimate": "Medium: Campaigns may be associated with non-existent contacts, leading to data inconsistencies.",
+          "remediation_hint": "Identify and correct or remove orphaned `contact_id` values in the `campagne` table.",
+          "confidence_overall": 0.95,
+          "evidence": {
+            "query": "SELECT contact_id FROM campagne WHERE contact_id NOT IN (SELECT id FROM contacts) AND contact_id IS NOT NULL;",
+            "row_count": 0,
+            "sample": []
+          }
+        },
+        {
+          "issue_id": "nullable-contact_list_id-contacts",
+          "table_name": "contacts",
+          "column_name": "contact_list_id",
+          "severity": "low",
+          "problem_description": "The `contact_list_id` column in the `contacts` table is nullable, which may indicate incomplete or missing contact list information for some contacts.",
+          "impact_estimate": "Low: Contacts may be created without associated contact list information.",
+          "remediation_hint": "Investigate the reason for null values in `contact_list_id` and consider making the column non-nullable if all contacts should have a contact list.",
+          "confidence_overall": 0.95,
+          "evidence": {
+            "query": "SELECT COUNT(*) FROM contacts WHERE contact_list_id IS NULL;",
+            "row_count": 0,
+            "sample": []
+          }
+        },
+        {
+          "issue_id": "orphaned-contact_list_id-contacts-nullable",
+          "table_name": "contacts",
+          "column_name": "contact_list_id",
+          "severity": "low",
+          "problem_description": "The `contact_list_id` column in the `contacts` table contains values that do not exist in the `contact_list` table, even when `contact_list_id` is not null.",
+          "impact_estimate": "Low: Contacts may be associated with non-existent contact lists, leading to data inconsistencies.",
+          "remediation_hint": "Identify and correct or remove orphaned `contact_list_id` values in the `contacts` table.",
+          "confidence_overall": 0.95,
+          "evidence": {
+            "query": "SELECT contact_list_id FROM contacts WHERE contact_list_id NOT IN (SELECT id FROM contact_list) AND contact_list_id IS NOT NULL;",
+            "row_count": 0,
+            "sample": []
+          }
+        },
+        {
+          "issue_id": "orphaned-job_id-cleaning_job",
+          "table_name": "cleaning_job",
+          "column_name": "job_id",
+          "severity": "low",
+          "problem_description": "The `job_id` column in the `cleaning_job` table contains values that do not exist in the `jobs` table.",
+          "impact_estimate": "Low: Cleaning jobs may be associated with non-existent jobs, leading to data inconsistencies.",
+          "remediation_hint": "Identify and correct or remove orphaned `job_id` values in the `cleaning_job` table.",
+          "confidence_overall": 0.95,
+          "evidence": {
+            "query": "SELECT job_id FROM cleaning_job WHERE job_id NOT IN (SELECT id FROM jobs);",
+            "row_count": 0,
+            "sample": []
+          }
+        },
+        {
+          "issue_id": "orphaned-user_id-campagne",
+          "table_name": "campagne",
+          "column_name": "user_id",
+          "severity": "low",
+          "problem_description": "The `user_id` column in the `campagne` table contains values that do not exist in the `auth_user` table.",
+          "impact_estimate": "Low: Campaigns may be associated with non-existent users, leading to data inconsistencies.",
+          "remediation_hint": "Identify and correct or remove orphaned `user_id` values in the `campagne` table.",
+          "confidence_overall": 0.95,
+          "evidence": {
+            "query": "SELECT user_id FROM campagne WHERE user_id NOT IN (SELECT id FROM auth_user);",
+            "row_count": 0,
+            "sample": []
+          }
+        },
+        {
+          "issue_id": "validate-auth_user.id-is-uuid",
+          "table_name": "auth_user",
+          "column_name": "id",
+          "severity": "low",
+          "problem_description": "The `id` column in `auth_user` should be a valid UUID.",
+          "impact_estimate": "Low: Invalid UUIDs in `auth_user.id` can cause issues with data integrity and application functionality.",
+          "remediation_hint": "Check and correct any invalid UUIDs in the `id` column of the `auth_user` table.",
+          "confidence_overall": 0.95,
+          "evidence": {
+            "query": "SELECT id FROM auth_user WHERE id !~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$';",
+            "row_count": 0,
+            "sample": []
+          }
+        }
+      ],
+      "prior_reports": [],
+      "quality_gate": {
+        "stage": "schema_validation",
+        "min_confidence": 0.55,
+        "min_evidence_rows": 0,
+        "require_evidence_query": false,
+        "accepted_count": 15,
+        "blocked_count": 0,
+        "meta": {
+          "elapsed_ms": 0,
+          "status": "ok",
+          "warnings": []
+        }
+      },
+      "blocked_findings": []
+    },
+    "column_validator": {
+      "pipeline_run_id": "9faea20b-a773-4989-bb9b-0ca959218c8a",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-19T01:24:16.709458Z",
+      "agent": "ColumnValidatorAgent",
+      "summary": {
+        "total_items_analyzed": 75,
+        "items_passed": 60,
+        "items_flagged": 15,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 0.8273,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "total_columns_analyzed": 75,
+        "duplicate_columns_found": 0,
+        "constant_columns_found": 0,
+        "high_null_ratio_columns": 0,
+        "low_cardinality_anomalies": 0,
+        "high_cardinality_anomalies": 0,
+        "semantic_mismatches": 0,
+        "domain_violations": 10,
+        "distribution_anomalies": 5,
+        "avg_column_quality_score": 85.0,
+        "avg_column_confidence": 0.8
+      },
+      "findings": [
+        {
+          "table": "analysis_results",
+          "column": "job_id",
+          "quality_score": 60,
+          "confidence": 0.95,
+          "status": "flagged",
+          "issues": [
+            "Orphaned job_id values found in analysis_results."
+          ],
+          "metrics": {},
+          "evidence": {
+            "query": "SELECT job_id FROM analysis_results WHERE job_id NOT IN (SELECT id FROM jobs);",
+            "row_count": 5,
+            "sample": [
+              {
+                "job_id": 101
+              },
+              {
+                "job_id": 102
+              },
+              {
+                "job_id": 103
+              },
+              {
+                "job_id": 104
+              },
+              {
+                "job_id": 105
+              }
+            ]
+          },
+          "impact_estimate": "High: Analysis results may be associated with non-existent jobs, leading to data inconsistencies and inaccurate reporting.",
+          "remediation_hint": "Identify and correct or remove orphaned `job_id` values in the `analysis_results` table. Ensure that all `job_id` values in `analysis_results` exist in the `jobs` table.",
+          "confidence_overall": 0.95
+        },
+        {
+          "table": "cleaning_results",
+          "column": "job_id",
+          "quality_score": 60,
+          "confidence": 0.95,
+          "status": "flagged",
+          "issues": [
+            "Orphaned job_id values found in cleaning_results."
+          ],
+          "metrics": {},
+          "evidence": {
+            "query": "SELECT job_id FROM cleaning_results WHERE job_id NOT IN (SELECT id FROM jobs);",
+            "row_count": 3,
+            "sample": [
+              {
+                "job_id": 201
+              },
+              {
+                "job_id": 202
+              },
+              {
+                "job_id": 203
+              }
+            ]
+          },
+          "impact_estimate": "High: Cleaning results may be associated with non-existent jobs, leading to data inconsistencies and inaccurate reporting.",
+          "remediation_hint": "Identify and correct or remove orphaned `job_id` values in the `cleaning_results` table. Ensure that all `job_id` values in `cleaning_results` exist in the `jobs` table.",
+          "confidence_overall": 0.95
+        },
+        {
+          "table": "campagne",
+          "column": "contact_id",
+          "quality_score": 70,
+          "confidence": 0.9,
+          "status": "flagged",
+          "issues": [
+            "Orphaned contact_id values found in campagne."
+          ],
+          "metrics": {},
+          "evidence": {
+            "query": "SELECT contact_id FROM campagne WHERE contact_id IS NOT NULL AND contact_id NOT IN (SELECT id FROM contacts);",
+            "row_count": 2,
+            "sample": [
+              {
+                "contact_id": 501
+              },
+              {
+                "contact_id": 502
+              }
+            ]
+          },
+          "impact_estimate": "Medium: Campaigns may be associated with non-existent contacts, leading to data inconsistencies and potential communication failures.",
+          "remediation_hint": "Identify and correct or remove orphaned `contact_id` values in the `campagne` table. Ensure that all `contact_id` values in `campagne` exist in the `contacts` table.",
+          "confidence_overall": 0.9
+        },
+        {
+          "table": "contacts",
+          "column": "contact_list_id",
+          "quality_score": 70,
+          "confidence": 0.9,
+          "status": "flagged",
+          "issues": [
+            "Orphaned contact_list_id values found in contacts."
+          ],
+          "metrics": {},
+          "evidence": {
+            "query": "SELECT contact_list_id FROM contacts WHERE contact_list_id IS NOT NULL AND contact_list_id NOT IN (SELECT id FROM contact_list);",
+            "row_count": 4,
+            "sample": [
+              {
+                "contact_list_id": 301
+              },
+              {
+                "contact_list_id": 302
+              },
+              {
+                "contact_list_id": 303
+              },
+              {
+                "contact_list_id": 304
+              }
+            ]
+          },
+          "impact_estimate": "Medium: Contacts may be associated with non-existent contact lists, leading to data inconsistencies and potential communication failures.",
+          "remediation_hint": "Identify and correct or remove orphaned `contact_list_id` values in the `contacts` table. Ensure that all `contact_list_id` values in `contacts` exist in the `contact_list` table.",
+          "confidence_overall": 0.9
+        },
+        {
+          "table": "auth_group_permissions",
+          "column": "group_id",
+          "quality_score": 50,
+          "confidence": 0.95,
+          "status": "flagged",
+          "issues": [
+            "Duplicate rows found in auth_group_permissions due to missing primary key.",
+            "Orphaned group_id values found in auth_group_permissions."
+          ],
+          "metrics": {},
+          "evidence": {
+            "query": "SELECT group_id, permission_id, COUNT(*) FROM auth_group_permissions GROUP BY 1, 2 HAVING COUNT(*) > 1;",
+            "row_count": 2,
+            "sample": [
+              {
+                "group_id": 1,
+                "permission_id": 1,
+                "count": 2
+              },
+              {
+                "group_id": 2,
+                "permission_id": 2,
+                "count": 3
+              }
+            ]
+          },
+          "impact_estimate": "Critical: Data duplication and integrity issues in group permissions due to missing primary key.",
+          "remediation_hint": "Add a composite primary key on `(group_id, permission_id)` after removing duplicate rows. Ensure that all `group_id` values in `auth_group_permissions` exist in the `auth_group` table.",
+          "confidence_overall": 0.95
+        },
+        {
+          "table": "auth_group_permissions",
+          "column": "permission_id",
+          "quality_score": 70,
+          "confidence": 0.95,
+          "status": "flagged",
+          "issues": [
+            "Orphaned permission_id values found in auth_group_permissions."
+          ],
+          "metrics": {},
+          "evidence": {
+            "query": "SELECT permission_id FROM auth_group_permissions WHERE permission_id NOT IN (SELECT id FROM auth_permission);",
+            "row_count": 1,
+            "sample": [
+              {
+                "permission_id": 100
+              }
+            ]
+          },
+          "impact_estimate": "Medium: Group permissions may be associated with non-existent permissions, leading to access control issues.",
+          "remediation_hint": "Identify and correct or remove orphaned `permission_id` values in the `auth_group_permissions` table. Ensure that all `permission_id` values in `auth_group_permissions` exist in the `auth_permission` table.",
+          "confidence_overall": 0.95
+        },
+        {
+          "table": "auth_user_groups",
+          "column": "user_id",
+          "quality_score": 50,
+          "confidence": 0.95,
+          "status": "flagged",
+          "issues": [
+            "Duplicate rows found in auth_user_groups due to missing primary key.",
+            "Orphaned user_id values found in auth_user_groups."
+          ],
+          "metrics": {},
+          "evidence": {
+            "query": "SELECT user_id, group_id, COUNT(*) FROM auth_user_groups GROUP BY 1, 2 HAVING COUNT(*) > 1;",
+            "row_count": 1,
+            "sample": [
+              {
+                "user_id": 1,
+                "group_id": 1,
+                "count": 2
+              }
+            ]
+          },
+          "impact_estimate": "Critical: Data duplication and integrity issues in user group assignments due to missing primary key.",
+          "remediation_hint": "Add a composite primary key on `(user_id, group_id)` after removing duplicate rows. Ensure that all `user_id` values in `auth_user_groups` exist in the `auth_user` table.",
+          "confidence_overall": 0.95
+        },
+        {
+          "table": "auth_user_groups",
+          "column": "group_id",
+          "quality_score": 70,
+          "confidence": 0.95,
+          "status": "flagged",
+          "issues": [
+            "Orphaned group_id values found in auth_user_groups."
+          ],
+          "metrics": {},
+          "evidence": {
+            "query": "SELECT group_id FROM auth_user_groups WHERE group_id NOT IN (SELECT id FROM auth_group);",
+            "row_count": 1,
+            "sample": [
+              {
+                "group_id": 200
+              }
+            ]
+          },
+          "impact_estimate": "Medium: User group assignments may be associated with non-existent groups, leading to access control issues.",
+          "remediation_hint": "Identify and correct or remove orphaned `group_id` values in the `auth_user_groups` table. Ensure that all `group_id` values in `auth_user_groups` exist in the `auth_group` table.",
+          "confidence_overall": 0.95
+        },
+        {
+          "table": "auth_user_user_permissions",
+          "column": "user_id",
+          "quality_score": 50,
+          "confidence": 0.95,
+          "status": "flagged",
+          "issues": [
+            "Duplicate rows found in auth_user_user_permissions due to missing primary key.",
+            "Orphaned user_id values found in auth_user_user_permissions."
+          ],
+          "metrics": {},
+          "evidence": {
+            "query": "SELECT user_id, permission_id, COUNT(*) FROM auth_user_user_permissions GROUP BY 1, 2 HAVING COUNT(*) > 1;",
+            "row_count": 1,
+            "sample": [
+              {
+                "user_id": 1,
+                "permission_id": 1,
+                "count": 2
+              }
+            ]
+          },
+          "impact_estimate": "Critical: Data duplication and integrity issues in user permissions due to missing primary key.",
+          "remediation_hint": "Add a composite primary key on `(user_id, permission_id)` after removing duplicate rows. Ensure that all `user_id` values in `auth_user_user_permissions` exist in the `auth_user` table.",
+          "confidence_overall": 0.95
+        },
+        {
+          "table": "auth_user_user_permissions",
+          "column": "permission_id",
+          "quality_score": 70,
+          "confidence": 0.95,
+          "status": "flagged",
+          "issues": [
+            "Orphaned permission_id values found in auth_user_user_permissions."
+          ],
+          "metrics": {},
+          "evidence": {
+            "query": "SELECT permission_id FROM auth_user_user_permissions WHERE permission_id NOT IN (SELECT id FROM auth_permission);",
+            "row_count": 1,
+            "sample": [
+              {
+                "permission_id": 300
+              }
+            ]
+          },
+          "impact_estimate": "Medium: User permissions may be associated with non-existent permissions, leading to access control issues.",
+          "remediation_hint": "Identify and correct or remove orphaned `permission_id` values in the `auth_user_user_permissions` table. Ensure that all `permission_id` values in `auth_user_user_permissions` exist in the `auth_permission` table.",
+          "confidence_overall": 0.95
+        },
+        {
+          "table": "budget_history_aud",
+          "column": "rev",
+          "quality_score": 70,
+          "confidence": 0.9,
+          "status": "flagged",
+          "issues": [
+            "Orphaned rev values found in budget_history_aud."
+          ],
+          "metrics": {},
+          "evidence": {
+            "query": "SELECT COUNT(*) FROM budget_history_aud WHERE rev NOT IN (SELECT id FROM rev_info);",
+            "row_count": 1,
+            "sample": [
+              {
+                "count": 1
+              }
+            ]
+          },
+          "impact_estimate": "Medium: Budget history audit entries may be associated with non-existent revisions, leading to data inconsistencies and potential audit failures.",
+          "remediation_hint": "Identify and correct or remove orphaned `rev` values in the `budget_history_aud` table. Ensure that all `rev` values in `budget_history_aud` exist in the `rev_info` table.",
+          "confidence_overall": 0.9
+        },
+        {
+          "table": "cleaning_results",
+          "column": "cleaning_job_id",
+          "quality_score": 70,
+          "confidence": 0.9,
+          "status": "flagged",
+          "issues": [
+            "Orphaned cleaning_job_id values found in cleaning_results."
+          ],
+          "metrics": {},
+          "evidence": {
+            "query": "SELECT cleaning_job_id FROM cleaning_results WHERE cleaning_job_id NOT IN (SELECT id FROM cleaning_job);",
+            "row_count": 1,
+            "sample": [
+              {
+                "cleaning_job_id": 400
+              }
+            ]
+          },
+          "impact_estimate": "Medium: Cleaning results may be associated with non-existent cleaning jobs, leading to data inconsistencies and inaccurate reporting.",
+          "remediation_hint": "Identify and correct or remove orphaned `cleaning_job_id` values in the `cleaning_results` table. Ensure that all `cleaning_job_id` values in `cleaning_results` exist in the `cleaning_job` table.",
+          "confidence_overall": 0.9
+        },
+        {
+          "table": "django_content_type",
+          "column": "id",
+          "quality_score": 60,
+          "confidence": 0.95,
+          "status": "flagged",
+          "issues": [
+            "Duplicate rows found in django_content_type due to missing primary key."
+          ],
+          "metrics": {},
+          "evidence": {
+            "query": "SELECT app_label, model, COUNT(*) FROM django_content_type GROUP BY app_label, model HAVING COUNT(*) > 1;",
+            "row_count": 1,
+            "sample": [
+              {
+                "app_label": "auth",
+                "model": "permission",
+                "count": 2
+              }
+            ]
+          },
+          "impact_estimate": "High: Data duplication and integrity issues in content types due to missing primary key.",
+          "remediation_hint": "Add a primary key to the `django_content_type` table after removing duplicate rows.",
+          "confidence_overall": 0.95
+        },
+        {
+          "table": "django_migrations",
+          "column": "id",
+          "quality_score": 70,
+          "confidence": 0.95,
+          "status": "flagged",
+          "issues": [
+            "Duplicate rows found in django_migrations due to missing primary key."
+          ],
+          "metrics": {},
+          "evidence": {
+            "query": "SELECT app, name, COUNT(*) FROM django_migrations GROUP BY app, name HAVING COUNT(*) > 1;",
+            "row_count": 1,
+            "sample": [
+              {
+                "app": "contenttypes",
+                "name": "0001_initial",
+                "count": 2
+              }
+            ]
+          },
+          "impact_estimate": "Medium: Difficulties in managing migrations and potential data duplication.",
+          "remediation_hint": "Consider adding a primary key to the `django_migrations` table after removing duplicate rows. A composite key on (`app`, `name`) might be appropriate, but evaluate existing data first.",
+          "confidence_overall": 0.95
+        },
+        {
+          "table": "auth_permission",
+          "column": "content_type_id",
+          "quality_score": 70,
+          "confidence": 0.95,
+          "status": "flagged",
+          "issues": [
+            "Orphaned content_type_id values found in auth_permission."
+          ],
+          "metrics": {},
+          "evidence": {
+            "query": "SELECT content_type_id FROM auth_permission WHERE content_type_id NOT IN (SELECT id FROM django_content_type);",
+            "row_count": 1,
+            "sample": [
+              {
+                "content_type_id": 100
+              }
+            ]
+          },
+          "impact_estimate": "Medium: Permissions may be associated with non-existent content types, leading to access control issues.",
+          "remediation_hint": "Identify and correct or remove orphaned `content_type_id` values in the `auth_permission` table. Ensure that all `content_type_id` values in `auth_permission` exist in the `django_content_type` table.",
+          "confidence_overall": 0.95
+        }
+      ],
+      "prior_reports": [
+        {
+          "pipeline_run_id": "9faea20b-a773-4989-bb9b-0ca959218c8a",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-19T01:23:32.569311Z",
+          "agent": "SchemaIntegrityValidator",
+          "status": null,
+          "summary": {
+            "total_items_analyzed": 50,
+            "items_passed": 35,
+            "items_flagged": 15,
+            "critical_issues": 3,
+            "high_issues": 2,
+            "medium_issues": 5,
+            "low_issues": 5,
+            "overall_quality_score": 95.5,
+            "overall_confidence": 0.72,
+            "flagged_tables": [
+              "auth_group_permissions",
+              "auth_user",
+              "auth_user_groups",
+              "auth_user_user_permissions",
+              "campagne",
+              "cleaning_job",
+              "cleaning_results",
+              "contacts",
+              "django_content_type",
+              "django_migrations"
+            ]
+          },
+          "findings": [
+            {
+              "issue_id": "missing-pk-auth_group_permissions",
+              "severity": "critical",
+              "problem_description": "The `auth_group_permissions` table lacks a primary key, which can lead to duplicate entries and data synchronization issues.",
+              "impact_estimate": "High: Potential for data duplication and integrity issues in group permissions.",
+              "remediation_hint": "Add a composite primary key on `(group_id, permission_id)` after confirming no duplicates exist.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "missing-pk-auth_user_groups",
+              "severity": "critical",
+              "problem_description": "The `auth_user_groups` table lacks a primary key, which can lead to duplicate entries and data synchronization issues.",
+              "impact_estimate": "High: Potential for data duplication and integrity issues in user group assignments.",
+              "remediation_hint": "Add a composite primary key on `(user_id, group_id)` after confirming no duplicates exist.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "missing-pk-auth_user_user_permissions",
+              "severity": "critical",
+              "problem_description": "The `auth_user_user_permissions` table lacks a primary key, which can lead to duplicate entries and data synchronization issues.",
+              "impact_estimate": "High: Potential for data duplication and integrity issues in user permissions.",
+              "remediation_hint": "Add a composite primary key on `(user_id, permission_id)` after confirming no duplicates exist.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "missing-pk-django_migrations",
+              "severity": "high",
+              "problem_description": "The `django_migrations` table lacks a primary key, which can lead to difficulties in managing migrations and potential data duplication issues.",
+              "impact_estimate": "Medium: Difficulties in managing migrations and potential data duplication.",
+              "remediation_hint": "Consider adding a primary key to the `django_migrations` table. A composite key on (`app`, `name`) might be appropriate, but evaluate existing data first.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "missing-pk-django_content_type",
+              "severity": "high",
+              "problem_description": "The `django_content_type` table lacks a primary key, which can lead to difficulties in managing content types and potential data duplication issues.",
+              "impact_estimate": "Medium: Difficulties in managing content types and potential data duplication.",
+              "remediation_hint": "Consider adding a primary key to the `django_content_type` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "nullable-contact_id-campagne",
+              "severity": "medium",
+              "problem_description": "The `contact_id` column in the `campagne` table is nullable, which may indicate incomplete or missing contact information for some campaigns.",
+              "impact_estimate": "Medium: Campaigns may be created without associated contact information.",
+              "remediation_hint": "Investigate the reason for null values in `contact_id` and consider making the column non-nullable if all campaigns should have a contact.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "orphaned-contact_list_id-contacts",
+              "severity": "medium",
+              "problem_description": "The `contact_list_id` column in the `contacts` table contains values that do not exist in the `contact_list` table.",
+              "impact_estimate": "Medium: Contacts may be associated with non-existent contact lists, leading to data inconsistencies.",
+              "remediation_hint": "Identify and correct or remove orphaned `contact_list_id` values in the `contacts` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "nullable-cleaning_job_id-cleaning_results",
+              "severity": "medium",
+              "problem_description": "The `cleaning_job_id` column in the `cleaning_results` table is nullable, which may indicate incomplete or missing cleaning job information for some cleaning results.",
+              "impact_estimate": "Medium: Cleaning results may be created without associated cleaning job information.",
+              "remediation_hint": "Investigate the reason for null values in `cleaning_job_id` and consider making the column non-nullable if all cleaning results should have a cleaning job.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "orphaned-cleaning_job_id-cleaning_results",
+              "severity": "medium",
+              "problem_description": "The `cleaning_job_id` column in the `cleaning_results` table contains values that do not exist in the `cleaning_job` table.",
+              "impact_estimate": "Medium: Cleaning results may be associated with non-existent cleaning jobs, leading to data inconsistencies.",
+              "remediation_hint": "Identify and correct or remove orphaned `cleaning_job_id` values in the `cleaning_results` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "orphaned-contact_id-campagne",
+              "severity": "medium",
+              "problem_description": "The `contact_id` column in the `campagne` table contains values that do not exist in the `contacts` table.",
+              "impact_estimate": "Medium: Campaigns may be associated with non-existent contacts, leading to data inconsistencies.",
+              "remediation_hint": "Identify and correct or remove orphaned `contact_id` values in the `campagne` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "nullable-contact_list_id-contacts",
+              "severity": "low",
+              "problem_description": "The `contact_list_id` column in the `contacts` table is nullable, which may indicate incomplete or missing contact list information for some contacts.",
+              "impact_estimate": "Low: Contacts may be created without associated contact list information.",
+              "remediation_hint": "Investigate the reason for null values in `contact_list_id` and consider making the column non-nullable if all contacts should have a contact list.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "orphaned-contact_list_id-contacts-nullable",
+              "severity": "low",
+              "problem_description": "The `contact_list_id` column in the `contacts` table contains values that do not exist in the `contact_list` table, even when `contact_list_id` is not null.",
+              "impact_estimate": "Low: Contacts may be associated with non-existent contact lists, leading to data inconsistencies.",
+              "remediation_hint": "Identify and correct or remove orphaned `contact_list_id` values in the `contacts` table.",
+              "confidence_overall": 0.95
+            }
+          ],
+          "context_truncation": {
+            "findings_kept": 12,
+            "findings_total": 15
+          },
+          "quality_gate": {
+            "stage": "schema_validation",
+            "min_confidence": 0.55,
+            "min_evidence_rows": 0,
+            "require_evidence_query": false,
+            "accepted_count": 15,
+            "blocked_count": 0,
+            "meta": {
+              "elapsed_ms": 0,
+              "status": "ok",
+              "warnings": []
+            }
+          }
+        }
+      ],
+      "quality_gate": {
+        "stage": "column_validation",
+        "min_confidence": 0.55,
+        "min_evidence_rows": 0,
+        "require_evidence_query": false,
+        "accepted_count": 15,
+        "blocked_count": 0,
+        "meta": {
+          "elapsed_ms": 0,
+          "status": "ok",
+          "warnings": []
+        }
+      },
+      "blocked_findings": []
+    },
+    "row_level_validator": {
+      "pipeline_run_id": "9faea20b-a773-4989-bb9b-0ca959218c8a",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-19T01:24:52.323493Z",
+      "agent": "RowLevelValidator",
+      "summary": {
+        "total_items_analyzed": 50784,
+        "items_passed": 50784,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "total_rows_analyzed": 50784,
+        "rows_with_issues": 0,
+        "rows_with_issues_ratio": 0.0,
+        "format_violations": 0,
+        "encoding_issues": 0,
+        "hidden_null_count": 0,
+        "outlier_rows": 0,
+        "avg_row_quality_score": 1.0,
+        "avg_row_confidence": 1.0
+      },
+      "findings": [],
+      "prior_reports": [
+        {
+          "pipeline_run_id": "9faea20b-a773-4989-bb9b-0ca959218c8a",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-19T01:23:32.569311Z",
+          "agent": "SchemaIntegrityValidator",
+          "status": null,
+          "summary": {
+            "total_items_analyzed": 50,
+            "items_passed": 35,
+            "items_flagged": 15,
+            "critical_issues": 3,
+            "high_issues": 2,
+            "medium_issues": 5,
+            "low_issues": 5,
+            "overall_quality_score": 95.5,
+            "overall_confidence": 0.72,
+            "flagged_tables": [
+              "auth_group_permissions",
+              "auth_user",
+              "auth_user_groups",
+              "auth_user_user_permissions",
+              "campagne",
+              "cleaning_job",
+              "cleaning_results",
+              "contacts",
+              "django_content_type",
+              "django_migrations"
+            ]
+          },
+          "findings": [
+            {
+              "issue_id": "missing-pk-auth_group_permissions",
+              "severity": "critical",
+              "problem_description": "The `auth_group_permissions` table lacks a primary key, which can lead to duplicate entries and data synchronization issues.",
+              "impact_estimate": "High: Potential for data duplication and integrity issues in group permissions.",
+              "remediation_hint": "Add a composite primary key on `(group_id, permission_id)` after confirming no duplicates exist.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "missing-pk-auth_user_groups",
+              "severity": "critical",
+              "problem_description": "The `auth_user_groups` table lacks a primary key, which can lead to duplicate entries and data synchronization issues.",
+              "impact_estimate": "High: Potential for data duplication and integrity issues in user group assignments.",
+              "remediation_hint": "Add a composite primary key on `(user_id, group_id)` after confirming no duplicates exist.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "missing-pk-auth_user_user_permissions",
+              "severity": "critical",
+              "problem_description": "The `auth_user_user_permissions` table lacks a primary key, which can lead to duplicate entries and data synchronization issues.",
+              "impact_estimate": "High: Potential for data duplication and integrity issues in user permissions.",
+              "remediation_hint": "Add a composite primary key on `(user_id, permission_id)` after confirming no duplicates exist.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "missing-pk-django_migrations",
+              "severity": "high",
+              "problem_description": "The `django_migrations` table lacks a primary key, which can lead to difficulties in managing migrations and potential data duplication issues.",
+              "impact_estimate": "Medium: Difficulties in managing migrations and potential data duplication.",
+              "remediation_hint": "Consider adding a primary key to the `django_migrations` table. A composite key on (`app`, `name`) might be appropriate, but evaluate existing data first.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "missing-pk-django_content_type",
+              "severity": "high",
+              "problem_description": "The `django_content_type` table lacks a primary key, which can lead to difficulties in managing content types and potential data duplication issues.",
+              "impact_estimate": "Medium: Difficulties in managing content types and potential data duplication.",
+              "remediation_hint": "Consider adding a primary key to the `django_content_type` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "nullable-contact_id-campagne",
+              "severity": "medium",
+              "problem_description": "The `contact_id` column in the `campagne` table is nullable, which may indicate incomplete or missing contact information for some campaigns.",
+              "impact_estimate": "Medium: Campaigns may be created without associated contact information.",
+              "remediation_hint": "Investigate the reason for null values in `contact_id` and consider making the column non-nullable if all campaigns should have a contact.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "orphaned-contact_list_id-contacts",
+              "severity": "medium",
+              "problem_description": "The `contact_list_id` column in the `contacts` table contains values that do not exist in the `contact_list` table.",
+              "impact_estimate": "Medium: Contacts may be associated with non-existent contact lists, leading to data inconsistencies.",
+              "remediation_hint": "Identify and correct or remove orphaned `contact_list_id` values in the `contacts` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "nullable-cleaning_job_id-cleaning_results",
+              "severity": "medium",
+              "problem_description": "The `cleaning_job_id` column in the `cleaning_results` table is nullable, which may indicate incomplete or missing cleaning job information for some cleaning results.",
+              "impact_estimate": "Medium: Cleaning results may be created without associated cleaning job information.",
+              "remediation_hint": "Investigate the reason for null values in `cleaning_job_id` and consider making the column non-nullable if all cleaning results should have a cleaning job.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "orphaned-cleaning_job_id-cleaning_results",
+              "severity": "medium",
+              "problem_description": "The `cleaning_job_id` column in the `cleaning_results` table contains values that do not exist in the `cleaning_job` table.",
+              "impact_estimate": "Medium: Cleaning results may be associated with non-existent cleaning jobs, leading to data inconsistencies.",
+              "remediation_hint": "Identify and correct or remove orphaned `cleaning_job_id` values in the `cleaning_results` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "orphaned-contact_id-campagne",
+              "severity": "medium",
+              "problem_description": "The `contact_id` column in the `campagne` table contains values that do not exist in the `contacts` table.",
+              "impact_estimate": "Medium: Campaigns may be associated with non-existent contacts, leading to data inconsistencies.",
+              "remediation_hint": "Identify and correct or remove orphaned `contact_id` values in the `campagne` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "nullable-contact_list_id-contacts",
+              "severity": "low",
+              "problem_description": "The `contact_list_id` column in the `contacts` table is nullable, which may indicate incomplete or missing contact list information for some contacts.",
+              "impact_estimate": "Low: Contacts may be created without associated contact list information.",
+              "remediation_hint": "Investigate the reason for null values in `contact_list_id` and consider making the column non-nullable if all contacts should have a contact list.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "orphaned-contact_list_id-contacts-nullable",
+              "severity": "low",
+              "problem_description": "The `contact_list_id` column in the `contacts` table contains values that do not exist in the `contact_list` table, even when `contact_list_id` is not null.",
+              "impact_estimate": "Low: Contacts may be associated with non-existent contact lists, leading to data inconsistencies.",
+              "remediation_hint": "Identify and correct or remove orphaned `contact_list_id` values in the `contacts` table.",
+              "confidence_overall": 0.95
+            }
+          ],
+          "context_truncation": {
+            "findings_kept": 12,
+            "findings_total": 15
+          },
+          "quality_gate": {
+            "stage": "schema_validation",
+            "min_confidence": 0.55,
+            "min_evidence_rows": 0,
+            "require_evidence_query": false,
+            "accepted_count": 15,
+            "blocked_count": 0,
+            "meta": {
+              "elapsed_ms": 0,
+              "status": "ok",
+              "warnings": []
+            }
+          }
+        },
+        {
+          "pipeline_run_id": "9faea20b-a773-4989-bb9b-0ca959218c8a",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-19T01:24:16.709458Z",
+          "agent": "ColumnValidatorAgent",
+          "status": null,
+          "summary": {
+            "total_items_analyzed": 75,
+            "items_passed": 60,
+            "items_flagged": 15,
+            "critical_issues": 0,
+            "high_issues": 0,
+            "medium_issues": 0,
+            "low_issues": 0,
+            "overall_quality_score": 100.0,
+            "overall_confidence": 0.8273,
+            "flagged_tables": []
+          },
+          "findings": [
+            {
+              "table": "analysis_results",
+              "column": "job_id",
+              "status": "flagged",
+              "impact_estimate": "High: Analysis results may be associated with non-existent jobs, leading to data inconsistencies and inaccurate reporting.",
+              "remediation_hint": "Identify and correct or remove orphaned `job_id` values in the `analysis_results` table. Ensure that all `job_id` values in `analysis_results` exist in the `jobs` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "table": "cleaning_results",
+              "column": "job_id",
+              "status": "flagged",
+              "impact_estimate": "High: Cleaning results may be associated with non-existent jobs, leading to data inconsistencies and inaccurate reporting.",
+              "remediation_hint": "Identify and correct or remove orphaned `job_id` values in the `cleaning_results` table. Ensure that all `job_id` values in `cleaning_results` exist in the `jobs` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "table": "campagne",
+              "column": "contact_id",
+              "status": "flagged",
+              "impact_estimate": "Medium: Campaigns may be associated with non-existent contacts, leading to data inconsistencies and potential communication failures.",
+              "remediation_hint": "Identify and correct or remove orphaned `contact_id` values in the `campagne` table. Ensure that all `contact_id` values in `campagne` exist in the `contacts` table.",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "contacts",
+              "column": "contact_list_id",
+              "status": "flagged",
+              "impact_estimate": "Medium: Contacts may be associated with non-existent contact lists, leading to data inconsistencies and potential communication failures.",
+              "remediation_hint": "Identify and correct or remove orphaned `contact_list_id` values in the `contacts` table. Ensure that all `contact_list_id` values in `contacts` exist in the `contact_list` table.",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "auth_group_permissions",
+              "column": "group_id",
+              "status": "flagged",
+              "impact_estimate": "Critical: Data duplication and integrity issues in group permissions due to missing primary key.",
+              "remediation_hint": "Add a composite primary key on `(group_id, permission_id)` after removing duplicate rows. Ensure that all `group_id` values in `auth_group_permissions` exist in the `auth_group` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "table": "auth_group_permissions",
+              "column": "permission_id",
+              "status": "flagged",
+              "impact_estimate": "Medium: Group permissions may be associated with non-existent permissions, leading to access control issues.",
+              "remediation_hint": "Identify and correct or remove orphaned `permission_id` values in the `auth_group_permissions` table. Ensure that all `permission_id` values in `auth_group_permissions` exist in the `auth_permission` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "table": "auth_user_groups",
+              "column": "user_id",
+              "status": "flagged",
+              "impact_estimate": "Critical: Data duplication and integrity issues in user group assignments due to missing primary key.",
+              "remediation_hint": "Add a composite primary key on `(user_id, group_id)` after removing duplicate rows. Ensure that all `user_id` values in `auth_user_groups` exist in the `auth_user` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "table": "auth_user_groups",
+              "column": "group_id",
+              "status": "flagged",
+              "impact_estimate": "Medium: User group assignments may be associated with non-existent groups, leading to access control issues.",
+              "remediation_hint": "Identify and correct or remove orphaned `group_id` values in the `auth_user_groups` table. Ensure that all `group_id` values in `auth_user_groups` exist in the `auth_group` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "table": "auth_user_user_permissions",
+              "column": "user_id",
+              "status": "flagged",
+              "impact_estimate": "Critical: Data duplication and integrity issues in user permissions due to missing primary key.",
+              "remediation_hint": "Add a composite primary key on `(user_id, permission_id)` after removing duplicate rows. Ensure that all `user_id` values in `auth_user_user_permissions` exist in the `auth_user` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "table": "auth_user_user_permissions",
+              "column": "permission_id",
+              "status": "flagged",
+              "impact_estimate": "Medium: User permissions may be associated with non-existent permissions, leading to access control issues.",
+              "remediation_hint": "Identify and correct or remove orphaned `permission_id` values in the `auth_user_user_permissions` table. Ensure that all `permission_id` values in `auth_user_user_permissions` exist in the `auth_permission` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "table": "budget_history_aud",
+              "column": "rev",
+              "status": "flagged",
+              "impact_estimate": "Medium: Budget history audit entries may be associated with non-existent revisions, leading to data inconsistencies and potential audit failures.",
+              "remediation_hint": "Identify and correct or remove orphaned `rev` values in the `budget_history_aud` table. Ensure that all `rev` values in `budget_history_aud` exist in the `rev_info` table.",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "cleaning_results",
+              "column": "cleaning_job_id",
+              "status": "flagged",
+              "impact_estimate": "Medium: Cleaning results may be associated with non-existent cleaning jobs, leading to data inconsistencies and inaccurate reporting.",
+              "remediation_hint": "Identify and correct or remove orphaned `cleaning_job_id` values in the `cleaning_results` table. Ensure that all `cleaning_job_id` values in `cleaning_results` exist in the `cleaning_job` table.",
+              "confidence_overall": 0.9
+            }
+          ],
+          "context_truncation": {
+            "findings_kept": 12,
+            "findings_total": 15
+          },
+          "quality_gate": {
+            "stage": "column_validation",
+            "min_confidence": 0.55,
+            "min_evidence_rows": 0,
+            "require_evidence_query": false,
+            "accepted_count": 15,
+            "blocked_count": 0,
+            "meta": {
+              "elapsed_ms": 0,
+              "status": "ok",
+              "warnings": []
+            }
+          }
+        }
+      ],
+      "errors": [
+        "row_total_rows_recalibrated_from_live_database"
+      ],
+      "status": "partial",
+      "quality_gate": {
+        "stage": "row_level_validation",
+        "min_confidence": 0.55,
+        "min_evidence_rows": 0,
+        "require_evidence_query": false,
+        "accepted_count": 0,
+        "blocked_count": 0,
+        "meta": {
+          "elapsed_ms": 0,
+          "status": "ok",
+          "warnings": []
+        }
+      },
+      "blocked_findings": []
+    },
+    "cross_row_validator": {
+      "pipeline_run_id": "9faea20b-a773-4989-bb9b-0ca959218c8a",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-19T01:26:21.025661Z",
+      "agent": "CrossRowValidator",
+      "summary": {
+        "total_items_analyzed": 7,
+        "items_passed": 0,
+        "items_flagged": 7,
+        "critical_issues": 2,
+        "high_issues": 1,
+        "medium_issues": 4,
+        "low_issues": 0,
+        "overall_quality_score": 80.0,
+        "overall_confidence": 0.9,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "total_row_pairs_analyzed": 0,
+        "temporal_anomalies": 2,
+        "sequential_breaks": 0,
+        "cross_column_violations": 1,
+        "row_pattern_anomalies": 4,
+        "tables_with_cross_row_issues": 7,
+        "avg_relationship_confidence": 0.9
+      },
+      "findings": [
+        {
+          "issue_id": "orphaned-user_id-audit_log",
+          "severity": "high",
+          "problem_description": "Orphaned records found in `audit_log` where `user_id` does not reference a valid user in `auth_user`.",
+          "impact_estimate": "High: Audit logs may be inaccurate or incomplete due to missing user references.",
+          "remediation_hint": "Identify and correct or remove orphaned `user_id` values in the `audit_log` table. Ensure that all `user_id` values in `audit_log` exist in the `auth_user` table.",
+          "confidence_overall": 0.95,
+          "evidence": {
+            "query": "SELECT DISTINCT user_id FROM audit_log WHERE user_id NOT IN (SELECT id FROM auth_user);",
+            "row_count": 1,
+            "sample": [
+              {
+                "user_id": 99
+              }
+            ]
+          }
+        },
+        {
+          "issue_id": "campaign-date-inconsistency",
+          "severity": "medium",
+          "problem_description": "Inconsistent campaign dates found where `date_debut` is not before `date_fin` in the `campagne` table.",
+          "impact_estimate": "Medium: Campaigns may be scheduled incorrectly, leading to operational issues.",
+          "remediation_hint": "Review and correct the `date_debut` and `date_fin` values in the `campagne` table to ensure that the start date is always before the end date.",
+          "confidence_overall": 0.95,
+          "evidence": {
+            "query": "SELECT id, nom FROM campagne WHERE date_debut >= date_fin;",
+            "row_count": 1,
+            "sample": [
+              {
+                "id": 1,
+                "nom": "test"
+              }
+            ]
+          }
+        },
+        {
+          "issue_id": "audit-log-invalid-action",
+          "severity": "medium",
+          "problem_description": "Invalid `action` values found in the `audit_log` table. Actions should be limited to 'create', 'update', 'delete', and 'login'.",
+          "impact_estimate": "Medium: Audit logs may contain incorrect or misleading information due to invalid action types.",
+          "remediation_hint": "Review and correct the `action` values in the `audit_log` table to ensure they are valid action types.",
+          "confidence_overall": 0.95,
+          "evidence": {
+            "query": "SELECT id, action FROM audit_log WHERE action NOT IN ('create', 'update', 'delete', 'login');",
+            "row_count": 1,
+            "sample": [
+              {
+                "id": 1,
+                "action": "view"
+              }
+            ]
+          }
+        },
+        {
+          "issue_id": "audit-log-invalid-table-name",
+          "severity": "medium",
+          "problem_description": "Invalid `table_name` values found in the `audit_log` table. The `table_name` column should contain only valid table names present in the database.",
+          "impact_estimate": "Medium: Audit logs may contain incorrect or misleading information due to invalid table names.",
+          "remediation_hint": "Review and correct the `table_name` values in the `audit_log` table to ensure they are valid table names.",
+          "confidence_overall": 0.95,
+          "evidence": {
+            "query": "SELECT id, table_name FROM audit_log WHERE table_name NOT IN ('account_emailaddress', 'account_emailconfirmation', 'analysis_results', 'audit_log', 'auth_group', 'auth_group_permissions', 'auth_permission', 'auth_user', 'auth_user_groups', 'auth_user_user_permissions', 'budget_history', 'budget_history_aud', 'campagne', 'cleaning_job', 'cleaning_results', 'contact_list', 'contacts', 'django_content_type', 'django_migrations', 'django_session', 'jobs', 'organization', 'rev_info', 'send_sms', 'sent_sms', 'smsc', 'smsc_routing_rule', 'taskmeta', 'tasksetmeta');",
+            "row_count": 1,
+            "sample": [
+              {
+                "id": 1,
+                "table_name": "invalid_table"
+              }
+            ]
+          }
+        },
+        {
+          "issue_id": "email-address-empty",
+          "severity": "critical",
+          "problem_description": "Empty email addresses found in the `account_emailaddress` table.",
+          "impact_estimate": "Critical: Users may not be able to receive important notifications or reset their passwords.",
+          "remediation_hint": "Review and correct the empty `email` values in the `account_emailaddress` table. Ensure that all email addresses are valid and not empty.",
+          "confidence_overall": 0.95,
+          "evidence": {
+            "query": "SELECT id, email FROM account_emailaddress WHERE email = '';",
+            "row_count": 1,
+            "sample": [
+              {
+                "id": 1,
+                "email": ""
+              }
+            ]
+          }
+        },
+        {
+          "issue_id": "smsc-routing-rule-missing-defaults",
+          "severity": "critical",
+          "problem_description": "Missing default routing rules for some organizations in `smsc_routing_rule`. Each organization should have exactly one default rule.",
+          "impact_estimate": "Critical: SMS messages may not be routed correctly for some organizations, leading to communication failures.",
+          "remediation_hint": "Review the `smsc_routing_rule` table and ensure that each organization has exactly one default routing rule (where `expediteur_id` and `groupe_id` are NULL).",
+          "confidence_overall": 0.95,
+          "evidence": {
+            "query": "SELECT o.id FROM organization o LEFT JOIN smsc_routing_rule r ON o.id = r.organization_id WHERE r.expediteur_id IS NULL AND r.groupe_id IS NULL GROUP BY o.id HAVING COUNT(r.id) != 1;",
+            "row_count": 1,
+            "sample": [
+              {
+                "id": 1
+              }
+            ]
+          }
+        },
+        {
+          "issue_id": "cleaning-job-date-inconsistency",
+          "severity": "medium",
+          "problem_description": "Inconsistent cleaning job dates found where `date_debut` is not before `date_fin` in the `cleaning_job` table.",
+          "impact_estimate": "Medium: Cleaning jobs may be scheduled incorrectly, leading to operational issues.",
+          "remediation_hint": "Review and correct the `date_debut` and `date_fin` values in the `cleaning_job` table to ensure that the start date is always before the end date.",
+          "confidence_overall": 0.95,
+          "evidence": {
+            "query": "SELECT id FROM cleaning_job WHERE date_debut >= date_fin;",
+            "row_count": 1,
+            "sample": [
+              {
+                "id": 1
+              }
+            ]
+          }
+        }
+      ],
+      "prior_reports": [
+        {
+          "pipeline_run_id": "9faea20b-a773-4989-bb9b-0ca959218c8a",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-19T01:23:32.569311Z",
+          "agent": "SchemaIntegrityValidator",
+          "status": null,
+          "summary": {
+            "total_items_analyzed": 50,
+            "items_passed": 35,
+            "items_flagged": 15,
+            "critical_issues": 3,
+            "high_issues": 2,
+            "medium_issues": 5,
+            "low_issues": 5,
+            "overall_quality_score": 95.5,
+            "overall_confidence": 0.72,
+            "flagged_tables": [
+              "auth_group_permissions",
+              "auth_user",
+              "auth_user_groups",
+              "auth_user_user_permissions",
+              "campagne",
+              "cleaning_job",
+              "cleaning_results",
+              "contacts",
+              "django_content_type",
+              "django_migrations"
+            ]
+          },
+          "findings": [
+            {
+              "issue_id": "missing-pk-auth_group_permissions",
+              "severity": "critical",
+              "problem_description": "The `auth_group_permissions` table lacks a primary key, which can lead to duplicate entries and data synchronization issues.",
+              "impact_estimate": "High: Potential for data duplication and integrity issues in group permissions.",
+              "remediation_hint": "Add a composite primary key on `(group_id, permission_id)` after confirming no duplicates exist.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "missing-pk-auth_user_groups",
+              "severity": "critical",
+              "problem_description": "The `auth_user_groups` table lacks a primary key, which can lead to duplicate entries and data synchronization issues.",
+              "impact_estimate": "High: Potential for data duplication and integrity issues in user group assignments.",
+              "remediation_hint": "Add a composite primary key on `(user_id, group_id)` after confirming no duplicates exist.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "missing-pk-auth_user_user_permissions",
+              "severity": "critical",
+              "problem_description": "The `auth_user_user_permissions` table lacks a primary key, which can lead to duplicate entries and data synchronization issues.",
+              "impact_estimate": "High: Potential for data duplication and integrity issues in user permissions.",
+              "remediation_hint": "Add a composite primary key on `(user_id, permission_id)` after confirming no duplicates exist.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "missing-pk-django_migrations",
+              "severity": "high",
+              "problem_description": "The `django_migrations` table lacks a primary key, which can lead to difficulties in managing migrations and potential data duplication issues.",
+              "impact_estimate": "Medium: Difficulties in managing migrations and potential data duplication.",
+              "remediation_hint": "Consider adding a primary key to the `django_migrations` table. A composite key on (`app`, `name`) might be appropriate, but evaluate existing data first.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "missing-pk-django_content_type",
+              "severity": "high",
+              "problem_description": "The `django_content_type` table lacks a primary key, which can lead to difficulties in managing content types and potential data duplication issues.",
+              "impact_estimate": "Medium: Difficulties in managing content types and potential data duplication.",
+              "remediation_hint": "Consider adding a primary key to the `django_content_type` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "nullable-contact_id-campagne",
+              "severity": "medium",
+              "problem_description": "The `contact_id` column in the `campagne` table is nullable, which may indicate incomplete or missing contact information for some campaigns.",
+              "impact_estimate": "Medium: Campaigns may be created without associated contact information.",
+              "remediation_hint": "Investigate the reason for null values in `contact_id` and consider making the column non-nullable if all campaigns should have a contact.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "orphaned-contact_list_id-contacts",
+              "severity": "medium",
+              "problem_description": "The `contact_list_id` column in the `contacts` table contains values that do not exist in the `contact_list` table.",
+              "impact_estimate": "Medium: Contacts may be associated with non-existent contact lists, leading to data inconsistencies.",
+              "remediation_hint": "Identify and correct or remove orphaned `contact_list_id` values in the `contacts` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "nullable-cleaning_job_id-cleaning_results",
+              "severity": "medium",
+              "problem_description": "The `cleaning_job_id` column in the `cleaning_results` table is nullable, which may indicate incomplete or missing cleaning job information for some cleaning results.",
+              "impact_estimate": "Medium: Cleaning results may be created without associated cleaning job information.",
+              "remediation_hint": "Investigate the reason for null values in `cleaning_job_id` and consider making the column non-nullable if all cleaning results should have a cleaning job.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "orphaned-cleaning_job_id-cleaning_results",
+              "severity": "medium",
+              "problem_description": "The `cleaning_job_id` column in the `cleaning_results` table contains values that do not exist in the `cleaning_job` table.",
+              "impact_estimate": "Medium: Cleaning results may be associated with non-existent cleaning jobs, leading to data inconsistencies.",
+              "remediation_hint": "Identify and correct or remove orphaned `cleaning_job_id` values in the `cleaning_results` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "orphaned-contact_id-campagne",
+              "severity": "medium",
+              "problem_description": "The `contact_id` column in the `campagne` table contains values that do not exist in the `contacts` table.",
+              "impact_estimate": "Medium: Campaigns may be associated with non-existent contacts, leading to data inconsistencies.",
+              "remediation_hint": "Identify and correct or remove orphaned `contact_id` values in the `campagne` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "nullable-contact_list_id-contacts",
+              "severity": "low",
+              "problem_description": "The `contact_list_id` column in the `contacts` table is nullable, which may indicate incomplete or missing contact list information for some contacts.",
+              "impact_estimate": "Low: Contacts may be created without associated contact list information.",
+              "remediation_hint": "Investigate the reason for null values in `contact_list_id` and consider making the column non-nullable if all contacts should have a contact list.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "orphaned-contact_list_id-contacts-nullable",
+              "severity": "low",
+              "problem_description": "The `contact_list_id` column in the `contacts` table contains values that do not exist in the `contact_list` table, even when `contact_list_id` is not null.",
+              "impact_estimate": "Low: Contacts may be associated with non-existent contact lists, leading to data inconsistencies.",
+              "remediation_hint": "Identify and correct or remove orphaned `contact_list_id` values in the `contacts` table.",
+              "confidence_overall": 0.95
+            }
+          ],
+          "context_truncation": {
+            "findings_kept": 12,
+            "findings_total": 15
+          },
+          "quality_gate": {
+            "stage": "schema_validation",
+            "min_confidence": 0.55,
+            "min_evidence_rows": 0,
+            "require_evidence_query": false,
+            "accepted_count": 15,
+            "blocked_count": 0,
+            "meta": {
+              "elapsed_ms": 0,
+              "status": "ok",
+              "warnings": []
+            }
+          }
+        },
+        {
+          "pipeline_run_id": "9faea20b-a773-4989-bb9b-0ca959218c8a",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-19T01:24:16.709458Z",
+          "agent": "ColumnValidatorAgent",
+          "status": null,
+          "summary": {
+            "total_items_analyzed": 75,
+            "items_passed": 60,
+            "items_flagged": 15,
+            "critical_issues": 0,
+            "high_issues": 0,
+            "medium_issues": 0,
+            "low_issues": 0,
+            "overall_quality_score": 100.0,
+            "overall_confidence": 0.8273,
+            "flagged_tables": []
+          },
+          "findings": [
+            {
+              "table": "analysis_results",
+              "column": "job_id",
+              "status": "flagged",
+              "impact_estimate": "High: Analysis results may be associated with non-existent jobs, leading to data inconsistencies and inaccurate reporting.",
+              "remediation_hint": "Identify and correct or remove orphaned `job_id` values in the `analysis_results` table. Ensure that all `job_id` values in `analysis_results` exist in the `jobs` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "table": "cleaning_results",
+              "column": "job_id",
+              "status": "flagged",
+              "impact_estimate": "High: Cleaning results may be associated with non-existent jobs, leading to data inconsistencies and inaccurate reporting.",
+              "remediation_hint": "Identify and correct or remove orphaned `job_id` values in the `cleaning_results` table. Ensure that all `job_id` values in `cleaning_results` exist in the `jobs` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "table": "campagne",
+              "column": "contact_id",
+              "status": "flagged",
+              "impact_estimate": "Medium: Campaigns may be associated with non-existent contacts, leading to data inconsistencies and potential communication failures.",
+              "remediation_hint": "Identify and correct or remove orphaned `contact_id` values in the `campagne` table. Ensure that all `contact_id` values in `campagne` exist in the `contacts` table.",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "contacts",
+              "column": "contact_list_id",
+              "status": "flagged",
+              "impact_estimate": "Medium: Contacts may be associated with non-existent contact lists, leading to data inconsistencies and potential communication failures.",
+              "remediation_hint": "Identify and correct or remove orphaned `contact_list_id` values in the `contacts` table. Ensure that all `contact_list_id` values in `contacts` exist in the `contact_list` table.",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "auth_group_permissions",
+              "column": "group_id",
+              "status": "flagged",
+              "impact_estimate": "Critical: Data duplication and integrity issues in group permissions due to missing primary key.",
+              "remediation_hint": "Add a composite primary key on `(group_id, permission_id)` after removing duplicate rows. Ensure that all `group_id` values in `auth_group_permissions` exist in the `auth_group` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "table": "auth_group_permissions",
+              "column": "permission_id",
+              "status": "flagged",
+              "impact_estimate": "Medium: Group permissions may be associated with non-existent permissions, leading to access control issues.",
+              "remediation_hint": "Identify and correct or remove orphaned `permission_id` values in the `auth_group_permissions` table. Ensure that all `permission_id` values in `auth_group_permissions` exist in the `auth_permission` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "table": "auth_user_groups",
+              "column": "user_id",
+              "status": "flagged",
+              "impact_estimate": "Critical: Data duplication and integrity issues in user group assignments due to missing primary key.",
+              "remediation_hint": "Add a composite primary key on `(user_id, group_id)` after removing duplicate rows. Ensure that all `user_id` values in `auth_user_groups` exist in the `auth_user` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "table": "auth_user_groups",
+              "column": "group_id",
+              "status": "flagged",
+              "impact_estimate": "Medium: User group assignments may be associated with non-existent groups, leading to access control issues.",
+              "remediation_hint": "Identify and correct or remove orphaned `group_id` values in the `auth_user_groups` table. Ensure that all `group_id` values in `auth_user_groups` exist in the `auth_group` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "table": "auth_user_user_permissions",
+              "column": "user_id",
+              "status": "flagged",
+              "impact_estimate": "Critical: Data duplication and integrity issues in user permissions due to missing primary key.",
+              "remediation_hint": "Add a composite primary key on `(user_id, permission_id)` after removing duplicate rows. Ensure that all `user_id` values in `auth_user_user_permissions` exist in the `auth_user` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "table": "auth_user_user_permissions",
+              "column": "permission_id",
+              "status": "flagged",
+              "impact_estimate": "Medium: User permissions may be associated with non-existent permissions, leading to access control issues.",
+              "remediation_hint": "Identify and correct or remove orphaned `permission_id` values in the `auth_user_user_permissions` table. Ensure that all `permission_id` values in `auth_user_user_permissions` exist in the `auth_permission` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "table": "budget_history_aud",
+              "column": "rev",
+              "status": "flagged",
+              "impact_estimate": "Medium: Budget history audit entries may be associated with non-existent revisions, leading to data inconsistencies and potential audit failures.",
+              "remediation_hint": "Identify and correct or remove orphaned `rev` values in the `budget_history_aud` table. Ensure that all `rev` values in `budget_history_aud` exist in the `rev_info` table.",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "cleaning_results",
+              "column": "cleaning_job_id",
+              "status": "flagged",
+              "impact_estimate": "Medium: Cleaning results may be associated with non-existent cleaning jobs, leading to data inconsistencies and inaccurate reporting.",
+              "remediation_hint": "Identify and correct or remove orphaned `cleaning_job_id` values in the `cleaning_results` table. Ensure that all `cleaning_job_id` values in `cleaning_results` exist in the `cleaning_job` table.",
+              "confidence_overall": 0.9
+            }
+          ],
+          "context_truncation": {
+            "findings_kept": 12,
+            "findings_total": 15
+          },
+          "quality_gate": {
+            "stage": "column_validation",
+            "min_confidence": 0.55,
+            "min_evidence_rows": 0,
+            "require_evidence_query": false,
+            "accepted_count": 15,
+            "blocked_count": 0,
+            "meta": {
+              "elapsed_ms": 0,
+              "status": "ok",
+              "warnings": []
+            }
+          }
+        },
+        {
+          "pipeline_run_id": "9faea20b-a773-4989-bb9b-0ca959218c8a",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-19T01:24:52.323493Z",
+          "agent": "RowLevelValidator",
+          "status": "partial",
+          "summary": {
+            "total_items_analyzed": 50784,
+            "items_passed": 50784,
+            "items_flagged": 0,
+            "critical_issues": 0,
+            "high_issues": 0,
+            "medium_issues": 0,
+            "low_issues": 0,
+            "overall_quality_score": 100.0,
+            "overall_confidence": 1.0,
+            "flagged_tables": []
+          },
+          "findings": [],
+          "quality_gate": {
+            "stage": "row_level_validation",
+            "min_confidence": 0.55,
+            "min_evidence_rows": 0,
+            "require_evidence_query": false,
+            "accepted_count": 0,
+            "blocked_count": 0,
+            "meta": {
+              "elapsed_ms": 0,
+              "status": "ok",
+              "warnings": []
+            }
+          },
+          "errors": [
+            "row_total_rows_recalibrated_from_live_database"
+          ]
+        }
+      ],
+      "quality_gate": {
+        "stage": "cross_row_validation",
+        "min_confidence": 0.55,
+        "min_evidence_rows": 0,
+        "require_evidence_query": false,
+        "accepted_count": 7,
+        "blocked_count": 0,
+        "meta": {
+          "elapsed_ms": 1,
+          "status": "ok",
+          "warnings": []
+        }
+      },
+      "blocked_findings": []
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "9faea20b-a773-4989-bb9b-0ca959218c8a",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-19T01:26:57.091518Z",
+      "agent": "DataFixPlanner",
+      "summary": {
+        "total_items_analyzed": 37,
+        "items_passed": 26,
+        "items_flagged": 11,
+        "critical_issues": 1,
+        "high_issues": 0,
+        "medium_issues": 11,
+        "low_issues": 0,
+        "overall_quality_score": 97.03,
+        "overall_confidence": 0.7,
+        "flagged_tables": [
+          "analysis_results",
+          "auth_group_permissions",
+          "auth_user_groups",
+          "auth_user_user_permissions",
+          "budget_history_aud",
+          "campagne",
+          "cleaning_results",
+          "contacts"
+        ]
+      },
+      "metrics": {
+        "total_issues_received": 37,
+        "fixes_generated": 11,
+        "critical_fixes": 1,
+        "high_fixes": 0,
+        "medium_fixes": 11,
+        "low_fixes": 0,
+        "estimated_rows_affected": 0,
+        "fix_confidence": 0.7
+      },
+      "findings": [
+        {
+          "id": "fix_001",
+          "table": "auth_group_permissions",
+          "target_table": "auth_group_permissions_clean",
+          "problem": "The auth_group_permissions table contains duplicate entries, and lacks a primary key, which can lead to data integrity issues.",
+          "fix": "Remove duplicates and add primary key to auth_group_permissions",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS auth_group_permissions_clean (LIKE auth_group_permissions INCLUDING ALL);",
+            "INSERT INTO auth_group_permissions_clean SELECT * FROM auth_group_permissions ON CONFLICT DO NOTHING;",
+            "DELETE FROM auth_group_permissions_clean WHERE (group_id, permission_id) IN ( SELECT group_id, permission_id FROM ( SELECT group_id, permission_id, ROW_NUMBER() OVER (PARTITION BY group_id, permission_id ORDER BY (SELECT NULL)) AS row_num FROM auth_group_permissions_clean ) AS sub WHERE row_num > 1 );",
+            "ALTER TABLE auth_group_permissions_clean ADD CONSTRAINT auth_group_permissions_pk PRIMARY KEY (group_id, permission_id);"
+          ],
+          "explanation": "This fix removes duplicate entries in the auth_group_permissions table and adds a primary key to ensure data integrity. The primary key is a composite key consisting of group_id and permission_id."
+        },
+        {
+          "id": "fix_002",
+          "table": "auth_user_groups",
+          "target_table": "auth_user_groups_clean",
+          "problem": "The auth_user_groups table contains duplicate entries, and lacks a primary key, which can lead to data integrity issues.",
+          "fix": "Remove duplicates and add primary key to auth_user_groups",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS auth_user_groups_clean (LIKE auth_user_groups INCLUDING ALL);",
+            "INSERT INTO auth_user_groups_clean SELECT * FROM auth_user_groups ON CONFLICT DO NOTHING;",
+            "DELETE FROM auth_user_groups_clean WHERE (user_id, group_id) IN ( SELECT user_id, group_id FROM ( SELECT user_id, group_id, ROW_NUMBER() OVER (PARTITION BY user_id, group_id ORDER BY (SELECT NULL)) AS row_num FROM auth_user_groups_clean ) AS sub WHERE row_num > 1 );",
+            "ALTER TABLE auth_user_groups_clean ADD CONSTRAINT auth_user_groups_pk PRIMARY KEY (user_id, group_id);"
+          ],
+          "explanation": "This fix removes duplicate entries in the auth_user_groups table and adds a primary key to ensure data integrity. The primary key is a composite key consisting of user_id and group_id."
+        },
+        {
+          "id": "fix_003",
+          "table": "auth_user_user_permissions",
+          "target_table": "auth_user_user_permissions_clean",
+          "problem": "The auth_user_user_permissions table contains duplicate entries, and lacks a primary key, which can lead to data integrity issues.",
+          "fix": "Remove duplicates and add primary key to auth_user_user_permissions",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS auth_user_user_permissions_clean (LIKE auth_user_user_permissions INCLUDING ALL);",
+            "INSERT INTO auth_user_user_permissions_clean SELECT * FROM auth_user_user_permissions ON CONFLICT DO NOTHING;",
+            "DELETE FROM auth_user_user_permissions_clean WHERE (user_id, permission_id) IN ( SELECT user_id, permission_id FROM ( SELECT user_id, permission_id, ROW_NUMBER() OVER (PARTITION BY user_id, permission_id ORDER BY (SELECT NULL)) AS row_num FROM auth_user_user_permissions_clean ) AS sub WHERE row_num > 1 );",
+            "ALTER TABLE auth_user_user_permissions_clean ADD CONSTRAINT auth_user_user_permissions_pk PRIMARY KEY (user_id, permission_id);"
+          ],
+          "explanation": "This fix removes duplicate entries in the auth_user_user_permissions table and adds a primary key to ensure data integrity. The primary key is a composite key consisting of user_id and permission_id."
+        },
+        {
+          "id": "fix_004",
+          "table": "analysis_results",
+          "target_table": "analysis_results_clean",
+          "problem": "The analysis_results table contains job_id values that do not exist in the jobs table, leading to orphaned records.",
+          "fix": "Set orphaned job_id values in analysis_results to NULL",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS analysis_results_clean (LIKE analysis_results INCLUDING ALL);",
+            "INSERT INTO analysis_results_clean SELECT * FROM analysis_results ON CONFLICT DO NOTHING;",
+            "UPDATE analysis_results_clean SET job_id = NULL WHERE job_id NOT IN (SELECT id FROM jobs);"
+          ],
+          "explanation": "This fix updates the analysis_results table by setting the job_id to NULL for any records where the job_id does not exist in the jobs table. This prevents orphaned records and maintains data integrity."
+        },
+        {
+          "id": "fix_005",
+          "table": "cleaning_results",
+          "target_table": "cleaning_results_clean",
+          "problem": "The cleaning_results table contains job_id values that do not exist in the jobs table, leading to orphaned records.",
+          "fix": "Set orphaned job_id values in cleaning_results to NULL",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS cleaning_results_clean (LIKE cleaning_results INCLUDING ALL);",
+            "INSERT INTO cleaning_results_clean SELECT * FROM cleaning_results ON CONFLICT DO NOTHING;",
+            "UPDATE cleaning_results_clean SET job_id = NULL WHERE job_id NOT IN (SELECT id FROM jobs);"
+          ],
+          "explanation": "This fix updates the cleaning_results table by setting the job_id to NULL for any records where the job_id does not exist in the jobs table. This prevents orphaned records and maintains data integrity."
+        },
+        {
+          "id": "fix_006",
+          "table": "campagne",
+          "target_table": "campagne_clean",
+          "problem": "The campagne table contains contact_id values that do not exist in the contacts table, leading to orphaned records.",
+          "fix": "Set orphaned contact_id values in campagne to NULL",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS campagne_clean (LIKE campagne INCLUDING ALL);",
+            "INSERT INTO campagne_clean SELECT * FROM campagne ON CONFLICT DO NOTHING;",
+            "UPDATE campagne_clean SET contact_id = NULL WHERE contact_id IS NOT NULL AND contact_id NOT IN (SELECT id FROM contacts);"
+          ],
+          "explanation": "This fix updates the campagne table by setting the contact_id to NULL for any records where the contact_id does not exist in the contacts table. This prevents orphaned records and maintains data integrity."
+        },
+        {
+          "id": "fix_007",
+          "table": "contacts",
+          "target_table": "contacts_clean",
+          "problem": "The contacts table contains contact_list_id values that do not exist in the contact_list table, leading to orphaned records.",
+          "fix": "Set orphaned contact_list_id values in contacts to NULL",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS contacts_clean (LIKE contacts INCLUDING ALL);",
+            "INSERT INTO contacts_clean SELECT * FROM contacts ON CONFLICT DO NOTHING;",
+            "UPDATE contacts_clean SET contact_list_id = NULL WHERE contact_list_id IS NOT NULL AND contact_list_id NOT IN (SELECT id FROM contact_list);"
+          ],
+          "explanation": "This fix updates the contacts table by setting the contact_list_id to NULL for any records where the contact_list_id does not exist in the contact_list table. This prevents orphaned records and maintains data integrity."
+        },
+        {
+          "id": "fix_008",
+          "table": "auth_group_permissions",
+          "target_table": "auth_group_permissions_clean",
+          "problem": "The auth_group_permissions table contains group_id and permission_id values that do not exist in the auth_group and auth_permission tables, respectively, leading to orphaned records.",
+          "fix": "Set orphaned group_id and permission_id values in auth_group_permissions to NULL",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS auth_group_permissions_clean (LIKE auth_group_permissions INCLUDING ALL);",
+            "INSERT INTO auth_group_permissions_clean SELECT * FROM auth_group_permissions ON CONFLICT DO NOTHING;",
+            "UPDATE auth_group_permissions_clean SET group_id = NULL WHERE group_id NOT IN (SELECT id FROM auth_group);",
+            "UPDATE auth_group_permissions_clean SET permission_id = NULL WHERE permission_id NOT IN (SELECT id FROM auth_permission);"
+          ],
+          "explanation": "This fix updates the auth_group_permissions table by setting the group_id and permission_id to NULL for any records where the group_id and permission_id do not exist in the auth_group and auth_permission tables, respectively. This prevents orphaned records and maintains data integrity."
+        },
+        {
+          "id": "fix_009",
+          "table": "auth_user_groups",
+          "target_table": "auth_user_groups_clean",
+          "problem": "The auth_user_groups table contains user_id and group_id values that do not exist in the auth_user and auth_group tables, respectively, leading to orphaned records.",
+          "fix": "Set orphaned user_id and group_id values in auth_user_groups to NULL",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS auth_user_groups_clean (LIKE auth_user_groups INCLUDING ALL);",
+            "INSERT INTO auth_user_groups_clean SELECT * FROM auth_user_groups ON CONFLICT DO NOTHING;",
+            "UPDATE auth_user_groups_clean SET user_id = NULL WHERE user_id NOT IN (SELECT id FROM auth_user);",
+            "UPDATE auth_user_groups_clean SET group_id = NULL WHERE group_id NOT IN (SELECT id FROM auth_group);"
+          ],
+          "explanation": "This fix updates the auth_user_groups table by setting the user_id and group_id to NULL for any records where the user_id and group_id do not exist in the auth_user and auth_group tables, respectively. This prevents orphaned records and maintains data integrity."
+        },
+        {
+          "id": "fix_010",
+          "table": "auth_user_user_permissions",
+          "target_table": "auth_user_user_permissions_clean",
+          "problem": "The auth_user_user_permissions table contains user_id and permission_id values that do not exist in the auth_user and auth_permission tables, respectively, leading to orphaned records.",
+          "fix": "Set orphaned user_id and permission_id values in auth_user_user_permissions to NULL",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS auth_user_user_permissions_clean (LIKE auth_user_user_permissions INCLUDING ALL);",
+            "INSERT INTO auth_user_user_permissions_clean SELECT * FROM auth_user_user_permissions ON CONFLICT DO NOTHING;",
+            "UPDATE auth_user_user_permissions_clean SET user_id = NULL WHERE user_id NOT IN (SELECT id FROM auth_user);",
+            "UPDATE auth_user_user_permissions_clean SET permission_id = NULL WHERE permission_id NOT IN (SELECT id FROM auth_permission);"
+          ],
+          "explanation": "This fix updates the auth_user_user_permissions table by setting the user_id and permission_id to NULL for any records where the user_id and permission_id do not exist in the auth_user and auth_permission tables, respectively. This prevents orphaned records and maintains data integrity."
+        },
+        {
+          "id": "fix_011",
+          "table": "budget_history_aud",
+          "target_table": "budget_history_aud_clean",
+          "problem": "The budget_history_aud table contains rev values that do not exist in the rev_info table, leading to orphaned records.",
+          "fix": "Set orphaned rev values in budget_history_aud to NULL",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE TABLE IF NOT EXISTS budget_history_aud_clean (LIKE budget_history_aud INCLUDING ALL);",
+            "INSERT INTO budget_history_aud_clean SELECT * FROM budget_history_aud ON CONFLICT DO NOTHING;",
+            "UPDATE budget_history_aud_clean SET rev = NULL WHERE rev NOT IN (SELECT id FROM rev_info);"
+          ],
+          "explanation": "This fix updates the budget_history_aud table by setting the rev to NULL for any records where the rev does not exist in the rev_info table. This prevents orphaned records and maintains data integrity."
+        }
+      ],
+      "prior_reports": [
+        {
+          "pipeline_run_id": "9faea20b-a773-4989-bb9b-0ca959218c8a",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-19T01:23:32.569311Z",
+          "agent": "SchemaIntegrityValidator",
+          "status": null,
+          "summary": {
+            "total_items_analyzed": 50,
+            "items_passed": 35,
+            "items_flagged": 15,
+            "critical_issues": 3,
+            "high_issues": 2,
+            "medium_issues": 5,
+            "low_issues": 5,
+            "overall_quality_score": 95.5,
+            "overall_confidence": 0.72,
+            "flagged_tables": [
+              "auth_group_permissions",
+              "auth_user",
+              "auth_user_groups",
+              "auth_user_user_permissions",
+              "campagne",
+              "cleaning_job",
+              "cleaning_results",
+              "contacts",
+              "django_content_type",
+              "django_migrations"
+            ]
+          },
+          "findings": [
+            {
+              "issue_id": "missing-pk-auth_group_permissions",
+              "severity": "critical",
+              "problem_description": "The `auth_group_permissions` table lacks a primary key, which can lead to duplicate entries and data synchronization issues.",
+              "impact_estimate": "High: Potential for data duplication and integrity issues in group permissions.",
+              "remediation_hint": "Add a composite primary key on `(group_id, permission_id)` after confirming no duplicates exist.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "missing-pk-auth_user_groups",
+              "severity": "critical",
+              "problem_description": "The `auth_user_groups` table lacks a primary key, which can lead to duplicate entries and data synchronization issues.",
+              "impact_estimate": "High: Potential for data duplication and integrity issues in user group assignments.",
+              "remediation_hint": "Add a composite primary key on `(user_id, group_id)` after confirming no duplicates exist.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "missing-pk-auth_user_user_permissions",
+              "severity": "critical",
+              "problem_description": "The `auth_user_user_permissions` table lacks a primary key, which can lead to duplicate entries and data synchronization issues.",
+              "impact_estimate": "High: Potential for data duplication and integrity issues in user permissions.",
+              "remediation_hint": "Add a composite primary key on `(user_id, permission_id)` after confirming no duplicates exist.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "missing-pk-django_migrations",
+              "severity": "high",
+              "problem_description": "The `django_migrations` table lacks a primary key, which can lead to difficulties in managing migrations and potential data duplication issues.",
+              "impact_estimate": "Medium: Difficulties in managing migrations and potential data duplication.",
+              "remediation_hint": "Consider adding a primary key to the `django_migrations` table. A composite key on (`app`, `name`) might be appropriate, but evaluate existing data first.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "missing-pk-django_content_type",
+              "severity": "high",
+              "problem_description": "The `django_content_type` table lacks a primary key, which can lead to difficulties in managing content types and potential data duplication issues.",
+              "impact_estimate": "Medium: Difficulties in managing content types and potential data duplication.",
+              "remediation_hint": "Consider adding a primary key to the `django_content_type` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "nullable-contact_id-campagne",
+              "severity": "medium",
+              "problem_description": "The `contact_id` column in the `campagne` table is nullable, which may indicate incomplete or missing contact information for some campaigns.",
+              "impact_estimate": "Medium: Campaigns may be created without associated contact information.",
+              "remediation_hint": "Investigate the reason for null values in `contact_id` and consider making the column non-nullable if all campaigns should have a contact.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "orphaned-contact_list_id-contacts",
+              "severity": "medium",
+              "problem_description": "The `contact_list_id` column in the `contacts` table contains values that do not exist in the `contact_list` table.",
+              "impact_estimate": "Medium: Contacts may be associated with non-existent contact lists, leading to data inconsistencies.",
+              "remediation_hint": "Identify and correct or remove orphaned `contact_list_id` values in the `contacts` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "nullable-cleaning_job_id-cleaning_results",
+              "severity": "medium",
+              "problem_description": "The `cleaning_job_id` column in the `cleaning_results` table is nullable, which may indicate incomplete or missing cleaning job information for some cleaning results.",
+              "impact_estimate": "Medium: Cleaning results may be created without associated cleaning job information.",
+              "remediation_hint": "Investigate the reason for null values in `cleaning_job_id` and consider making the column non-nullable if all cleaning results should have a cleaning job.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "orphaned-cleaning_job_id-cleaning_results",
+              "severity": "medium",
+              "problem_description": "The `cleaning_job_id` column in the `cleaning_results` table contains values that do not exist in the `cleaning_job` table.",
+              "impact_estimate": "Medium: Cleaning results may be associated with non-existent cleaning jobs, leading to data inconsistencies.",
+              "remediation_hint": "Identify and correct or remove orphaned `cleaning_job_id` values in the `cleaning_results` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "orphaned-contact_id-campagne",
+              "severity": "medium",
+              "problem_description": "The `contact_id` column in the `campagne` table contains values that do not exist in the `contacts` table.",
+              "impact_estimate": "Medium: Campaigns may be associated with non-existent contacts, leading to data inconsistencies.",
+              "remediation_hint": "Identify and correct or remove orphaned `contact_id` values in the `campagne` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "nullable-contact_list_id-contacts",
+              "severity": "low",
+              "problem_description": "The `contact_list_id` column in the `contacts` table is nullable, which may indicate incomplete or missing contact list information for some contacts.",
+              "impact_estimate": "Low: Contacts may be created without associated contact list information.",
+              "remediation_hint": "Investigate the reason for null values in `contact_list_id` and consider making the column non-nullable if all contacts should have a contact list.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "orphaned-contact_list_id-contacts-nullable",
+              "severity": "low",
+              "problem_description": "The `contact_list_id` column in the `contacts` table contains values that do not exist in the `contact_list` table, even when `contact_list_id` is not null.",
+              "impact_estimate": "Low: Contacts may be associated with non-existent contact lists, leading to data inconsistencies.",
+              "remediation_hint": "Identify and correct or remove orphaned `contact_list_id` values in the `contacts` table.",
+              "confidence_overall": 0.95
+            }
+          ],
+          "context_truncation": {
+            "findings_kept": 12,
+            "findings_total": 15
+          },
+          "quality_gate": {
+            "stage": "schema_validation",
+            "min_confidence": 0.55,
+            "min_evidence_rows": 0,
+            "require_evidence_query": false,
+            "accepted_count": 15,
+            "blocked_count": 0,
+            "meta": {
+              "elapsed_ms": 0,
+              "status": "ok",
+              "warnings": []
+            }
+          }
+        },
+        {
+          "pipeline_run_id": "9faea20b-a773-4989-bb9b-0ca959218c8a",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-19T01:24:16.709458Z",
+          "agent": "ColumnValidatorAgent",
+          "status": null,
+          "summary": {
+            "total_items_analyzed": 75,
+            "items_passed": 60,
+            "items_flagged": 15,
+            "critical_issues": 0,
+            "high_issues": 0,
+            "medium_issues": 0,
+            "low_issues": 0,
+            "overall_quality_score": 100.0,
+            "overall_confidence": 0.8273,
+            "flagged_tables": []
+          },
+          "findings": [
+            {
+              "table": "analysis_results",
+              "column": "job_id",
+              "status": "flagged",
+              "impact_estimate": "High: Analysis results may be associated with non-existent jobs, leading to data inconsistencies and inaccurate reporting.",
+              "remediation_hint": "Identify and correct or remove orphaned `job_id` values in the `analysis_results` table. Ensure that all `job_id` values in `analysis_results` exist in the `jobs` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "table": "cleaning_results",
+              "column": "job_id",
+              "status": "flagged",
+              "impact_estimate": "High: Cleaning results may be associated with non-existent jobs, leading to data inconsistencies and inaccurate reporting.",
+              "remediation_hint": "Identify and correct or remove orphaned `job_id` values in the `cleaning_results` table. Ensure that all `job_id` values in `cleaning_results` exist in the `jobs` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "table": "campagne",
+              "column": "contact_id",
+              "status": "flagged",
+              "impact_estimate": "Medium: Campaigns may be associated with non-existent contacts, leading to data inconsistencies and potential communication failures.",
+              "remediation_hint": "Identify and correct or remove orphaned `contact_id` values in the `campagne` table. Ensure that all `contact_id` values in `campagne` exist in the `contacts` table.",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "contacts",
+              "column": "contact_list_id",
+              "status": "flagged",
+              "impact_estimate": "Medium: Contacts may be associated with non-existent contact lists, leading to data inconsistencies and potential communication failures.",
+              "remediation_hint": "Identify and correct or remove orphaned `contact_list_id` values in the `contacts` table. Ensure that all `contact_list_id` values in `contacts` exist in the `contact_list` table.",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "auth_group_permissions",
+              "column": "group_id",
+              "status": "flagged",
+              "impact_estimate": "Critical: Data duplication and integrity issues in group permissions due to missing primary key.",
+              "remediation_hint": "Add a composite primary key on `(group_id, permission_id)` after removing duplicate rows. Ensure that all `group_id` values in `auth_group_permissions` exist in the `auth_group` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "table": "auth_group_permissions",
+              "column": "permission_id",
+              "status": "flagged",
+              "impact_estimate": "Medium: Group permissions may be associated with non-existent permissions, leading to access control issues.",
+              "remediation_hint": "Identify and correct or remove orphaned `permission_id` values in the `auth_group_permissions` table. Ensure that all `permission_id` values in `auth_group_permissions` exist in the `auth_permission` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "table": "auth_user_groups",
+              "column": "user_id",
+              "status": "flagged",
+              "impact_estimate": "Critical: Data duplication and integrity issues in user group assignments due to missing primary key.",
+              "remediation_hint": "Add a composite primary key on `(user_id, group_id)` after removing duplicate rows. Ensure that all `user_id` values in `auth_user_groups` exist in the `auth_user` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "table": "auth_user_groups",
+              "column": "group_id",
+              "status": "flagged",
+              "impact_estimate": "Medium: User group assignments may be associated with non-existent groups, leading to access control issues.",
+              "remediation_hint": "Identify and correct or remove orphaned `group_id` values in the `auth_user_groups` table. Ensure that all `group_id` values in `auth_user_groups` exist in the `auth_group` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "table": "auth_user_user_permissions",
+              "column": "user_id",
+              "status": "flagged",
+              "impact_estimate": "Critical: Data duplication and integrity issues in user permissions due to missing primary key.",
+              "remediation_hint": "Add a composite primary key on `(user_id, permission_id)` after removing duplicate rows. Ensure that all `user_id` values in `auth_user_user_permissions` exist in the `auth_user` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "table": "auth_user_user_permissions",
+              "column": "permission_id",
+              "status": "flagged",
+              "impact_estimate": "Medium: User permissions may be associated with non-existent permissions, leading to access control issues.",
+              "remediation_hint": "Identify and correct or remove orphaned `permission_id` values in the `auth_user_user_permissions` table. Ensure that all `permission_id` values in `auth_user_user_permissions` exist in the `auth_permission` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "table": "budget_history_aud",
+              "column": "rev",
+              "status": "flagged",
+              "impact_estimate": "Medium: Budget history audit entries may be associated with non-existent revisions, leading to data inconsistencies and potential audit failures.",
+              "remediation_hint": "Identify and correct or remove orphaned `rev` values in the `budget_history_aud` table. Ensure that all `rev` values in `budget_history_aud` exist in the `rev_info` table.",
+              "confidence_overall": 0.9
+            },
+            {
+              "table": "cleaning_results",
+              "column": "cleaning_job_id",
+              "status": "flagged",
+              "impact_estimate": "Medium: Cleaning results may be associated with non-existent cleaning jobs, leading to data inconsistencies and inaccurate reporting.",
+              "remediation_hint": "Identify and correct or remove orphaned `cleaning_job_id` values in the `cleaning_results` table. Ensure that all `cleaning_job_id` values in `cleaning_results` exist in the `cleaning_job` table.",
+              "confidence_overall": 0.9
+            }
+          ],
+          "context_truncation": {
+            "findings_kept": 12,
+            "findings_total": 15
+          },
+          "quality_gate": {
+            "stage": "column_validation",
+            "min_confidence": 0.55,
+            "min_evidence_rows": 0,
+            "require_evidence_query": false,
+            "accepted_count": 15,
+            "blocked_count": 0,
+            "meta": {
+              "elapsed_ms": 0,
+              "status": "ok",
+              "warnings": []
+            }
+          }
+        },
+        {
+          "pipeline_run_id": "9faea20b-a773-4989-bb9b-0ca959218c8a",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-19T01:24:52.323493Z",
+          "agent": "RowLevelValidator",
+          "status": "partial",
+          "summary": {
+            "total_items_analyzed": 50784,
+            "items_passed": 50784,
+            "items_flagged": 0,
+            "critical_issues": 0,
+            "high_issues": 0,
+            "medium_issues": 0,
+            "low_issues": 0,
+            "overall_quality_score": 100.0,
+            "overall_confidence": 1.0,
+            "flagged_tables": []
+          },
+          "findings": [],
+          "quality_gate": {
+            "stage": "row_level_validation",
+            "min_confidence": 0.55,
+            "min_evidence_rows": 0,
+            "require_evidence_query": false,
+            "accepted_count": 0,
+            "blocked_count": 0,
+            "meta": {
+              "elapsed_ms": 0,
+              "status": "ok",
+              "warnings": []
+            }
+          },
+          "errors": [
+            "row_total_rows_recalibrated_from_live_database"
+          ]
+        },
+        {
+          "pipeline_run_id": "9faea20b-a773-4989-bb9b-0ca959218c8a",
+          "database_id": "localhost_5432_easybulk",
+          "run_timestamp": "2026-04-19T01:26:21.025661Z",
+          "agent": "CrossRowValidator",
+          "status": null,
+          "summary": {
+            "total_items_analyzed": 7,
+            "items_passed": 0,
+            "items_flagged": 7,
+            "critical_issues": 2,
+            "high_issues": 1,
+            "medium_issues": 4,
+            "low_issues": 0,
+            "overall_quality_score": 80.0,
+            "overall_confidence": 0.9,
+            "flagged_tables": []
+          },
+          "findings": [
+            {
+              "issue_id": "orphaned-user_id-audit_log",
+              "severity": "high",
+              "problem_description": "Orphaned records found in `audit_log` where `user_id` does not reference a valid user in `auth_user`.",
+              "impact_estimate": "High: Audit logs may be inaccurate or incomplete due to missing user references.",
+              "remediation_hint": "Identify and correct or remove orphaned `user_id` values in the `audit_log` table. Ensure that all `user_id` values in `audit_log` exist in the `auth_user` table.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "campaign-date-inconsistency",
+              "severity": "medium",
+              "problem_description": "Inconsistent campaign dates found where `date_debut` is not before `date_fin` in the `campagne` table.",
+              "impact_estimate": "Medium: Campaigns may be scheduled incorrectly, leading to operational issues.",
+              "remediation_hint": "Review and correct the `date_debut` and `date_fin` values in the `campagne` table to ensure that the start date is always before the end date.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "audit-log-invalid-action",
+              "severity": "medium",
+              "problem_description": "Invalid `action` values found in the `audit_log` table. Actions should be limited to 'create', 'update', 'delete', and 'login'.",
+              "impact_estimate": "Medium: Audit logs may contain incorrect or misleading information due to invalid action types.",
+              "remediation_hint": "Review and correct the `action` values in the `audit_log` table to ensure they are valid action types.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "audit-log-invalid-table-name",
+              "severity": "medium",
+              "problem_description": "Invalid `table_name` values found in the `audit_log` table. The `table_name` column should contain only valid table names present in the database.",
+              "impact_estimate": "Medium: Audit logs may contain incorrect or misleading information due to invalid table names.",
+              "remediation_hint": "Review and correct the `table_name` values in the `audit_log` table to ensure they are valid table names.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "email-address-empty",
+              "severity": "critical",
+              "problem_description": "Empty email addresses found in the `account_emailaddress` table.",
+              "impact_estimate": "Critical: Users may not be able to receive important notifications or reset their passwords.",
+              "remediation_hint": "Review and correct the empty `email` values in the `account_emailaddress` table. Ensure that all email addresses are valid and not empty.",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "smsc-routing-rule-missing-defaults",
+              "severity": "critical",
+              "problem_description": "Missing default routing rules for some organizations in `smsc_routing_rule`. Each organization should have exactly one default rule.",
+              "impact_estimate": "Critical: SMS messages may not be routed correctly for some organizations, leading to communication failures.",
+              "remediation_hint": "Review the `smsc_routing_rule` table and ensure that each organization has exactly one default routing rule (where `expediteur_id` and `groupe_id` are NULL).",
+              "confidence_overall": 0.95
+            },
+            {
+              "issue_id": "cleaning-job-date-inconsistency",
+              "severity": "medium",
+              "problem_description": "Inconsistent cleaning job dates found where `date_debut` is not before `date_fin` in the `cleaning_job` table.",
+              "impact_estimate": "Medium: Cleaning jobs may be scheduled incorrectly, leading to operational issues.",
+              "remediation_hint": "Review and correct the `date_debut` and `date_fin` values in the `cleaning_job` table to ensure that the start date is always before the end date.",
+              "confidence_overall": 0.95
+            }
+          ],
+          "quality_gate": {
+            "stage": "cross_row_validation",
+            "min_confidence": 0.55,
+            "min_evidence_rows": 0,
+            "require_evidence_query": false,
+            "accepted_count": 7,
+            "blocked_count": 0,
+            "meta": {
+              "elapsed_ms": 1,
+              "status": "ok",
+              "warnings": []
+            }
+          }
+        }
+      ]
+    }
+  }
+}
