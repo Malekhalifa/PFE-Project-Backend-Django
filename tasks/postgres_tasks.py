@@ -8,11 +8,13 @@ from django.db.models import Q
 from django.utils import timezone as dj_tz
 from config.celery import app
 from services.postgres_service import analyze_postgres_database
+from services.postgres_connection import parse_postgres_dsn_info
 from services.notification_service import (
     notify_admin_job_failed,
     notify_admin_job_stuck,
     notify_user_analysis_started,
     notify_user_analysis_results_ready,
+    notify_user_job_failed,
 )
 from api.db import (
     get_job,
@@ -50,6 +52,36 @@ def _get_job_user(job_id: str) -> User | None:
         return None
 
     return user
+
+
+def _get_job_context(job_id: str) -> tuple[str | None, str | None]:
+    """
+    Return (db_name, analysis_date) extracted from the job row.
+    Either can be None if not available. Used to enrich notification emails.
+    """
+    job = get_job(job_id) or {}
+    db_name = None
+    connection_string = job.get('connection_string')
+    if connection_string:
+        try:
+            db_name = parse_postgres_dsn_info(connection_string).database
+        except Exception:
+            pass
+
+    analysis_date = None
+    raw_ts = job.get('created_at')
+    if raw_ts:
+        try:
+            if hasattr(raw_ts, 'strftime'):
+                analysis_date = raw_ts.strftime('%Y-%m-%d %H:%M UTC')
+            else:
+                from datetime import datetime as _dt
+                parsed = _dt.fromisoformat(str(raw_ts).replace('Z', '+00:00'))
+                analysis_date = parsed.strftime('%Y-%m-%d %H:%M UTC')
+        except Exception:
+            analysis_date = str(raw_ts)
+
+    return db_name, analysis_date
 
 @app.task(bind=True, max_retries=0, time_limit=1800) # 30 mins limit to give AI agents enough time
 def analyze_postgres_task(
@@ -93,7 +125,8 @@ def analyze_postgres_task(
 
     job_user = _get_job_user(job_id)
     if job_user and bool(getattr(job_user, 'email_notifications_enabled', True)):
-        _safe_notify(notify_user_analysis_started, job_user.email, job_id)
+        _job_db_name, _job_date = _get_job_context(job_id)
+        _safe_notify(notify_user_analysis_started, job_user.email, job_id, _job_db_name, _job_date)
 
     try:
         started_at = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
@@ -137,7 +170,8 @@ def analyze_postgres_task(
 
         refreshed_job_user = _get_job_user(job_id)
         if refreshed_job_user and bool(getattr(refreshed_job_user, 'email_notifications_enabled', True)):
-            _safe_notify(notify_user_analysis_results_ready, refreshed_job_user.email, job_id)
+            _done_db_name, _done_date = _get_job_context(job_id)
+            _safe_notify(notify_user_analysis_results_ready, refreshed_job_user.email, job_id, _done_db_name, _done_date)
 
     except Exception as e:
         failed_at_step = 'unknown'
@@ -153,6 +187,11 @@ def analyze_postgres_task(
             'status_code': 500,
         })
         _safe_notify(notify_admin_job_failed, job_id, failed_at_step, str(e))
+        # Also notify the job owner
+        failed_job_user = _get_job_user(job_id)
+        if failed_job_user and bool(getattr(failed_job_user, 'email_notifications_enabled', True)):
+            _fail_db_name, _fail_date = _get_job_context(job_id)
+            _safe_notify(notify_user_job_failed, failed_job_user.email, job_id, _fail_db_name, _fail_date)
         raise
 
 

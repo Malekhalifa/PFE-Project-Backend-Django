@@ -52,7 +52,7 @@ class Job(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f'Job({self.id}) — {self.file_name} [{self.status}]'
+        return f'Job({self.id}) [{self.status}]'
 
 
 # ──────────────────────────────────────────────

@@ -69,10 +69,13 @@ def _send_html_email(*, to_email: str, subject: str, title: str, message_html: s
 # Email notifications
 # ---------------------------------------------------------------------------
 
-def notify_user_analysis_started(user_email: str, job_id: str) -> int:
+def notify_user_analysis_started(user_email: str, job_id: str, db_name: str | None = None, analysis_date: str | None = None) -> int:
+    display_db = db_name or 'Unknown database'
+    display_date = analysis_date or 'N/A'
     subject = '⏳ QualityLab — PostgreSQL analysis started'
     message_html = (
-        f'<p>Your PostgreSQL analysis has started for job <strong>#{job_id}</strong>.</p>'
+        f'<p>Your PostgreSQL analysis has started for database <strong>{display_db}</strong>.</p>'
+        f'<p><strong>Initiated:</strong> {display_date}</p>'
         '<p>We will notify you again as soon as the analysis results are ready for review.</p>'
     )
     return _send_html_email(
@@ -85,10 +88,13 @@ def notify_user_analysis_started(user_email: str, job_id: str) -> int:
     )
 
 
-def notify_user_analysis_results_ready(user_email: str, job_id: str) -> int:
+def notify_user_analysis_results_ready(user_email: str, job_id: str, db_name: str | None = None, analysis_date: str | None = None) -> int:
+    display_db = db_name or 'Unknown database'
+    display_date = analysis_date or 'N/A'
     subject = '✅ QualityLab — Analysis results are ready'
     message_html = (
-        f'<p>Your PostgreSQL analysis pipeline has completed successfully for job <strong>#{job_id}</strong>.</p>'
+        f'<p>Your PostgreSQL analysis pipeline has completed successfully for database <strong>{display_db}</strong>.</p>'
+        f'<p><strong>Completed:</strong> {display_date}</p>'
         '<p>Your reports and AI insights are now available and ready to be reviewed.</p>'
     )
     return _send_html_email(
@@ -105,6 +111,43 @@ def notify_user_job_completed(user_email: str, job_id: str) -> int:
     return notify_user_analysis_results_ready(user_email, job_id)
 
 
+def notify_user_job_failed(user_email: str, job_id: str, db_name: str | None = None, analysis_date: str | None = None) -> int:
+    display_db = db_name or 'Unknown database'
+    display_date = analysis_date or 'N/A'
+    subject = '❌ QualityLab — Analysis job failed'
+    message_html = (
+        f'<p>Unfortunately, your PostgreSQL analysis for database <strong>{display_db}</strong> has failed.</p>'
+        f'<p><strong>Initiated:</strong> {display_date}</p>'
+        '<p>The AI agent pipeline encountered an unexpected error and could not complete successfully. '
+        'You can start a new analysis from the dashboard at any time.</p>'
+    )
+    return _send_html_email(
+        to_email=user_email,
+        subject=subject,
+        title='Analysis job failed',
+        message_html=message_html,
+        cta_label='Go to Dashboard',
+        cta_href='/dashboard',
+    )
+
+
+def notify_user_job_cancelled(user_email: str, job_id: str, db_name: str | None = None, analysis_date: str | None = None) -> int:
+    display_db = db_name or 'Unknown database'
+    display_date = analysis_date or 'N/A'
+    subject = '🚫 QualityLab — Analysis job cancelled'
+    message_html = (
+        f'<p>Your PostgreSQL analysis for database <strong>{display_db}</strong> was cancelled successfully.</p>'
+        f'<p><strong>Initiated:</strong> {display_date}</p>'
+        '<p>No results were generated. You can start a new analysis from the dashboard whenever you are ready.</p>'
+    )
+    return _send_html_email(
+        to_email=user_email,
+        subject=subject,
+        title='Analysis job cancelled',
+        message_html=message_html,
+        cta_label='Start a New Analysis',
+        cta_href='/new-analysis',
+    )
 
 
 

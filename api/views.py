@@ -56,7 +56,7 @@ from api.serializers import (
 from api.fix_safety import validate_fix_queries
 from agents.query_executor_agent import QueryExecutorAgent
 from agents.reporting import synthesize_fixes_from_prior_reports
-from services.notification_service import notify_user_fix_executed
+from services.notification_service import notify_user_fix_executed, notify_user_job_cancelled
 from services.postgres_connection import (
     looks_like_postgres_dsn,
     redact_postgres_dsn,
@@ -688,8 +688,6 @@ class AnalyzePostgresView(APIView):
         # Create a job tracking entry
         job_id = create_job(
             user_id=user_id,
-            file_name=db_label,
-            file_path="postgres://<hidden>",
             mode="agentic_postgres",
             llm_model=llm_model,
         )
@@ -982,34 +980,31 @@ class JobsView(APIView):
         analysis_set = get_analysis_job_ids(job_ids) if job_ids else set()
         chat_set = get_chat_job_ids(job_ids) if job_ids else set()
 
-        # Build a connection_string lookup for db_name backfill (for jobs with old placeholder)
+        # Build a connection_string → db_name lookup for every job
         job_ids_list = [j['id'] for j in jobs]
         conn_str_map: dict[str, str] = {}
         if job_ids_list:
             from api.models import Job as JobModel
+            from api.connection_string_crypto import decrypt_connection_string
             from services.postgres_connection import parse_postgres_dsn_info
             qs = JobModel.objects.filter(
                 id__in=job_ids_list,
-                file_name='PostgreSQL Connection'
             ).only('id', 'connection_string')
             for jobj in qs:
-                raw_cs = jobj.connection_string or ''
-                if raw_cs:
+                encrypted_cs = jobj.connection_string or ''
+                if encrypted_cs:
                     try:
-                        db_label = parse_postgres_dsn_info(raw_cs).database or ''
+                        plain_cs = decrypt_connection_string(encrypted_cs) or ''
+                        db_label = parse_postgres_dsn_info(plain_cs).database or '' if plain_cs else ''
                     except Exception:
                         db_label = ''
-                    conn_str_map[str(jobj.id)] = db_label
+                    if db_label:
+                        conn_str_map[str(jobj.id)] = db_label
 
         result = [
             {
                 '_id': j['id'],
-                'file_name': j.get('file_name', 'unknown'),
-                'db_name': (
-                    j.get('file_name')
-                    if j.get('file_name') and j.get('file_name') != 'PostgreSQL Connection'
-                    else conn_str_map.get(j['id'], j.get('file_name', 'unknown'))
-                ),
+                'db_name': conn_str_map.get(j['id'], ''),
                 'status': j.get('status'),
                 'mode': j.get('mode'),
                 'created_at': j.get('created_at'),
@@ -1144,6 +1139,41 @@ class JobDetailView(APIView):
         }
         if revoke_error:
             response_payload['revoke_error'] = revoke_error
+
+        # Notify the job owner that the job was cancelled
+        try:
+            cancelled_job_user = User.objects.filter(
+                id=job.get('user_id')
+            ).only('id', 'email', 'email_notifications_enabled').first()
+            if cancelled_job_user and bool(getattr(cancelled_job_user, 'email_notifications_enabled', True)):
+                user_email = getattr(cancelled_job_user, 'email', '')
+                if user_email:
+                    # Extract db_name from the decrypted connection string
+                    _cancel_db_name = None
+                    _cs = job.get('connection_string')
+                    if _cs:
+                        try:
+                            from services.postgres_connection import parse_postgres_dsn_info
+                            _cancel_db_name = parse_postgres_dsn_info(_cs).database
+                        except Exception:
+                            pass
+                    # Format analysis_date from created_at
+                    _cancel_date = None
+                    _raw_ts = job.get('created_at')
+                    if _raw_ts:
+                        try:
+                            if hasattr(_raw_ts, 'strftime'):
+                                _cancel_date = _raw_ts.strftime('%Y-%m-%d %H:%M UTC')
+                            else:
+                                from datetime import datetime as _dt
+                                _cancel_date = _dt.fromisoformat(
+                                    str(_raw_ts).replace('Z', '+00:00')
+                                ).strftime('%Y-%m-%d %H:%M UTC')
+                        except Exception:
+                            _cancel_date = str(_raw_ts)
+                    notify_user_job_cancelled(user_email, job_id, _cancel_db_name, _cancel_date)
+        except Exception:
+            logger.exception('Failed to send cancellation notification for job %s', job_id)
 
         return Response(response_payload)
 
@@ -1715,7 +1745,7 @@ class AdminStatsView(APIView):
 
         active_jobs_qs = Job.objects.filter(
             Q(status__in=list(_ADMIN_ACTIVE_JOB_STATUSES)) | Q(status__startswith='running_')
-        ).only('id', 'status', 'updated_at', 'user_id', 'file_name', 'mode').order_by('-updated_at')
+        ).only('id', 'status', 'updated_at', 'user_id', 'mode').order_by('-updated_at')
         active_jobs_count = active_jobs_qs.count()
         active_jobs_sample = list(active_jobs_qs[:25])
 
@@ -1729,7 +1759,6 @@ class AdminStatsView(APIView):
                 'job_id': entry.id,
                 'status': entry.status,
                 'mode': entry.mode,
-                'file_name': entry.file_name,
                 'updated_at': entry.updated_at.isoformat().replace('+00:00', 'Z') if entry.updated_at else None,
                 'user_email': active_user_emails.get(str(entry.user_id)),
             }

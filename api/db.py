@@ -16,7 +16,6 @@ from django.utils import timezone as dj_tz
 from api.models import (
     Job,
     AnalysisResult,
-    CleaningResult,
     ChatMessage,
     JobGuideline,
 )
@@ -106,9 +105,6 @@ def _serialize_job(job: Job) -> dict:
     return {
         'id': str(job.id),
         'user_id': str(job.user_id) if job.user_id else None,
-        'file_name': job.file_name,
-        'file_path': job.file_path,
-        'cleaned_file_path': job.cleaned_file_path,
         'connection_string': decrypted_connection_string,
         'status': job.status,
         'celery_task_id': job.celery_task_id,
@@ -147,8 +143,6 @@ def _legacy_cleaning_summary(report: dict | None) -> dict:
 
 def create_job(
     user_id: str,
-    file_name: str,
-    file_path: str,
     mode: str = 'normal',
     llm_model: str = _DEFAULT_LLM_MODEL,
 ) -> str:
@@ -159,8 +153,6 @@ def create_job(
 
     job = Job.objects.create(
         user_id=normalized_user_id,
-        file_name=file_name,
-        file_path=file_path,
         mode=mode,
         llm_model=(llm_model or _DEFAULT_LLM_MODEL).strip() or _DEFAULT_LLM_MODEL,
         status='starting',
@@ -181,9 +173,6 @@ def get_job(job_id: str) -> dict | None:
         .values(
             'id',
             'user_id',
-            'file_name',
-            'file_path',
-            'cleaned_file_path',
             'connection_string',
             'status',
             'celery_task_id',
@@ -210,9 +199,6 @@ def get_job(job_id: str) -> dict | None:
     return {
         'id': str(row.get('id')),
         'user_id': str(row.get('user_id')) if row.get('user_id') else None,
-        'file_name': row.get('file_name') or '',
-        'file_path': row.get('file_path') or '',
-        'cleaned_file_path': row.get('cleaned_file_path'),
         'connection_string': decrypted_connection_string,
         'status': row.get('status') or '',
         'celery_task_id': row.get('celery_task_id'),
@@ -235,12 +221,11 @@ def get_jobs_for_user(user_id: str, is_admin: bool = False) -> list[dict]:
 
     qs = Job.objects.all() if is_admin else Job.objects.filter(user_id=normalized_user_id)
     qs = qs.order_by('-created_at').only(
-        'id', 'file_name', 'status', 'mode', 'llm_model', 'created_at', 'user_id'
+        'id', 'status', 'mode', 'llm_model', 'created_at', 'user_id'
     )
     return [
         {
             'id': str(j.id),
-            'file_name': j.file_name,
             'status': j.status,
             'mode': j.mode,
             'llm_model': j.llm_model,
