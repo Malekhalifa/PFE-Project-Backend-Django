@@ -1,7 +1,7 @@
 """
 Celery application for QualityLab.
 
-Handles async CSV analysis and cleaning tasks.
+Handles async PostgreSQL analysis and fix execution tasks.
 """
 import os
 from celery import Celery
@@ -14,7 +14,7 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 app.autodiscover_tasks(['tasks'])
 
 # Explicitly import all files containing Celery tasks to avoid 'unregistered task' errors
-app.conf.imports = ('tasks.csv_tasks', 'tasks.postgres_tasks')
+app.conf.imports = ('tasks.postgres_tasks',)
 
 existing_schedule = dict(getattr(app.conf, 'beat_schedule', {}) or {})
 existing_schedule['check-stuck-jobs-every-5-minutes'] = {

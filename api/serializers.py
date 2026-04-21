@@ -21,24 +21,6 @@ _SUGGESTED_LLM_MODELS = (
 _LLM_MODEL_HINT = f"Suggested models: {', '.join(_SUGGESTED_LLM_MODELS)}"
 
 
-class CleaningRulesSerializer(serializers.Serializer):
-    remove_duplicates = serializers.BooleanField(default=True)
-    handle_missing = serializers.ChoiceField(
-        choices=['drop', 'mean', 'median', 'mode'],
-        default='drop',
-    )
-    outliers = serializers.ChoiceField(
-        choices=['remove', 'cap', 'ignore'],
-        default='ignore',
-    )
-    normalize = serializers.BooleanField(default=False)
-
-
-class CleanRequestSerializer(serializers.Serializer):
-    mode = serializers.ChoiceField(choices=['auto', 'manual'], default='auto')
-    rules = CleaningRulesSerializer(required=False)
-
-
 class JobDeleteSerializer(serializers.Serializer):
     job_ids = serializers.ListField(
         child=serializers.CharField(),
@@ -68,10 +50,6 @@ class AnalyzePostgresSerializer(serializers.Serializer):
             )
 
         return model_id
-
-
-class AnalyzeCsvStartSerializer(serializers.Serializer):
-    pass
 
 
 class ChatMessageCreateSerializer(serializers.Serializer):

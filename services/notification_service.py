@@ -105,20 +105,7 @@ def notify_user_job_completed(user_email: str, job_id: str) -> int:
     return notify_user_analysis_results_ready(user_email, job_id)
 
 
-def notify_user_cleaning_done(user_email: str, job_id: str) -> int:
-    subject = '✅ QualityLab — CSV Cleaning Completed'
-    message_html = (
-        f'<p>Your CSV cleaning job <strong>#{job_id}</strong> has finished successfully.</p>'
-        '<p>You can now review the cleaned output and summary metrics.</p>'
-    )
-    return _send_html_email(
-        to_email=user_email,
-        subject=subject,
-        title='CSV cleaning completed',
-        message_html=message_html,
-        cta_label='View Cleaning Results',
-        cta_href=f'/results/{job_id}',
-    )
+
 
 
 def notify_user_fix_executed(user_email: str, job_id: str, status: str) -> int:

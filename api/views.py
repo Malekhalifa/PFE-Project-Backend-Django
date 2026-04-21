@@ -1,8 +1,7 @@
 """
-API views for jobs, uploads, analysis, cleaning, and raw data.
+API views for jobs, analysis, and raw data.
 
-Every endpoint matches the Node.js backend's API surface exactly,
-so the Angular frontend requires only a base URL change.
+Every endpoint matches the Angular frontend's expected API surface.
 
 All views require authentication (CookieJWTAuthentication) and
 enforce job ownership via find_owned_job().
@@ -17,7 +16,6 @@ import requests as http_requests
 from datetime import datetime, time, timedelta, timezone
 from typing import Any
 
-import pandas as pd
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db.models import Count, Q
@@ -39,9 +37,7 @@ from api.db import (
     get_jobs_for_user,
     get_analysis_result,
     save_analysis_result,
-    get_cleaning_result,
     get_analysis_job_ids,
-    get_cleaning_job_ids,
     get_chat_job_ids,
     get_chat_messages,
     save_chat_message,
@@ -53,23 +49,19 @@ from api.db import (
 )
 from api.permissions import find_owned_job
 from api.serializers import (
-    AnalyzeCsvStartSerializer,
     AnalyzePostgresSerializer,
     ChatMessageCreateSerializer,
-    CleanRequestSerializer,
     JobDeleteSerializer,
 )
 from api.fix_safety import validate_fix_queries
 from agents.query_executor_agent import QueryExecutorAgent
 from agents.reporting import synthesize_fixes_from_prior_reports
-from services.analysis_service import compute_row_outliers, to_native
 from services.notification_service import notify_user_fix_executed
 from services.postgres_connection import (
     looks_like_postgres_dsn,
     redact_postgres_dsn,
     test_postgres_connection,
 )
-from tasks.csv_tasks import analyze_csv_task, clean_csv_task
 from tasks.postgres_tasks import analyze_postgres_task
 from users.models import User
 
@@ -117,8 +109,8 @@ def _sanitize_for_json(obj):
     return obj
 
 
-_ADMIN_ACTIVE_JOB_STATUSES = {'starting', 'running', 'cleaning'}
-_TERMINAL_ACTIVE_PREFIX_EXCLUSIONS = {'cleaning_completed', 'cleaning_failed'}
+_ADMIN_ACTIVE_JOB_STATUSES = {'starting', 'running'}
+_TERMINAL_ACTIVE_PREFIX_EXCLUSIONS: set[str] = set()
 _PIPELINE_STEP_DEFINITIONS = [
     ('guideline_gen_schema', 'Guideline Generation - Schema'),
     ('schema_validation', 'Schema Validation'),
@@ -588,103 +580,6 @@ def _normalize_agent_markdown_response(raw_content: Any) -> str:
     )
 
 
-# ──────────────────────────────────────────────
-# Upload
-# ──────────────────────────────────────────────
-
-class UploadView(APIView):
-    """
-    POST /api/upload — upload CSV file, create job.
-
-    Matches Node.js: saves file to uploads/, creates Job in PostgreSQL,
-    writes audit log, returns { job_id }.
-    """
-    permission_classes = [IsAuthenticated]
-    parser_classes = [MultiPartParser]
-
-    def post(self, request):
-        unverified = _require_verified_email(request)
-        if unverified:
-            return unverified
-
-        uploaded_file = request.FILES.get('file')
-        if not uploaded_file:
-            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Save file to disk with UUID filename (matches Node.js multer pattern)
-        file_ext = os.path.splitext(uploaded_file.name)[1] or '.csv'
-        file_uuid = str(uuid.uuid4())
-        filename = f'{file_uuid}{file_ext}'
-        file_path = os.path.join(str(settings.UPLOAD_DIR), filename)
-
-        with open(file_path, 'wb+') as dest:
-            for chunk in uploaded_file.chunks():
-                dest.write(chunk)
-
-        file_size = os.path.getsize(file_path)
-        mode = 'large' if file_size > 50 * 1024 * 1024 else 'normal'  # 50MB threshold
-
-        # Create job in PostgreSQL
-        user_id = str(request.user.id)
-        job_id = create_job(
-            user_id=user_id,
-            file_name=uploaded_file.name,
-            file_path=file_path,
-            mode=mode,
-        )
-
-        # Audit logs
-        audit_log(job_id, 'JOB_CREATED', {'user_id': user_id}, user_id=user_id)
-        audit_log(job_id, 'FILE_UPLOADED', {
-            'fileName': uploaded_file.name,
-            'size': file_size,
-            'mode': mode,
-        }, user_id=user_id)
-
-        return Response({'job_id': job_id})
-
-
-# ──────────────────────────────────────────────
-# Analysis
-# ──────────────────────────────────────────────
-
-class AnalyzeView(APIView):
-    """
-    POST /api/analyze/<jobId> — start analysis (fire-and-forget Celery task).
-    """
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request, jobId):
-        unverified = _require_verified_email(request)
-        if unverified:
-            return unverified
-
-        job = find_owned_job(jobId, request.user)
-        if not job:
-            return Response(
-                {'detail': 'No uploaded file found for this job.'},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        start_serializer = AnalyzeCsvStartSerializer(data=request.data or {})
-        if not start_serializer.is_valid():
-            return Response(start_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        # Dispatch Celery task (fire-and-forget)
-        async_result = analyze_csv_task.delay(
-            job_id=jobId,
-            file_path=job['file_path'],
-            mode=job.get('mode', 'normal'),
-            options={},
-        )
-        task_id = str(getattr(async_result, 'id', '') or '')
-        if task_id:
-            update_job_celery_task_id(jobId, task_id)
-
-        audit_log(jobId, 'ANALYSIS_ENQUEUED', {'task_id': task_id}, user_id=str(request.user.id))
-        return Response({'message': 'analysis started', 'task_id': task_id})
-
-
 class TestPostgresConnectionView(APIView):
     """
     POST /api/test-postgres — test connectivity to a PostgreSQL database.
@@ -781,19 +676,25 @@ class AnalyzePostgresView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        from services.postgres_connection import parse_postgres_dsn_info
+        try:
+            dsn_info = parse_postgres_dsn_info(conn_str)
+            db_label = dsn_info.database or 'PostgreSQL Connection'
+        except Exception:
+            db_label = 'PostgreSQL Connection'
+
         user_id = str(request.user.id)
-        
+
         # Create a job tracking entry
         job_id = create_job(
             user_id=user_id,
-            file_name="PostgreSQL Connection",
+            file_name=db_label,
             file_path="postgres://<hidden>",
             mode="agentic_postgres",
             llm_model=llm_model,
         )
 
-        # Persist the DSN in the job document so the cleaning task
-        # can retrieve it later without needing it re-passed.
+        # Persist the DSN in the job document for task retrieval.
         update_job_connection_string(job_id, conn_str)
 
         async_result = analyze_postgres_task.delay(
@@ -859,54 +760,7 @@ class ResultsView(APIView):
             result = _ensure_fix_cards_result(jobId, result, analysis.get('analysis_type', 'postgres_agentic'))
             result = _enrich_report_download_meta(jobId, result)
 
-        # If it's already the new CSV format natively (has dataset_summary)
-        # OR if it's an agentic postgres format (has schema_analysis)
-        if 'dataset_summary' in result or 'schema_analysis' in result:
-            return Response(_sanitize_for_json(result))
-
-        # Otherwise, map the legacy CSV format to the new format
-        meta = result.get('meta', {})
-        qr = _sanitize_for_json(result.get('quality_report', {}))
-        cleaned = result.get('cleaned_data', {})
-
-        response_data = {
-            'meta': {
-                'job_id': jobId,
-                'file_path': meta.get('file_path'),
-                'file_size_bytes': meta.get('file_size_bytes'),
-                'mode': meta.get('mode', 'normal'),
-                'analysis_type': meta.get('analysis_type', 'in-memory'),
-                'started_at': meta.get('started_at'),
-                'completed_at': meta.get('completed_at'),
-                'duration_ms': meta.get('duration_ms'),
-                'version': '1.0',
-            },
-            'dataset_summary': {
-                'rows': cleaned.get('rows', 0),
-                'columns': cleaned.get('columns', 0),
-            },
-            'quality_overview': {
-                'missing_rate': qr.get('missing_rate'),
-                'duplicate_rate': qr.get('duplicate_rate'),
-                'error_rate': qr.get('outlier_rate'),
-            },
-            'column_analysis': qr.get('column_analysis', {}),
-            'limitations': {
-                'approximate_metrics': False,
-                'skipped_checks': [],
-            },
-        }
-
-        if 'schema_analysis' in result:
-            response_data['schema_analysis'] = result['schema_analysis']
-        if 'column_validator_analysis' in result:
-            response_data['column_validator_analysis'] = result['column_validator_analysis']
-        if 'cross_row_analysis' in result:
-            response_data['cross_row_analysis'] = result['cross_row_analysis']
-        if 'row_level_analysis' in result:
-            response_data['row_level_analysis'] = result['row_level_analysis']
-
-        return Response(response_data)
+        return Response(_sanitize_for_json(result))
 
 
 class ResultsDiffView(APIView):
@@ -1051,8 +905,8 @@ class ResultsExportView(APIView):
             if export_payload.get('reports'):
                 return Response(_sanitize_for_json(export_payload))
 
-        # If already in native CSV-v2 format or agentic PostgreSQL format,
-        # return as-is (sanitized) so all generated keys are preserved.
+        # If already in agentic PostgreSQL format, return as-is (sanitized)
+        # so all generated keys are preserved.
         if 'dataset_summary' in data or 'schema_analysis' in data:
             return Response(_sanitize_for_json(data))
 
@@ -1091,236 +945,6 @@ class ResultsExportView(APIView):
         return Response(export_report)
 
 
-class RawDataView(APIView):
-    """
-    GET /api/raw/<jobId> — get raw CSV data as { header, rows }.
-
-    In the Node.js backend this was proxied to Python. Now we do it directly.
-    """
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, jobId):
-        job = find_owned_job(jobId, request.user)
-        if not job or not job.get('file_path'):
-            return Response(
-                {'detail': 'No data found for this job.'},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        file_path = job['file_path']
-        if not os.path.exists(file_path):
-            return Response(
-                {'detail': 'File not found on disk'},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        df = pd.read_csv(file_path)
-        df = df.replace(
-            {pd.NA: None, float('nan'): None, float('inf'): None, float('-inf'): None}
-        )
-        df = df.where(pd.notna(df), None)
-
-        return Response(_sanitize_for_json({
-            'header': df.columns.tolist(),
-            'rows': df.values.tolist(),
-        }))
-
-
-class RawWithOutliersView(APIView):
-    """
-    GET /api/raw_with_outliers/<jobId> — get raw CSV with row-level outlier metadata.
-
-    Returns { header, rows: [{ values, is_outlier, outlier_score, outlier_severity }] }.
-    """
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, jobId):
-        job = find_owned_job(jobId, request.user)
-        if not job or not job.get('file_path'):
-            return Response(
-                {'detail': 'No data found for this job.'},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        file_path = job['file_path']
-        if not os.path.exists(file_path):
-            return Response(
-                {'detail': 'File not found on disk'},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        df = pd.read_csv(file_path)
-        df = df.replace(
-            {pd.NA: None, float('nan'): None, float('inf'): None, float('-inf'): None}
-        )
-        df = df.where(pd.notna(df), None)
-
-        header = df.columns.tolist()
-        rows = df.values.tolist()
-        enriched_rows = compute_row_outliers(header, rows)
-
-        return Response({
-            'header': header,
-            'rows': _sanitize_for_json(to_native(enriched_rows)),
-        })
-
-
-# ──────────────────────────────────────────────
-# Cleaning
-# ──────────────────────────────────────────────
-
-class CleanView(APIView):
-    """
-    POST /api/clean/<jobId> — start cleaning (fire-and-forget Celery task).
-
-    Body: { mode: "auto"|"manual", rules?: { ... } }
-    """
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request, jobId):
-        unverified = _require_verified_email(request)
-        if unverified:
-            return unverified
-
-        job = find_owned_job(jobId, request.user)
-        if not job:
-            return Response({'error': 'Job not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        # Parse cleaning options
-        mode = request.data.get('mode', 'auto')
-        rules = request.data.get('rules', {})
-
-        # Dispatch Celery task (fire-and-forget)
-        async_result = clean_csv_task.delay(
-            job_id=jobId,
-            file_path=job['file_path'],
-            mode=mode,
-            rules=rules,
-            options={},
-        )
-        task_id = str(getattr(async_result, 'id', '') or '')
-        if task_id:
-            update_job_celery_task_id(jobId, task_id)
-
-        audit_log(jobId, 'CLEANING_ENQUEUED', {'mode': mode, 'task_id': task_id}, user_id=str(request.user.id))
-        return Response({'job_id': jobId, 'status': 'cleaning_started', 'task_id': task_id})
-
-
-class CleanedFileView(APIView):
-    """
-    GET /api/cleaned/<jobId> — download cleaned CSV file.
-    """
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, jobId):
-        job = find_owned_job(jobId, request.user)
-        if not job or not job.get('cleaned_file_path'):
-            return Response(
-                {'error': 'Cleaned file not found'},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        cleaned_path = job['cleaned_file_path']
-        if not os.path.exists(cleaned_path):
-            return Response(
-                {'error': 'File missing on disk'},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        return FileResponse(
-            open(cleaned_path, 'rb'),
-            content_type='text/csv',
-            as_attachment=True,
-            filename=f'{jobId}-cleaned.csv',
-        )
-
-
-class CleaningResultView(APIView):
-    """
-    GET /api/cleaning-result/<jobId> — get cleaning result metadata.
-    """
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, jobId):
-        job = find_owned_job(jobId, request.user)
-        if not job:
-            return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        result = get_cleaning_result(jobId)
-        if not result:
-            # Return null instead of 404 so the frontend catchError isn't triggered
-            # and Chrome doesn't log a red console error
-            return Response(None)
-
-        # Drop legacy compatibility key if present.
-        result.pop('_id', None)
-        return Response(_sanitize_for_json(result))
-
-
-class CleaningResultExportView(APIView):
-    """
-    GET /api/cleaning-result/<jobId>/export — download cleaning report.
-
-    Returns structured report matching Node.js export format.
-    """
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, jobId):
-        job = find_owned_job(jobId, request.user)
-        if not job:
-            return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        result = get_cleaning_result(jobId)
-        if not result:
-            return Response(
-                {'error': 'No cleaning result found'},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        summary = result.get('summary', {})
-        rules_applied = result.get('rules_applied', [])
-        rows_before = summary.get('rows_before', 0)
-        rows_removed = summary.get('rows_removed', 0)
-
-        report = {
-            'meta': {
-                'job_id': jobId,
-                'file_name': job.get('file_name'),
-                'file_path': job.get('file_path'),
-                'cleaned_file_path': job.get('cleaned_file_path'),
-                'cleaning_mode': result.get('mode', 'auto'),
-                'cleaned_at': (
-                    result.get('updated_at') or result.get('created_at') or None
-                ),
-                'version': '1.0',
-            },
-            'summary': {
-                'rows_before': rows_before,
-                'rows_after': summary.get('rows_after'),
-                'rows_removed': rows_removed,
-                'removal_rate': (
-                    round(rows_removed / rows_before, 4)
-                    if rows_before else None
-                ),
-            },
-            'rules_applied': [
-                {
-                    'rule': r.get('rule'),
-                    'description': r.get('description'),
-                    'rows_removed': r.get('rows_removed'),
-                    'columns': r.get('columns'),
-                }
-                for r in rules_applied
-            ],
-            'rules_summary': {
-                'total_rules_applied': len(rules_applied),
-                'rules_list': [r.get('rule') for r in rules_applied if r.get('rule')],
-            },
-        }
-
-        return Response(report)
-
-
 # ──────────────────────────────────────────────
 # Jobs (History)
 # ──────────────────────────────────────────────
@@ -1354,20 +978,42 @@ class JobsView(APIView):
             users = User.objects.filter(id__in=uuid_ids).only('id', 'email', 'username')
             user_map = {str(u.id): u for u in users}
 
-        # Batch-check which jobs have analysis/cleaning/chat results
+        # Batch-check which jobs have analysis/chat results
         analysis_set = get_analysis_job_ids(job_ids) if job_ids else set()
-        cleaning_set = get_cleaning_job_ids(job_ids) if job_ids else set()
         chat_set = get_chat_job_ids(job_ids) if job_ids else set()
+
+        # Build a connection_string lookup for db_name backfill (for jobs with old placeholder)
+        job_ids_list = [j['id'] for j in jobs]
+        conn_str_map: dict[str, str] = {}
+        if job_ids_list:
+            from api.models import Job as JobModel
+            from services.postgres_connection import parse_postgres_dsn_info
+            qs = JobModel.objects.filter(
+                id__in=job_ids_list,
+                file_name='PostgreSQL Connection'
+            ).only('id', 'connection_string')
+            for jobj in qs:
+                raw_cs = jobj.connection_string or ''
+                if raw_cs:
+                    try:
+                        db_label = parse_postgres_dsn_info(raw_cs).database or ''
+                    except Exception:
+                        db_label = ''
+                    conn_str_map[str(jobj.id)] = db_label
 
         result = [
             {
                 '_id': j['id'],
                 'file_name': j.get('file_name', 'unknown'),
+                'db_name': (
+                    j.get('file_name')
+                    if j.get('file_name') and j.get('file_name') != 'PostgreSQL Connection'
+                    else conn_str_map.get(j['id'], j.get('file_name', 'unknown'))
+                ),
                 'status': j.get('status'),
                 'mode': j.get('mode'),
                 'created_at': j.get('created_at'),
                 'has_analysis': j['id'] in analysis_set,
-                'has_cleaning': j['id'] in cleaning_set,
                 'has_chat': j['id'] in chat_set,
                 **(
                     {
@@ -2061,10 +1707,10 @@ class AdminStatsView(APIView):
         total_users = User.objects.count()
         total_jobs = Job.objects.count()
         jobs_today = Job.objects.filter(created_at__gte=today_start).count()
-        failed_jobs = Job.objects.filter(status__in=['failed', 'cleaning_failed']).count()
+        failed_jobs = Job.objects.filter(status='failed').count()
         failed_jobs_today = Job.objects.filter(
             created_at__gte=today_start,
-            status__in=['failed', 'cleaning_failed'],
+            status='failed',
         ).count()
 
         active_jobs_qs = Job.objects.filter(
@@ -2094,8 +1740,6 @@ class AdminStatsView(APIView):
         duration_event_types = [
             'ANALYSIS_COMPLETED',
             'DB_ANALYSIS_COMPLETED',
-            'CLEANING_COMPLETED',
-            'POSTGRES_CLEANING_COMPLETED',
             'FIX_EXECUTED',
         ]
         duration_logs = AuditLog.objects.filter(
