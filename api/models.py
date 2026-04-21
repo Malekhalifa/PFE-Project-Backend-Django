@@ -6,7 +6,6 @@ one persisted runtime entity:
 
   Job              ← jobs
   AnalysisResult   ← analysis_results
-  CleaningResult   ← cleaning_results
   ChatMessage      ← chat_messages
   JobGuideline     ← job_guidelines
   AuditLog         ← audit_log  (was already here, unchanged)
@@ -36,9 +35,6 @@ class Job(models.Model):
     )
 
     # File / connection metadata
-    file_name = models.CharField(max_length=500, blank=True, default='')
-    file_path = models.TextField(blank=True, default='')
-    cleaned_file_path = models.TextField(null=True, blank=True)
     connection_string = models.TextField(null=True, blank=True)
 
     # Job lifecycle
@@ -86,31 +82,6 @@ class AnalysisResult(models.Model):
 
     def __str__(self):
         return f'AnalysisResult({self.job_id})'
-
-
-# ──────────────────────────────────────────────
-# Cleaning results
-# ──────────────────────────────────────────────
-
-class CleaningResult(models.Model):
-    """Stores the cleaning summary and applied rules for a job."""
-    job = models.OneToOneField(
-        Job, on_delete=models.CASCADE, related_name='cleaning_result',
-        db_column='job_id',
-    )
-    mode = models.CharField(max_length=64, default='auto')
-    rules_applied = models.JSONField(default=list)
-    summary = models.JSONField(default=dict)
-    execution_log = models.JSONField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        db_table = 'cleaning_results'
-
-    def __str__(self):
-        return f'CleaningResult({self.job_id})'
-
 
 # ──────────────────────────────────────────────
 # Chat messages

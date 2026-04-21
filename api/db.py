@@ -128,19 +128,6 @@ def _analysis_to_dict(ar: AnalysisResult) -> dict:
         'updated_at': ar.updated_at,
     }
 
-
-def _cleaning_to_dict(cr: CleaningResult) -> dict:
-    return {
-        'job_id': str(cr.job_id),
-        'mode': cr.mode,
-        'rules_applied': cr.rules_applied,
-        'summary': cr.summary,
-        'execution_log': cr.execution_log,
-        'created_at': cr.created_at,
-        'updated_at': cr.updated_at,
-    }
-
-
 def _legacy_cleaning_summary(report: dict | None) -> dict:
     if not isinstance(report, dict):
         return {}
@@ -295,17 +282,6 @@ def update_job_celery_task_id(job_id: str, task_id: str | None) -> None:
         celery_task_id=normalized_task_id,
         updated_at=dj_tz.now(),
     )
-
-
-def update_job_cleaned_path(job_id: str, cleaned_file_path: str) -> None:
-    """Set the cleaned file path on a job."""
-    normalized_job_id = _normalize_uuid(job_id)
-    if not normalized_job_id:
-        return
-    Job.objects.filter(id=normalized_job_id).update(
-        cleaned_file_path=cleaned_file_path, updated_at=dj_tz.now()
-    )
-
 
 def update_job_connection_string(job_id: str, connection_string: str) -> None:
     """Persist the user's PostgreSQL DSN in the job row."""
@@ -500,58 +476,6 @@ def get_analysis_job_ids(job_ids: list[str]) -> set[str]:
         .filter(job_id__in=normalized_job_ids)
         .values_list('job_id', flat=True)
     )
-
-
-# ──────────────────────────────────────────────
-# Cleaning results
-# ──────────────────────────────────────────────
-
-def save_cleaning_result(
-    job_id: str,
-    mode: str,
-    rules_applied: list[dict],
-    summary: dict,
-) -> None:
-    """Upsert a cleaning result for a job."""
-    normalized_job_id = _normalize_uuid(job_id)
-    if not normalized_job_id:
-        return
-
-    CleaningResult.objects.update_or_create(
-        job_id=normalized_job_id,
-        defaults={
-            'mode': mode,
-            'rules_applied': rules_applied,
-            'summary': summary,
-        },
-    )
-
-
-def get_cleaning_result(job_id: str) -> dict | None:
-    """Find a cleaning result by job_id."""
-    normalized_job_id = _normalize_uuid(job_id)
-    if not normalized_job_id:
-        return None
-
-    try:
-        return _cleaning_to_dict(CleaningResult.objects.get(job_id=normalized_job_id))
-    except CleaningResult.DoesNotExist:
-        return None
-
-
-def get_cleaning_job_ids(job_ids: list[str]) -> set[str]:
-    """Return set of job_ids that have cleaning results."""
-    normalized_job_ids = [jid for raw in (job_ids or []) if (jid := _normalize_uuid(raw))]
-    if not normalized_job_ids:
-        return set()
-
-    return set(
-        str(jid)
-        for jid in CleaningResult.objects
-        .filter(job_id__in=normalized_job_ids)
-        .values_list('job_id', flat=True)
-    )
-
 
 # ──────────────────────────────────────────────
 # Chat messages
