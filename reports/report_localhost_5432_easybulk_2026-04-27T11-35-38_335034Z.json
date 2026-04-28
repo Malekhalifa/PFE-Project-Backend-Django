@@ -1,0 +1,2276 @@
+{
+  "pipeline_run_id": "b9e52c5a-a4bb-4dc6-a9f3-dc1b2a1726d9",
+  "database_id": "localhost_5432_easybulk",
+  "llm_model": "gemini-2.5-flash",
+  "run_timestamp": "2026-04-27T11:35:38.335034Z",
+  "summary": {
+    "confidence_score": 73,
+    "data_quality_score": 22,
+    "final_fix_count": 26
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "b9e52c5a-a4bb-4dc6-a9f3-dc1b2a1726d9",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T11:35:38.335034Z",
+      "agent": "Schema Integrity Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 15,
+        "items_passed": 0,
+        "items_flagged": 15,
+        "critical_issues": 3,
+        "high_issues": 6,
+        "medium_issues": 6,
+        "low_issues": 0,
+        "overall_quality_score": 0.0,
+        "overall_confidence": 0.74,
+        "flagged_tables": [
+          "budget_history",
+          "campagne_aud",
+          "campagne_contacts",
+          "contacts",
+          "expediteur_aud",
+          "expediteur_groupe",
+          "groupe"
+        ]
+      },
+      "metrics": {
+        "validator": "schema",
+        "findings_count": 15
+      },
+      "findings": [
+        {
+          "table": "campagne_contacts",
+          "column": null,
+          "entity": "campagne_contacts",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "campagne_contacts",
+            "columns_inspected": "campagne_id, contact_id",
+            "primary_key_required": true
+          },
+          "remediation_hint": "Define a primary key for table 'campagne_contacts'. Consider using 'campagne_id, contact_id' as a composite primary key.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "Define a primary key for table 'campagne_contacts'. Consider using 'campagne_id, contact_id' as a composite primary key.",
+              "evidence": {
+                "table_name": "campagne_contacts",
+                "columns_inspected": "campagne_id, contact_id",
+                "primary_key_required": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur_groupe",
+          "column": null,
+          "entity": "expediteur_groupe",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "expediteur_groupe",
+            "columns_inspected": "groupe_id, expediteur_id",
+            "primary_key_required": true
+          },
+          "remediation_hint": "Define a composite primary key for table 'expediteur_groupe' using columns (groupe_id, expediteur_id).",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "Define a composite primary key for table 'expediteur_groupe' using columns (groupe_id, expediteur_id).",
+              "evidence": {
+                "table_name": "expediteur_groupe",
+                "columns_inspected": "groupe_id, expediteur_id",
+                "primary_key_required": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "contacts",
+          "column": null,
+          "entity": "contacts",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "contacts",
+            "columns_inspected": "msisdn, country_code",
+            "primary_key_required": true
+          },
+          "remediation_hint": "Define a primary key for table 'contacts'. Consider 'msisdn' as a primary key or part of a composite key.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "Define a primary key for table 'contacts'. Consider 'msisdn' as a primary key or part of a composite key.",
+              "evidence": {
+                "table_name": "contacts",
+                "columns_inspected": "msisdn, country_code",
+                "primary_key_required": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur_aud",
+          "column": "name",
+          "entity": "expediteur_aud.name",
+          "rule": "inconsistent_nullability_audit",
+          "severity": "high",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "expediteur_aud",
+            "column_name": "name",
+            "is_nullable": "YES",
+            "related_table": "expediteur",
+            "related_column_is_nullable": "NO"
+          },
+          "remediation_hint": "Ensure nullability consistency between 'expediteur_aud.name' and its corresponding column in 'expediteur'. If 'expediteur.name' is non-nullable, consider making 'expediteur_aud.name' non-nullable as well, or explicitly document the reason for the difference.",
+          "issues": [
+            {
+              "type": "inconsistent_nullability_audit",
+              "severity": "high",
+              "description": "Ensure nullability consistency between 'expediteur_aud.name' and its corresponding column in 'expediteur'. If 'expediteur.name' is non-nullable, consider making 'expediteur_aud.name' non-nullable as well, or explicitly document the reason for the difference.",
+              "evidence": {
+                "table_name": "expediteur_aud",
+                "column_name": "name",
+                "is_nullable": "YES",
+                "related_table": "expediteur",
+                "related_column_is_nullable": "NO"
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur_aud",
+          "column": "status",
+          "entity": "expediteur_aud.status",
+          "rule": "inconsistent_nullability_audit",
+          "severity": "high",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "expediteur_aud",
+            "column_name": "status",
+            "is_nullable": "YES",
+            "related_table": "expediteur",
+            "related_column_is_nullable": "NO"
+          },
+          "remediation_hint": "Ensure nullability consistency between 'expediteur_aud.status' and its corresponding column in 'expediteur'. If 'expediteur.status' is non-nullable, consider making 'expediteur_aud.status' non-nullable as well, or explicitly document the reason for the difference.",
+          "issues": [
+            {
+              "type": "inconsistent_nullability_audit",
+              "severity": "high",
+              "description": "Ensure nullability consistency between 'expediteur_aud.status' and its corresponding column in 'expediteur'. If 'expediteur.status' is non-nullable, consider making 'expediteur_aud.status' non-nullable as well, or explicitly document the reason for the difference.",
+              "evidence": {
+                "table_name": "expediteur_aud",
+                "column_name": "status",
+                "is_nullable": "YES",
+                "related_table": "expediteur",
+                "related_column_is_nullable": "NO"
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur_aud",
+          "column": "organization_id",
+          "entity": "expediteur_aud.organization_id",
+          "rule": "nullable_fk_audit_inconsistent",
+          "severity": "high",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "expediteur_aud",
+            "column_name": "organization_id",
+            "is_nullable": "YES",
+            "related_table": "expediteur",
+            "related_column_is_nullable": "NO",
+            "foreign_key_validation": true
+          },
+          "remediation_hint": "Review the nullability of foreign key 'expediteur_aud.organization_id'. If the related column in 'expediteur' is non-nullable, consider making this foreign key non-nullable to maintain data integrity, or document the reason for the difference.",
+          "issues": [
+            {
+              "type": "nullable_fk_audit_inconsistent",
+              "severity": "high",
+              "description": "Review the nullability of foreign key 'expediteur_aud.organization_id'. If the related column in 'expediteur' is non-nullable, consider making this foreign key non-nullable to maintain data integrity, or document the reason for the difference.",
+              "evidence": {
+                "table_name": "expediteur_aud",
+                "column_name": "organization_id",
+                "is_nullable": "YES",
+                "related_table": "expediteur",
+                "related_column_is_nullable": "NO",
+                "foreign_key_validation": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "budget_history",
+          "column": "groupe_id",
+          "entity": "budget_history.groupe_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.7,
+          "evidence": {
+            "table_name": "budget_history",
+            "column_name": "groupe_id",
+            "is_nullable": "YES",
+            "foreign_key_validation": true
+          },
+          "remediation_hint": "Evaluate if the foreign key 'budget_history.groupe_id' should be non-nullable. If the relationship is mandatory, alter the column to disallow NULL values to enforce data integrity.",
+          "issues": [
+            {
+              "type": "nullable_fk",
+              "severity": "high",
+              "description": "Evaluate if the foreign key 'budget_history.groupe_id' should be non-nullable. If the relationship is mandatory, alter the column to disallow NULL values to enforce data integrity.",
+              "evidence": {
+                "table_name": "budget_history",
+                "column_name": "groupe_id",
+                "is_nullable": "YES",
+                "foreign_key_validation": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "entity": "groupe.admin_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.7,
+          "evidence": {
+            "table_name": "groupe",
+            "column_name": "admin_id",
+            "is_nullable": "YES",
+            "foreign_key_validation": true
+          },
+          "remediation_hint": "Evaluate if the foreign key 'groupe.admin_id' should be non-nullable. If the relationship is mandatory, alter the column to disallow NULL values to enforce data integrity.",
+          "issues": [
+            {
+              "type": "nullable_fk",
+              "severity": "high",
+              "description": "Evaluate if the foreign key 'groupe.admin_id' should be non-nullable. If the relationship is mandatory, alter the column to disallow NULL values to enforce data integrity.",
+              "evidence": {
+                "table_name": "groupe",
+                "column_name": "admin_id",
+                "is_nullable": "YES",
+                "foreign_key_validation": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_contacts",
+          "column": "contact_id",
+          "entity": "campagne_contacts.contact_id",
+          "rule": "nullable_fk_join_table",
+          "severity": "high",
+          "confidence": 0.7,
+          "evidence": {
+            "table_name": "campagne_contacts",
+            "column_name": "contact_id",
+            "is_nullable": "YES",
+            "foreign_key_validation": true
+          },
+          "remediation_hint": "For join table 'campagne_contacts', ensure that foreign key 'contact_id' is non-nullable and consider including it as part of a composite primary key to enforce relationship integrity.",
+          "issues": [
+            {
+              "type": "nullable_fk_join_table",
+              "severity": "high",
+              "description": "For join table 'campagne_contacts', ensure that foreign key 'contact_id' is non-nullable and consider including it as part of a composite primary key to enforce relationship integrity.",
+              "evidence": {
+                "table_name": "campagne_contacts",
+                "column_name": "contact_id",
+                "is_nullable": "YES",
+                "foreign_key_validation": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": "quota_loked",
+          "entity": "groupe.quota_loked",
+          "rule": "naming_convention_violation",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "groupe",
+            "column_name": "quota_loked",
+            "expected_pattern": "snake_case",
+            "actual_name": "quota_loked"
+          },
+          "remediation_hint": "Rename column 'groupe.quota_loked' to 'quota_locked' to correct the typo and adhere to naming conventions.",
+          "issues": [
+            {
+              "type": "naming_convention_violation",
+              "severity": "medium",
+              "description": "Rename column 'groupe.quota_loked' to 'quota_locked' to correct the typo and adhere to naming conventions.",
+              "evidence": {
+                "table_name": "groupe",
+                "column_name": "quota_loked",
+                "expected_pattern": "snake_case",
+                "actual_name": "quota_loked"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_aud",
+          "column": "campaign_type_permission_id",
+          "entity": "campagne_aud.campaign_type_permission_id",
+          "rule": "nullable_fk_audit",
+          "severity": "medium",
+          "confidence": 0.6,
+          "evidence": {
+            "table_name": "campagne_aud",
+            "column_name": "campaign_type_permission_id",
+            "is_nullable": "YES",
+            "foreign_key_validation": true
+          },
+          "remediation_hint": "Review the nullability of foreign key 'campagne_aud.campaign_type_permission_id' in the audit table. If the corresponding column in the main table is non-nullable, consider if this audit column should also be non-nullable or document the design choice.",
+          "issues": [
+            {
+              "type": "nullable_fk_audit",
+              "severity": "medium",
+              "description": "Review the nullability of foreign key 'campagne_aud.campaign_type_permission_id' in the audit table. If the corresponding column in the main table is non-nullable, consider if this audit column should also be non-nullable or document the design choice.",
+              "evidence": {
+                "table_name": "campagne_aud",
+                "column_name": "campaign_type_permission_id",
+                "is_nullable": "YES",
+                "foreign_key_validation": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_aud",
+          "column": "expediteur_id",
+          "entity": "campagne_aud.expediteur_id",
+          "rule": "nullable_fk_audit",
+          "severity": "medium",
+          "confidence": 0.6,
+          "evidence": {
+            "table_name": "campagne_aud",
+            "column_name": "expediteur_id",
+            "is_nullable": "YES",
+            "foreign_key_validation": true
+          },
+          "remediation_hint": "Review the nullability of foreign key 'campagne_aud.expediteur_id' in the audit table. If the corresponding column in the main table is non-nullable, consider if this audit column should also be non-nullable or document the design choice.",
+          "issues": [
+            {
+              "type": "nullable_fk_audit",
+              "severity": "medium",
+              "description": "Review the nullability of foreign key 'campagne_aud.expediteur_id' in the audit table. If the corresponding column in the main table is non-nullable, consider if this audit column should also be non-nullable or document the design choice.",
+              "evidence": {
+                "table_name": "campagne_aud",
+                "column_name": "expediteur_id",
+                "is_nullable": "YES",
+                "foreign_key_validation": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_aud",
+          "column": "modele_id",
+          "entity": "campagne_aud.modele_id",
+          "rule": "nullable_fk_audit",
+          "severity": "medium",
+          "confidence": 0.6,
+          "evidence": {
+            "table_name": "campagne_aud",
+            "column_name": "modele_id",
+            "is_nullable": "YES",
+            "foreign_key_validation": true
+          },
+          "remediation_hint": "Review the nullability of foreign key 'campagne_aud.modele_id' in the audit table. If the corresponding column in the main table is non-nullable, consider if this audit column should also be non-nullable or document the design choice.",
+          "issues": [
+            {
+              "type": "nullable_fk_audit",
+              "severity": "medium",
+              "description": "Review the nullability of foreign key 'campagne_aud.modele_id' in the audit table. If the corresponding column in the main table is non-nullable, consider if this audit column should also be non-nullable or document the design choice.",
+              "evidence": {
+                "table_name": "campagne_aud",
+                "column_name": "modele_id",
+                "is_nullable": "YES",
+                "foreign_key_validation": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_aud",
+          "column": "schedule_id",
+          "entity": "campagne_aud.schedule_id",
+          "rule": "nullable_fk_audit",
+          "severity": "medium",
+          "confidence": 0.6,
+          "evidence": {
+            "table_name": "campagne_aud",
+            "column_name": "schedule_id",
+            "is_nullable": "YES",
+            "foreign_key_validation": true
+          },
+          "remediation_hint": "Review the nullability of foreign key 'campagne_aud.schedule_id' in the audit table. If the corresponding column in the main table is non-nullable, consider if this audit column should also be non-nullable or document the design choice.",
+          "issues": [
+            {
+              "type": "nullable_fk_audit",
+              "severity": "medium",
+              "description": "Review the nullability of foreign key 'campagne_aud.schedule_id' in the audit table. If the corresponding column in the main table is non-nullable, consider if this audit column should also be non-nullable or document the design choice.",
+              "evidence": {
+                "table_name": "campagne_aud",
+                "column_name": "schedule_id",
+                "is_nullable": "YES",
+                "foreign_key_validation": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_aud",
+          "column": "status_id",
+          "entity": "campagne_aud.status_id",
+          "rule": "nullable_fk_audit",
+          "severity": "medium",
+          "confidence": 0.6,
+          "evidence": {
+            "table_name": "campagne_aud",
+            "column_name": "status_id",
+            "is_nullable": "YES",
+            "foreign_key_validation": true
+          },
+          "remediation_hint": "Review the nullability of foreign key 'campagne_aud.status_id' in the audit table. If the corresponding column in the main table is non-nullable, consider if this audit column should also be non-nullable or document the design choice.",
+          "issues": [
+            {
+              "type": "nullable_fk_audit",
+              "severity": "medium",
+              "description": "Review the nullability of foreign key 'campagne_aud.status_id' in the audit table. If the corresponding column in the main table is non-nullable, consider if this audit column should also be non-nullable or document the design choice.",
+              "evidence": {
+                "table_name": "campagne_aud",
+                "column_name": "status_id",
+                "is_nullable": "YES",
+                "foreign_key_validation": true
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": []
+    },
+    "column_validator": {
+      "pipeline_run_id": "b9e52c5a-a4bb-4dc6-a9f3-dc1b2a1726d9",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T11:35:38.335034Z",
+      "agent": "Column Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 11,
+        "items_passed": 0,
+        "items_flagged": 11,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 11,
+        "low_issues": 0,
+        "overall_quality_score": 12.0,
+        "overall_confidence": 0.6,
+        "flagged_tables": [
+          "campaign_spool_state"
+        ]
+      },
+      "metrics": {
+        "validator": "column",
+        "findings_count": 11
+      },
+      "findings": [
+        {
+          "table": "campaign_spool_state",
+          "column": "send_sms_table_size",
+          "entity": "campaign_spool_state.send_sms_table_size",
+          "rule": "low_cardinality_potential_issue",
+          "severity": "medium",
+          "confidence": 0.6,
+          "evidence": {
+            "table_name": "campaign_spool_state",
+            "column_name": "send_sms_table_size",
+            "unique_values": 1,
+            "total_rows": 7,
+            "value": 0
+          },
+          "remediation_hint": "The column 'send_sms_table_size' in 'campaign_spool_state' has only one unique value (0) across all 7 rows. Investigate if this column is expected to have more diverse values, as this might indicate a data population issue or a lack of activity.",
+          "issues": [
+            {
+              "type": "low_cardinality_potential_issue",
+              "severity": "medium",
+              "description": "The column 'send_sms_table_size' in 'campaign_spool_state' has only one unique value (0) across all 7 rows. Investigate if this column is expected to have more diverse values, as this might indicate a data population issue or a lack of activity.",
+              "evidence": {
+                "table_name": "campaign_spool_state",
+                "column_name": "send_sms_table_size",
+                "unique_values": 1,
+                "total_rows": 7,
+                "value": 0
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "spool_size",
+          "entity": "campaign_spool_state.spool_size",
+          "rule": "low_cardinality_potential_issue",
+          "severity": "medium",
+          "confidence": 0.6,
+          "evidence": {
+            "table_name": "campaign_spool_state",
+            "column_name": "spool_size",
+            "unique_values": 1,
+            "total_rows": 7,
+            "value": 0
+          },
+          "remediation_hint": "The column 'spool_size' in 'campaign_spool_state' has only one unique value (0) across all 7 rows. Investigate if this column is expected to have more diverse values, as this might indicate a data population issue or a lack of activity.",
+          "issues": [
+            {
+              "type": "low_cardinality_potential_issue",
+              "severity": "medium",
+              "description": "The column 'spool_size' in 'campaign_spool_state' has only one unique value (0) across all 7 rows. Investigate if this column is expected to have more diverse values, as this might indicate a data population issue or a lack of activity.",
+              "evidence": {
+                "table_name": "campaign_spool_state",
+                "column_name": "spool_size",
+                "unique_values": 1,
+                "total_rows": 7,
+                "value": 0
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "is_full",
+          "entity": "campaign_spool_state.is_full",
+          "rule": "low_cardinality_potential_issue",
+          "severity": "medium",
+          "confidence": 0.6,
+          "evidence": {
+            "table_name": "campaign_spool_state",
+            "column_name": "is_full",
+            "unique_values": 1,
+            "total_rows": 7
+          },
+          "remediation_hint": "The column 'is_full' in 'campaign_spool_state' has only one unique value across all 7 rows. Investigate if this boolean column is expected to have both true and false values, as this might indicate a lack of diverse states being recorded.",
+          "issues": [
+            {
+              "type": "low_cardinality_potential_issue",
+              "severity": "medium",
+              "description": "The column 'is_full' in 'campaign_spool_state' has only one unique value across all 7 rows. Investigate if this boolean column is expected to have both true and false values, as this might indicate a lack of diverse states being recorded.",
+              "evidence": {
+                "table_name": "campaign_spool_state",
+                "column_name": "is_full",
+                "unique_values": 1,
+                "total_rows": 7
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "sms_received",
+          "entity": "campaign_spool_state.sms_received",
+          "rule": "low_cardinality_potential_issue",
+          "severity": "medium",
+          "confidence": 0.6,
+          "evidence": {
+            "table_name": "campaign_spool_state",
+            "column_name": "sms_received",
+            "unique_values": 1,
+            "total_rows": 7,
+            "value": 0
+          },
+          "remediation_hint": "The column 'sms_received' in 'campaign_spool_state' has only one unique value (0) across all 7 rows. Investigate if this column is expected to have more diverse values, as this might indicate a data population issue or a lack of activity.",
+          "issues": [
+            {
+              "type": "low_cardinality_potential_issue",
+              "severity": "medium",
+              "description": "The column 'sms_received' in 'campaign_spool_state' has only one unique value (0) across all 7 rows. Investigate if this column is expected to have more diverse values, as this might indicate a data population issue or a lack of activity.",
+              "evidence": {
+                "table_name": "campaign_spool_state",
+                "column_name": "sms_received",
+                "unique_values": 1,
+                "total_rows": 7,
+                "value": 0
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "sms_received_queued",
+          "entity": "campaign_spool_state.sms_received_queued",
+          "rule": "low_cardinality_potential_issue",
+          "severity": "medium",
+          "confidence": 0.6,
+          "evidence": {
+            "table_name": "campaign_spool_state",
+            "column_name": "sms_received_queued",
+            "unique_values": 1,
+            "total_rows": 7,
+            "value": 0
+          },
+          "remediation_hint": "The column 'sms_received_queued' in 'campaign_spool_state' has only one unique value (0) across all 7 rows. Investigate if this column is expected to have more diverse values, as this might indicate a data population issue or a lack of activity.",
+          "issues": [
+            {
+              "type": "low_cardinality_potential_issue",
+              "severity": "medium",
+              "description": "The column 'sms_received_queued' in 'campaign_spool_state' has only one unique value (0) across all 7 rows. Investigate if this column is expected to have more diverse values, as this might indicate a data population issue or a lack of activity.",
+              "evidence": {
+                "table_name": "campaign_spool_state",
+                "column_name": "sms_received_queued",
+                "unique_values": 1,
+                "total_rows": 7,
+                "value": 0
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "sms_sent_queued",
+          "entity": "campaign_spool_state.sms_sent_queued",
+          "rule": "low_cardinality_potential_issue",
+          "severity": "medium",
+          "confidence": 0.6,
+          "evidence": {
+            "table_name": "campaign_spool_state",
+            "column_name": "sms_sent_queued",
+            "unique_values": 1,
+            "total_rows": 7,
+            "value": 0
+          },
+          "remediation_hint": "The column 'sms_sent_queued' in 'campaign_spool_state' has only one unique value (0) across all 7 rows. Investigate if this column is expected to have more diverse values, as this might indicate a data population issue or a lack of activity.",
+          "issues": [
+            {
+              "type": "low_cardinality_potential_issue",
+              "severity": "medium",
+              "description": "The column 'sms_sent_queued' in 'campaign_spool_state' has only one unique value (0) across all 7 rows. Investigate if this column is expected to have more diverse values, as this might indicate a data population issue or a lack of activity.",
+              "evidence": {
+                "table_name": "campaign_spool_state",
+                "column_name": "sms_sent_queued",
+                "unique_values": 1,
+                "total_rows": 7,
+                "value": 0
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "store_size",
+          "entity": "campaign_spool_state.store_size",
+          "rule": "low_cardinality_potential_issue",
+          "severity": "medium",
+          "confidence": 0.6,
+          "evidence": {
+            "table_name": "campaign_spool_state",
+            "column_name": "store_size",
+            "unique_values": 1,
+            "total_rows": 7,
+            "value": 0
+          },
+          "remediation_hint": "The column 'store_size' in 'campaign_spool_state' has only one unique value (0) across all 7 rows. Investigate if this column is expected to have more diverse values, as this might indicate a data population issue or a lack of activity.",
+          "issues": [
+            {
+              "type": "low_cardinality_potential_issue",
+              "severity": "medium",
+              "description": "The column 'store_size' in 'campaign_spool_state' has only one unique value (0) across all 7 rows. Investigate if this column is expected to have more diverse values, as this might indicate a data population issue or a lack of activity.",
+              "evidence": {
+                "table_name": "campaign_spool_state",
+                "column_name": "store_size",
+                "unique_values": 1,
+                "total_rows": 7,
+                "value": 0
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "dlr_sent",
+          "entity": "campaign_spool_state.dlr_sent",
+          "rule": "low_cardinality_potential_issue",
+          "severity": "medium",
+          "confidence": 0.6,
+          "evidence": {
+            "table_name": "campaign_spool_state",
+            "column_name": "dlr_sent",
+            "unique_values": 1,
+            "total_rows": 7,
+            "value": 0
+          },
+          "remediation_hint": "The column 'dlr_sent' in 'campaign_spool_state' has only one unique value (0) across all 7 rows. Investigate if this column is expected to have more diverse values, as this might indicate a data population issue or a lack of activity.",
+          "issues": [
+            {
+              "type": "low_cardinality_potential_issue",
+              "severity": "medium",
+              "description": "The column 'dlr_sent' in 'campaign_spool_state' has only one unique value (0) across all 7 rows. Investigate if this column is expected to have more diverse values, as this might indicate a data population issue or a lack of activity.",
+              "evidence": {
+                "table_name": "campaign_spool_state",
+                "column_name": "dlr_sent",
+                "unique_values": 1,
+                "total_rows": 7,
+                "value": 0
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "sms_inbound_msg_per_sec",
+          "entity": "campaign_spool_state.sms_inbound_msg_per_sec",
+          "rule": "low_cardinality_potential_issue",
+          "severity": "medium",
+          "confidence": 0.6,
+          "evidence": {
+            "table_name": "campaign_spool_state",
+            "column_name": "sms_inbound_msg_per_sec",
+            "unique_values": 1,
+            "total_rows": 7
+          },
+          "remediation_hint": "The column 'sms_inbound_msg_per_sec' in 'campaign_spool_state' has only one unique value across all 7 rows. Investigate if this column is expected to have more diverse values, as this might indicate a data population issue or a lack of activity.",
+          "issues": [
+            {
+              "type": "low_cardinality_potential_issue",
+              "severity": "medium",
+              "description": "The column 'sms_inbound_msg_per_sec' in 'campaign_spool_state' has only one unique value across all 7 rows. Investigate if this column is expected to have more diverse values, as this might indicate a data population issue or a lack of activity.",
+              "evidence": {
+                "table_name": "campaign_spool_state",
+                "column_name": "sms_inbound_msg_per_sec",
+                "unique_values": 1,
+                "total_rows": 7
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "sms_outbound_msg_per_sec",
+          "entity": "campaign_spool_state.sms_outbound_msg_per_sec",
+          "rule": "low_cardinality_potential_issue",
+          "severity": "medium",
+          "confidence": 0.6,
+          "evidence": {
+            "table_name": "campaign_spool_state",
+            "column_name": "sms_outbound_msg_per_sec",
+            "unique_values": 1,
+            "total_rows": 7
+          },
+          "remediation_hint": "The column 'sms_outbound_msg_per_sec' in 'campaign_spool_state' has only one unique value across all 7 rows. Investigate if this column is expected to have more diverse values, as this might indicate a data population issue or a lack of activity.",
+          "issues": [
+            {
+              "type": "low_cardinality_potential_issue",
+              "severity": "medium",
+              "description": "The column 'sms_outbound_msg_per_sec' in 'campaign_spool_state' has only one unique value across all 7 rows. Investigate if this column is expected to have more diverse values, as this might indicate a data population issue or a lack of activity.",
+              "evidence": {
+                "table_name": "campaign_spool_state",
+                "column_name": "sms_outbound_msg_per_sec",
+                "unique_values": 1,
+                "total_rows": 7
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "dlr_outbound_msg_per_sec",
+          "entity": "campaign_spool_state.dlr_outbound_msg_per_sec",
+          "rule": "low_cardinality_potential_issue",
+          "severity": "medium",
+          "confidence": 0.6,
+          "evidence": {
+            "table_name": "campaign_spool_state",
+            "column_name": "dlr_outbound_msg_per_sec",
+            "unique_values": 1,
+            "total_rows": 7
+          },
+          "remediation_hint": "The column 'dlr_outbound_msg_per_sec' in 'campaign_spool_state' has only one unique value across all 7 rows. Investigate if this column is expected to have more diverse values, as this might indicate a data population issue or a lack of activity.",
+          "issues": [
+            {
+              "type": "low_cardinality_potential_issue",
+              "severity": "medium",
+              "description": "The column 'dlr_outbound_msg_per_sec' in 'campaign_spool_state' has only one unique value across all 7 rows. Investigate if this column is expected to have more diverse values, as this might indicate a data population issue or a lack of activity.",
+              "evidence": {
+                "table_name": "campaign_spool_state",
+                "column_name": "dlr_outbound_msg_per_sec",
+                "unique_values": 1,
+                "total_rows": 7
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": []
+    },
+    "row_level_validator": {
+      "pipeline_run_id": "b9e52c5a-a4bb-4dc6-a9f3-dc1b2a1726d9",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T11:35:38.335034Z",
+      "agent": "Row Level Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 15,
+        "items_passed": 0,
+        "items_flagged": 15,
+        "critical_issues": 5,
+        "high_issues": 4,
+        "medium_issues": 6,
+        "low_issues": 0,
+        "overall_quality_score": 0.0,
+        "overall_confidence": 0.66,
+        "flagged_tables": [
+          "budget_history",
+          "campagne",
+          "campaign_schedule",
+          "contacts",
+          "expediteur",
+          "groupe",
+          "organization",
+          "prm_campaign_type",
+          "prm_organization",
+          "users"
+        ]
+      },
+      "metrics": {
+        "validator": "row",
+        "findings_count": 15
+      },
+      "findings": [
+        {
+          "table": "campaign_schedule",
+          "column": "code",
+          "entity": "campaign_schedule.code",
+          "rule": "blank_required_value",
+          "severity": "critical",
+          "confidence": 0.7,
+          "evidence": {
+            "table_name": "campaign_schedule",
+            "column_name": "code",
+            "is_nullable": "NO",
+            "issue": "Potential for empty string or only whitespace"
+          },
+          "remediation_hint": "Ensure 'campaign_schedule.code' contains non-empty, meaningful values as it is a non-nullable required field.",
+          "issues": [
+            {
+              "type": "blank_required_value",
+              "severity": "critical",
+              "description": "Ensure 'campaign_schedule.code' contains non-empty, meaningful values as it is a non-nullable required field.",
+              "evidence": {
+                "table_name": "campaign_schedule",
+                "column_name": "code",
+                "is_nullable": "NO",
+                "issue": "Potential for empty string or only whitespace"
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": "name",
+          "entity": "groupe.name",
+          "rule": "blank_required_value",
+          "severity": "critical",
+          "confidence": 0.7,
+          "evidence": {
+            "table_name": "groupe",
+            "column_name": "name",
+            "is_nullable": "NO",
+            "issue": "Potential for empty string or only whitespace"
+          },
+          "remediation_hint": "Ensure 'groupe.name' contains non-empty, meaningful values as it is a non-nullable required field.",
+          "issues": [
+            {
+              "type": "blank_required_value",
+              "severity": "critical",
+              "description": "Ensure 'groupe.name' contains non-empty, meaningful values as it is a non-nullable required field.",
+              "evidence": {
+                "table_name": "groupe",
+                "column_name": "name",
+                "is_nullable": "NO",
+                "issue": "Potential for empty string or only whitespace"
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur",
+          "column": "name",
+          "entity": "expediteur.name",
+          "rule": "blank_required_value",
+          "severity": "critical",
+          "confidence": 0.7,
+          "evidence": {
+            "table_name": "expediteur",
+            "column_name": "name",
+            "is_nullable": "NO",
+            "issue": "Potential for empty string or only whitespace"
+          },
+          "remediation_hint": "Ensure 'expediteur.name' contains non-empty, meaningful values as it is a non-nullable required field.",
+          "issues": [
+            {
+              "type": "blank_required_value",
+              "severity": "critical",
+              "description": "Ensure 'expediteur.name' contains non-empty, meaningful values as it is a non-nullable required field.",
+              "evidence": {
+                "table_name": "expediteur",
+                "column_name": "name",
+                "is_nullable": "NO",
+                "issue": "Potential for empty string or only whitespace"
+              }
+            }
+          ]
+        },
+        {
+          "table": "contacts",
+          "column": "msisdn",
+          "entity": "contacts.msisdn",
+          "rule": "blank_required_value",
+          "severity": "critical",
+          "confidence": 0.7,
+          "evidence": {
+            "table_name": "contacts",
+            "column_name": "msisdn",
+            "is_nullable": "NO",
+            "issue": "Potential for empty string or only whitespace"
+          },
+          "remediation_hint": "Ensure 'contacts.msisdn' contains non-empty, meaningful values as it is a non-nullable required field.",
+          "issues": [
+            {
+              "type": "blank_required_value",
+              "severity": "critical",
+              "description": "Ensure 'contacts.msisdn' contains non-empty, meaningful values as it is a non-nullable required field.",
+              "evidence": {
+                "table_name": "contacts",
+                "column_name": "msisdn",
+                "is_nullable": "NO",
+                "issue": "Potential for empty string or only whitespace"
+              }
+            }
+          ]
+        },
+        {
+          "table": "users",
+          "column": "email",
+          "entity": "users.email",
+          "rule": "blank_required_value",
+          "severity": "critical",
+          "confidence": 0.7,
+          "evidence": {
+            "table_name": "users",
+            "column_name": "email",
+            "is_nullable": "NO",
+            "issue": "Potential for empty string or only whitespace"
+          },
+          "remediation_hint": "Ensure 'users.email' contains non-empty, meaningful values as it is a non-nullable required field.",
+          "issues": [
+            {
+              "type": "blank_required_value",
+              "severity": "critical",
+              "description": "Ensure 'users.email' contains non-empty, meaningful values as it is a non-nullable required field.",
+              "evidence": {
+                "table_name": "users",
+                "column_name": "email",
+                "is_nullable": "NO",
+                "issue": "Potential for empty string or only whitespace"
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": "quota",
+          "entity": "groupe.quota",
+          "rule": "negative_amount",
+          "severity": "high",
+          "confidence": 0.7,
+          "evidence": {
+            "table_name": "groupe",
+            "column_name": "quota",
+            "data_type": "bigint",
+            "issue": "Potential for negative values"
+          },
+          "remediation_hint": "Review 'groupe.quota' for negative values. Quota amounts should typically be non-negative.",
+          "issues": [
+            {
+              "type": "negative_amount",
+              "severity": "high",
+              "description": "Review 'groupe.quota' for negative values. Quota amounts should typically be non-negative.",
+              "evidence": {
+                "table_name": "groupe",
+                "column_name": "quota",
+                "data_type": "bigint",
+                "issue": "Potential for negative values"
+              }
+            }
+          ]
+        },
+        {
+          "table": "organization",
+          "column": "quota",
+          "entity": "organization.quota",
+          "rule": "negative_amount",
+          "severity": "high",
+          "confidence": 0.7,
+          "evidence": {
+            "table_name": "organization",
+            "column_name": "quota",
+            "data_type": "bigint",
+            "issue": "Potential for negative values"
+          },
+          "remediation_hint": "Review 'organization.quota' for negative values. Quota amounts should typically be non-negative.",
+          "issues": [
+            {
+              "type": "negative_amount",
+              "severity": "high",
+              "description": "Review 'organization.quota' for negative values. Quota amounts should typically be non-negative.",
+              "evidence": {
+                "table_name": "organization",
+                "column_name": "quota",
+                "data_type": "bigint",
+                "issue": "Potential for negative values"
+              }
+            }
+          ]
+        },
+        {
+          "table": "budget_history",
+          "column": "amount",
+          "entity": "budget_history.amount",
+          "rule": "negative_amount",
+          "severity": "medium",
+          "confidence": 0.6,
+          "evidence": {
+            "table_name": "budget_history",
+            "column_name": "amount",
+            "data_type": "bigint",
+            "issue": "Potential for negative values"
+          },
+          "remediation_hint": "Review 'budget_history.amount' for negative values. Amounts should typically be non-negative.",
+          "issues": [
+            {
+              "type": "negative_amount",
+              "severity": "medium",
+              "description": "Review 'budget_history.amount' for negative values. Amounts should typically be non-negative.",
+              "evidence": {
+                "table_name": "budget_history",
+                "column_name": "amount",
+                "data_type": "bigint",
+                "issue": "Potential for negative values"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne",
+          "column": "cost",
+          "entity": "campagne.cost",
+          "rule": "negative_amount",
+          "severity": "medium",
+          "confidence": 0.6,
+          "evidence": {
+            "table_name": "campagne",
+            "column_name": "cost",
+            "data_type": "bigint",
+            "issue": "Potential for negative values"
+          },
+          "remediation_hint": "Review 'campagne.cost' for negative values. Costs should typically be non-negative.",
+          "issues": [
+            {
+              "type": "negative_amount",
+              "severity": "medium",
+              "description": "Review 'campagne.cost' for negative values. Costs should typically be non-negative.",
+              "evidence": {
+                "table_name": "campagne",
+                "column_name": "cost",
+                "data_type": "bigint",
+                "issue": "Potential for negative values"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne",
+          "column": "budget_used",
+          "entity": "campagne.budget_used",
+          "rule": "negative_amount",
+          "severity": "medium",
+          "confidence": 0.6,
+          "evidence": {
+            "table_name": "campagne",
+            "column_name": "budget_used",
+            "data_type": "bigint",
+            "issue": "Potential for negative values"
+          },
+          "remediation_hint": "Review 'campagne.budget_used' for negative values. Budget usage should typically be non-negative.",
+          "issues": [
+            {
+              "type": "negative_amount",
+              "severity": "medium",
+              "description": "Review 'campagne.budget_used' for negative values. Budget usage should typically be non-negative.",
+              "evidence": {
+                "table_name": "campagne",
+                "column_name": "budget_used",
+                "data_type": "bigint",
+                "issue": "Potential for negative values"
+              }
+            }
+          ]
+        },
+        {
+          "table": "contacts",
+          "column": "msisdn",
+          "entity": "contacts.msisdn",
+          "rule": "duplicate_unique_column",
+          "severity": "high",
+          "confidence": 0.7,
+          "evidence": {
+            "table_name": "contacts",
+            "column_name": "msisdn",
+            "unique_pattern": "msisdn",
+            "issue": "Potential for duplicate values"
+          },
+          "remediation_hint": "Ensure 'contacts.msisdn' contains only unique values as per the domain rule for MSISDNs.",
+          "issues": [
+            {
+              "type": "duplicate_unique_column",
+              "severity": "high",
+              "description": "Ensure 'contacts.msisdn' contains only unique values as per the domain rule for MSISDNs.",
+              "evidence": {
+                "table_name": "contacts",
+                "column_name": "msisdn",
+                "unique_pattern": "msisdn",
+                "issue": "Potential for duplicate values"
+              }
+            }
+          ]
+        },
+        {
+          "table": "users",
+          "column": "email",
+          "entity": "users.email",
+          "rule": "duplicate_unique_column",
+          "severity": "high",
+          "confidence": 0.7,
+          "evidence": {
+            "table_name": "users",
+            "column_name": "email",
+            "unique_pattern": "email",
+            "issue": "Potential for duplicate values"
+          },
+          "remediation_hint": "Ensure 'users.email' contains only unique values as per the domain rule for emails.",
+          "issues": [
+            {
+              "type": "duplicate_unique_column",
+              "severity": "high",
+              "description": "Ensure 'users.email' contains only unique values as per the domain rule for emails.",
+              "evidence": {
+                "table_name": "users",
+                "column_name": "email",
+                "unique_pattern": "email",
+                "issue": "Potential for duplicate values"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_schedule",
+          "column": "code",
+          "entity": "campaign_schedule.code",
+          "rule": "duplicate_unique_column",
+          "severity": "medium",
+          "confidence": 0.6,
+          "evidence": {
+            "table_name": "campaign_schedule",
+            "column_name": "code",
+            "unique_pattern": "*_code",
+            "issue": "Potential for duplicate values"
+          },
+          "remediation_hint": "Ensure 'campaign_schedule.code' contains only unique values as per the domain rule for code patterns.",
+          "issues": [
+            {
+              "type": "duplicate_unique_column",
+              "severity": "medium",
+              "description": "Ensure 'campaign_schedule.code' contains only unique values as per the domain rule for code patterns.",
+              "evidence": {
+                "table_name": "campaign_schedule",
+                "column_name": "code",
+                "unique_pattern": "*_code",
+                "issue": "Potential for duplicate values"
+              }
+            }
+          ]
+        },
+        {
+          "table": "prm_campaign_type",
+          "column": "code",
+          "entity": "prm_campaign_type.code",
+          "rule": "duplicate_unique_column",
+          "severity": "medium",
+          "confidence": 0.6,
+          "evidence": {
+            "table_name": "prm_campaign_type",
+            "column_name": "code",
+            "unique_pattern": "*_code",
+            "issue": "Potential for duplicate values"
+          },
+          "remediation_hint": "Ensure 'prm_campaign_type.code' contains only unique values as per the domain rule for code patterns.",
+          "issues": [
+            {
+              "type": "duplicate_unique_column",
+              "severity": "medium",
+              "description": "Ensure 'prm_campaign_type.code' contains only unique values as per the domain rule for code patterns.",
+              "evidence": {
+                "table_name": "prm_campaign_type",
+                "column_name": "code",
+                "unique_pattern": "*_code",
+                "issue": "Potential for duplicate values"
+              }
+            }
+          ]
+        },
+        {
+          "table": "prm_organization",
+          "column": "code",
+          "entity": "prm_organization.code",
+          "rule": "duplicate_unique_column",
+          "severity": "medium",
+          "confidence": 0.6,
+          "evidence": {
+            "table_name": "prm_organization",
+            "column_name": "code",
+            "unique_pattern": "*_code",
+            "issue": "Potential for duplicate values"
+          },
+          "remediation_hint": "Ensure 'prm_organization.code' contains only unique values as per the domain rule for code patterns.",
+          "issues": [
+            {
+              "type": "duplicate_unique_column",
+              "severity": "medium",
+              "description": "Ensure 'prm_organization.code' contains only unique values as per the domain rule for code patterns.",
+              "evidence": {
+                "table_name": "prm_organization",
+                "column_name": "code",
+                "unique_pattern": "*_code",
+                "issue": "Potential for duplicate values"
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": []
+    },
+    "cross_row_validator": {
+      "pipeline_run_id": "b9e52c5a-a4bb-4dc6-a9f3-dc1b2a1726d9",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T11:35:38.335034Z",
+      "agent": "Cross Row Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 0,
+        "items_passed": 0,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "crossrow",
+        "findings_count": 0
+      },
+      "findings": [],
+      "prior_reports": []
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "b9e52c5a-a4bb-4dc6-a9f3-dc1b2a1726d9",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T11:35:38.335034Z",
+      "agent": "Data Fix Planner",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 26,
+        "items_passed": 0,
+        "items_flagged": 26,
+        "critical_issues": 9,
+        "high_issues": 1,
+        "medium_issues": 16,
+        "low_issues": 0,
+        "overall_quality_score": 0.0,
+        "overall_confidence": 0.6385,
+        "flagged_tables": [
+          "budget_history",
+          "campagne",
+          "campaign_schedule",
+          "campaign_spool_state",
+          "contacts",
+          "expediteur",
+          "groupe",
+          "organization",
+          "prm_campaign_type",
+          "prm_organization",
+          "users"
+        ]
+      },
+      "metrics": {
+        "total_issues_received": 26,
+        "fixes_generated": 26
+      },
+      "findings": [
+        {
+          "id": "fix_001_campaign_schedule",
+          "table": "campaign_schedule",
+          "target_table": "campaign_schedule",
+          "problem": "Remediate blank or whitespace-only 'code' in 'campaign_schedule'",
+          "fix": "The column 'campaign_schedule.code' is defined as NOT NULL, but contains rows where 'code' is an empty string or consists only of whitespace. This violates data integrity and can lead to unexpected application behavior. The suggested action is to update these invalid entries to a meaningful placeholder.",
+          "severity": "critical",
+          "confidence": 0.7,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "UPDATE campaign_schedule SET code = 'N/A' WHERE TRIM(code) = '';"
+          ],
+          "explanation": "The column 'campaign_schedule.code' is defined as NOT NULL, but contains rows where 'code' is an empty string or consists only of whitespace. This violates data integrity and can lead to unexpected application behavior. The suggested action is to update these invalid entries to a meaningful placeholder.",
+          "preconditions": [
+            "SELECT COUNT(*) FROM campaign_schedule WHERE TRIM(code) = '';"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM campaign_schedule WHERE TRIM(code) = '';"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_002_groupe",
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "Remediate blank or whitespace-only 'name' in 'groupe'",
+          "fix": "The column 'groupe.name' is defined as NOT NULL, but contains rows where 'name' is an empty string or consists only of whitespace. This violates data integrity and can lead to unexpected application behavior. The suggested action is to update these invalid entries to a meaningful placeholder.",
+          "severity": "critical",
+          "confidence": 0.7,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "UPDATE groupe SET name = 'N/A' WHERE TRIM(name) = '';"
+          ],
+          "explanation": "The column 'groupe.name' is defined as NOT NULL, but contains rows where 'name' is an empty string or consists only of whitespace. This violates data integrity and can lead to unexpected application behavior. The suggested action is to update these invalid entries to a meaningful placeholder.",
+          "preconditions": [
+            "SELECT COUNT(*) FROM groupe WHERE TRIM(name) = '';"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM groupe WHERE TRIM(name) = '';"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_003_expediteur",
+          "table": "expediteur",
+          "target_table": "expediteur",
+          "problem": "Remediate blank or whitespace-only 'name' in 'expediteur'",
+          "fix": "The column 'expediteur.name' is defined as NOT NULL, but contains rows where 'name' is an empty string or consists only of whitespace. This violates data integrity and can lead to unexpected application behavior. The suggested action is to update these invalid entries to a meaningful placeholder.",
+          "severity": "critical",
+          "confidence": 0.7,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "UPDATE expediteur SET name = 'N/A' WHERE TRIM(name) = '';"
+          ],
+          "explanation": "The column 'expediteur.name' is defined as NOT NULL, but contains rows where 'name' is an empty string or consists only of whitespace. This violates data integrity and can lead to unexpected application behavior. The suggested action is to update these invalid entries to a meaningful placeholder.",
+          "preconditions": [
+            "SELECT COUNT(*) FROM expediteur WHERE TRIM(name) = '';"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM expediteur WHERE TRIM(name) = '';"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_004_contacts",
+          "table": "contacts",
+          "target_table": "contacts",
+          "problem": "Remediate blank or whitespace-only 'msisdn' in 'contacts'",
+          "fix": "The column 'contacts.msisdn' is defined as NOT NULL, but contains rows where 'msisdn' is an empty string or consists only of whitespace. This violates data integrity and can lead to unexpected application behavior. The suggested action is to update these invalid entries to a meaningful placeholder.",
+          "severity": "critical",
+          "confidence": 0.7,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "UPDATE contacts SET msisdn = 'UNKNOWN' WHERE TRIM(msisdn) = '';"
+          ],
+          "explanation": "The column 'contacts.msisdn' is defined as NOT NULL, but contains rows where 'msisdn' is an empty string or consists only of whitespace. This violates data integrity and can lead to unexpected application behavior. The suggested action is to update these invalid entries to a meaningful placeholder.",
+          "preconditions": [
+            "SELECT COUNT(*) FROM contacts WHERE TRIM(msisdn) = '';"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM contacts WHERE TRIM(msisdn) = '';"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_005_users",
+          "table": "users",
+          "target_table": "users",
+          "problem": "Remediate blank or whitespace-only 'email' in 'users'",
+          "fix": "The column 'users.email' is defined as NOT NULL, but contains rows where 'email' is an empty string or consists only of whitespace. This violates data integrity and can lead to unexpected application behavior. The suggested action is to update these invalid entries to a meaningful placeholder.",
+          "severity": "critical",
+          "confidence": 0.7,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "UPDATE users SET email = 'unknown@example.com' WHERE TRIM(email) = '';"
+          ],
+          "explanation": "The column 'users.email' is defined as NOT NULL, but contains rows where 'email' is an empty string or consists only of whitespace. This violates data integrity and can lead to unexpected application behavior. The suggested action is to update these invalid entries to a meaningful placeholder.",
+          "preconditions": [
+            "SELECT COUNT(*) FROM users WHERE TRIM(email) = '';"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM users WHERE TRIM(email) = '';"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_006_groupe",
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "Remediate negative 'quota' values in 'groupe'",
+          "fix": "The column 'groupe.quota' contains negative values, which is typically not expected for a quota amount. This can lead to incorrect calculations or business logic errors. The suggested action is to update any negative 'quota' values to 0.",
+          "severity": "critical",
+          "confidence": 0.7,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "UPDATE groupe SET quota = 0 WHERE quota < 0;"
+          ],
+          "explanation": "The column 'groupe.quota' contains negative values, which is typically not expected for a quota amount. This can lead to incorrect calculations or business logic errors. The suggested action is to update any negative 'quota' values to 0.",
+          "preconditions": [
+            "SELECT COUNT(*) FROM groupe WHERE quota < 0;"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM groupe WHERE quota < 0;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_007_organization",
+          "table": "organization",
+          "target_table": "organization",
+          "problem": "Remediate negative 'quota' values in 'organization'",
+          "fix": "The column 'organization.quota' contains negative values, which is typically not expected for a quota amount. This can lead to incorrect calculations or business logic errors. The suggested action is to update any negative 'quota' values to 0.",
+          "severity": "high",
+          "confidence": 0.7,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "UPDATE organization SET quota = 0 WHERE quota < 0;"
+          ],
+          "explanation": "The column 'organization.quota' contains negative values, which is typically not expected for a quota amount. This can lead to incorrect calculations or business logic errors. The suggested action is to update any negative 'quota' values to 0.",
+          "preconditions": [
+            "SELECT COUNT(*) FROM organization WHERE quota < 0;"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM organization WHERE quota < 0;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_008_contacts",
+          "table": "contacts",
+          "target_table": "contacts",
+          "problem": "Identify duplicate 'msisdn' values in 'contacts'",
+          "fix": "The column 'contacts.msisdn' is expected to contain unique values as per domain rules. Duplicate entries can lead to data inconsistencies and incorrect processing. This card provides a query to identify such duplicates for further investigation and manual remediation.",
+          "severity": "critical",
+          "confidence": 0.7,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- Manual remediation required: Identify and resolve duplicate 'msisdn' values.\n-- Example: DELETE FROM contacts WHERE id IN (SELECT id FROM (SELECT id, ROW_NUMBER() OVER(PARTITION BY msisdn ORDER BY id) as rn FROM contacts) t WHERE t.rn > 1);"
+          ],
+          "explanation": "The column 'contacts.msisdn' is expected to contain unique values as per domain rules. Duplicate entries can lead to data inconsistencies and incorrect processing. This card provides a query to identify such duplicates for further investigation and manual remediation.",
+          "preconditions": [
+            "SELECT msisdn, COUNT(*) FROM contacts GROUP BY msisdn HAVING COUNT(*) > 1;"
+          ],
+          "verification_queries": [
+            "SELECT msisdn, COUNT(*) FROM contacts GROUP BY msisdn HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_009_users",
+          "table": "users",
+          "target_table": "users",
+          "problem": "Identify duplicate 'email' values in 'users'",
+          "fix": "The column 'users.email' is expected to contain unique values as per domain rules. Duplicate entries can lead to data inconsistencies and incorrect processing. This card provides a query to identify such duplicates for further investigation and manual remediation.",
+          "severity": "critical",
+          "confidence": 0.7,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- Manual remediation required: Identify and resolve duplicate 'email' values.\n-- Example: DELETE FROM users WHERE id IN (SELECT id FROM (SELECT id, ROW_NUMBER() OVER(PARTITION BY email ORDER BY id) as rn FROM users) t WHERE t.rn > 1);"
+          ],
+          "explanation": "The column 'users.email' is expected to contain unique values as per domain rules. Duplicate entries can lead to data inconsistencies and incorrect processing. This card provides a query to identify such duplicates for further investigation and manual remediation.",
+          "preconditions": [
+            "SELECT email, COUNT(*) FROM users GROUP BY email HAVING COUNT(*) > 1;"
+          ],
+          "verification_queries": [
+            "SELECT email, COUNT(*) FROM users GROUP BY email HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_010_campaign_spool_state",
+          "table": "campaign_spool_state",
+          "target_table": "campaign_spool_state",
+          "problem": "Investigate low cardinality in 'campaign_spool_state.send_sms_table_size'",
+          "fix": "The column 'campaign_spool_state.send_sms_table_size' has very low cardinality (only one unique value: 0) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "severity": "medium",
+          "confidence": 0.6,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- No direct SQL fix. Investigation is required.;"
+          ],
+          "explanation": "The column 'campaign_spool_state.send_sms_table_size' has very low cardinality (only one unique value: 0) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "preconditions": [
+            "SELECT send_sms_table_size, COUNT(*) FROM campaign_spool_state GROUP BY send_sms_table_size;"
+          ],
+          "verification_queries": [
+            "SELECT send_sms_table_size, COUNT(*) FROM campaign_spool_state GROUP BY send_sms_table_size;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_011_campaign_spool_state",
+          "table": "campaign_spool_state",
+          "target_table": "campaign_spool_state",
+          "problem": "Investigate low cardinality in 'campaign_spool_state.spool_size'",
+          "fix": "The column 'campaign_spool_state.spool_size' has very low cardinality (only one unique value: 0) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "severity": "medium",
+          "confidence": 0.6,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- No direct SQL fix. Investigation is required.;"
+          ],
+          "explanation": "The column 'campaign_spool_state.spool_size' has very low cardinality (only one unique value: 0) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "preconditions": [
+            "SELECT spool_size, COUNT(*) FROM campaign_spool_state GROUP BY spool_size;"
+          ],
+          "verification_queries": [
+            "SELECT spool_size, COUNT(*) FROM campaign_spool_state GROUP BY spool_size;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_012_campaign_spool_state",
+          "table": "campaign_spool_state",
+          "target_table": "campaign_spool_state",
+          "problem": "Investigate low cardinality in 'campaign_spool_state.is_full'",
+          "fix": "The boolean column 'campaign_spool_state.is_full' has very low cardinality (only one unique value) across all 7 rows. This might indicate a lack of diverse states being recorded or a data population issue. Further investigation is recommended to understand the root cause.",
+          "severity": "medium",
+          "confidence": 0.6,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- No direct SQL fix. Investigation is required.;"
+          ],
+          "explanation": "The boolean column 'campaign_spool_state.is_full' has very low cardinality (only one unique value) across all 7 rows. This might indicate a lack of diverse states being recorded or a data population issue. Further investigation is recommended to understand the root cause.",
+          "preconditions": [
+            "SELECT is_full, COUNT(*) FROM campaign_spool_state GROUP BY is_full;"
+          ],
+          "verification_queries": [
+            "SELECT is_full, COUNT(*) FROM campaign_spool_state GROUP BY is_full;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_013_campaign_spool_state",
+          "table": "campaign_spool_state",
+          "target_table": "campaign_spool_state",
+          "problem": "Investigate low cardinality in 'campaign_spool_state.sms_received'",
+          "fix": "The column 'campaign_spool_state.sms_received' has very low cardinality (only one unique value: 0) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "severity": "medium",
+          "confidence": 0.6,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- No direct SQL fix. Investigation is required.;"
+          ],
+          "explanation": "The column 'campaign_spool_state.sms_received' has very low cardinality (only one unique value: 0) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "preconditions": [
+            "SELECT sms_received, COUNT(*) FROM campaign_spool_state GROUP BY sms_received;"
+          ],
+          "verification_queries": [
+            "SELECT sms_received, COUNT(*) FROM campaign_spool_state GROUP BY sms_received;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_014_campaign_spool_state",
+          "table": "campaign_spool_state",
+          "target_table": "campaign_spool_state",
+          "problem": "Investigate low cardinality in 'campaign_spool_state.sms_received_queued'",
+          "fix": "The column 'campaign_spool_state.sms_received_queued' has very low cardinality (only one unique value: 0) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "severity": "medium",
+          "confidence": 0.6,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- No direct SQL fix. Investigation is required.;"
+          ],
+          "explanation": "The column 'campaign_spool_state.sms_received_queued' has very low cardinality (only one unique value: 0) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "preconditions": [
+            "SELECT sms_received_queued, COUNT(*) FROM campaign_spool_state GROUP BY sms_received_queued;"
+          ],
+          "verification_queries": [
+            "SELECT sms_received_queued, COUNT(*) FROM campaign_spool_state GROUP BY sms_received_queued;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_015_campaign_spool_state",
+          "table": "campaign_spool_state",
+          "target_table": "campaign_spool_state",
+          "problem": "Investigate low cardinality in 'campaign_spool_state.sms_sent_queued'",
+          "fix": "The column 'campaign_spool_state.sms_sent_queued' has very low cardinality (only one unique value: 0) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "severity": "medium",
+          "confidence": 0.6,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- No direct SQL fix. Investigation is required.;"
+          ],
+          "explanation": "The column 'campaign_spool_state.sms_sent_queued' has very low cardinality (only one unique value: 0) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "preconditions": [
+            "SELECT sms_sent_queued, COUNT(*) FROM campaign_spool_state GROUP BY sms_sent_queued;"
+          ],
+          "verification_queries": [
+            "SELECT sms_sent_queued, COUNT(*) FROM campaign_spool_state GROUP BY sms_sent_queued;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_016_campaign_spool_state",
+          "table": "campaign_spool_state",
+          "target_table": "campaign_spool_state",
+          "problem": "Investigate low cardinality in 'campaign_spool_state.store_size'",
+          "fix": "The column 'campaign_spool_state.store_size' has very low cardinality (only one unique value: 0) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "severity": "medium",
+          "confidence": 0.6,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- No direct SQL fix. Investigation is required.;"
+          ],
+          "explanation": "The column 'campaign_spool_state.store_size' has very low cardinality (only one unique value: 0) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "preconditions": [
+            "SELECT store_size, COUNT(*) FROM campaign_spool_state GROUP BY store_size;"
+          ],
+          "verification_queries": [
+            "SELECT store_size, COUNT(*) FROM campaign_spool_state GROUP BY store_size;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_017_campaign_spool_state",
+          "table": "campaign_spool_state",
+          "target_table": "campaign_spool_state",
+          "problem": "Investigate low cardinality in 'campaign_spool_state.dlr_sent'",
+          "fix": "The column 'campaign_spool_state.dlr_sent' has very low cardinality (only one unique value: 0) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "severity": "medium",
+          "confidence": 0.6,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- No direct SQL fix. Investigation is required.;"
+          ],
+          "explanation": "The column 'campaign_spool_state.dlr_sent' has very low cardinality (only one unique value: 0) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "preconditions": [
+            "SELECT dlr_sent, COUNT(*) FROM campaign_spool_state GROUP BY dlr_sent;"
+          ],
+          "verification_queries": [
+            "SELECT dlr_sent, COUNT(*) FROM campaign_spool_state GROUP BY dlr_sent;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_018_campaign_spool_state",
+          "table": "campaign_spool_state",
+          "target_table": "campaign_spool_state",
+          "problem": "Investigate low cardinality in 'campaign_spool_state.sms_inbound_msg_per_sec'",
+          "fix": "The column 'campaign_spool_state.sms_inbound_msg_per_sec' has very low cardinality (only one unique value) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "severity": "medium",
+          "confidence": 0.6,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- No direct SQL fix. Investigation is required.;"
+          ],
+          "explanation": "The column 'campaign_spool_state.sms_inbound_msg_per_sec' has very low cardinality (only one unique value) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "preconditions": [
+            "SELECT sms_inbound_msg_per_sec, COUNT(*) FROM campaign_spool_state GROUP BY sms_inbound_msg_per_sec;"
+          ],
+          "verification_queries": [
+            "SELECT sms_inbound_msg_per_sec, COUNT(*) FROM campaign_spool_state GROUP BY sms_inbound_msg_per_sec;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_019_campaign_spool_state",
+          "table": "campaign_spool_state",
+          "target_table": "campaign_spool_state",
+          "problem": "Investigate low cardinality in 'campaign_spool_state.sms_outbound_msg_per_sec'",
+          "fix": "The column 'campaign_spool_state.sms_outbound_msg_per_sec' has very low cardinality (only one unique value) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "severity": "medium",
+          "confidence": 0.6,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- No direct SQL fix. Investigation is required.;"
+          ],
+          "explanation": "The column 'campaign_spool_state.sms_outbound_msg_per_sec' has very low cardinality (only one unique value) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "preconditions": [
+            "SELECT sms_outbound_msg_per_sec, COUNT(*) FROM campaign_spool_state GROUP BY sms_outbound_msg_per_sec;"
+          ],
+          "verification_queries": [
+            "SELECT sms_outbound_msg_per_sec, COUNT(*) FROM campaign_spool_state GROUP BY sms_outbound_msg_per_sec;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_020_campaign_spool_state",
+          "table": "campaign_spool_state",
+          "target_table": "campaign_spool_state",
+          "problem": "Investigate low cardinality in 'campaign_spool_state.dlr_outbound_msg_per_sec'",
+          "fix": "The column 'campaign_spool_state.dlr_outbound_msg_per_sec' has very low cardinality (only one unique value) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "severity": "medium",
+          "confidence": 0.6,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- No direct SQL fix. Investigation is required.;"
+          ],
+          "explanation": "The column 'campaign_spool_state.dlr_outbound_msg_per_sec' has very low cardinality (only one unique value) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "preconditions": [
+            "SELECT dlr_outbound_msg_per_sec, COUNT(*) FROM campaign_spool_state GROUP BY dlr_outbound_msg_per_sec;"
+          ],
+          "verification_queries": [
+            "SELECT dlr_outbound_msg_per_sec, COUNT(*) FROM campaign_spool_state GROUP BY dlr_outbound_msg_per_sec;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_021_budget_history",
+          "table": "budget_history",
+          "target_table": "budget_history",
+          "problem": "Remediate negative 'amount' values in 'budget_history'",
+          "fix": "The column 'budget_history.amount' contains negative values, which is typically not expected for an amount. This can lead to incorrect calculations or business logic errors. The suggested action is to update any negative 'amount' values to 0.",
+          "severity": "medium",
+          "confidence": 0.6,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "UPDATE budget_history SET amount = 0 WHERE amount < 0;"
+          ],
+          "explanation": "The column 'budget_history.amount' contains negative values, which is typically not expected for an amount. This can lead to incorrect calculations or business logic errors. The suggested action is to update any negative 'amount' values to 0.",
+          "preconditions": [
+            "SELECT COUNT(*) FROM budget_history WHERE amount < 0;"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM budget_history WHERE amount < 0;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_022_campagne",
+          "table": "campagne",
+          "target_table": "campagne",
+          "problem": "Remediate negative 'cost' values in 'campagne'",
+          "fix": "The column 'campagne.cost' contains negative values, which is typically not expected for a cost. This can lead to incorrect calculations or business logic errors. The suggested action is to update any negative 'cost' values to 0.",
+          "severity": "medium",
+          "confidence": 0.6,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "UPDATE campagne SET cost = 0 WHERE cost < 0;"
+          ],
+          "explanation": "The column 'campagne.cost' contains negative values, which is typically not expected for a cost. This can lead to incorrect calculations or business logic errors. The suggested action is to update any negative 'cost' values to 0.",
+          "preconditions": [
+            "SELECT COUNT(*) FROM campagne WHERE cost < 0;"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM campagne WHERE cost < 0;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_023_campagne",
+          "table": "campagne",
+          "target_table": "campagne",
+          "problem": "Remediate negative 'budget_used' values in 'campagne'",
+          "fix": "The column 'campagne.budget_used' contains negative values, which is typically not expected for budget usage. This can lead to incorrect calculations or business logic errors. The suggested action is to update any negative 'budget_used' values to 0.",
+          "severity": "medium",
+          "confidence": 0.6,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "UPDATE campagne SET budget_used = 0 WHERE budget_used < 0;"
+          ],
+          "explanation": "The column 'campagne.budget_used' contains negative values, which is typically not expected for budget usage. This can lead to incorrect calculations or business logic errors. The suggested action is to update any negative 'budget_used' values to 0.",
+          "preconditions": [
+            "SELECT COUNT(*) FROM campagne WHERE budget_used < 0;"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM campagne WHERE budget_used < 0;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_024_campaign_schedule",
+          "table": "campaign_schedule",
+          "target_table": "campaign_schedule",
+          "problem": "Identify duplicate 'code' values in 'campaign_schedule'",
+          "fix": "The column 'campaign_schedule.code' is expected to contain unique values as per domain rules for code patterns. Duplicate entries can lead to data inconsistencies and incorrect processing. This card provides a query to identify such duplicates for further investigation and manual remediation.",
+          "severity": "critical",
+          "confidence": 0.7,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- Manual remediation required: Identify and resolve duplicate 'code' values.\n-- Example: DELETE FROM campaign_schedule WHERE id IN (SELECT id FROM (SELECT id, ROW_NUMBER() OVER(PARTITION BY code ORDER BY id) as rn FROM campaign_schedule) t WHERE t.rn > 1);"
+          ],
+          "explanation": "The column 'campaign_schedule.code' is expected to contain unique values as per domain rules for code patterns. Duplicate entries can lead to data inconsistencies and incorrect processing. This card provides a query to identify such duplicates for further investigation and manual remediation.",
+          "preconditions": [
+            "SELECT code, COUNT(*) FROM campaign_schedule GROUP BY code HAVING COUNT(*) > 1;"
+          ],
+          "verification_queries": [
+            "SELECT code, COUNT(*) FROM campaign_schedule GROUP BY code HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_025_prm_campaign_type",
+          "table": "prm_campaign_type",
+          "target_table": "prm_campaign_type",
+          "problem": "Identify duplicate 'code' values in 'prm_campaign_type'",
+          "fix": "The column 'prm_campaign_type.code' is expected to contain unique values as per domain rules for code patterns. Duplicate entries can lead to data inconsistencies and incorrect processing. This card provides a query to identify such duplicates for further investigation and manual remediation.",
+          "severity": "medium",
+          "confidence": 0.6,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- Manual remediation required: Identify and resolve duplicate 'code' values.\n-- Example: DELETE FROM prm_campaign_type WHERE code IN (SELECT code FROM (SELECT code, ROW_NUMBER() OVER(PARTITION BY code ORDER BY code) as rn FROM prm_campaign_type) t WHERE t.rn > 1);"
+          ],
+          "explanation": "The column 'prm_campaign_type.code' is expected to contain unique values as per domain rules for code patterns. Duplicate entries can lead to data inconsistencies and incorrect processing. This card provides a query to identify such duplicates for further investigation and manual remediation.",
+          "preconditions": [
+            "SELECT code, COUNT(*) FROM prm_campaign_type GROUP BY code HAVING COUNT(*) > 1;"
+          ],
+          "verification_queries": [
+            "SELECT code, COUNT(*) FROM prm_campaign_type GROUP BY code HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_026_prm_organization",
+          "table": "prm_organization",
+          "target_table": "prm_organization",
+          "problem": "Identify duplicate 'code' values in 'prm_organization'",
+          "fix": "The column 'prm_organization.code' is expected to contain unique values as per domain rules for code patterns. Duplicate entries can lead to data inconsistencies and incorrect processing. This card provides a query to identify such duplicates for further investigation and manual remediation.",
+          "severity": "medium",
+          "confidence": 0.6,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- Manual remediation required: Identify and resolve duplicate 'code' values. Consider which rows to keep or how to merge them.\n-- Example: DELETE FROM prm_organization WHERE id IN (SELECT id FROM (SELECT id, ROW_NUMBER() OVER(PARTITION BY code ORDER BY id) as rn FROM prm_organization) t WHERE t.rn > 1);"
+          ],
+          "explanation": "The column 'prm_organization.code' is expected to contain unique values as per domain rules for code patterns. Duplicate entries can lead to data inconsistencies and incorrect processing. This card provides a query to identify such duplicates for further investigation and manual remediation.",
+          "preconditions": [
+            "SELECT code, COUNT(*) FROM prm_organization GROUP BY code HAVING COUNT(*) > 1;"
+          ],
+          "verification_queries": [
+            "SELECT code, COUNT(*) FROM prm_organization GROUP BY code HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        }
+      ],
+      "cards": [
+        {
+          "title": "Remediate blank or whitespace-only 'code' in 'campaign_schedule'",
+          "target": "campaign_schedule",
+          "rationale": "The column 'campaign_schedule.code' is defined as NOT NULL, but contains rows where 'code' is an empty string or consists only of whitespace. This violates data integrity and can lead to unexpected application behavior. The suggested action is to update these invalid entries to a meaningful placeholder.",
+          "sql": "UPDATE campaign_schedule SET code = 'N/A' WHERE TRIM(code) = '';",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT COUNT(*) FROM campaign_schedule WHERE TRIM(code) = '';"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM campaign_schedule WHERE TRIM(code) = '';"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Remediate blank or whitespace-only 'name' in 'groupe'",
+          "target": "groupe",
+          "rationale": "The column 'groupe.name' is defined as NOT NULL, but contains rows where 'name' is an empty string or consists only of whitespace. This violates data integrity and can lead to unexpected application behavior. The suggested action is to update these invalid entries to a meaningful placeholder.",
+          "sql": "UPDATE groupe SET name = 'N/A' WHERE TRIM(name) = '';",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT COUNT(*) FROM groupe WHERE TRIM(name) = '';"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM groupe WHERE TRIM(name) = '';"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Remediate blank or whitespace-only 'name' in 'expediteur'",
+          "target": "expediteur",
+          "rationale": "The column 'expediteur.name' is defined as NOT NULL, but contains rows where 'name' is an empty string or consists only of whitespace. This violates data integrity and can lead to unexpected application behavior. The suggested action is to update these invalid entries to a meaningful placeholder.",
+          "sql": "UPDATE expediteur SET name = 'N/A' WHERE TRIM(name) = '';",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT COUNT(*) FROM expediteur WHERE TRIM(name) = '';"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM expediteur WHERE TRIM(name) = '';"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Remediate blank or whitespace-only 'msisdn' in 'contacts'",
+          "target": "contacts",
+          "rationale": "The column 'contacts.msisdn' is defined as NOT NULL, but contains rows where 'msisdn' is an empty string or consists only of whitespace. This violates data integrity and can lead to unexpected application behavior. The suggested action is to update these invalid entries to a meaningful placeholder.",
+          "sql": "UPDATE contacts SET msisdn = 'UNKNOWN' WHERE TRIM(msisdn) = '';",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT COUNT(*) FROM contacts WHERE TRIM(msisdn) = '';"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM contacts WHERE TRIM(msisdn) = '';"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Remediate blank or whitespace-only 'email' in 'users'",
+          "target": "users",
+          "rationale": "The column 'users.email' is defined as NOT NULL, but contains rows where 'email' is an empty string or consists only of whitespace. This violates data integrity and can lead to unexpected application behavior. The suggested action is to update these invalid entries to a meaningful placeholder.",
+          "sql": "UPDATE users SET email = 'unknown@example.com' WHERE TRIM(email) = '';",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT COUNT(*) FROM users WHERE TRIM(email) = '';"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM users WHERE TRIM(email) = '';"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Remediate negative 'quota' values in 'groupe'",
+          "target": "groupe",
+          "rationale": "The column 'groupe.quota' contains negative values, which is typically not expected for a quota amount. This can lead to incorrect calculations or business logic errors. The suggested action is to update any negative 'quota' values to 0.",
+          "sql": "UPDATE groupe SET quota = 0 WHERE quota < 0;",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT COUNT(*) FROM groupe WHERE quota < 0;"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM groupe WHERE quota < 0;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Remediate negative 'quota' values in 'organization'",
+          "target": "organization",
+          "rationale": "The column 'organization.quota' contains negative values, which is typically not expected for a quota amount. This can lead to incorrect calculations or business logic errors. The suggested action is to update any negative 'quota' values to 0.",
+          "sql": "UPDATE organization SET quota = 0 WHERE quota < 0;",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT COUNT(*) FROM organization WHERE quota < 0;"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM organization WHERE quota < 0;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Identify duplicate 'msisdn' values in 'contacts'",
+          "target": "contacts",
+          "rationale": "The column 'contacts.msisdn' is expected to contain unique values as per domain rules. Duplicate entries can lead to data inconsistencies and incorrect processing. This card provides a query to identify such duplicates for further investigation and manual remediation.",
+          "sql": "-- Manual remediation required: Identify and resolve duplicate 'msisdn' values.\n-- Example: DELETE FROM contacts WHERE id IN (SELECT id FROM (SELECT id, ROW_NUMBER() OVER(PARTITION BY msisdn ORDER BY id) as rn FROM contacts) t WHERE t.rn > 1);",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT msisdn, COUNT(*) FROM contacts GROUP BY msisdn HAVING COUNT(*) > 1;"
+          ],
+          "verification_queries": [
+            "SELECT msisdn, COUNT(*) FROM contacts GROUP BY msisdn HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Identify duplicate 'email' values in 'users'",
+          "target": "users",
+          "rationale": "The column 'users.email' is expected to contain unique values as per domain rules. Duplicate entries can lead to data inconsistencies and incorrect processing. This card provides a query to identify such duplicates for further investigation and manual remediation.",
+          "sql": "-- Manual remediation required: Identify and resolve duplicate 'email' values.\n-- Example: DELETE FROM users WHERE id IN (SELECT id FROM (SELECT id, ROW_NUMBER() OVER(PARTITION BY email ORDER BY id) as rn FROM users) t WHERE t.rn > 1);",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT email, COUNT(*) FROM users GROUP BY email HAVING COUNT(*) > 1;"
+          ],
+          "verification_queries": [
+            "SELECT email, COUNT(*) FROM users GROUP BY email HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate low cardinality in 'campaign_spool_state.send_sms_table_size'",
+          "target": "campaign_spool_state",
+          "rationale": "The column 'campaign_spool_state.send_sms_table_size' has very low cardinality (only one unique value: 0) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "sql": "-- No direct SQL fix. Investigation is required.",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT send_sms_table_size, COUNT(*) FROM campaign_spool_state GROUP BY send_sms_table_size;"
+          ],
+          "verification_queries": [
+            "SELECT send_sms_table_size, COUNT(*) FROM campaign_spool_state GROUP BY send_sms_table_size;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate low cardinality in 'campaign_spool_state.spool_size'",
+          "target": "campaign_spool_state",
+          "rationale": "The column 'campaign_spool_state.spool_size' has very low cardinality (only one unique value: 0) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "sql": "-- No direct SQL fix. Investigation is required.",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT spool_size, COUNT(*) FROM campaign_spool_state GROUP BY spool_size;"
+          ],
+          "verification_queries": [
+            "SELECT spool_size, COUNT(*) FROM campaign_spool_state GROUP BY spool_size;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate low cardinality in 'campaign_spool_state.is_full'",
+          "target": "campaign_spool_state",
+          "rationale": "The boolean column 'campaign_spool_state.is_full' has very low cardinality (only one unique value) across all 7 rows. This might indicate a lack of diverse states being recorded or a data population issue. Further investigation is recommended to understand the root cause.",
+          "sql": "-- No direct SQL fix. Investigation is required.",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT is_full, COUNT(*) FROM campaign_spool_state GROUP BY is_full;"
+          ],
+          "verification_queries": [
+            "SELECT is_full, COUNT(*) FROM campaign_spool_state GROUP BY is_full;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate low cardinality in 'campaign_spool_state.sms_received'",
+          "target": "campaign_spool_state",
+          "rationale": "The column 'campaign_spool_state.sms_received' has very low cardinality (only one unique value: 0) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "sql": "-- No direct SQL fix. Investigation is required.",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT sms_received, COUNT(*) FROM campaign_spool_state GROUP BY sms_received;"
+          ],
+          "verification_queries": [
+            "SELECT sms_received, COUNT(*) FROM campaign_spool_state GROUP BY sms_received;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate low cardinality in 'campaign_spool_state.sms_received_queued'",
+          "target": "campaign_spool_state",
+          "rationale": "The column 'campaign_spool_state.sms_received_queued' has very low cardinality (only one unique value: 0) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "sql": "-- No direct SQL fix. Investigation is required.",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT sms_received_queued, COUNT(*) FROM campaign_spool_state GROUP BY sms_received_queued;"
+          ],
+          "verification_queries": [
+            "SELECT sms_received_queued, COUNT(*) FROM campaign_spool_state GROUP BY sms_received_queued;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate low cardinality in 'campaign_spool_state.sms_sent_queued'",
+          "target": "campaign_spool_state",
+          "rationale": "The column 'campaign_spool_state.sms_sent_queued' has very low cardinality (only one unique value: 0) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "sql": "-- No direct SQL fix. Investigation is required.",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT sms_sent_queued, COUNT(*) FROM campaign_spool_state GROUP BY sms_sent_queued;"
+          ],
+          "verification_queries": [
+            "SELECT sms_sent_queued, COUNT(*) FROM campaign_spool_state GROUP BY sms_sent_queued;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate low cardinality in 'campaign_spool_state.store_size'",
+          "target": "campaign_spool_state",
+          "rationale": "The column 'campaign_spool_state.store_size' has very low cardinality (only one unique value: 0) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "sql": "-- No direct SQL fix. Investigation is required.",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT store_size, COUNT(*) FROM campaign_spool_state GROUP BY store_size;"
+          ],
+          "verification_queries": [
+            "SELECT store_size, COUNT(*) FROM campaign_spool_state GROUP BY store_size;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate low cardinality in 'campaign_spool_state.dlr_sent'",
+          "target": "campaign_spool_state",
+          "rationale": "The column 'campaign_spool_state.dlr_sent' has very low cardinality (only one unique value: 0) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "sql": "-- No direct SQL fix. Investigation is required.",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT dlr_sent, COUNT(*) FROM campaign_spool_state GROUP BY dlr_sent;"
+          ],
+          "verification_queries": [
+            "SELECT dlr_sent, COUNT(*) FROM campaign_spool_state GROUP BY dlr_sent;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate low cardinality in 'campaign_spool_state.sms_inbound_msg_per_sec'",
+          "target": "campaign_spool_state",
+          "rationale": "The column 'campaign_spool_state.sms_inbound_msg_per_sec' has very low cardinality (only one unique value) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "sql": "-- No direct SQL fix. Investigation is required.",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT sms_inbound_msg_per_sec, COUNT(*) FROM campaign_spool_state GROUP BY sms_inbound_msg_per_sec;"
+          ],
+          "verification_queries": [
+            "SELECT sms_inbound_msg_per_sec, COUNT(*) FROM campaign_spool_state GROUP BY sms_inbound_msg_per_sec;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate low cardinality in 'campaign_spool_state.sms_outbound_msg_per_sec'",
+          "target": "campaign_spool_state",
+          "rationale": "The column 'campaign_spool_state.sms_outbound_msg_per_sec' has very low cardinality (only one unique value) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "sql": "-- No direct SQL fix. Investigation is required.",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT sms_outbound_msg_per_sec, COUNT(*) FROM campaign_spool_state GROUP BY sms_outbound_msg_per_sec;"
+          ],
+          "verification_queries": [
+            "SELECT sms_outbound_msg_per_sec, COUNT(*) FROM campaign_spool_state GROUP BY sms_outbound_msg_per_sec;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate low cardinality in 'campaign_spool_state.dlr_outbound_msg_per_sec'",
+          "target": "campaign_spool_state",
+          "rationale": "The column 'campaign_spool_state.dlr_outbound_msg_per_sec' has very low cardinality (only one unique value) across all 7 rows. This might indicate a data population issue, a lack of activity, or that the column is not being used as expected. Further investigation is recommended to understand the root cause.",
+          "sql": "-- No direct SQL fix. Investigation is required.",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT dlr_outbound_msg_per_sec, COUNT(*) FROM campaign_spool_state GROUP BY dlr_outbound_msg_per_sec;"
+          ],
+          "verification_queries": [
+            "SELECT dlr_outbound_msg_per_sec, COUNT(*) FROM campaign_spool_state GROUP BY dlr_outbound_msg_per_sec;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Remediate negative 'amount' values in 'budget_history'",
+          "target": "budget_history",
+          "rationale": "The column 'budget_history.amount' contains negative values, which is typically not expected for an amount. This can lead to incorrect calculations or business logic errors. The suggested action is to update any negative 'amount' values to 0.",
+          "sql": "UPDATE budget_history SET amount = 0 WHERE amount < 0;",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT COUNT(*) FROM budget_history WHERE amount < 0;"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM budget_history WHERE amount < 0;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Remediate negative 'cost' values in 'campagne'",
+          "target": "campagne",
+          "rationale": "The column 'campagne.cost' contains negative values, which is typically not expected for a cost. This can lead to incorrect calculations or business logic errors. The suggested action is to update any negative 'cost' values to 0.",
+          "sql": "UPDATE campagne SET cost = 0 WHERE cost < 0;",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT COUNT(*) FROM campagne WHERE cost < 0;"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM campagne WHERE cost < 0;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Remediate negative 'budget_used' values in 'campagne'",
+          "target": "campagne",
+          "rationale": "The column 'campagne.budget_used' contains negative values, which is typically not expected for budget usage. This can lead to incorrect calculations or business logic errors. The suggested action is to update any negative 'budget_used' values to 0.",
+          "sql": "UPDATE campagne SET budget_used = 0 WHERE budget_used < 0;",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT COUNT(*) FROM campagne WHERE budget_used < 0;"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM campagne WHERE budget_used < 0;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Identify duplicate 'code' values in 'campaign_schedule'",
+          "target": "campaign_schedule",
+          "rationale": "The column 'campaign_schedule.code' is expected to contain unique values as per domain rules for code patterns. Duplicate entries can lead to data inconsistencies and incorrect processing. This card provides a query to identify such duplicates for further investigation and manual remediation.",
+          "sql": "-- Manual remediation required: Identify and resolve duplicate 'code' values.\n-- Example: DELETE FROM campaign_schedule WHERE id IN (SELECT id FROM (SELECT id, ROW_NUMBER() OVER(PARTITION BY code ORDER BY id) as rn FROM campaign_schedule) t WHERE t.rn > 1);",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT code, COUNT(*) FROM campaign_schedule GROUP BY code HAVING COUNT(*) > 1;"
+          ],
+          "verification_queries": [
+            "SELECT code, COUNT(*) FROM campaign_schedule GROUP BY code HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Identify duplicate 'code' values in 'prm_campaign_type'",
+          "target": "prm_campaign_type",
+          "rationale": "The column 'prm_campaign_type.code' is expected to contain unique values as per domain rules for code patterns. Duplicate entries can lead to data inconsistencies and incorrect processing. This card provides a query to identify such duplicates for further investigation and manual remediation.",
+          "sql": "-- Manual remediation required: Identify and resolve duplicate 'code' values.\n-- Example: DELETE FROM prm_campaign_type WHERE code IN (SELECT code FROM (SELECT code, ROW_NUMBER() OVER(PARTITION BY code ORDER BY code) as rn FROM prm_campaign_type) t WHERE t.rn > 1);",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT code, COUNT(*) FROM prm_campaign_type GROUP BY code HAVING COUNT(*) > 1;"
+          ],
+          "verification_queries": [
+            "SELECT code, COUNT(*) FROM prm_campaign_type GROUP BY code HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Identify duplicate 'code' values in 'prm_organization'",
+          "target": "prm_organization",
+          "rationale": "The column 'prm_organization.code' is expected to contain unique values as per domain rules for code patterns. Duplicate entries can lead to data inconsistencies and incorrect processing. This card provides a query to identify such duplicates for further investigation and manual remediation.",
+          "sql": "-- Manual remediation required: Identify and resolve duplicate 'code' values. Consider which rows to keep or how to merge them.\n-- Example: DELETE FROM prm_organization WHERE id IN (SELECT id FROM (SELECT id, ROW_NUMBER() OVER(PARTITION BY code ORDER BY id) as rn FROM prm_organization) t WHERE t.rn > 1);",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT code, COUNT(*) FROM prm_organization GROUP BY code HAVING COUNT(*) > 1;"
+          ],
+          "verification_queries": [
+            "SELECT code, COUNT(*) FROM prm_organization GROUP BY code HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": []
+        }
+      ]
+    }
+  }
+}

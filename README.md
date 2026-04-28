@@ -40,55 +40,52 @@ Request lifecycle summary:
 3. Celery executes analysis pipelines and writes results/status updates.
 4. Frontend polls status and renders results, chat, guidelines, and fix cards.
 
-## Multi-Agent Validation System Architecture (7 Agents)
+## Multi-Agent Validation System Architecture (6 Agents)
 
-The backend agent architecture includes seven distinct agent roles.
+The backend agent architecture includes six distinct agent roles.
 
-### Agent List (All 7)
+### Agent List (All 6)
 
-1. Database Guideline Generator Agent
-2. Schema Integrity Validator
-3. Column Validator
-4. Row-Level Logic Validator
-5. Cross-Row Validator
-6. Data Fix Planner
-7. Query Executor Agent
+1. Schema Integrity Validator
+2. Column Validator
+3. Row-Level Logic Validator
+4. Cross-Row Validator
+5. Data Fix Planner
+6. Query Executor Agent
 
 ### How They Work Together
 
 ```text
 Automated analysis pipeline (Celery):
 
-1) Database Guideline Generator Agent
- -> generates database-specific instructions per stage
-
-2) Schema Integrity Validator
+1) Schema Integrity Validator
  -> structure constraints, PK/FK, nullability, schema quality
 
-3) Column Validator
+2) Column Validator
  -> column-level quality, semantics, null/cardinality/distribution checks
 
-4) Row-Level Logic Validator
+3) Row-Level Logic Validator
  -> per-row business-rule and format violations
 
-5) Cross-Row Validator
+4) Cross-Row Validator
  -> temporal, relational, and multi-row anomaly checks
 
-6) Data Fix Planner
+5) Data Fix Planner
  -> synthesizes findings into human-reviewable SQL fix cards
 
 Human-in-the-loop execution path:
 
-7) Query Executor Agent
+6) Query Executor Agent
  -> executes approved fix-card SQL in one safe transaction
 ```
 
-### Pipeline Notes
+### Pipeline Notes & Hybrid Signal-Based Architecture
 
-- Guideline Generator runs before each validator/planner stage.
-- Validators return structured JSON reports and pass prior context forward.
-- Fix Planner generates proposed fixes; it does not directly execute SQL.
-- Query Executor Agent executes only user-approved queries from fix cards.
+The pipeline uses a **Hybrid Signal-Based Architecture** to minimize LLM token costs and ensure deterministic fixes:
+- **Signals over Reports:** Inter-agent communication is strictly limited to compact `ValidationSignal` objects containing math-based `metrics` and exact SQL `predicate` clauses.
+- **Minimal Context Sampling:** Tools run aggregations rather than returning raw rows. When semantic clarity is required, agents append a maximum of 3 `context_samples` to a signal.
+- **Execution Safety:** The Data Fix Planner inherently acts on upstream signal predicates, but strictly dry-runs them (`EXPLAIN` or read-only `COUNT`) to verify safety before proposing the final `UPDATE` or `DELETE` SQL.
+- Query Executor Agent executes only user-approved queries from fix cards in a standalone phase.
 
 ## Project Structure
 
@@ -218,7 +215,7 @@ python manage.py runserver 0.0.0.0:8000
 ```bash
 cd backend-django
 source venv/bin/activate
-celery -A config worker -l info
+celery -A config worker -l info --concurrency=1 --prefetch-multiplier=1
 ```
 
 Optional: start celery beat if you use scheduled jobs.

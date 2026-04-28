@@ -1,0 +1,1202 @@
+{
+  "pipeline_run_id": "4cbec51a-f242-436f-96bc-e10cca1c7835",
+  "database_id": "localhost_5432_easybulk",
+  "llm_model": "gemini-2.5-flash",
+  "run_timestamp": "2026-04-27T20:59:40.157983Z",
+  "summary": {
+    "confidence_score": 84,
+    "data_quality_score": 48,
+    "final_fix_count": 10
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "4cbec51a-f242-436f-96bc-e10cca1c7835",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T20:59:40.157983Z",
+      "agent": "Schema Integrity Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 15,
+        "items_passed": 0,
+        "items_flagged": 15,
+        "critical_issues": 2,
+        "high_issues": 13,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 0.0,
+        "overall_confidence": 0.8133,
+        "flagged_tables": [
+          "budget_history",
+          "campagne_aud",
+          "campagne_contacts",
+          "campaign_schedule",
+          "campaign_schedule_aud",
+          "campaign_spool_state",
+          "campaign_type_permission",
+          "contacts",
+          "expediteur",
+          "expediteur_aud",
+          "expediteur_groupe",
+          "expediteur_groupe_aud",
+          "groupe",
+          "membership"
+        ]
+      },
+      "metrics": {
+        "validator": "schema",
+        "findings_count": 15
+      },
+      "findings": [
+        {
+          "table": "campagne_contacts",
+          "column": null,
+          "entity": "campagne_contacts",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "campagne_contacts",
+            "column_name": "N/A",
+            "details": "Column 'campagne_id' is non-nullable, 'contact_id' is nullable.",
+            "primary_key_required": true
+          },
+          "remediation_hint": "Define a primary key for 'campagne_contacts'. Consider making 'contact_id' non-nullable if it's intended to be part of a composite primary key with 'campagne_id'.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "Define a primary key for 'campagne_contacts'. Consider making 'contact_id' non-nullable if it's intended to be part of a composite primary key with 'campagne_id'.",
+              "evidence": {
+                "table_name": "campagne_contacts",
+                "column_name": "N/A",
+                "details": "Column 'campagne_id' is non-nullable, 'contact_id' is nullable.",
+                "primary_key_required": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_contacts",
+          "column": "contact_id",
+          "entity": "campagne_contacts.contact_id",
+          "rule": "nullable_fk_candidate",
+          "severity": "critical",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "campagne_contacts",
+            "column_name": "contact_id",
+            "is_nullable": "YES",
+            "column_type": "bigint",
+            "foreign_key_validation": true
+          },
+          "remediation_hint": "Review the 'contact_id' column in 'campagne_contacts'. If it's intended as a foreign key or part of a linking key, consider making it non-nullable.",
+          "issues": [
+            {
+              "type": "nullable_fk_candidate",
+              "severity": "critical",
+              "description": "Review the 'contact_id' column in 'campagne_contacts'. If it's intended as a foreign key or part of a linking key, consider making it non-nullable.",
+              "evidence": {
+                "table_name": "campagne_contacts",
+                "column_name": "contact_id",
+                "is_nullable": "YES",
+                "column_type": "bigint",
+                "foreign_key_validation": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "budget_history",
+          "column": null,
+          "entity": "budget_history",
+          "rule": "missing_pk",
+          "severity": "high",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "budget_history",
+            "column_name": "id",
+            "is_nullable": "NO",
+            "primary_key_required": true
+          },
+          "remediation_hint": "Define the 'id' column as the primary key for the 'budget_history' table.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "high",
+              "description": "Define the 'id' column as the primary key for the 'budget_history' table.",
+              "evidence": {
+                "table_name": "budget_history",
+                "column_name": "id",
+                "is_nullable": "NO",
+                "primary_key_required": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_schedule",
+          "column": null,
+          "entity": "campaign_schedule",
+          "rule": "missing_pk",
+          "severity": "high",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "campaign_schedule",
+            "column_name": "id",
+            "is_nullable": "NO",
+            "primary_key_required": true
+          },
+          "remediation_hint": "Define the 'id' column as the primary key for the 'campaign_schedule' table.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "high",
+              "description": "Define the 'id' column as the primary key for the 'campaign_schedule' table.",
+              "evidence": {
+                "table_name": "campaign_schedule",
+                "column_name": "id",
+                "is_nullable": "NO",
+                "primary_key_required": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": null,
+          "entity": "campaign_spool_state",
+          "rule": "missing_pk",
+          "severity": "high",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "campaign_spool_state",
+            "column_name": "id",
+            "is_nullable": "NO",
+            "primary_key_required": true
+          },
+          "remediation_hint": "Define the 'id' column as the primary key for the 'campaign_spool_state' table.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "high",
+              "description": "Define the 'id' column as the primary key for the 'campaign_spool_state' table.",
+              "evidence": {
+                "table_name": "campaign_spool_state",
+                "column_name": "id",
+                "is_nullable": "NO",
+                "primary_key_required": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_schedule_aud",
+          "column": null,
+          "entity": "campaign_schedule_aud",
+          "rule": "missing_pk",
+          "severity": "high",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "campaign_schedule_aud",
+            "column_names": "id, rev",
+            "is_nullable": "NO",
+            "primary_key_required": true
+          },
+          "remediation_hint": "Define a composite primary key using the 'id' and 'rev' columns for the 'campaign_schedule_aud' table.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "high",
+              "description": "Define a composite primary key using the 'id' and 'rev' columns for the 'campaign_schedule_aud' table.",
+              "evidence": {
+                "table_name": "campaign_schedule_aud",
+                "column_names": "id, rev",
+                "is_nullable": "NO",
+                "primary_key_required": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_type_permission",
+          "column": null,
+          "entity": "campaign_type_permission",
+          "rule": "missing_pk",
+          "severity": "high",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "campaign_type_permission",
+            "column_name": "id",
+            "is_nullable": "NO",
+            "primary_key_required": true
+          },
+          "remediation_hint": "Define the 'id' column as the primary key for the 'campaign_type_permission' table.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "high",
+              "description": "Define the 'id' column as the primary key for the 'campaign_type_permission' table.",
+              "evidence": {
+                "table_name": "campaign_type_permission",
+                "column_name": "id",
+                "is_nullable": "NO",
+                "primary_key_required": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur_groupe_aud",
+          "column": null,
+          "entity": "expediteur_groupe_aud",
+          "rule": "missing_pk",
+          "severity": "high",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "expediteur_groupe_aud",
+            "column_names": "rev, groupe_id, expediteur_id",
+            "is_nullable": "NO",
+            "primary_key_required": true
+          },
+          "remediation_hint": "Define a composite primary key using the 'rev', 'groupe_id', and 'expediteur_id' columns for the 'expediteur_groupe_aud' table.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "high",
+              "description": "Define a composite primary key using the 'rev', 'groupe_id', and 'expediteur_id' columns for the 'expediteur_groupe_aud' table.",
+              "evidence": {
+                "table_name": "expediteur_groupe_aud",
+                "column_names": "rev, groupe_id, expediteur_id",
+                "is_nullable": "NO",
+                "primary_key_required": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": null,
+          "entity": "groupe",
+          "rule": "missing_pk",
+          "severity": "high",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "groupe",
+            "column_name": "id",
+            "is_nullable": "NO",
+            "primary_key_required": true
+          },
+          "remediation_hint": "Define the 'id' column as the primary key for the 'groupe' table.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "high",
+              "description": "Define the 'id' column as the primary key for the 'groupe' table.",
+              "evidence": {
+                "table_name": "groupe",
+                "column_name": "id",
+                "is_nullable": "NO",
+                "primary_key_required": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur",
+          "column": null,
+          "entity": "expediteur",
+          "rule": "missing_pk",
+          "severity": "high",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "expediteur",
+            "column_name": "id",
+            "is_nullable": "NO",
+            "primary_key_required": true
+          },
+          "remediation_hint": "Define the 'id' column as the primary key for the 'expediteur' table.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "high",
+              "description": "Define the 'id' column as the primary key for the 'expediteur' table.",
+              "evidence": {
+                "table_name": "expediteur",
+                "column_name": "id",
+                "is_nullable": "NO",
+                "primary_key_required": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_aud",
+          "column": null,
+          "entity": "campagne_aud",
+          "rule": "missing_pk",
+          "severity": "high",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "campagne_aud",
+            "column_names": "id, rev",
+            "is_nullable": "NO",
+            "primary_key_required": true
+          },
+          "remediation_hint": "Define a composite primary key using the 'id' and 'rev' columns for the 'campagne_aud' table.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "high",
+              "description": "Define a composite primary key using the 'id' and 'rev' columns for the 'campagne_aud' table.",
+              "evidence": {
+                "table_name": "campagne_aud",
+                "column_names": "id, rev",
+                "is_nullable": "NO",
+                "primary_key_required": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "membership",
+          "column": null,
+          "entity": "membership",
+          "rule": "missing_pk",
+          "severity": "high",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "membership",
+            "column_name": "id",
+            "is_nullable": "NO",
+            "primary_key_required": true
+          },
+          "remediation_hint": "Define the 'id' column as the primary key for the 'membership' table.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "high",
+              "description": "Define the 'id' column as the primary key for the 'membership' table.",
+              "evidence": {
+                "table_name": "membership",
+                "column_name": "id",
+                "is_nullable": "NO",
+                "primary_key_required": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur_groupe",
+          "column": null,
+          "entity": "expediteur_groupe",
+          "rule": "missing_pk",
+          "severity": "high",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "expediteur_groupe",
+            "column_names": "groupe_id, expediteur_id",
+            "is_nullable": "NO",
+            "primary_key_required": true
+          },
+          "remediation_hint": "Define a composite primary key using the 'groupe_id' and 'expediteur_id' columns for the 'expediteur_groupe' table.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "high",
+              "description": "Define a composite primary key using the 'groupe_id' and 'expediteur_id' columns for the 'expediteur_groupe' table.",
+              "evidence": {
+                "table_name": "expediteur_groupe",
+                "column_names": "groupe_id, expediteur_id",
+                "is_nullable": "NO",
+                "primary_key_required": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "contacts",
+          "column": null,
+          "entity": "contacts",
+          "rule": "missing_pk",
+          "severity": "high",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "contacts",
+            "column_name": "msisdn",
+            "is_nullable": "NO",
+            "primary_key_required": true
+          },
+          "remediation_hint": "Define the 'msisdn' column as the primary key or a unique constraint for the 'contacts' table.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "high",
+              "description": "Define the 'msisdn' column as the primary key or a unique constraint for the 'contacts' table.",
+              "evidence": {
+                "table_name": "contacts",
+                "column_name": "msisdn",
+                "is_nullable": "NO",
+                "primary_key_required": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur_aud",
+          "column": null,
+          "entity": "expediteur_aud",
+          "rule": "missing_pk",
+          "severity": "high",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "expediteur_aud",
+            "column_names": "id, rev",
+            "is_nullable": "NO",
+            "primary_key_required": true
+          },
+          "remediation_hint": "Define a composite primary key using the 'id' and 'rev' columns for the 'expediteur_aud' table.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "high",
+              "description": "Define a composite primary key using the 'id' and 'rev' columns for the 'expediteur_aud' table.",
+              "evidence": {
+                "table_name": "expediteur_aud",
+                "column_names": "id, rev",
+                "is_nullable": "NO",
+                "primary_key_required": true
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": []
+    },
+    "column_validator": {
+      "pipeline_run_id": "4cbec51a-f242-436f-96bc-e10cca1c7835",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T20:59:40.157983Z",
+      "agent": "Column Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 9,
+        "items_passed": 0,
+        "items_flagged": 9,
+        "critical_issues": 1,
+        "high_issues": 0,
+        "medium_issues": 6,
+        "low_issues": 2,
+        "overall_quality_score": 21.0,
+        "overall_confidence": 0.7222,
+        "flagged_tables": [
+          "budget_history",
+          "campagne",
+          "contacts",
+          "modele",
+          "prm_status",
+          "users"
+        ]
+      },
+      "metrics": {
+        "validator": "column",
+        "findings_count": 9
+      },
+      "findings": [
+        {
+          "table": "budget_history",
+          "column": null,
+          "entity": "budget_history",
+          "rule": "empty_table",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "budget_history",
+            "total_rows": 0
+          },
+          "remediation_hint": "Investigate why the 'budget_history' table is empty and ensure data ingestion processes are functioning correctly.",
+          "issues": [
+            {
+              "type": "empty_table",
+              "severity": "critical",
+              "description": "Investigate why the 'budget_history' table is empty and ensure data ingestion processes are functioning correctly.",
+              "evidence": {
+                "table_name": "budget_history",
+                "total_rows": 0
+              }
+            }
+          ]
+        },
+        {
+          "table": "modele",
+          "column": "membership_id",
+          "entity": "modele.membership_id",
+          "rule": "low_cardinality",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "modele",
+            "column_name": "membership_id",
+            "unique_values": 1,
+            "total_rows": 5,
+            "value": 6
+          },
+          "remediation_hint": "Investigate why all values in 'modele.membership_id' are identical. This may indicate a data population error or an unexpected data distribution.",
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "medium",
+              "description": "Investigate why all values in 'modele.membership_id' are identical. This may indicate a data population error or an unexpected data distribution.",
+              "evidence": {
+                "table_name": "modele",
+                "column_name": "membership_id",
+                "unique_values": 1,
+                "total_rows": 5,
+                "value": 6
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne",
+          "column": "expediteur_id",
+          "entity": "campagne.expediteur_id",
+          "rule": "low_cardinality",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "campagne",
+            "column_name": "expediteur_id",
+            "unique_values": 1,
+            "total_rows": 9,
+            "value": 3
+          },
+          "remediation_hint": "Investigate why all values in 'campagne.expediteur_id' are identical. This may indicate a data population error or an unexpected data distribution.",
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "medium",
+              "description": "Investigate why all values in 'campagne.expediteur_id' are identical. This may indicate a data population error or an unexpected data distribution.",
+              "evidence": {
+                "table_name": "campagne",
+                "column_name": "expediteur_id",
+                "unique_values": 1,
+                "total_rows": 9,
+                "value": 3
+              }
+            }
+          ]
+        },
+        {
+          "table": "contacts",
+          "column": "country_code",
+          "entity": "contacts.country_code",
+          "rule": "categorical_drift",
+          "severity": "medium",
+          "confidence": 0.7,
+          "evidence": {
+            "table_name": "contacts",
+            "column_name": "country_code",
+            "low_frequency_categories_count": 13,
+            "total_rows": 10043
+          },
+          "remediation_hint": "Review low-frequency categories in 'contacts.country_code' for potential typos or inconsistent data entry. Consider standardizing country codes.",
+          "issues": [
+            {
+              "type": "categorical_drift",
+              "severity": "medium",
+              "description": "Review low-frequency categories in 'contacts.country_code' for potential typos or inconsistent data entry. Consider standardizing country codes.",
+              "evidence": {
+                "table_name": "contacts",
+                "column_name": "country_code",
+                "low_frequency_categories_count": 13,
+                "total_rows": 10043
+              }
+            }
+          ]
+        },
+        {
+          "table": "modele",
+          "column": "campaign_type",
+          "entity": "modele.campaign_type",
+          "rule": "low_cardinality",
+          "severity": "medium",
+          "confidence": 0.7,
+          "evidence": {
+            "table_name": "modele",
+            "column_name": "campaign_type",
+            "unique_values": 2,
+            "total_rows": 5
+          },
+          "remediation_hint": "Evaluate if 'modele.campaign_type' is intended to have such low cardinality. If more distinct campaign types are expected, investigate data entry or source system issues.",
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "medium",
+              "description": "Evaluate if 'modele.campaign_type' is intended to have such low cardinality. If more distinct campaign types are expected, investigate data entry or source system issues.",
+              "evidence": {
+                "table_name": "modele",
+                "column_name": "campaign_type",
+                "unique_values": 2,
+                "total_rows": 5
+              }
+            }
+          ]
+        },
+        {
+          "table": "prm_status",
+          "column": "type",
+          "entity": "prm_status.type",
+          "rule": "low_cardinality",
+          "severity": "medium",
+          "confidence": 0.7,
+          "evidence": {
+            "table_name": "prm_status",
+            "column_name": "type",
+            "unique_values": 4,
+            "total_rows": 25
+          },
+          "remediation_hint": "Review the distinct values in 'prm_status.type'. If more variety is expected, check data sources for completeness.",
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "medium",
+              "description": "Review the distinct values in 'prm_status.type'. If more variety is expected, check data sources for completeness.",
+              "evidence": {
+                "table_name": "prm_status",
+                "column_name": "type",
+                "unique_values": 4,
+                "total_rows": 25
+              }
+            }
+          ]
+        },
+        {
+          "table": "prm_status",
+          "column": "value",
+          "entity": "prm_status.value",
+          "rule": "categorical_drift",
+          "severity": "medium",
+          "confidence": 0.6,
+          "evidence": {
+            "table_name": "prm_status",
+            "column_name": "value",
+            "low_frequency_categories_count": 23,
+            "total_rows": 25
+          },
+          "remediation_hint": "Examine the numerous low-frequency categories in 'prm_status.value' for potential typos, inconsistent naming, or a need for standardization.",
+          "issues": [
+            {
+              "type": "categorical_drift",
+              "severity": "medium",
+              "description": "Examine the numerous low-frequency categories in 'prm_status.value' for potential typos, inconsistent naming, or a need for standardization.",
+              "evidence": {
+                "table_name": "prm_status",
+                "column_name": "value",
+                "low_frequency_categories_count": 23,
+                "total_rows": 25
+              }
+            }
+          ]
+        },
+        {
+          "table": "users",
+          "column": "first_name",
+          "entity": "users.first_name",
+          "rule": "duplicate_values",
+          "severity": "low",
+          "confidence": 0.6,
+          "evidence": {
+            "table_name": "users",
+            "column_name": "first_name",
+            "unique_values": 6,
+            "total_rows": 7
+          },
+          "remediation_hint": "Review 'users.first_name' for duplicate entries. While not always an issue, it could indicate data entry inconsistencies if unique first names are expected.",
+          "issues": [
+            {
+              "type": "duplicate_values",
+              "severity": "low",
+              "description": "Review 'users.first_name' for duplicate entries. While not always an issue, it could indicate data entry inconsistencies if unique first names are expected.",
+              "evidence": {
+                "table_name": "users",
+                "column_name": "first_name",
+                "unique_values": 6,
+                "total_rows": 7
+              }
+            }
+          ]
+        },
+        {
+          "table": "users",
+          "column": "last_name",
+          "entity": "users.last_name",
+          "rule": "duplicate_values",
+          "severity": "low",
+          "confidence": 0.6,
+          "evidence": {
+            "table_name": "users",
+            "column_name": "last_name",
+            "unique_values": 3,
+            "total_rows": 7
+          },
+          "remediation_hint": "Review 'users.last_name' for duplicate entries. While not always an issue, it could indicate data entry inconsistencies if more unique last names are expected.",
+          "issues": [
+            {
+              "type": "duplicate_values",
+              "severity": "low",
+              "description": "Review 'users.last_name' for duplicate entries. While not always an issue, it could indicate data entry inconsistencies if more unique last names are expected.",
+              "evidence": {
+                "table_name": "users",
+                "column_name": "last_name",
+                "unique_values": 3,
+                "total_rows": 7
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": []
+    },
+    "row_level_validator": {
+      "pipeline_run_id": "4cbec51a-f242-436f-96bc-e10cca1c7835",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T20:59:40.157983Z",
+      "agent": "Row Level Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 1,
+        "items_passed": 0,
+        "items_flagged": 1,
+        "critical_issues": 0,
+        "high_issues": 1,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 85.0,
+        "overall_confidence": 0.9,
+        "flagged_tables": [
+          "prm_organization"
+        ]
+      },
+      "metrics": {
+        "validator": "row",
+        "findings_count": 1
+      },
+      "findings": [
+        {
+          "table": "prm_organization",
+          "column": "code",
+          "entity": "prm_organization.code",
+          "rule": "duplicate_unique_column",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "prm_organization",
+            "column_name": "code",
+            "details": "Duplicate values found for 'code' column, which is expected to be unique based on domain rules.",
+            "duplicate_codes": "TRACEABILITY, CAMPAIGN_TYPE_CLASSIC, CAMPAIGN_TYPE_TRANSACTIONAL, URL_NOTIFICATION, MSISDN"
+          },
+          "remediation_hint": "Investigate and remove duplicate entries in the 'code' column of the 'prm_organization' table to ensure data integrity.",
+          "issues": [
+            {
+              "type": "duplicate_unique_column",
+              "severity": "high",
+              "description": "Investigate and remove duplicate entries in the 'code' column of the 'prm_organization' table to ensure data integrity.",
+              "evidence": {
+                "table_name": "prm_organization",
+                "column_name": "code",
+                "details": "Duplicate values found for 'code' column, which is expected to be unique based on domain rules.",
+                "duplicate_codes": "TRACEABILITY, CAMPAIGN_TYPE_CLASSIC, CAMPAIGN_TYPE_TRANSACTIONAL, URL_NOTIFICATION, MSISDN"
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": []
+    },
+    "cross_row_validator": {
+      "pipeline_run_id": "4cbec51a-f242-436f-96bc-e10cca1c7835",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T20:59:40.157983Z",
+      "agent": "Cross Row Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 1,
+        "items_passed": 0,
+        "items_flagged": 1,
+        "critical_issues": 0,
+        "high_issues": 1,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 85.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": [
+          "prm_organization"
+        ]
+      },
+      "metrics": {
+        "validator": "crossrow",
+        "findings_count": 1
+      },
+      "findings": [
+        {
+          "table": "prm_organization",
+          "column": "code",
+          "entity": "prm_organization.code",
+          "rule": "duplicate_unique_field",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "prm_organization",
+            "column_name": "code",
+            "duplicate_values": "TRACEABILITY, CAMPAIGN_TYPE_CLASSIC, CAMPAIGN_TYPE_TRANSACTIONAL, URL_NOTIFICATION, MSISDN",
+            "count_of_duplicates": 3,
+            "unique_column_patterns": "['email', 'msisdn', 'reference', '*_code']"
+          },
+          "remediation_hint": "The 'code' column in the 'prm_organization' table contains duplicate values, violating the unique column pattern rule. Add a unique constraint to the 'code' column to enforce uniqueness.",
+          "issues": [
+            {
+              "type": "duplicate_unique_field",
+              "severity": "high",
+              "description": "The 'code' column in the 'prm_organization' table contains duplicate values, violating the unique column pattern rule. Add a unique constraint to the 'code' column to enforce uniqueness.",
+              "evidence": {
+                "table_name": "prm_organization",
+                "column_name": "code",
+                "duplicate_values": "TRACEABILITY, CAMPAIGN_TYPE_CLASSIC, CAMPAIGN_TYPE_TRANSACTIONAL, URL_NOTIFICATION, MSISDN",
+                "count_of_duplicates": 3,
+                "unique_column_patterns": "['email', 'msisdn', 'reference', '*_code']"
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": []
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "4cbec51a-f242-436f-96bc-e10cca1c7835",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T20:59:40.157983Z",
+      "agent": "Data Fix Planner",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 11,
+        "items_passed": 1,
+        "items_flagged": 10,
+        "critical_issues": 1,
+        "high_issues": 1,
+        "medium_issues": 6,
+        "low_issues": 2,
+        "overall_quality_score": 50.0,
+        "overall_confidence": 0.77,
+        "flagged_tables": [
+          "budget_history",
+          "campagne",
+          "contacts",
+          "modele",
+          "prm_organization",
+          "prm_status",
+          "users"
+        ]
+      },
+      "metrics": {
+        "total_issues_received": 11,
+        "fixes_generated": 10
+      },
+      "findings": [
+        {
+          "id": "fix_001_budget_history",
+          "table": "budget_history",
+          "target_table": "budget_history",
+          "problem": "Investigate Empty Table: budget_history",
+          "fix": "The 'budget_history' table is currently empty, with 0 rows. This indicates a potential issue with data ingestion or an unexpected state for a table that should track budget modifications.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT count(*) FROM budget_history;"
+          ],
+          "explanation": "The 'budget_history' table is currently empty, with 0 rows. This indicates a potential issue with data ingestion or an unexpected state for a table that should track budget modifications.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_002_prm_organization",
+          "table": "prm_organization",
+          "target_table": "prm_organization",
+          "problem": "Enforce Uniqueness and Remove Duplicates in prm_organization.code",
+          "fix": "The 'code' column in the 'prm_organization' table contains duplicate values (e.g., 'TRACEABILITY', 'CAMPAIGN_TYPE_CLASSIC', 'CAMPAIGN_TYPE_TRANSACTIONAL', 'URL_NOTIFICATION', 'MSISDN'), with each appearing 3 times. This violates the domain rule requiring unique values for columns matching the '*_code' pattern. Duplicates can lead to data integrity issues and unexpected application behavior. The suggested action is to remove duplicate entries and then add a unique constraint to the 'code' column.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT code, COUNT(*) FROM prm_organization GROUP BY code HAVING COUNT(*) > 1;"
+          ],
+          "explanation": "The 'code' column in the 'prm_organization' table contains duplicate values (e.g., 'TRACEABILITY', 'CAMPAIGN_TYPE_CLASSIC', 'CAMPAIGN_TYPE_TRANSACTIONAL', 'URL_NOTIFICATION', 'MSISDN'), with each appearing 3 times. This violates the domain rule requiring unique values for columns matching the '*_code' pattern. Duplicates can lead to data integrity issues and unexpected application behavior. The suggested action is to remove duplicate entries and then add a unique constraint to the 'code' column.",
+          "preconditions": [
+            "Ensure that the application logic can handle the removal of duplicate 'code' entries. Back up the 'prm_organization' table before proceeding with any deletion."
+          ],
+          "verification_queries": [
+            "SELECT code, COUNT(*) FROM prm_organization GROUP BY code HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "/* Rollback for this operation would typically involve restoring the table from a point-in-time backup, as direct reversal of duplicate deletion can be complex and data-dependent. */"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_003_modele",
+          "table": "modele",
+          "target_table": "modele",
+          "problem": "Investigate Low Cardinality in modele.membership_id",
+          "fix": "The 'membership_id' column in the 'modele' table has a very low cardinality, with only 1 unique value (6) across 5 total rows. This might indicate a data population error where all records are incorrectly associated with a single membership, or it could be an unexpected data distribution.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT membership_id, COUNT(*) FROM modele GROUP BY membership_id;"
+          ],
+          "explanation": "The 'membership_id' column in the 'modele' table has a very low cardinality, with only 1 unique value (6) across 5 total rows. This might indicate a data population error where all records are incorrectly associated with a single membership, or it could be an unexpected data distribution.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_004_campagne",
+          "table": "campagne",
+          "target_table": "campagne",
+          "problem": "Investigate Low Cardinality in campagne.expediteur_id",
+          "fix": "The 'expediteur_id' column in the 'campagne' table exhibits low cardinality, with only 1 unique value (3) across 9 total rows. This could suggest a data population error or an unexpected data distribution where all campaigns are linked to a single expediteur.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT expediteur_id, COUNT(*) FROM campagne GROUP BY expediteur_id;"
+          ],
+          "explanation": "The 'expediteur_id' column in the 'campagne' table exhibits low cardinality, with only 1 unique value (3) across 9 total rows. This could suggest a data population error or an unexpected data distribution where all campaigns are linked to a single expediteur.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_005_contacts",
+          "table": "contacts",
+          "target_table": "contacts",
+          "problem": "Review and Standardize contacts.country_code Low-Frequency Categories",
+          "fix": "The 'country_code' column in the 'contacts' table shows categorical drift, with 13 low-frequency categories out of 10043 total rows. This often indicates potential typos, inconsistent data entry, or a need for standardization of country codes. For example, values like '61', '86', '39', '49', '91', '27', '971', '212', '44', '81', '55', '34', '33' appear with very low counts compared to '216'.",
+          "severity": "medium",
+          "confidence": 0.7,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT country_code, COUNT(*) FROM contacts GROUP BY country_code ORDER BY COUNT(*) ASC;"
+          ],
+          "explanation": "The 'country_code' column in the 'contacts' table shows categorical drift, with 13 low-frequency categories out of 10043 total rows. This often indicates potential typos, inconsistent data entry, or a need for standardization of country codes. For example, values like '61', '86', '39', '49', '91', '27', '971', '212', '44', '81', '55', '34', '33' appear with very low counts compared to '216'.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_006_modele",
+          "table": "modele",
+          "target_table": "modele",
+          "problem": "Evaluate Cardinality of modele.campaign_type",
+          "fix": "The 'campaign_type' column in the 'modele' table has low cardinality, with only 2 unique values ('TRANSACTIONAL', 'CLASSIC') across 5 total rows. If more distinct campaign types are expected, this could indicate data entry inconsistencies or issues with the source system.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT campaign_type, COUNT(*) FROM modele GROUP BY campaign_type;"
+          ],
+          "explanation": "The 'campaign_type' column in the 'modele' table has low cardinality, with only 2 unique values ('TRANSACTIONAL', 'CLASSIC') across 5 total rows. If more distinct campaign types are expected, this could indicate data entry inconsistencies or issues with the source system.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_007_prm_status",
+          "table": "prm_status",
+          "target_table": "prm_status",
+          "problem": "Review Cardinality of prm_status.type",
+          "fix": "The 'type' column in the 'prm_status' table has low cardinality, with only 4 unique values ('BUDGET_STATUS', 'GROUPE_STATUS', 'USER_STATUS', 'CAMPAGNE_STATUS') across 25 total rows. If a wider variety of status types is anticipated, this finding suggests a need to check data sources for completeness or review the data model.",
+          "severity": "medium",
+          "confidence": 0.7,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT type, COUNT(*) FROM prm_status GROUP BY type;"
+          ],
+          "explanation": "The 'type' column in the 'prm_status' table has low cardinality, with only 4 unique values ('BUDGET_STATUS', 'GROUPE_STATUS', 'USER_STATUS', 'CAMPAGNE_STATUS') across 25 total rows. If a wider variety of status types is anticipated, this finding suggests a need to check data sources for completeness or review the data model.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_008_prm_status",
+          "table": "prm_status",
+          "target_table": "prm_status",
+          "problem": "Examine and Standardize prm_status.value Low-Frequency Categories",
+          "fix": "The 'value' column in the 'prm_status' table exhibits significant categorical drift, with 23 low-frequency categories out of 25 total rows. This high number of unique values with low counts strongly suggests potential typos, inconsistent naming conventions, or a lack of standardization in status values.",
+          "severity": "medium",
+          "confidence": 0.7,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT value, COUNT(*) FROM prm_status GROUP BY value ORDER BY COUNT(*) ASC;"
+          ],
+          "explanation": "The 'value' column in the 'prm_status' table exhibits significant categorical drift, with 23 low-frequency categories out of 25 total rows. This high number of unique values with low counts strongly suggests potential typos, inconsistent naming conventions, or a lack of standardization in status values.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_009_users",
+          "table": "users",
+          "target_table": "users",
+          "problem": "Review Duplicate Entries in users.first_name",
+          "fix": "The 'first_name' column in the 'users' table contains duplicate entries, with 'ranim' appearing 2 times out of 7 total rows. While not always a critical issue, this could indicate data entry inconsistencies if unique first names are generally expected or if these duplicates represent distinct users with the same name.",
+          "severity": "low",
+          "confidence": 0.6,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT first_name, COUNT(*) FROM users GROUP BY first_name HAVING COUNT() > 1;"
+          ],
+          "explanation": "The 'first_name' column in the 'users' table contains duplicate entries, with 'ranim' appearing 2 times out of 7 total rows. While not always a critical issue, this could indicate data entry inconsistencies if unique first names are generally expected or if these duplicates represent distinct users with the same name.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_010_users",
+          "table": "users",
+          "target_table": "users",
+          "problem": "Review Duplicate Entries in users.last_name",
+          "fix": "The 'last_name' column in the 'users' table contains duplicate entries, with 'ebs' appearing 5 times out of 7 total rows. Similar to first names, this could point to data entry inconsistencies or a lack of unique identification if more distinct last names are expected for individual users.",
+          "severity": "low",
+          "confidence": 0.6,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT last_name, COUNT(*) FROM users GROUP BY last_name HAVING COUNT() > 1;"
+          ],
+          "explanation": "The 'last_name' column in the 'users' table contains duplicate entries, with 'ebs' appearing 5 times out of 7 total rows. Similar to first names, this could point to data entry inconsistencies or a lack of unique identification if more distinct last names are expected for individual users.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        }
+      ],
+      "cards": [
+        {
+          "title": "Investigate Empty Table: budget_history",
+          "target": "budget_history",
+          "rationale": "The 'budget_history' table is currently empty, with 0 rows. This indicates a potential issue with data ingestion or an unexpected state for a table that should track budget modifications.",
+          "sql": "SELECT count(*) FROM budget_history;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": []
+        },
+        {
+          "title": "Enforce Uniqueness and Remove Duplicates in prm_organization.code",
+          "target": "prm_organization",
+          "rationale": "The 'code' column in the 'prm_organization' table contains duplicate values (e.g., 'TRACEABILITY', 'CAMPAIGN_TYPE_CLASSIC', 'CAMPAIGN_TYPE_TRANSACTIONAL', 'URL_NOTIFICATION', 'MSISDN'), with each appearing 3 times. This violates the domain rule requiring unique values for columns matching the '*_code' pattern. Duplicates can lead to data integrity issues and unexpected application behavior. The suggested action is to remove duplicate entries and then add a unique constraint to the 'code' column.",
+          "sql": "SELECT code, COUNT(*) FROM prm_organization GROUP BY code HAVING COUNT(*) > 1;",
+          "explain_summary": null,
+          "preconditions": [
+            "Ensure that the application logic can handle the removal of duplicate 'code' entries. Back up the 'prm_organization' table before proceeding with any deletion."
+          ],
+          "verification_queries": [
+            "SELECT code, COUNT(*) FROM prm_organization GROUP BY code HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "/* Rollback for this operation would typically involve restoring the table from a point-in-time backup, as direct reversal of duplicate deletion can be complex and data-dependent. */"
+          ]
+        },
+        {
+          "title": "Investigate Low Cardinality in modele.membership_id",
+          "target": "modele",
+          "rationale": "The 'membership_id' column in the 'modele' table has a very low cardinality, with only 1 unique value (6) across 5 total rows. This might indicate a data population error where all records are incorrectly associated with a single membership, or it could be an unexpected data distribution.",
+          "sql": "SELECT membership_id, COUNT(*) FROM modele GROUP BY membership_id;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate Low Cardinality in campagne.expediteur_id",
+          "target": "campagne",
+          "rationale": "The 'expediteur_id' column in the 'campagne' table exhibits low cardinality, with only 1 unique value (3) across 9 total rows. This could suggest a data population error or an unexpected data distribution where all campaigns are linked to a single expediteur.",
+          "sql": "SELECT expediteur_id, COUNT(*) FROM campagne GROUP BY expediteur_id;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": []
+        },
+        {
+          "title": "Review and Standardize contacts.country_code Low-Frequency Categories",
+          "target": "contacts",
+          "rationale": "The 'country_code' column in the 'contacts' table shows categorical drift, with 13 low-frequency categories out of 10043 total rows. This often indicates potential typos, inconsistent data entry, or a need for standardization of country codes. For example, values like '61', '86', '39', '49', '91', '27', '971', '212', '44', '81', '55', '34', '33' appear with very low counts compared to '216'.",
+          "sql": "SELECT country_code, COUNT(*) FROM contacts GROUP BY country_code ORDER BY COUNT(*) ASC;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": []
+        },
+        {
+          "title": "Evaluate Cardinality of modele.campaign_type",
+          "target": "modele",
+          "rationale": "The 'campaign_type' column in the 'modele' table has low cardinality, with only 2 unique values ('TRANSACTIONAL', 'CLASSIC') across 5 total rows. If more distinct campaign types are expected, this could indicate data entry inconsistencies or issues with the source system.",
+          "sql": "SELECT campaign_type, COUNT(*) FROM modele GROUP BY campaign_type;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": []
+        },
+        {
+          "title": "Review Cardinality of prm_status.type",
+          "target": "prm_status",
+          "rationale": "The 'type' column in the 'prm_status' table has low cardinality, with only 4 unique values ('BUDGET_STATUS', 'GROUPE_STATUS', 'USER_STATUS', 'CAMPAGNE_STATUS') across 25 total rows. If a wider variety of status types is anticipated, this finding suggests a need to check data sources for completeness or review the data model.",
+          "sql": "SELECT type, COUNT(*) FROM prm_status GROUP BY type;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": []
+        },
+        {
+          "title": "Examine and Standardize prm_status.value Low-Frequency Categories",
+          "target": "prm_status",
+          "rationale": "The 'value' column in the 'prm_status' table exhibits significant categorical drift, with 23 low-frequency categories out of 25 total rows. This high number of unique values with low counts strongly suggests potential typos, inconsistent naming conventions, or a lack of standardization in status values.",
+          "sql": "SELECT value, COUNT(*) FROM prm_status GROUP BY value ORDER BY COUNT(*) ASC;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": []
+        },
+        {
+          "title": "Review Duplicate Entries in users.first_name",
+          "target": "users",
+          "rationale": "The 'first_name' column in the 'users' table contains duplicate entries, with 'ranim' appearing 2 times out of 7 total rows. While not always a critical issue, this could indicate data entry inconsistencies if unique first names are generally expected or if these duplicates represent distinct users with the same name.",
+          "sql": "SELECT first_name, COUNT(*) FROM users GROUP BY first_name HAVING COUNT() > 1;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": []
+        },
+        {
+          "title": "Review Duplicate Entries in users.last_name",
+          "target": "users",
+          "rationale": "The 'last_name' column in the 'users' table contains duplicate entries, with 'ebs' appearing 5 times out of 7 total rows. Similar to first names, this could point to data entry inconsistencies or a lack of unique identification if more distinct last names are expected for individual users.",
+          "sql": "SELECT last_name, COUNT(*) FROM users GROUP BY last_name HAVING COUNT() > 1;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": []
+        }
+      ]
+    }
+  }
+}

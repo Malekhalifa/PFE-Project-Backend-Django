@@ -1,0 +1,1770 @@
+{
+  "pipeline_run_id": "0e8e4a76-f538-4aa8-87a6-d124e398d200",
+  "database_id": "localhost_5432_easybulk",
+  "llm_model": "gemini-2.5-flash",
+  "run_timestamp": "2026-04-27T22:56:41.842673Z",
+  "summary": {
+    "confidence_score": 87,
+    "data_quality_score": 35,
+    "final_fix_count": 25
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "0e8e4a76-f538-4aa8-87a6-d124e398d200",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T22:56:41.842673Z",
+      "agent": "Schema Integrity Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 33,
+        "items_passed": 24,
+        "items_flagged": 9,
+        "critical_issues": 5,
+        "high_issues": 0,
+        "medium_issues": 4,
+        "low_issues": 0,
+        "overall_quality_score": 0.0,
+        "overall_confidence": 0.8556,
+        "flagged_tables": [
+          "budget_history",
+          "campagne_contacts",
+          "campagne_tags",
+          "contacts",
+          "expediteur_groupe",
+          "groupe",
+          "prm_campaign_type",
+          "send_sms"
+        ]
+      },
+      "metrics": {
+        "validator": "schema",
+        "findings_count": 9
+      },
+      "findings": [
+        {
+          "table": "campagne_contacts",
+          "column": null,
+          "entity": "campagne_contacts",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 0.9,
+          "evidence": {
+            "table": "campagne_contacts",
+            "primary_key_required": true,
+            "columns_inspected": "campagne_id, contact_id"
+          },
+          "remediation_hint": "Add a primary key to the table 'campagne_contacts'.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "Add a primary key to the table 'campagne_contacts'.",
+              "evidence": {
+                "table": "campagne_contacts",
+                "primary_key_required": true,
+                "columns_inspected": "campagne_id, contact_id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur_groupe",
+          "column": null,
+          "entity": "expediteur_groupe",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 0.9,
+          "evidence": {
+            "table": "expediteur_groupe",
+            "primary_key_required": true,
+            "columns_inspected": "groupe_id, expediteur_id"
+          },
+          "remediation_hint": "Add a primary key to the table 'expediteur_groupe'.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "Add a primary key to the table 'expediteur_groupe'.",
+              "evidence": {
+                "table": "expediteur_groupe",
+                "primary_key_required": true,
+                "columns_inspected": "groupe_id, expediteur_id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "contacts",
+          "column": null,
+          "entity": "contacts",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 0.9,
+          "evidence": {
+            "table": "contacts",
+            "primary_key_required": true,
+            "columns_inspected": "msisdn, country_code"
+          },
+          "remediation_hint": "Add a primary key to the table 'contacts'.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "Add a primary key to the table 'contacts'.",
+              "evidence": {
+                "table": "contacts",
+                "primary_key_required": true,
+                "columns_inspected": "msisdn, country_code"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_tags",
+          "column": null,
+          "entity": "campagne_tags",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 0.9,
+          "evidence": {
+            "table": "campagne_tags",
+            "primary_key_required": true,
+            "columns_inspected": "campagne_id, tag_name"
+          },
+          "remediation_hint": "Add a primary key to the table 'campagne_tags'.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "Add a primary key to the table 'campagne_tags'.",
+              "evidence": {
+                "table": "campagne_tags",
+                "primary_key_required": true,
+                "columns_inspected": "campagne_id, tag_name"
+              }
+            }
+          ]
+        },
+        {
+          "table": "prm_campaign_type",
+          "column": null,
+          "entity": "prm_campaign_type",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 0.9,
+          "evidence": {
+            "table": "prm_campaign_type",
+            "primary_key_required": true,
+            "columns_inspected": "code, value"
+          },
+          "remediation_hint": "Add a primary key to the table 'prm_campaign_type'.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "Add a primary key to the table 'prm_campaign_type'.",
+              "evidence": {
+                "table": "prm_campaign_type",
+                "primary_key_required": true,
+                "columns_inspected": "code, value"
+              }
+            }
+          ]
+        },
+        {
+          "table": "budget_history",
+          "column": "groupe_id",
+          "entity": "budget_history.groupe_id",
+          "rule": "nullable_fk_style_column",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table": "budget_history",
+            "column": "groupe_id",
+            "is_nullable": true,
+            "data_type": "integer"
+          },
+          "remediation_hint": "Consider making column 'budget_history.groupe_id' non-nullable if it's intended to be a foreign key.",
+          "issues": [
+            {
+              "type": "nullable_fk_style_column",
+              "severity": "medium",
+              "description": "Consider making column 'budget_history.groupe_id' non-nullable if it's intended to be a foreign key.",
+              "evidence": {
+                "table": "budget_history",
+                "column": "groupe_id",
+                "is_nullable": true,
+                "data_type": "integer"
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "entity": "groupe.admin_id",
+          "rule": "nullable_fk_style_column",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table": "groupe",
+            "column": "admin_id",
+            "is_nullable": true,
+            "data_type": "integer"
+          },
+          "remediation_hint": "Consider making column 'groupe.admin_id' non-nullable if it's intended to be a foreign key.",
+          "issues": [
+            {
+              "type": "nullable_fk_style_column",
+              "severity": "medium",
+              "description": "Consider making column 'groupe.admin_id' non-nullable if it's intended to be a foreign key.",
+              "evidence": {
+                "table": "groupe",
+                "column": "admin_id",
+                "is_nullable": true,
+                "data_type": "integer"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_contacts",
+          "column": "contact_id",
+          "entity": "campagne_contacts.contact_id",
+          "rule": "nullable_fk_style_column",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table": "campagne_contacts",
+            "column": "contact_id",
+            "is_nullable": true,
+            "data_type": "bigint"
+          },
+          "remediation_hint": "Consider making column 'campagne_contacts.contact_id' non-nullable if it's intended to be a foreign key.",
+          "issues": [
+            {
+              "type": "nullable_fk_style_column",
+              "severity": "medium",
+              "description": "Consider making column 'campagne_contacts.contact_id' non-nullable if it's intended to be a foreign key.",
+              "evidence": {
+                "table": "campagne_contacts",
+                "column": "contact_id",
+                "is_nullable": true,
+                "data_type": "bigint"
+              }
+            }
+          ]
+        },
+        {
+          "table": "send_sms",
+          "column": "smsc_id",
+          "entity": "send_sms.smsc_id",
+          "rule": "nullable_fk_style_column",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table": "send_sms",
+            "column": "smsc_id",
+            "is_nullable": true,
+            "data_type": "character varying"
+          },
+          "remediation_hint": "Consider making column 'send_sms.smsc_id' non-nullable if it's intended to be a foreign key.",
+          "issues": [
+            {
+              "type": "nullable_fk_style_column",
+              "severity": "medium",
+              "description": "Consider making column 'send_sms.smsc_id' non-nullable if it's intended to be a foreign key.",
+              "evidence": {
+                "table": "send_sms",
+                "column": "smsc_id",
+                "is_nullable": true,
+                "data_type": "character varying"
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": []
+    },
+    "column_validator": {
+      "pipeline_run_id": "0e8e4a76-f538-4aa8-87a6-d124e398d200",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T22:56:41.842673Z",
+      "agent": "Column Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 33,
+        "items_passed": 18,
+        "items_flagged": 15,
+        "critical_issues": 0,
+        "high_issues": 5,
+        "medium_issues": 6,
+        "low_issues": 4,
+        "overall_quality_score": 0.0,
+        "overall_confidence": 0.7733,
+        "flagged_tables": [
+          "contacts",
+          "groupe",
+          "sent_sms",
+          "smsc_routing_rule",
+          "tags",
+          "user_contact",
+          "user_mission",
+          "users"
+        ]
+      },
+      "metrics": {
+        "validator": "column",
+        "findings_count": 15
+      },
+      "findings": [
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "entity": "groupe.admin_id",
+          "rule": "high_null_ratio",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "table": "groupe",
+            "column": "admin_id",
+            "null_rows": 8,
+            "total_rows": 9,
+            "null_ratio": 0.8889,
+            "max_null_pct_allowed": 0.05
+          },
+          "remediation_hint": "Investigate the high null ratio in column 'groupe.admin_id'. Consider if these nulls are expected or indicate missing data.",
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "high",
+              "description": "Investigate the high null ratio in column 'groupe.admin_id'. Consider if these nulls are expected or indicate missing data.",
+              "evidence": {
+                "table": "groupe",
+                "column": "admin_id",
+                "null_rows": 8,
+                "total_rows": 9,
+                "null_ratio": 0.8889,
+                "max_null_pct_allowed": 0.05
+              }
+            }
+          ]
+        },
+        {
+          "table": "sent_sms",
+          "column": null,
+          "entity": "sent_sms",
+          "rule": "high_null_ratio",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "table": "sent_sms",
+            "columns_with_high_nulls": [
+              "udhdata",
+              "service",
+              "id",
+              "mclass",
+              "mwi",
+              "compress",
+              "deferred",
+              "dlr_url",
+              "pid",
+              "alt_dcs",
+              "rpi",
+              "boxc_id",
+              "binfo",
+              "sms_type",
+              "coding",
+              "validity",
+              "charset",
+              "meta_data"
+            ],
+            "total_rows": 12,
+            "max_null_pct_allowed": 0.05
+          },
+          "remediation_hint": "Investigate the high null ratio in multiple columns of table 'sent_sms'. Consider if these nulls are expected or indicate missing data.",
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "high",
+              "description": "Investigate the high null ratio in multiple columns of table 'sent_sms'. Consider if these nulls are expected or indicate missing data.",
+              "evidence": {
+                "table": "sent_sms",
+                "columns_with_high_nulls": [
+                  "udhdata",
+                  "service",
+                  "id",
+                  "mclass",
+                  "mwi",
+                  "compress",
+                  "deferred",
+                  "dlr_url",
+                  "pid",
+                  "alt_dcs",
+                  "rpi",
+                  "boxc_id",
+                  "binfo",
+                  "sms_type",
+                  "coding",
+                  "validity",
+                  "charset",
+                  "meta_data"
+                ],
+                "total_rows": 12,
+                "max_null_pct_allowed": 0.05
+              }
+            }
+          ]
+        },
+        {
+          "table": "smsc_routing_rule",
+          "column": "expediteur_id",
+          "entity": "smsc_routing_rule.expediteur_id",
+          "rule": "high_null_ratio",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "table": "smsc_routing_rule",
+            "column": "expediteur_id",
+            "null_rows": 6,
+            "total_rows": 7,
+            "null_ratio": 0.8571,
+            "max_null_pct_allowed": 0.05
+          },
+          "remediation_hint": "Investigate the high null ratio in column 'smsc_routing_rule.expediteur_id'. Consider if these nulls are expected or indicate missing data.",
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "high",
+              "description": "Investigate the high null ratio in column 'smsc_routing_rule.expediteur_id'. Consider if these nulls are expected or indicate missing data.",
+              "evidence": {
+                "table": "smsc_routing_rule",
+                "column": "expediteur_id",
+                "null_rows": 6,
+                "total_rows": 7,
+                "null_ratio": 0.8571,
+                "max_null_pct_allowed": 0.05
+              }
+            }
+          ]
+        },
+        {
+          "table": "smsc_routing_rule",
+          "column": "groupe_id",
+          "entity": "smsc_routing_rule.groupe_id",
+          "rule": "high_null_ratio",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "table": "smsc_routing_rule",
+            "column": "groupe_id",
+            "null_rows": 6,
+            "total_rows": 7,
+            "null_ratio": 0.8571,
+            "max_null_pct_allowed": 0.05
+          },
+          "remediation_hint": "Investigate the high null ratio in column 'smsc_routing_rule.groupe_id'. Consider if these nulls are expected or indicate missing data.",
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "high",
+              "description": "Investigate the high null ratio in column 'smsc_routing_rule.groupe_id'. Consider if these nulls are expected or indicate missing data.",
+              "evidence": {
+                "table": "smsc_routing_rule",
+                "column": "groupe_id",
+                "null_rows": 6,
+                "total_rows": 7,
+                "null_ratio": 0.8571,
+                "max_null_pct_allowed": 0.05
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_mission",
+          "column": "groupe_id",
+          "entity": "user_mission.groupe_id",
+          "rule": "high_null_ratio",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "table": "user_mission",
+            "column": "groupe_id",
+            "null_rows": 4,
+            "total_rows": 8,
+            "null_ratio": 0.5,
+            "max_null_pct_allowed": 0.05
+          },
+          "remediation_hint": "Investigate the high null ratio in column 'user_mission.groupe_id'. Consider if these nulls are expected or indicate missing data.",
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "high",
+              "description": "Investigate the high null ratio in column 'user_mission.groupe_id'. Consider if these nulls are expected or indicate missing data.",
+              "evidence": {
+                "table": "user_mission",
+                "column": "groupe_id",
+                "null_rows": 4,
+                "total_rows": 8,
+                "null_ratio": 0.5,
+                "max_null_pct_allowed": 0.05
+              }
+            }
+          ]
+        },
+        {
+          "table": "contacts",
+          "column": "country_code",
+          "entity": "contacts.country_code",
+          "rule": "low_cardinality",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table": "contacts",
+            "column": "country_code",
+            "unique_values": 14,
+            "total_rows": 10043,
+            "cardinality_ratio": 0.0013
+          },
+          "remediation_hint": "Investigate the low cardinality of column 'contacts.country_code'. This might indicate a limited set of values or potential data entry issues.",
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "medium",
+              "description": "Investigate the low cardinality of column 'contacts.country_code'. This might indicate a limited set of values or potential data entry issues.",
+              "evidence": {
+                "table": "contacts",
+                "column": "country_code",
+                "unique_values": 14,
+                "total_rows": 10043,
+                "cardinality_ratio": 0.0013
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact",
+          "column": "attribute1",
+          "entity": "user_contact.attribute1",
+          "rule": "low_cardinality",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table": "user_contact",
+            "column": "attribute1",
+            "unique_values": 37,
+            "total_rows": 20042,
+            "cardinality_ratio": 0.0018
+          },
+          "remediation_hint": "Investigate the low cardinality of column 'user_contact.attribute1'. This might indicate a limited set of values or potential data entry issues.",
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "medium",
+              "description": "Investigate the low cardinality of column 'user_contact.attribute1'. This might indicate a limited set of values or potential data entry issues.",
+              "evidence": {
+                "table": "user_contact",
+                "column": "attribute1",
+                "unique_values": 37,
+                "total_rows": 20042,
+                "cardinality_ratio": 0.0018
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact",
+          "column": "attribute2",
+          "entity": "user_contact.attribute2",
+          "rule": "low_cardinality",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table": "user_contact",
+            "column": "attribute2",
+            "unique_values": 36,
+            "total_rows": 20042,
+            "cardinality_ratio": 0.0017
+          },
+          "remediation_hint": "Investigate the low cardinality of column 'user_contact.attribute2'. This might indicate a limited set of values or potential data entry issues.",
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "medium",
+              "description": "Investigate the low cardinality of column 'user_contact.attribute2'. This might indicate a limited set of values or potential data entry issues.",
+              "evidence": {
+                "table": "user_contact",
+                "column": "attribute2",
+                "unique_values": 36,
+                "total_rows": 20042,
+                "cardinality_ratio": 0.0017
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact",
+          "column": "attribute3",
+          "entity": "user_contact.attribute3",
+          "rule": "low_cardinality",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table": "user_contact",
+            "column": "attribute3",
+            "unique_values": 34,
+            "total_rows": 20042,
+            "cardinality_ratio": 0.0016
+          },
+          "remediation_hint": "Investigate the low cardinality of column 'user_contact.attribute3'. This might indicate a limited set of values or potential data entry issues.",
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "medium",
+              "description": "Investigate the low cardinality of column 'user_contact.attribute3'. This might indicate a limited set of values or potential data entry issues.",
+              "evidence": {
+                "table": "user_contact",
+                "column": "attribute3",
+                "unique_values": 34,
+                "total_rows": 20042,
+                "cardinality_ratio": 0.0016
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact",
+          "column": "membership_id",
+          "entity": "user_contact.membership_id",
+          "rule": "low_cardinality",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table": "user_contact",
+            "column": "membership_id",
+            "unique_values": 6,
+            "total_rows": 20042,
+            "cardinality_ratio": 0.0002
+          },
+          "remediation_hint": "Investigate the low cardinality of column 'user_contact.membership_id'. This might indicate a limited set of values or potential data entry issues.",
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "medium",
+              "description": "Investigate the low cardinality of column 'user_contact.membership_id'. This might indicate a limited set of values or potential data entry issues.",
+              "evidence": {
+                "table": "user_contact",
+                "column": "membership_id",
+                "unique_values": 6,
+                "total_rows": 20042,
+                "cardinality_ratio": 0.0002
+              }
+            }
+          ]
+        },
+        {
+          "table": "sent_sms",
+          "column": "foreign_id",
+          "entity": "sent_sms.foreign_id",
+          "rule": "duplicate_values",
+          "severity": "medium",
+          "confidence": 0.7,
+          "evidence": {
+            "table": "sent_sms",
+            "column": "foreign_id",
+            "unique_values": 10,
+            "total_rows": 12,
+            "duplicate_count": 2
+          },
+          "remediation_hint": "Investigate duplicate values in column 'sent_sms.foreign_id'. This column is expected to have unique values based on naming convention.",
+          "issues": [
+            {
+              "type": "duplicate_values",
+              "severity": "medium",
+              "description": "Investigate duplicate values in column 'sent_sms.foreign_id'. This column is expected to have unique values based on naming convention.",
+              "evidence": {
+                "table": "sent_sms",
+                "column": "foreign_id",
+                "unique_values": 10,
+                "total_rows": 12,
+                "duplicate_count": 2
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": "status_id",
+          "entity": "groupe.status_id",
+          "rule": "low_cardinality",
+          "severity": "low",
+          "confidence": 0.6,
+          "evidence": {
+            "table": "groupe",
+            "column": "status_id",
+            "unique_values": 1,
+            "total_rows": 9,
+            "cardinality_ratio": 0.1111
+          },
+          "remediation_hint": "Consider if the low cardinality of column 'groupe.status_id' is expected. If not, investigate for potential data issues.",
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "low",
+              "description": "Consider if the low cardinality of column 'groupe.status_id' is expected. If not, investigate for potential data issues.",
+              "evidence": {
+                "table": "groupe",
+                "column": "status_id",
+                "unique_values": 1,
+                "total_rows": 9,
+                "cardinality_ratio": 0.1111
+              }
+            }
+          ]
+        },
+        {
+          "table": "tags",
+          "column": "label",
+          "entity": "tags.label",
+          "rule": "low_cardinality",
+          "severity": "low",
+          "confidence": 0.6,
+          "evidence": {
+            "table": "tags",
+            "column": "label",
+            "unique_values": 6,
+            "total_rows": 7,
+            "cardinality_ratio": 0.8571
+          },
+          "remediation_hint": "Consider if the low cardinality of column 'tags.label' is expected. If not, investigate for potential data issues.",
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "low",
+              "description": "Consider if the low cardinality of column 'tags.label' is expected. If not, investigate for potential data issues.",
+              "evidence": {
+                "table": "tags",
+                "column": "label",
+                "unique_values": 6,
+                "total_rows": 7,
+                "cardinality_ratio": 0.8571
+              }
+            }
+          ]
+        },
+        {
+          "table": "tags",
+          "column": "membership_id",
+          "entity": "tags.membership_id",
+          "rule": "low_cardinality",
+          "severity": "low",
+          "confidence": 0.6,
+          "evidence": {
+            "table": "tags",
+            "column": "membership_id",
+            "unique_values": 6,
+            "total_rows": 7,
+            "cardinality_ratio": 0.8571
+          },
+          "remediation_hint": "Consider if the low cardinality of column 'tags.membership_id' is expected. If not, investigate for potential data issues.",
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "low",
+              "description": "Consider if the low cardinality of column 'tags.membership_id' is expected. If not, investigate for potential data issues.",
+              "evidence": {
+                "table": "tags",
+                "column": "membership_id",
+                "unique_values": 6,
+                "total_rows": 7,
+                "cardinality_ratio": 0.8571
+              }
+            }
+          ]
+        },
+        {
+          "table": "users",
+          "column": "first_name",
+          "entity": "users.first_name",
+          "rule": "low_cardinality",
+          "severity": "low",
+          "confidence": 0.6,
+          "evidence": {
+            "table": "users",
+            "column": "first_name",
+            "unique_values": 6,
+            "total_rows": 7,
+            "cardinality_ratio": 0.8571
+          },
+          "remediation_hint": "Consider if the low cardinality of column 'users.first_name' is expected. If not, investigate for potential data issues.",
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "low",
+              "description": "Consider if the low cardinality of column 'users.first_name' is expected. If not, investigate for potential data issues.",
+              "evidence": {
+                "table": "users",
+                "column": "first_name",
+                "unique_values": 6,
+                "total_rows": 7,
+                "cardinality_ratio": 0.8571
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": []
+    },
+    "row_level_validator": {
+      "pipeline_run_id": "0e8e4a76-f538-4aa8-87a6-d124e398d200",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T22:56:41.842673Z",
+      "agent": "Row Level Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 33,
+        "items_passed": 33,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "row",
+        "findings_count": 0
+      },
+      "findings": [],
+      "prior_reports": []
+    },
+    "cross_row_validator": {
+      "pipeline_run_id": "0e8e4a76-f538-4aa8-87a6-d124e398d200",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T22:56:41.842673Z",
+      "agent": "Cross Row Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 33,
+        "items_passed": 32,
+        "items_flagged": 1,
+        "critical_issues": 1,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 75.0,
+        "overall_confidence": 0.9,
+        "flagged_tables": [
+          "smsc_route"
+        ]
+      },
+      "metrics": {
+        "validator": "crossrow",
+        "findings_count": 1
+      },
+      "findings": [
+        {
+          "table": "smsc_route",
+          "column": "route_smsc_id",
+          "entity": "smsc_route.route_smsc_id",
+          "rule": "orphaned_foreign_key",
+          "severity": "critical",
+          "confidence": 0.9,
+          "evidence": {
+            "source_table": "smsc_route",
+            "source_column": "route_smsc_id",
+            "target_table": "smsc",
+            "target_column": "id",
+            "orphaned_record_count": 6
+          },
+          "remediation_hint": "Investigate why there are 6 records in `smsc_route` where `route_smsc_id` does not have a corresponding entry in `smsc.id`. Consider updating or deleting these orphaned records to maintain referential integrity.",
+          "issues": [
+            {
+              "type": "orphaned_foreign_key",
+              "severity": "critical",
+              "description": "Investigate why there are 6 records in `smsc_route` where `route_smsc_id` does not have a corresponding entry in `smsc.id`. Consider updating or deleting these orphaned records to maintain referential integrity.",
+              "evidence": {
+                "source_table": "smsc_route",
+                "source_column": "route_smsc_id",
+                "target_table": "smsc",
+                "target_column": "id",
+                "orphaned_record_count": 6
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": []
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "0e8e4a76-f538-4aa8-87a6-d124e398d200",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T22:56:41.842673Z",
+      "agent": "Data Fix Planner",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 25,
+        "items_passed": 0,
+        "items_flagged": 25,
+        "critical_issues": 6,
+        "high_issues": 6,
+        "medium_issues": 9,
+        "low_issues": 4,
+        "overall_quality_score": 0.0,
+        "overall_confidence": 0.812,
+        "flagged_tables": [
+          "budget_history",
+          "campagne_contacts",
+          "campagne_tags",
+          "contacts",
+          "expediteur_groupe",
+          "groupe",
+          "prm_campaign_type",
+          "send_sms",
+          "sent_sms",
+          "smsc_route",
+          "smsc_routing_rule",
+          "tags",
+          "user_contact",
+          "user_mission",
+          "users"
+        ]
+      },
+      "metrics": {
+        "total_issues_received": 25,
+        "fixes_generated": 25
+      },
+      "findings": [
+        {
+          "id": "fix_001_campagne_contacts",
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "Add Primary Key to campagne_contacts",
+          "fix": "The table 'campagne_contacts' is missing a primary key, which is crucial for data integrity and efficient data retrieval. The combination of 'campagne_id' and 'contact_id' has been validated as unique and can serve as a composite primary key.",
+          "severity": "critical",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE campagne_contacts ADD PRIMARY KEY (campagne_id, contact_id);"
+          ],
+          "explanation": "The table 'campagne_contacts' is missing a primary key, which is crucial for data integrity and efficient data retrieval. The combination of 'campagne_id' and 'contact_id' has been validated as unique and can serve as a composite primary key.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'campagne_contacts'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_contacts DROP CONSTRAINT campagne_contacts_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_002_expediteur_groupe",
+          "table": "expediteur_groupe",
+          "target_table": "expediteur_groupe",
+          "problem": "Add Primary Key to expediteur_groupe",
+          "fix": "The table 'expediteur_groupe' is missing a primary key, which is crucial for data integrity and efficient data retrieval. The combination of 'groupe_id' and 'expediteur_id' has been validated as unique and can serve as a composite primary key.",
+          "severity": "critical",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE expediteur_groupe ADD PRIMARY KEY (groupe_id, expediteur_id);"
+          ],
+          "explanation": "The table 'expediteur_groupe' is missing a primary key, which is crucial for data integrity and efficient data retrieval. The combination of 'groupe_id' and 'expediteur_id' has been validated as unique and can serve as a composite primary key.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'expediteur_groupe'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE expediteur_groupe DROP CONSTRAINT expediteur_groupe_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_003_contacts",
+          "table": "contacts",
+          "target_table": "contacts",
+          "problem": "Add Primary Key to contacts",
+          "fix": "The table 'contacts' is missing a primary key, which is crucial for data integrity and efficient data retrieval. The combination of 'msisdn' and 'country_code' has been validated as unique and can serve as a composite primary key.",
+          "severity": "critical",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE contacts ADD PRIMARY KEY (msisdn, country_code);"
+          ],
+          "explanation": "The table 'contacts' is missing a primary key, which is crucial for data integrity and efficient data retrieval. The combination of 'msisdn' and 'country_code' has been validated as unique and can serve as a composite primary key.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'contacts'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE contacts DROP CONSTRAINT contacts_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_004_campagne_tags",
+          "table": "campagne_tags",
+          "target_table": "campagne_tags",
+          "problem": "Add Primary Key to campagne_tags",
+          "fix": "The table 'campagne_tags' is missing a primary key, which is crucial for data integrity and efficient data retrieval. The combination of 'campagne_id' and 'tag_name' has been validated as unique and can serve as a composite primary key.",
+          "severity": "critical",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE campagne_tags ADD PRIMARY KEY (campagne_id, tag_name);"
+          ],
+          "explanation": "The table 'campagne_tags' is missing a primary key, which is crucial for data integrity and efficient data retrieval. The combination of 'campagne_id' and 'tag_name' has been validated as unique and can serve as a composite primary key.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'campagne_tags'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_tags DROP CONSTRAINT campagne_tags_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_005_prm_campaign_type",
+          "table": "prm_campaign_type",
+          "target_table": "prm_campaign_type",
+          "problem": "Add Primary Key to prm_campaign_type",
+          "fix": "The table 'prm_campaign_type' is missing a primary key, which is crucial for data integrity and efficient data retrieval. The combination of 'code' and 'value' has been validated as unique and can serve as a composite primary key.",
+          "severity": "critical",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE prm_campaign_type ADD PRIMARY KEY (code, value);"
+          ],
+          "explanation": "The table 'prm_campaign_type' is missing a primary key, which is crucial for data integrity and efficient data retrieval. The combination of 'code' and 'value' has been validated as unique and can serve as a composite primary key.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'prm_campaign_type'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE prm_campaign_type DROP CONSTRAINT prm_campaign_type_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_006_smsc_route_route_smsc_id",
+          "table": "smsc_route",
+          "target_table": "smsc_route",
+          "problem": "Investigate Orphaned Foreign Keys in smsc_route.route_smsc_id",
+          "fix": "There are 6 records in 'smsc_route' where 'route_smsc_id' does not have a corresponding entry in 'smsc.id'. This indicates a referential integrity issue. These orphaned records should be investigated and either updated to a valid 'smsc.id' or deleted.",
+          "severity": "critical",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT sr.id, sr.route_smsc_id FROM smsc_route sr LEFT JOIN smsc s ON sr.route_smsc_id = s.id WHERE s.id IS NULL;"
+          ],
+          "explanation": "There are 6 records in 'smsc_route' where 'route_smsc_id' does not have a corresponding entry in 'smsc.id'. This indicates a referential integrity issue. These orphaned records should be investigated and either updated to a valid 'smsc.id' or deleted.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM smsc_route sr LEFT JOIN smsc s ON sr.route_smsc_id = s.id WHERE s.id IS NULL;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_007_groupe_admin_id",
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "Investigate High Null Ratio in groupe.admin_id",
+          "fix": "The column 'groupe.admin_id' has a high null ratio (88.89%), with 8 out of 9 rows being null. This significantly exceeds the allowed maximum null percentage of 5%. This may indicate missing data or an unexpected schema design.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS total_rows, COUNT(admin_id) AS non_null_rows, (COUNT(*) - COUNT(admin_id)) AS null_rows, ROUND(((COUNT(*) - COUNT(admin_id))::numeric / COUNT(*)) * 100, 2) AS null_percentage FROM groupe;"
+          ],
+          "explanation": "The column 'groupe.admin_id' has a high null ratio (88.89%), with 8 out of 9 rows being null. This significantly exceeds the allowed maximum null percentage of 5%. This may indicate missing data or an unexpected schema design.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT ROUND(((COUNT(*) - COUNT(admin_id))::numeric / COUNT(*)) * 100, 2) FROM groupe;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_008_sent_sms",
+          "table": "sent_sms",
+          "target_table": "sent_sms",
+          "problem": "Investigate High Null Ratio in sent_sms Columns",
+          "fix": "Multiple columns in the 'sent_sms' table ('udhdata', 'service', 'id', 'mclass', 'mwi', 'compress', 'deferred', 'dlr_url', 'pid', 'alt_dcs', 'rpi', 'boxc_id', 'binfo', 'sms_type', 'coding', 'validity', 'charset', 'meta_data') exhibit a high null ratio, exceeding the allowed maximum of 5%. This suggests potential data completeness issues or that these columns might not be consistently populated.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS total_rows, COUNT(udhdata) AS udhdata_non_null, COUNT(service) AS service_non_null, COUNT(id) AS id_non_null, COUNT(mclass) AS mclass_non_null, COUNT(mwi) AS mwi_non_null, COUNT(compress) AS compress_non_null, COUNT(deferred) AS deferred_non_null, COUNT(dlr_url) AS dlr_url_non_null, COUNT(pid) AS pid_non_null, COUNT(alt_dcs) AS alt_dcs_non_null, COUNT(rpi) AS rpi_non_null, COUNT(boxc_id) AS boxc_id_non_null, COUNT(binfo) AS binfo_non_null, COUNT(sms_type) AS sms_type_non_null, COUNT(coding) AS coding_non_null, COUNT(validity) AS validity_non_null, COUNT(charset) AS charset_non_null, COUNT(meta_data) AS meta_data_non_null FROM sent_sms;"
+          ],
+          "explanation": "Multiple columns in the 'sent_sms' table ('udhdata', 'service', 'id', 'mclass', 'mwi', 'compress', 'deferred', 'dlr_url', 'pid', 'alt_dcs', 'rpi', 'boxc_id', 'binfo', 'sms_type', 'coding', 'validity', 'charset', 'meta_data') exhibit a high null ratio, exceeding the allowed maximum of 5%. This suggests potential data completeness issues or that these columns might not be consistently populated.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT ROUND(((COUNT(*) - COUNT(udhdata))::numeric / COUNT(*)) * 100, 2) AS udhdata_null_pct, ROUND(((COUNT(*) - COUNT(service))::numeric / COUNT(*)) * 100, 2) AS service_null_pct, ROUND(((COUNT(*) - COUNT(id))::numeric / COUNT(*)) * 100, 2) AS id_null_pct, ROUND(((COUNT(*) - COUNT(mclass))::numeric / COUNT(*)) * 100, 2) AS mclass_null_pct, ROUND(((COUNT(*) - COUNT(mwi))::numeric / COUNT(*)) * 100, 2) AS mwi_null_pct, ROUND(((COUNT(*) - COUNT(compress))::numeric / COUNT(*)) * 100, 2) AS compress_null_pct, ROUND(((COUNT(*) - COUNT(deferred))::numeric / COUNT(*)) * 100, 2) AS deferred_null_pct, ROUND(((COUNT(*) - COUNT(dlr_url))::numeric / COUNT(*)) * 100, 2) AS dlr_url_null_pct, ROUND(((COUNT(*) - COUNT(pid))::numeric / COUNT(*)) * 100, 2) AS pid_null_pct, ROUND(((COUNT(*) - COUNT(alt_dcs))::numeric / COUNT(*)) * 100, 2) AS alt_dcs_null_pct, ROUND(((COUNT(*) - COUNT(rpi))::numeric / COUNT(*)) * 100, 2) AS rpi_null_pct, ROUND(((COUNT(*) - COUNT(boxc_id))::numeric / COUNT(*)) * 100, 2) AS boxc_id_null_pct, ROUND(((COUNT(*) - COUNT(binfo))::numeric / COUNT(*)) * 100, 2) AS binfo_null_pct, ROUND(((COUNT(*) - COUNT(sms_type))::numeric / COUNT(*)) * 100, 2) AS sms_type_null_pct, ROUND(((COUNT(*) - COUNT(coding))::numeric / COUNT(*)) * 100, 2) AS coding_null_pct, ROUND(((COUNT(*) - COUNT(validity))::numeric / COUNT(*)) * 100, 2) AS validity_null_pct, ROUND(((COUNT(*) - COUNT(charset))::numeric / COUNT(*)) * 100, 2) AS charset_null_pct, ROUND(((COUNT(*) - COUNT(meta_data))::numeric / COUNT(*)) * 100, 2) AS meta_data_null_pct FROM sent_sms;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_009_smsc_routing_rule_expediteur_id",
+          "table": "smsc_routing_rule",
+          "target_table": "smsc_routing_rule",
+          "problem": "Investigate High Null Ratio in smsc_routing_rule.expediteur_id",
+          "fix": "The column 'smsc_routing_rule.expediteur_id' has a high null ratio (85.71%), with 6 out of 7 rows being null. This significantly exceeds the allowed maximum null percentage of 5%. This may indicate missing data or an unexpected schema design.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS total_rows, COUNT(expediteur_id) AS non_null_rows, (COUNT(*) - COUNT(expediteur_id)) AS null_rows, ROUND(((COUNT(*) - COUNT(expediteur_id))::numeric / COUNT(*)) * 100, 2) AS null_percentage FROM smsc_routing_rule;"
+          ],
+          "explanation": "The column 'smsc_routing_rule.expediteur_id' has a high null ratio (85.71%), with 6 out of 7 rows being null. This significantly exceeds the allowed maximum null percentage of 5%. This may indicate missing data or an unexpected schema design.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT ROUND(((COUNT(*) - COUNT(expediteur_id))::numeric / COUNT(*)) * 100, 2) FROM smsc_routing_rule;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_010_smsc_routing_rule_groupe_id",
+          "table": "smsc_routing_rule",
+          "target_table": "smsc_routing_rule",
+          "problem": "Investigate High Null Ratio in smsc_routing_rule.groupe_id",
+          "fix": "The column 'smsc_routing_rule.groupe_id' has a high null ratio (85.71%), with 6 out of 7 rows being null. This significantly exceeds the allowed maximum null percentage of 5%. This may indicate missing data or an unexpected schema design.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS total_rows, COUNT(groupe_id) AS non_null_rows, (COUNT(*) - COUNT(groupe_id)) AS null_rows, ROUND(((COUNT(*) - COUNT(groupe_id))::numeric / COUNT(*)) * 100, 2) AS null_percentage FROM smsc_routing_rule;"
+          ],
+          "explanation": "The column 'smsc_routing_rule.groupe_id' has a high null ratio (85.71%), with 6 out of 7 rows being null. This significantly exceeds the allowed maximum null percentage of 5%. This may indicate missing data or an unexpected schema design.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT ROUND(((COUNT(*) - COUNT(groupe_id))::numeric / COUNT(*)) * 100, 2) FROM smsc_routing_rule;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_011_user_mission_groupe_id",
+          "table": "user_mission",
+          "target_table": "user_mission",
+          "problem": "Investigate High Null Ratio in user_mission.groupe_id",
+          "fix": "The column 'user_mission.groupe_id' has a high null ratio (50%), with 4 out of 8 rows being null. This significantly exceeds the allowed maximum null percentage of 5%. This may indicate missing data or an unexpected schema design.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS total_rows, COUNT(groupe_id) AS non_null_rows, (COUNT(*) - COUNT(groupe_id)) AS null_rows, ROUND(((COUNT(*) - COUNT(groupe_id))::numeric / COUNT(*)) * 100, 2) AS null_percentage FROM user_mission;"
+          ],
+          "explanation": "The column 'user_mission.groupe_id' has a high null ratio (50%), with 4 out of 8 rows being null. This significantly exceeds the allowed maximum null percentage of 5%. This may indicate missing data or an unexpected schema design.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT ROUND(((COUNT(*) - COUNT(groupe_id))::numeric / COUNT(*)) * 100, 2) FROM user_mission;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_012_budget_history_groupe_id",
+          "table": "budget_history",
+          "target_table": "budget_history",
+          "problem": "Review Nullability of budget_history.groupe_id",
+          "fix": "The column 'budget_history.groupe_id' is nullable and appears to be a foreign key. If this column is intended to always reference a valid 'groupe' entry, it should be made non-nullable to enforce referential integrity.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS total_rows, COUNT(groupe_id) AS non_null_rows, (COUNT(*) - COUNT(groupe_id)) AS null_rows, ROUND(((COUNT(*) - COUNT(groupe_id))::numeric / COUNT(*)) * 100, 2) AS null_percentage FROM budget_history;"
+          ],
+          "explanation": "The column 'budget_history.groupe_id' is nullable and appears to be a foreign key. If this column is intended to always reference a valid 'groupe' entry, it should be made non-nullable to enforce referential integrity.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'budget_history' AND column_name = 'groupe_id';"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_013_groupe_admin_id",
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "Review Nullability of groupe.admin_id",
+          "fix": "The column 'groupe.admin_id' is nullable and appears to be a foreign key. If this column is intended to always reference a valid 'admin' entry, it should be made non-nullable to enforce referential integrity.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS total_rows, COUNT(admin_id) AS non_null_rows, (COUNT(*) - COUNT(admin_id)) AS null_rows, ROUND(((COUNT(*) - COUNT(admin_id))::numeric / COUNT(*)) * 100, 2) AS null_percentage FROM groupe;"
+          ],
+          "explanation": "The column 'groupe.admin_id' is nullable and appears to be a foreign key. If this column is intended to always reference a valid 'admin' entry, it should be made non-nullable to enforce referential integrity.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'groupe' AND column_name = 'admin_id';"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_014_campagne_contacts_contact_id",
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "Review Nullability of campagne_contacts.contact_id",
+          "fix": "The column 'campagne_contacts.contact_id' is nullable and appears to be a foreign key. If this column is intended to always reference a valid 'contact' entry, it should be made non-nullable to enforce referential integrity.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS total_rows, COUNT(contact_id) AS non_null_rows, (COUNT(*) - COUNT(contact_id)) AS null_rows, ROUND(((COUNT(*) - COUNT(contact_id))::numeric / COUNT(*)) * 100, 2) AS null_percentage FROM campagne_contacts;"
+          ],
+          "explanation": "The column 'campagne_contacts.contact_id' is nullable and appears to be a foreign key. If this column is intended to always reference a valid 'contact' entry, it should be made non-nullable to enforce referential integrity.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'campagne_contacts' AND column_name = 'contact_id';"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_015_send_sms_smsc_id",
+          "table": "send_sms",
+          "target_table": "send_sms",
+          "problem": "Review Nullability of send_sms.smsc_id",
+          "fix": "The column 'send_sms.smsc_id' is nullable and appears to be a foreign key. If this column is intended to always reference a valid 'smsc' entry, it should be made non-nullable to enforce referential integrity.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS total_rows, COUNT(smsc_id) AS non_null_rows, (COUNT(*) - COUNT(smsc_id)) AS null_rows, ROUND(((COUNT(*) - COUNT(smsc_id))::numeric / COUNT(*)) * 100, 2) AS null_percentage FROM send_sms;"
+          ],
+          "explanation": "The column 'send_sms.smsc_id' is nullable and appears to be a foreign key. If this column is intended to always reference a valid 'smsc' entry, it should be made non-nullable to enforce referential integrity.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'send_sms' AND column_name = 'smsc_id';"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_016_contacts_country_code",
+          "table": "contacts",
+          "target_table": "contacts",
+          "problem": "Investigate Low Cardinality in contacts.country_code",
+          "fix": "The column 'contacts.country_code' has a low cardinality ratio of 0.0013, with only 14 unique values out of 10043 rows. This might indicate a limited set of values, which could be expected for country codes, or it could point to potential data entry issues if a wider range of values is anticipated.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT country_code, COUNT(*) FROM contacts GROUP BY country_code ORDER BY COUNT(*) DESC;"
+          ],
+          "explanation": "The column 'contacts.country_code' has a low cardinality ratio of 0.0013, with only 14 unique values out of 10043 rows. This might indicate a limited set of values, which could be expected for country codes, or it could point to potential data entry issues if a wider range of values is anticipated.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(DISTINCT country_code) FROM contacts;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_017_user_contact_attribute1",
+          "table": "user_contact",
+          "target_table": "user_contact",
+          "problem": "Investigate Low Cardinality in user_contact.attribute1",
+          "fix": "The column 'user_contact.attribute1' has a low cardinality ratio of 0.0018, with only 37 unique values out of 20042 rows. This might indicate a limited set of values or potential data entry issues.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT attribute1, COUNT(*) FROM user_contact GROUP BY attribute1 ORDER BY COUNT(*) DESC;"
+          ],
+          "explanation": "The column 'user_contact.attribute1' has a low cardinality ratio of 0.0018, with only 37 unique values out of 20042 rows. This might indicate a limited set of values or potential data entry issues.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(DISTINCT attribute1) FROM user_contact;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_018_user_contact_attribute2",
+          "table": "user_contact",
+          "target_table": "user_contact",
+          "problem": "Investigate Low Cardinality in user_contact.attribute2",
+          "fix": "The column 'user_contact.attribute2' has a low cardinality ratio of 0.0017, with only 36 unique values out of 20042 rows. This might indicate a limited set of values or potential data entry issues.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT attribute2, COUNT(*) FROM user_contact GROUP BY attribute2 ORDER BY COUNT(*) DESC;"
+          ],
+          "explanation": "The column 'user_contact.attribute2' has a low cardinality ratio of 0.0017, with only 36 unique values out of 20042 rows. This might indicate a limited set of values or potential data entry issues.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(DISTINCT attribute2) FROM user_contact;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_019_user_contact_attribute3",
+          "table": "user_contact",
+          "target_table": "user_contact",
+          "problem": "Investigate Low Cardinality in user_contact.attribute3",
+          "fix": "The column 'user_contact.attribute3' has a low cardinality ratio of 0.0016, with only 34 unique values out of 20042 rows. This might indicate a limited set of values or potential data entry issues.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT attribute3, COUNT(*) FROM user_contact GROUP BY attribute3 ORDER BY COUNT(*) DESC;"
+          ],
+          "explanation": "The column 'user_contact.attribute3' has a low cardinality ratio of 0.0016, with only 34 unique values out of 20042 rows. This might indicate a limited set of values or potential data entry issues.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(DISTINCT attribute3) FROM user_contact;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_020_user_contact_membership_id",
+          "table": "user_contact",
+          "target_table": "user_contact",
+          "problem": "Investigate Low Cardinality in user_contact.membership_id",
+          "fix": "The column 'user_contact.membership_id' has a very low cardinality ratio of 0.0002, with only 6 unique values out of 20042 rows. This might indicate a limited set of values, which could be expected for a foreign key to a small lookup table, or it could point to potential data entry issues.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT membership_id, COUNT(*) FROM user_contact GROUP BY membership_id ORDER BY COUNT(*) DESC;"
+          ],
+          "explanation": "The column 'user_contact.membership_id' has a very low cardinality ratio of 0.0002, with only 6 unique values out of 20042 rows. This might indicate a limited set of values, which could be expected for a foreign key to a small lookup table, or it could point to potential data entry issues.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(DISTINCT membership_id) FROM user_contact;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_021_sent_sms_foreign_id",
+          "table": "sent_sms",
+          "target_table": "sent_sms",
+          "problem": "Remove Duplicates and Add Unique Constraint to sent_sms.foreign_id",
+          "fix": "The column 'sent_sms.foreign_id' contains duplicate values, which violates the expectation of uniqueness based on naming conventions. This can lead to data integrity issues. The remediation involves deleting duplicate rows, keeping the oldest entry (based on 'ctid'), and then adding a unique constraint to prevent future duplicates.",
+          "severity": "medium",
+          "confidence": 0.7,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "DELETE FROM sent_sms WHERE ctid NOT IN (SELECT MIN(ctid) FROM sent_sms GROUP BY foreign_id);",
+            "ALTER TABLE sent_sms ADD CONSTRAINT sent_sms_foreign_id_unique UNIQUE (foreign_id);"
+          ],
+          "explanation": "The column 'sent_sms.foreign_id' contains duplicate values, which violates the expectation of uniqueness based on naming conventions. This can lead to data integrity issues. The remediation involves deleting duplicate rows, keeping the oldest entry (based on 'ctid'), and then adding a unique constraint to prevent future duplicates.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM sent_sms GROUP BY foreign_id HAVING COUNT(*) > 1; SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'sent_sms'::regclass AND conname = 'sent_sms_foreign_id_unique';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE sent_sms DROP CONSTRAINT sent_sms_foreign_id_unique;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_022_groupe_status_id",
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "Investigate Low Cardinality in groupe.status_id",
+          "fix": "The column 'groupe.status_id' has a low cardinality ratio of 0.1111, with only 1 unique value out of 9 rows. This might indicate that the column is not being used to its full potential or that there's a data entry issue if more diverse status values are expected.",
+          "severity": "low",
+          "confidence": 0.6,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT status_id, COUNT(*) FROM groupe GROUP BY status_id ORDER BY COUNT(*) DESC;"
+          ],
+          "explanation": "The column 'groupe.status_id' has a low cardinality ratio of 0.1111, with only 1 unique value out of 9 rows. This might indicate that the column is not being used to its full potential or that there's a data entry issue if more diverse status values are expected.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(DISTINCT status_id) FROM groupe;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_023_tags_label",
+          "table": "tags",
+          "target_table": "tags",
+          "problem": "Investigate Low Cardinality in tags.label",
+          "fix": "The column 'tags.label' has a cardinality ratio of 0.8571, with 6 unique values out of 7 rows. While not extremely low, it's worth reviewing if this is expected for labels or if there's an opportunity for more diverse tagging.",
+          "severity": "low",
+          "confidence": 0.6,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT label, COUNT(*) FROM tags GROUP BY label ORDER BY COUNT(*) DESC;"
+          ],
+          "explanation": "The column 'tags.label' has a cardinality ratio of 0.8571, with 6 unique values out of 7 rows. While not extremely low, it's worth reviewing if this is expected for labels or if there's an opportunity for more diverse tagging.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(DISTINCT label) FROM tags;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_024_tags_membership_id",
+          "table": "tags",
+          "target_table": "tags",
+          "problem": "Investigate Low Cardinality in tags.membership_id",
+          "fix": "The column 'tags.membership_id' has a cardinality ratio of 0.8571, with 6 unique values out of 7 rows. This might be expected if 'membership_id' refers to a limited set of memberships, but it's worth reviewing if a wider distribution is anticipated.",
+          "severity": "low",
+          "confidence": 0.6,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT membership_id, COUNT(*) FROM tags GROUP BY membership_id ORDER BY COUNT(*) DESC;"
+          ],
+          "explanation": "The column 'tags.membership_id' has a cardinality ratio of 0.8571, with 6 unique values out of 7 rows. This might be expected if 'membership_id' refers to a limited set of memberships, but it's worth reviewing if a wider distribution is anticipated.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(DISTINCT membership_id) FROM tags;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_025_users_first_name",
+          "table": "users",
+          "target_table": "users",
+          "problem": "Investigate Low Cardinality in users.first_name",
+          "fix": "The column 'users.first_name' has a cardinality ratio of 0.8571, with 6 unique values out of 7 rows. This might be expected in a small user base, but it's worth reviewing if a wider variety of first names is anticipated.",
+          "severity": "low",
+          "confidence": 0.6,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT first_name, COUNT(*) FROM users GROUP BY first_name ORDER BY COUNT(*) DESC;"
+          ],
+          "explanation": "The column 'users.first_name' has a cardinality ratio of 0.8571, with 6 unique values out of 7 rows. This might be expected in a small user base, but it's worth reviewing if a wider variety of first names is anticipated.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(DISTINCT first_name) FROM users;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        }
+      ],
+      "cards": [
+        {
+          "title": "Add Primary Key to campagne_contacts",
+          "target": "campagne_contacts",
+          "rationale": "The table 'campagne_contacts' is missing a primary key, which is crucial for data integrity and efficient data retrieval. The combination of 'campagne_id' and 'contact_id' has been validated as unique and can serve as a composite primary key.",
+          "sql": "ALTER TABLE campagne_contacts ADD PRIMARY KEY (campagne_id, contact_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'campagne_contacts'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_contacts DROP CONSTRAINT campagne_contacts_pkey;"
+          ]
+        },
+        {
+          "title": "Add Primary Key to expediteur_groupe",
+          "target": "expediteur_groupe",
+          "rationale": "The table 'expediteur_groupe' is missing a primary key, which is crucial for data integrity and efficient data retrieval. The combination of 'groupe_id' and 'expediteur_id' has been validated as unique and can serve as a composite primary key.",
+          "sql": "ALTER TABLE expediteur_groupe ADD PRIMARY KEY (groupe_id, expediteur_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'expediteur_groupe'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE expediteur_groupe DROP CONSTRAINT expediteur_groupe_pkey;"
+          ]
+        },
+        {
+          "title": "Add Primary Key to contacts",
+          "target": "contacts",
+          "rationale": "The table 'contacts' is missing a primary key, which is crucial for data integrity and efficient data retrieval. The combination of 'msisdn' and 'country_code' has been validated as unique and can serve as a composite primary key.",
+          "sql": "ALTER TABLE contacts ADD PRIMARY KEY (msisdn, country_code);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'contacts'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE contacts DROP CONSTRAINT contacts_pkey;"
+          ]
+        },
+        {
+          "title": "Add Primary Key to campagne_tags",
+          "target": "campagne_tags",
+          "rationale": "The table 'campagne_tags' is missing a primary key, which is crucial for data integrity and efficient data retrieval. The combination of 'campagne_id' and 'tag_name' has been validated as unique and can serve as a composite primary key.",
+          "sql": "ALTER TABLE campagne_tags ADD PRIMARY KEY (campagne_id, tag_name);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'campagne_tags'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_tags DROP CONSTRAINT campagne_tags_pkey;"
+          ]
+        },
+        {
+          "title": "Add Primary Key to prm_campaign_type",
+          "target": "prm_campaign_type",
+          "rationale": "The table 'prm_campaign_type' is missing a primary key, which is crucial for data integrity and efficient data retrieval. The combination of 'code' and 'value' has been validated as unique and can serve as a composite primary key.",
+          "sql": "ALTER TABLE prm_campaign_type ADD PRIMARY KEY (code, value);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'prm_campaign_type'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE prm_campaign_type DROP CONSTRAINT prm_campaign_type_pkey;"
+          ]
+        },
+        {
+          "title": "Investigate Orphaned Foreign Keys in smsc_route.route_smsc_id",
+          "target": "smsc_route.route_smsc_id",
+          "rationale": "There are 6 records in 'smsc_route' where 'route_smsc_id' does not have a corresponding entry in 'smsc.id'. This indicates a referential integrity issue. These orphaned records should be investigated and either updated to a valid 'smsc.id' or deleted.",
+          "sql": "SELECT sr.id, sr.route_smsc_id FROM smsc_route sr LEFT JOIN smsc s ON sr.route_smsc_id = s.id WHERE s.id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM smsc_route sr LEFT JOIN smsc s ON sr.route_smsc_id = s.id WHERE s.id IS NULL;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate High Null Ratio in groupe.admin_id",
+          "target": "groupe.admin_id",
+          "rationale": "The column 'groupe.admin_id' has a high null ratio (88.89%), with 8 out of 9 rows being null. This significantly exceeds the allowed maximum null percentage of 5%. This may indicate missing data or an unexpected schema design.",
+          "sql": "SELECT COUNT(*) AS total_rows, COUNT(admin_id) AS non_null_rows, (COUNT(*) - COUNT(admin_id)) AS null_rows, ROUND(((COUNT(*) - COUNT(admin_id))::numeric / COUNT(*)) * 100, 2) AS null_percentage FROM groupe;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT ROUND(((COUNT(*) - COUNT(admin_id))::numeric / COUNT(*)) * 100, 2) FROM groupe;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate High Null Ratio in sent_sms Columns",
+          "target": "sent_sms",
+          "rationale": "Multiple columns in the 'sent_sms' table ('udhdata', 'service', 'id', 'mclass', 'mwi', 'compress', 'deferred', 'dlr_url', 'pid', 'alt_dcs', 'rpi', 'boxc_id', 'binfo', 'sms_type', 'coding', 'validity', 'charset', 'meta_data') exhibit a high null ratio, exceeding the allowed maximum of 5%. This suggests potential data completeness issues or that these columns might not be consistently populated.",
+          "sql": "SELECT COUNT(*) AS total_rows, COUNT(udhdata) AS udhdata_non_null, COUNT(service) AS service_non_null, COUNT(id) AS id_non_null, COUNT(mclass) AS mclass_non_null, COUNT(mwi) AS mwi_non_null, COUNT(compress) AS compress_non_null, COUNT(deferred) AS deferred_non_null, COUNT(dlr_url) AS dlr_url_non_null, COUNT(pid) AS pid_non_null, COUNT(alt_dcs) AS alt_dcs_non_null, COUNT(rpi) AS rpi_non_null, COUNT(boxc_id) AS boxc_id_non_null, COUNT(binfo) AS binfo_non_null, COUNT(sms_type) AS sms_type_non_null, COUNT(coding) AS coding_non_null, COUNT(validity) AS validity_non_null, COUNT(charset) AS charset_non_null, COUNT(meta_data) AS meta_data_non_null FROM sent_sms;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT ROUND(((COUNT(*) - COUNT(udhdata))::numeric / COUNT(*)) * 100, 2) AS udhdata_null_pct, ROUND(((COUNT(*) - COUNT(service))::numeric / COUNT(*)) * 100, 2) AS service_null_pct, ROUND(((COUNT(*) - COUNT(id))::numeric / COUNT(*)) * 100, 2) AS id_null_pct, ROUND(((COUNT(*) - COUNT(mclass))::numeric / COUNT(*)) * 100, 2) AS mclass_null_pct, ROUND(((COUNT(*) - COUNT(mwi))::numeric / COUNT(*)) * 100, 2) AS mwi_null_pct, ROUND(((COUNT(*) - COUNT(compress))::numeric / COUNT(*)) * 100, 2) AS compress_null_pct, ROUND(((COUNT(*) - COUNT(deferred))::numeric / COUNT(*)) * 100, 2) AS deferred_null_pct, ROUND(((COUNT(*) - COUNT(dlr_url))::numeric / COUNT(*)) * 100, 2) AS dlr_url_null_pct, ROUND(((COUNT(*) - COUNT(pid))::numeric / COUNT(*)) * 100, 2) AS pid_null_pct, ROUND(((COUNT(*) - COUNT(alt_dcs))::numeric / COUNT(*)) * 100, 2) AS alt_dcs_null_pct, ROUND(((COUNT(*) - COUNT(rpi))::numeric / COUNT(*)) * 100, 2) AS rpi_null_pct, ROUND(((COUNT(*) - COUNT(boxc_id))::numeric / COUNT(*)) * 100, 2) AS boxc_id_null_pct, ROUND(((COUNT(*) - COUNT(binfo))::numeric / COUNT(*)) * 100, 2) AS binfo_null_pct, ROUND(((COUNT(*) - COUNT(sms_type))::numeric / COUNT(*)) * 100, 2) AS sms_type_null_pct, ROUND(((COUNT(*) - COUNT(coding))::numeric / COUNT(*)) * 100, 2) AS coding_null_pct, ROUND(((COUNT(*) - COUNT(validity))::numeric / COUNT(*)) * 100, 2) AS validity_null_pct, ROUND(((COUNT(*) - COUNT(charset))::numeric / COUNT(*)) * 100, 2) AS charset_null_pct, ROUND(((COUNT(*) - COUNT(meta_data))::numeric / COUNT(*)) * 100, 2) AS meta_data_null_pct FROM sent_sms;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate High Null Ratio in smsc_routing_rule.expediteur_id",
+          "target": "smsc_routing_rule.expediteur_id",
+          "rationale": "The column 'smsc_routing_rule.expediteur_id' has a high null ratio (85.71%), with 6 out of 7 rows being null. This significantly exceeds the allowed maximum null percentage of 5%. This may indicate missing data or an unexpected schema design.",
+          "sql": "SELECT COUNT(*) AS total_rows, COUNT(expediteur_id) AS non_null_rows, (COUNT(*) - COUNT(expediteur_id)) AS null_rows, ROUND(((COUNT(*) - COUNT(expediteur_id))::numeric / COUNT(*)) * 100, 2) AS null_percentage FROM smsc_routing_rule;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT ROUND(((COUNT(*) - COUNT(expediteur_id))::numeric / COUNT(*)) * 100, 2) FROM smsc_routing_rule;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate High Null Ratio in smsc_routing_rule.groupe_id",
+          "target": "smsc_routing_rule.groupe_id",
+          "rationale": "The column 'smsc_routing_rule.groupe_id' has a high null ratio (85.71%), with 6 out of 7 rows being null. This significantly exceeds the allowed maximum null percentage of 5%. This may indicate missing data or an unexpected schema design.",
+          "sql": "SELECT COUNT(*) AS total_rows, COUNT(groupe_id) AS non_null_rows, (COUNT(*) - COUNT(groupe_id)) AS null_rows, ROUND(((COUNT(*) - COUNT(groupe_id))::numeric / COUNT(*)) * 100, 2) AS null_percentage FROM smsc_routing_rule;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT ROUND(((COUNT(*) - COUNT(groupe_id))::numeric / COUNT(*)) * 100, 2) FROM smsc_routing_rule;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate High Null Ratio in user_mission.groupe_id",
+          "target": "user_mission.groupe_id",
+          "rationale": "The column 'user_mission.groupe_id' has a high null ratio (50%), with 4 out of 8 rows being null. This significantly exceeds the allowed maximum null percentage of 5%. This may indicate missing data or an unexpected schema design.",
+          "sql": "SELECT COUNT(*) AS total_rows, COUNT(groupe_id) AS non_null_rows, (COUNT(*) - COUNT(groupe_id)) AS null_rows, ROUND(((COUNT(*) - COUNT(groupe_id))::numeric / COUNT(*)) * 100, 2) AS null_percentage FROM user_mission;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT ROUND(((COUNT(*) - COUNT(groupe_id))::numeric / COUNT(*)) * 100, 2) FROM user_mission;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Review Nullability of budget_history.groupe_id",
+          "target": "budget_history.groupe_id",
+          "rationale": "The column 'budget_history.groupe_id' is nullable and appears to be a foreign key. If this column is intended to always reference a valid 'groupe' entry, it should be made non-nullable to enforce referential integrity.",
+          "sql": "SELECT COUNT(*) AS total_rows, COUNT(groupe_id) AS non_null_rows, (COUNT(*) - COUNT(groupe_id)) AS null_rows, ROUND(((COUNT(*) - COUNT(groupe_id))::numeric / COUNT(*)) * 100, 2) AS null_percentage FROM budget_history;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'budget_history' AND column_name = 'groupe_id';"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Review Nullability of groupe.admin_id",
+          "target": "groupe.admin_id",
+          "rationale": "The column 'groupe.admin_id' is nullable and appears to be a foreign key. If this column is intended to always reference a valid 'admin' entry, it should be made non-nullable to enforce referential integrity.",
+          "sql": "SELECT COUNT(*) AS total_rows, COUNT(admin_id) AS non_null_rows, (COUNT(*) - COUNT(admin_id)) AS null_rows, ROUND(((COUNT(*) - COUNT(admin_id))::numeric / COUNT(*)) * 100, 2) AS null_percentage FROM groupe;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'groupe' AND column_name = 'admin_id';"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Review Nullability of campagne_contacts.contact_id",
+          "target": "campagne_contacts.contact_id",
+          "rationale": "The column 'campagne_contacts.contact_id' is nullable and appears to be a foreign key. If this column is intended to always reference a valid 'contact' entry, it should be made non-nullable to enforce referential integrity.",
+          "sql": "SELECT COUNT(*) AS total_rows, COUNT(contact_id) AS non_null_rows, (COUNT(*) - COUNT(contact_id)) AS null_rows, ROUND(((COUNT(*) - COUNT(contact_id))::numeric / COUNT(*)) * 100, 2) AS null_percentage FROM campagne_contacts;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'campagne_contacts' AND column_name = 'contact_id';"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Review Nullability of send_sms.smsc_id",
+          "target": "send_sms.smsc_id",
+          "rationale": "The column 'send_sms.smsc_id' is nullable and appears to be a foreign key. If this column is intended to always reference a valid 'smsc' entry, it should be made non-nullable to enforce referential integrity.",
+          "sql": "SELECT COUNT(*) AS total_rows, COUNT(smsc_id) AS non_null_rows, (COUNT(*) - COUNT(smsc_id)) AS null_rows, ROUND(((COUNT(*) - COUNT(smsc_id))::numeric / COUNT(*)) * 100, 2) AS null_percentage FROM send_sms;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'send_sms' AND column_name = 'smsc_id';"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate Low Cardinality in contacts.country_code",
+          "target": "contacts.country_code",
+          "rationale": "The column 'contacts.country_code' has a low cardinality ratio of 0.0013, with only 14 unique values out of 10043 rows. This might indicate a limited set of values, which could be expected for country codes, or it could point to potential data entry issues if a wider range of values is anticipated.",
+          "sql": "SELECT country_code, COUNT(*) FROM contacts GROUP BY country_code ORDER BY COUNT(*) DESC;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(DISTINCT country_code) FROM contacts;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate Low Cardinality in user_contact.attribute1",
+          "target": "user_contact.attribute1",
+          "rationale": "The column 'user_contact.attribute1' has a low cardinality ratio of 0.0018, with only 37 unique values out of 20042 rows. This might indicate a limited set of values or potential data entry issues.",
+          "sql": "SELECT attribute1, COUNT(*) FROM user_contact GROUP BY attribute1 ORDER BY COUNT(*) DESC;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(DISTINCT attribute1) FROM user_contact;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate Low Cardinality in user_contact.attribute2",
+          "target": "user_contact.attribute2",
+          "rationale": "The column 'user_contact.attribute2' has a low cardinality ratio of 0.0017, with only 36 unique values out of 20042 rows. This might indicate a limited set of values or potential data entry issues.",
+          "sql": "SELECT attribute2, COUNT(*) FROM user_contact GROUP BY attribute2 ORDER BY COUNT(*) DESC;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(DISTINCT attribute2) FROM user_contact;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate Low Cardinality in user_contact.attribute3",
+          "target": "user_contact.attribute3",
+          "rationale": "The column 'user_contact.attribute3' has a low cardinality ratio of 0.0016, with only 34 unique values out of 20042 rows. This might indicate a limited set of values or potential data entry issues.",
+          "sql": "SELECT attribute3, COUNT(*) FROM user_contact GROUP BY attribute3 ORDER BY COUNT(*) DESC;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(DISTINCT attribute3) FROM user_contact;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate Low Cardinality in user_contact.membership_id",
+          "target": "user_contact.membership_id",
+          "rationale": "The column 'user_contact.membership_id' has a very low cardinality ratio of 0.0002, with only 6 unique values out of 20042 rows. This might indicate a limited set of values, which could be expected for a foreign key to a small lookup table, or it could point to potential data entry issues.",
+          "sql": "SELECT membership_id, COUNT(*) FROM user_contact GROUP BY membership_id ORDER BY COUNT(*) DESC;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(DISTINCT membership_id) FROM user_contact;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Remove Duplicates and Add Unique Constraint to sent_sms.foreign_id",
+          "target": "sent_sms.foreign_id",
+          "rationale": "The column 'sent_sms.foreign_id' contains duplicate values, which violates the expectation of uniqueness based on naming conventions. This can lead to data integrity issues. The remediation involves deleting duplicate rows, keeping the oldest entry (based on 'ctid'), and then adding a unique constraint to prevent future duplicates.",
+          "sql": "DELETE FROM sent_sms WHERE ctid NOT IN (SELECT MIN(ctid) FROM sent_sms GROUP BY foreign_id); ALTER TABLE sent_sms ADD CONSTRAINT sent_sms_foreign_id_unique UNIQUE (foreign_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM sent_sms GROUP BY foreign_id HAVING COUNT(*) > 1; SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'sent_sms'::regclass AND conname = 'sent_sms_foreign_id_unique';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE sent_sms DROP CONSTRAINT sent_sms_foreign_id_unique;"
+          ]
+        },
+        {
+          "title": "Investigate Low Cardinality in groupe.status_id",
+          "target": "groupe.status_id",
+          "rationale": "The column 'groupe.status_id' has a low cardinality ratio of 0.1111, with only 1 unique value out of 9 rows. This might indicate that the column is not being used to its full potential or that there's a data entry issue if more diverse status values are expected.",
+          "sql": "SELECT status_id, COUNT(*) FROM groupe GROUP BY status_id ORDER BY COUNT(*) DESC;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(DISTINCT status_id) FROM groupe;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate Low Cardinality in tags.label",
+          "target": "tags.label",
+          "rationale": "The column 'tags.label' has a cardinality ratio of 0.8571, with 6 unique values out of 7 rows. While not extremely low, it's worth reviewing if this is expected for labels or if there's an opportunity for more diverse tagging.",
+          "sql": "SELECT label, COUNT(*) FROM tags GROUP BY label ORDER BY COUNT(*) DESC;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(DISTINCT label) FROM tags;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate Low Cardinality in tags.membership_id",
+          "target": "tags.membership_id",
+          "rationale": "The column 'tags.membership_id' has a cardinality ratio of 0.8571, with 6 unique values out of 7 rows. This might be expected if 'membership_id' refers to a limited set of memberships, but it's worth reviewing if a wider distribution is anticipated.",
+          "sql": "SELECT membership_id, COUNT(*) FROM tags GROUP BY membership_id ORDER BY COUNT(*) DESC;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(DISTINCT membership_id) FROM tags;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate Low Cardinality in users.first_name",
+          "target": "users.first_name",
+          "rationale": "The column 'users.first_name' has a cardinality ratio of 0.8571, with 6 unique values out of 7 rows. This might be expected in a small user base, but it's worth reviewing if a wider variety of first names is anticipated.",
+          "sql": "SELECT first_name, COUNT(*) FROM users GROUP BY first_name ORDER BY COUNT(*) DESC;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(DISTINCT first_name) FROM users;"
+          ],
+          "rollback_queries": []
+        }
+      ]
+    }
+  }
+}

@@ -23,15 +23,13 @@ class PreviousRunLinkingTests(TestCase):
 
         self.first_job = Job.objects.create(
             user=self.user,
-            file_name='PostgreSQL Connection',
-            file_path='postgres://<hidden>',
+            connection_string='postgresql://user:pass@localhost:5432/qualitylab',
             status='completed',
             mode='agentic_postgres',
         )
         self.second_job = Job.objects.create(
             user=self.user,
-            file_name='PostgreSQL Connection',
-            file_path='postgres://<hidden>',
+            connection_string='postgresql://user:pass@localhost:5432/qualitylab',
             status='completed',
             mode='agentic_postgres',
         )

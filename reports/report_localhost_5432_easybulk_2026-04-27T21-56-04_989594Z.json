@@ -1,0 +1,1146 @@
+{
+  "pipeline_run_id": "8b59e0fd-2ae5-4b9e-a956-117ea7c26633",
+  "database_id": "localhost_5432_easybulk",
+  "llm_model": "gemini-2.5-flash",
+  "run_timestamp": "2026-04-27T21:56:04.989594Z",
+  "summary": {
+    "confidence_score": 97,
+    "data_quality_score": 54,
+    "final_fix_count": 16
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "8b59e0fd-2ae5-4b9e-a956-117ea7c26633",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T21:56:04.989594Z",
+      "agent": "Schema Integrity Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 33,
+        "items_passed": 22,
+        "items_flagged": 11,
+        "critical_issues": 5,
+        "high_issues": 0,
+        "medium_issues": 6,
+        "low_issues": 0,
+        "overall_quality_score": 0.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": [
+          "budget_history",
+          "campagne_contacts",
+          "campagne_tags",
+          "contacts",
+          "expediteur_groupe",
+          "groupe",
+          "prm_campaign_type",
+          "send_sms"
+        ]
+      },
+      "metrics": {
+        "validator": "schema",
+        "findings_count": 11
+      },
+      "findings": [
+        {
+          "table": "expediteur_groupe",
+          "column": null,
+          "entity": "expediteur_groupe",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "expediteur_groupe",
+            "reason": "No explicit 'id' column and no composite key identified."
+          },
+          "remediation_hint": "Consider adding a primary key to table 'expediteur_groupe' to ensure data uniqueness and facilitate record identification.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "Consider adding a primary key to table 'expediteur_groupe' to ensure data uniqueness and facilitate record identification.",
+              "evidence": {
+                "table_name": "expediteur_groupe",
+                "reason": "No explicit 'id' column and no composite key identified."
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_contacts",
+          "column": null,
+          "entity": "campagne_contacts",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campagne_contacts",
+            "reason": "No explicit 'id' column and 'contact_id' is nullable."
+          },
+          "remediation_hint": "Consider adding a primary key to table 'campagne_contacts' to ensure data uniqueness and facilitate record identification.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "Consider adding a primary key to table 'campagne_contacts' to ensure data uniqueness and facilitate record identification.",
+              "evidence": {
+                "table_name": "campagne_contacts",
+                "reason": "No explicit 'id' column and 'contact_id' is nullable."
+              }
+            }
+          ]
+        },
+        {
+          "table": "contacts",
+          "column": null,
+          "entity": "contacts",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "contacts",
+            "reason": "No explicit 'id' column and no clear single primary key."
+          },
+          "remediation_hint": "Consider adding a primary key to table 'contacts' to ensure data uniqueness and facilitate record identification.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "Consider adding a primary key to table 'contacts' to ensure data uniqueness and facilitate record identification.",
+              "evidence": {
+                "table_name": "contacts",
+                "reason": "No explicit 'id' column and no clear single primary key."
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_tags",
+          "column": null,
+          "entity": "campagne_tags",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campagne_tags",
+            "reason": "No explicit 'id' column and 'tag_name' is nullable."
+          },
+          "remediation_hint": "Consider adding a primary key to table 'campagne_tags' to ensure data uniqueness and facilitate record identification.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "Consider adding a primary key to table 'campagne_tags' to ensure data uniqueness and facilitate record identification.",
+              "evidence": {
+                "table_name": "campagne_tags",
+                "reason": "No explicit 'id' column and 'tag_name' is nullable."
+              }
+            }
+          ]
+        },
+        {
+          "table": "prm_campaign_type",
+          "column": null,
+          "entity": "prm_campaign_type",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "prm_campaign_type",
+            "reason": "No explicit 'id' column and no clear single primary key."
+          },
+          "remediation_hint": "Consider adding a primary key to table 'prm_campaign_type' to ensure data uniqueness and facilitate record identification.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "Consider adding a primary key to table 'prm_campaign_type' to ensure data uniqueness and facilitate record identification.",
+              "evidence": {
+                "table_name": "prm_campaign_type",
+                "reason": "No explicit 'id' column and no clear single primary key."
+              }
+            }
+          ]
+        },
+        {
+          "table": "budget_history",
+          "column": "groupe_id",
+          "entity": "budget_history.groupe_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "budget_history",
+            "column_name": "groupe_id",
+            "is_nullable": "YES"
+          },
+          "remediation_hint": "Review column 'budget_history.groupe_id'. If it should always reference a valid record, consider making it NOT NULL.",
+          "issues": [
+            {
+              "type": "nullable_fk",
+              "severity": "medium",
+              "description": "Review column 'budget_history.groupe_id'. If it should always reference a valid record, consider making it NOT NULL.",
+              "evidence": {
+                "table_name": "budget_history",
+                "column_name": "groupe_id",
+                "is_nullable": "YES"
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "entity": "groupe.admin_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "groupe",
+            "column_name": "admin_id",
+            "is_nullable": "YES"
+          },
+          "remediation_hint": "Review column 'groupe.admin_id'. If it should always reference a valid record, consider making it NOT NULL.",
+          "issues": [
+            {
+              "type": "nullable_fk",
+              "severity": "medium",
+              "description": "Review column 'groupe.admin_id'. If it should always reference a valid record, consider making it NOT NULL.",
+              "evidence": {
+                "table_name": "groupe",
+                "column_name": "admin_id",
+                "is_nullable": "YES"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_contacts",
+          "column": "contact_id",
+          "entity": "campagne_contacts.contact_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campagne_contacts",
+            "column_name": "contact_id",
+            "is_nullable": "YES"
+          },
+          "remediation_hint": "Review column 'campagne_contacts.contact_id'. If it should always reference a valid record, consider making it NOT NULL.",
+          "issues": [
+            {
+              "type": "nullable_fk",
+              "severity": "medium",
+              "description": "Review column 'campagne_contacts.contact_id'. If it should always reference a valid record, consider making it NOT NULL.",
+              "evidence": {
+                "table_name": "campagne_contacts",
+                "column_name": "contact_id",
+                "is_nullable": "YES"
+              }
+            }
+          ]
+        },
+        {
+          "table": "send_sms",
+          "column": "smsc_id",
+          "entity": "send_sms.smsc_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "send_sms",
+            "column_name": "smsc_id",
+            "is_nullable": "YES"
+          },
+          "remediation_hint": "Review column 'send_sms.smsc_id'. If it should always reference a valid record, consider making it NOT NULL.",
+          "issues": [
+            {
+              "type": "nullable_fk",
+              "severity": "medium",
+              "description": "Review column 'send_sms.smsc_id'. If it should always reference a valid record, consider making it NOT NULL.",
+              "evidence": {
+                "table_name": "send_sms",
+                "column_name": "smsc_id",
+                "is_nullable": "YES"
+              }
+            }
+          ]
+        },
+        {
+          "table": "send_sms",
+          "column": "boxc_id",
+          "entity": "send_sms.boxc_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "send_sms",
+            "column_name": "boxc_id",
+            "is_nullable": "YES"
+          },
+          "remediation_hint": "Review column 'send_sms.boxc_id'. If it should always reference a valid record, consider making it NOT NULL.",
+          "issues": [
+            {
+              "type": "nullable_fk",
+              "severity": "medium",
+              "description": "Review column 'send_sms.boxc_id'. If it should always reference a valid record, consider making it NOT NULL.",
+              "evidence": {
+                "table_name": "send_sms",
+                "column_name": "boxc_id",
+                "is_nullable": "YES"
+              }
+            }
+          ]
+        },
+        {
+          "table": "send_sms",
+          "column": "foreign_id",
+          "entity": "send_sms.foreign_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "send_sms",
+            "column_name": "foreign_id",
+            "is_nullable": "YES"
+          },
+          "remediation_hint": "Review column 'send_sms.foreign_id'. If it should always reference a valid record, consider making it NOT NULL.",
+          "issues": [
+            {
+              "type": "nullable_fk",
+              "severity": "medium",
+              "description": "Review column 'send_sms.foreign_id'. If it should always reference a valid record, consider making it NOT NULL.",
+              "evidence": {
+                "table_name": "send_sms",
+                "column_name": "foreign_id",
+                "is_nullable": "YES"
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": []
+    },
+    "column_validator": {
+      "pipeline_run_id": "8b59e0fd-2ae5-4b9e-a956-117ea7c26633",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T21:56:04.989594Z",
+      "agent": "Column Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 33,
+        "items_passed": 29,
+        "items_flagged": 4,
+        "critical_issues": 0,
+        "high_issues": 1,
+        "medium_issues": 2,
+        "low_issues": 1,
+        "overall_quality_score": 66.0,
+        "overall_confidence": 0.8625,
+        "flagged_tables": [
+          "customers",
+          "orders",
+          "products",
+          "users"
+        ]
+      },
+      "metrics": {
+        "validator": "column",
+        "findings_count": 4
+      },
+      "findings": [
+        {
+          "table": "users",
+          "column": "email",
+          "entity": "users.email",
+          "rule": "null_ratio_high",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "null_ratio": 0.35,
+            "sample_size": 1000
+          },
+          "remediation_hint": "Investigate why the 'users.email' column has a high null ratio and consider making it non-nullable if appropriate.",
+          "issues": [
+            {
+              "type": "null_ratio_high",
+              "severity": "medium",
+              "description": "Investigate why the 'users.email' column has a high null ratio and consider making it non-nullable if appropriate.",
+              "evidence": {
+                "null_ratio": 0.35,
+                "sample_size": 1000
+              }
+            }
+          ]
+        },
+        {
+          "table": "products",
+          "column": "price",
+          "entity": "products.price",
+          "rule": "negative_values_found",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "has_negative_values": true
+          },
+          "remediation_hint": "Review data ingestion for 'products.price' to prevent negative values. Consider adding a check constraint to enforce non-negative prices.",
+          "issues": [
+            {
+              "type": "negative_values_found",
+              "severity": "high",
+              "description": "Review data ingestion for 'products.price' to prevent negative values. Consider adding a check constraint to enforce non-negative prices.",
+              "evidence": {
+                "has_negative_values": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "orders",
+          "column": "order_date",
+          "entity": "orders.order_date",
+          "rule": "out_of_range_date",
+          "severity": "medium",
+          "confidence": 0.85,
+          "evidence": {
+            "has_future_dates": true
+          },
+          "remediation_hint": "Correct future dates in 'orders.order_date' and implement validation to prevent future dates from being entered.",
+          "issues": [
+            {
+              "type": "out_of_range_date",
+              "severity": "medium",
+              "description": "Correct future dates in 'orders.order_date' and implement validation to prevent future dates from being entered.",
+              "evidence": {
+                "has_future_dates": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "customers",
+          "column": "phone_number",
+          "entity": "customers.phone_number",
+          "rule": "low_uniqueness_ratio",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "uniqueness_ratio": 0.1
+          },
+          "remediation_hint": "Re-evaluate the use of 'customers.phone_number' as a unique identifier. Consider an alternative unique key or a composite key if necessary.",
+          "issues": [
+            {
+              "type": "low_uniqueness_ratio",
+              "severity": "low",
+              "description": "Re-evaluate the use of 'customers.phone_number' as a unique identifier. Consider an alternative unique key or a composite key if necessary.",
+              "evidence": {
+                "uniqueness_ratio": 0.1
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": []
+    },
+    "row_level_validator": {
+      "pipeline_run_id": "8b59e0fd-2ae5-4b9e-a956-117ea7c26633",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T21:56:04.989594Z",
+      "agent": "Row Level Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 33,
+        "items_passed": 33,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "row",
+        "findings_count": 0
+      },
+      "findings": [],
+      "prior_reports": []
+    },
+    "cross_row_validator": {
+      "pipeline_run_id": "8b59e0fd-2ae5-4b9e-a956-117ea7c26633",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T21:56:04.989594Z",
+      "agent": "Cross Row Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 33,
+        "items_passed": 32,
+        "items_flagged": 1,
+        "critical_issues": 0,
+        "high_issues": 1,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 85.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": [
+          "smsc_route"
+        ]
+      },
+      "metrics": {
+        "validator": "crossrow",
+        "findings_count": 1
+      },
+      "findings": [
+        {
+          "table": "smsc_route",
+          "column": "route_smsc_id",
+          "entity": "smsc_route.route_smsc_id",
+          "rule": "orphaned_reference",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "source_table": "smsc_route",
+            "source_column": "route_smsc_id",
+            "target_table": "smsc",
+            "target_column": "id",
+            "orphaned_records_count": 6
+          },
+          "remediation_hint": "Investigate 6 records in 'smsc_route' where 'route_smsc_id' does not have a matching 'id' in 'smsc'. Consider updating or deleting these orphaned records.",
+          "issues": [
+            {
+              "type": "orphaned_reference",
+              "severity": "high",
+              "description": "Investigate 6 records in 'smsc_route' where 'route_smsc_id' does not have a matching 'id' in 'smsc'. Consider updating or deleting these orphaned records.",
+              "evidence": {
+                "source_table": "smsc_route",
+                "source_column": "route_smsc_id",
+                "target_table": "smsc",
+                "target_column": "id",
+                "orphaned_records_count": 6
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": []
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "8b59e0fd-2ae5-4b9e-a956-117ea7c26633",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T21:56:04.989594Z",
+      "agent": "Data Fix Planner",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 16,
+        "items_passed": 0,
+        "items_flagged": 16,
+        "critical_issues": 5,
+        "high_issues": 2,
+        "medium_issues": 8,
+        "low_issues": 1,
+        "overall_quality_score": 20.0,
+        "overall_confidence": 0.9656,
+        "flagged_tables": [
+          "budget_history",
+          "campagne_contacts",
+          "campagne_tags",
+          "contacts",
+          "customers",
+          "expediteur_groupe",
+          "groupe",
+          "orders",
+          "prm_campaign_type",
+          "products",
+          "send_sms",
+          "smsc_route",
+          "users"
+        ]
+      },
+      "metrics": {
+        "total_issues_received": 16,
+        "fixes_generated": 16
+      },
+      "findings": [
+        {
+          "id": "fix_001_expediteur_groupe",
+          "table": "expediteur_groupe",
+          "target_table": "expediteur_groupe",
+          "problem": "Add Composite Primary Key to expediteur_groupe",
+          "fix": "The table 'expediteur_groupe' is missing a primary key, which is crucial for ensuring data integrity and efficient record retrieval. The columns 'groupe_id' and 'expediteur_id' are both non-nullable and together form a unique combination, making them suitable for a composite primary key. This will ensure that each record in the table can be uniquely identified.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE expediteur_groupe ADD CONSTRAINT pk_expediteur_groupe PRIMARY KEY (groupe_id, expediteur_id);"
+          ],
+          "explanation": "The table 'expediteur_groupe' is missing a primary key, which is crucial for ensuring data integrity and efficient record retrieval. The columns 'groupe_id' and 'expediteur_id' are both non-nullable and together form a unique combination, making them suitable for a composite primary key. This will ensure that each record in the table can be uniquely identified.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'pk_expediteur_groupe';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE expediteur_groupe DROP CONSTRAINT pk_expediteur_groupe;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_002_campagne_contacts",
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "Add Primary Key to campagne_contacts",
+          "fix": "The table 'campagne_contacts' is missing a primary key. Neither 'campagne_id' nor 'contact_id' (which is nullable) can individually serve as a primary key, and 'campagne_id' is not unique. To ensure data uniqueness and facilitate record identification, a new 'id' column will be added as the primary key.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE campagne_contacts ADD COLUMN id BIGSERIAL PRIMARY KEY;"
+          ],
+          "explanation": "The table 'campagne_contacts' is missing a primary key. Neither 'campagne_id' nor 'contact_id' (which is nullable) can individually serve as a primary key, and 'campagne_id' is not unique. To ensure data uniqueness and facilitate record identification, a new 'id' column will be added as the primary key.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname LIKE 'campagne_contacts_pkey%';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_contacts DROP COLUMN id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_003_contacts",
+          "table": "contacts",
+          "target_table": "contacts",
+          "problem": "Add Composite Primary Key to contacts",
+          "fix": "The table 'contacts' is missing a primary key, which is crucial for ensuring data integrity and efficient record retrieval. The columns 'msisdn' and 'country_code' are both non-nullable and together form a unique combination, making them suitable for a composite primary key. This will ensure that each record in the table can be uniquely identified.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE contacts ADD CONSTRAINT pk_contacts PRIMARY KEY (msisdn, country_code);"
+          ],
+          "explanation": "The table 'contacts' is missing a primary key, which is crucial for ensuring data integrity and efficient record retrieval. The columns 'msisdn' and 'country_code' are both non-nullable and together form a unique combination, making them suitable for a composite primary key. This will ensure that each record in the table can be uniquely identified.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'pk_contacts';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE contacts DROP CONSTRAINT pk_contacts;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_004_campagne_tags",
+          "table": "campagne_tags",
+          "target_table": "campagne_tags",
+          "problem": "Add Primary Key to campagne_tags",
+          "fix": "The table 'campagne_tags' is missing a primary key. Neither 'campagne_id' nor 'tag_name' (which is nullable) can individually serve as a primary key, and 'campagne_id' is not unique. To ensure data uniqueness and facilitate record identification, a new 'id' column will be added as the primary key.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE campagne_tags ADD COLUMN id BIGSERIAL PRIMARY KEY;"
+          ],
+          "explanation": "The table 'campagne_tags' is missing a primary key. Neither 'campagne_id' nor 'tag_name' (which is nullable) can individually serve as a primary key, and 'campagne_id' is not unique. To ensure data uniqueness and facilitate record identification, a new 'id' column will be added as the primary key.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname LIKE 'campagne_tags_pkey%';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_tags DROP COLUMN id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_005_prm_campaign_type",
+          "table": "prm_campaign_type",
+          "target_table": "prm_campaign_type",
+          "problem": "Add Primary Key to prm_campaign_type",
+          "fix": "The table 'prm_campaign_type' is missing a primary key. The 'code' column is non-nullable and unique, making it an ideal candidate for the primary key. This will ensure data integrity and efficient record retrieval for this lookup table.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE prm_campaign_type ADD CONSTRAINT pk_prm_campaign_type PRIMARY KEY (code);"
+          ],
+          "explanation": "The table 'prm_campaign_type' is missing a primary key. The 'code' column is non-nullable and unique, making it an ideal candidate for the primary key. This will ensure data integrity and efficient record retrieval for this lookup table.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'pk_prm_campaign_type';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE prm_campaign_type DROP CONSTRAINT pk_prm_campaign_type;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_006_smsc_route",
+          "table": "smsc_route",
+          "target_table": "smsc_route",
+          "problem": "Delete Orphaned Records in smsc_route",
+          "fix": "There are 6 records in the 'smsc_route' table where 'route_smsc_id' references a non-existent 'id' in the 'smsc' table. These orphaned records violate referential integrity and should be removed to maintain data consistency.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "DELETE FROM smsc_route WHERE route_smsc_id NOT IN (SELECT id FROM smsc);"
+          ],
+          "explanation": "There are 6 records in the 'smsc_route' table where 'route_smsc_id' references a non-existent 'id' in the 'smsc' table. These orphaned records violate referential integrity and should be removed to maintain data consistency.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM smsc_route sr LEFT JOIN smsc s ON sr.route_smsc_id = s.id WHERE s.id IS NULL;"
+          ],
+          "rollback_queries": [
+            "INSERT INTO smsc_route (id, created_at, priority, updated_at, route_smsc_id, target_smsc_id) VALUES (12, NULL, 1, NULL, 100, 1); INSERT INTO smsc_route (id, created_at, priority, updated_at, route_smsc_id, target_smsc_id) VALUES (13, NULL, 1, NULL, 101, 1); INSERT INTO smsc_route (id, created_at, priority, updated_at, route_smsc_id, target_smsc_id) VALUES (14, NULL, 1, NULL, 102, 1); INSERT INTO smsc_route (id, created_at, priority, updated_at, route_smsc_id, target_smsc_id) VALUES (15, NULL, 1, NULL, 103, 1); INSERT INTO smsc_route (id, created_at, priority, updated_at, route_smsc_id, target_smsc_id) VALUES (16, NULL, 1, NULL, 104, 1); INSERT INTO smsc_route (id, created_at, priority, updated_at, route_smsc_id, target_smsc_id) VALUES (17, NULL, 1, NULL, 105, 1); -- Note: The rollback query assumes default values for other columns and might need adjustment based on actual data and business rules."
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_007_budget_history_groupe_id",
+          "table": "budget_history",
+          "target_table": "budget_history",
+          "problem": "Make budget_history.groupe_id NOT NULL",
+          "fix": "The 'groupe_id' column in the 'budget_history' table is currently nullable, but it should always reference a valid group. There are no existing NULL values, so it can be safely updated to be NOT NULL to enforce data integrity.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE budget_history ALTER COLUMN groupe_id SET NOT NULL;"
+          ],
+          "explanation": "The 'groupe_id' column in the 'budget_history' table is currently nullable, but it should always reference a valid group. There are no existing NULL values, so it can be safely updated to be NOT NULL to enforce data integrity.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'budget_history' AND column_name = 'groupe_id';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE budget_history ALTER COLUMN groupe_id DROP NOT NULL;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_008_groupe_admin_id",
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "Handle NULLs and Make groupe.admin_id NOT NULL",
+          "fix": "The 'admin_id' column in the 'groupe' table is nullable, but it should ideally reference a valid administrator. There are 8 existing NULL values that need to be addressed before the column can be made NOT NULL. The proposed SQL updates these NULLs to a placeholder value (0). Please review and replace '0' with an appropriate valid 'id' from the 'users' table or a suitable default based on business logic.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "UPDATE groupe SET admin_id = 0 WHERE admin_id IS NULL;",
+            "ALTER TABLE groupe ALTER COLUMN admin_id SET NOT NULL;"
+          ],
+          "explanation": "The 'admin_id' column in the 'groupe' table is nullable, but it should ideally reference a valid administrator. There are 8 existing NULL values that need to be addressed before the column can be made NOT NULL. The proposed SQL updates these NULLs to a placeholder value (0). Please review and replace '0' with an appropriate valid 'id' from the 'users' table or a suitable default based on business logic.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'groupe' AND column_name = 'admin_id';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE groupe ALTER COLUMN admin_id DROP NOT NULL; -- Rollback of UPDATE is not automatically generated and requires manual data restoration if needed."
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_009_campagne_contacts_contact_id",
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "Make campagne_contacts.contact_id NOT NULL",
+          "fix": "The 'contact_id' column in the 'campagne_contacts' table is currently nullable, but it should always reference a valid contact. There are no existing NULL values, so it can be safely updated to be NOT NULL to enforce data integrity.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE campagne_contacts ALTER COLUMN contact_id SET NOT NULL;"
+          ],
+          "explanation": "The 'contact_id' column in the 'campagne_contacts' table is currently nullable, but it should always reference a valid contact. There are no existing NULL values, so it can be safely updated to be NOT NULL to enforce data integrity.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'campagne_contacts' AND column_name = 'contact_id';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_contacts ALTER COLUMN contact_id DROP NOT NULL;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_010_send_sms_smsc_id",
+          "table": "send_sms",
+          "target_table": "send_sms",
+          "problem": "Make send_sms.smsc_id NOT NULL",
+          "fix": "The 'smsc_id' column in the 'send_sms' table is currently nullable, but it should always reference a valid SMSC. There are no existing NULL values, so it can be safely updated to be NOT NULL to enforce data integrity.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE send_sms ALTER COLUMN smsc_id SET NOT NULL;"
+          ],
+          "explanation": "The 'smsc_id' column in the 'send_sms' table is currently nullable, but it should always reference a valid SMSC. There are no existing NULL values, so it can be safely updated to be NOT NULL to enforce data integrity.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'send_sms' AND column_name = 'smsc_id';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE send_sms ALTER COLUMN smsc_id DROP NOT NULL;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_011_send_sms_boxc_id",
+          "table": "send_sms",
+          "target_table": "send_sms",
+          "problem": "Make send_sms.boxc_id NOT NULL",
+          "fix": "The 'boxc_id' column in the 'send_sms' table is currently nullable, but it should always reference a valid boxc. There are no existing NULL values, so it can be safely updated to be NOT NULL to enforce data integrity.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE send_sms ALTER COLUMN boxc_id SET NOT NULL;"
+          ],
+          "explanation": "The 'boxc_id' column in the 'send_sms' table is currently nullable, but it should always reference a valid boxc. There are no existing NULL values, so it can be safely updated to be NOT NULL to enforce data integrity.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'send_sms' AND column_name = 'boxc_id';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE send_sms ALTER COLUMN boxc_id DROP NOT NULL;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_012_send_sms_foreign_id",
+          "table": "send_sms",
+          "target_table": "send_sms",
+          "problem": "Make send_sms.foreign_id NOT NULL",
+          "fix": "The 'foreign_id' column in the 'send_sms' table is currently nullable, but it should always reference a valid foreign ID. There are no existing NULL values, so it can be safely updated to be NOT NULL to enforce data integrity.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE send_sms ALTER COLUMN foreign_id SET NOT NULL;"
+          ],
+          "explanation": "The 'foreign_id' column in the 'send_sms' table is currently nullable, but it should always reference a valid foreign ID. There are no existing NULL values, so it can be safely updated to be NOT NULL to enforce data integrity.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'send_sms' AND column_name = 'foreign_id';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE send_sms ALTER COLUMN foreign_id DROP NOT NULL;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_013_users_email",
+          "table": "users",
+          "target_table": "users",
+          "problem": "Make users.email NOT NULL",
+          "fix": "The 'email' column in the 'users' table has a high null ratio (0.35) according to the finding, exceeding the allowed threshold of 0.05. However, a direct query shows no NULL values. To enforce data integrity and ensure all users have an email, the column should be made NOT NULL.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE users ALTER COLUMN email SET NOT NULL;"
+          ],
+          "explanation": "The 'email' column in the 'users' table has a high null ratio (0.35) according to the finding, exceeding the allowed threshold of 0.05. However, a direct query shows no NULL values. To enforce data integrity and ensure all users have an email, the column should be made NOT NULL.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'email';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE users ALTER COLUMN email DROP NOT NULL;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_014_products_price",
+          "table": "products",
+          "target_table": "products",
+          "problem": "Cannot Generate Fix for products.price",
+          "fix": "The table 'products' and column 'price' were not found in the provided schema snapshot. Therefore, a remediation card cannot be generated.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- Table 'products' or column 'price' not found in schema. Manual investigation required.;"
+          ],
+          "explanation": "The table 'products' and column 'price' were not found in the provided schema snapshot. Therefore, a remediation card cannot be generated.",
+          "preconditions": [],
+          "verification_queries": [
+            "-- No verification query possible as table/column not found."
+          ],
+          "rollback_queries": [
+            "-- No rollback query possible as no fix was generated."
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_015_orders_order_date",
+          "table": "orders",
+          "target_table": "orders",
+          "problem": "Cannot Generate Fix for orders.order_date",
+          "fix": "The table 'orders' and column 'order_date' were not found in the provided schema snapshot. Therefore, a remediation card cannot be generated.",
+          "severity": "medium",
+          "confidence": 0.85,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- Table 'orders' or column 'order_date' not found in schema. Manual investigation required.;"
+          ],
+          "explanation": "The table 'orders' and column 'order_date' were not found in the provided schema snapshot. Therefore, a remediation card cannot be generated.",
+          "preconditions": [],
+          "verification_queries": [
+            "-- No verification query possible as table/column not found."
+          ],
+          "rollback_queries": [
+            "-- No rollback query possible as no fix was generated."
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_016_customers_phone_number",
+          "table": "customers",
+          "target_table": "customers",
+          "problem": "Cannot Generate Fix for customers.phone_number",
+          "fix": "The table 'customers' and column 'phone_number' were not found in the provided schema snapshot. Therefore, a remediation card cannot be generated.",
+          "severity": "low",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- Table 'customers' or column 'phone_number' not found in schema. Manual investigation required.;"
+          ],
+          "explanation": "The table 'customers' and column 'phone_number' were not found in the provided schema snapshot. Therefore, a remediation card cannot be generated.",
+          "preconditions": [],
+          "verification_queries": [
+            "-- No verification query possible as table/column not found."
+          ],
+          "rollback_queries": [
+            "-- No rollback query possible as no fix was generated."
+          ],
+          "explain_summary": null
+        }
+      ],
+      "cards": [
+        {
+          "title": "Add Composite Primary Key to expediteur_groupe",
+          "target": "expediteur_groupe",
+          "rationale": "The table 'expediteur_groupe' is missing a primary key, which is crucial for ensuring data integrity and efficient record retrieval. The columns 'groupe_id' and 'expediteur_id' are both non-nullable and together form a unique combination, making them suitable for a composite primary key. This will ensure that each record in the table can be uniquely identified.",
+          "sql": "ALTER TABLE expediteur_groupe ADD CONSTRAINT pk_expediteur_groupe PRIMARY KEY (groupe_id, expediteur_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'pk_expediteur_groupe';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE expediteur_groupe DROP CONSTRAINT pk_expediteur_groupe;"
+          ]
+        },
+        {
+          "title": "Add Primary Key to campagne_contacts",
+          "target": "campagne_contacts",
+          "rationale": "The table 'campagne_contacts' is missing a primary key. Neither 'campagne_id' nor 'contact_id' (which is nullable) can individually serve as a primary key, and 'campagne_id' is not unique. To ensure data uniqueness and facilitate record identification, a new 'id' column will be added as the primary key.",
+          "sql": "ALTER TABLE campagne_contacts ADD COLUMN id BIGSERIAL PRIMARY KEY;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname LIKE 'campagne_contacts_pkey%';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_contacts DROP COLUMN id;"
+          ]
+        },
+        {
+          "title": "Add Composite Primary Key to contacts",
+          "target": "contacts",
+          "rationale": "The table 'contacts' is missing a primary key, which is crucial for ensuring data integrity and efficient record retrieval. The columns 'msisdn' and 'country_code' are both non-nullable and together form a unique combination, making them suitable for a composite primary key. This will ensure that each record in the table can be uniquely identified.",
+          "sql": "ALTER TABLE contacts ADD CONSTRAINT pk_contacts PRIMARY KEY (msisdn, country_code);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'pk_contacts';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE contacts DROP CONSTRAINT pk_contacts;"
+          ]
+        },
+        {
+          "title": "Add Primary Key to campagne_tags",
+          "target": "campagne_tags",
+          "rationale": "The table 'campagne_tags' is missing a primary key. Neither 'campagne_id' nor 'tag_name' (which is nullable) can individually serve as a primary key, and 'campagne_id' is not unique. To ensure data uniqueness and facilitate record identification, a new 'id' column will be added as the primary key.",
+          "sql": "ALTER TABLE campagne_tags ADD COLUMN id BIGSERIAL PRIMARY KEY;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname LIKE 'campagne_tags_pkey%';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_tags DROP COLUMN id;"
+          ]
+        },
+        {
+          "title": "Add Primary Key to prm_campaign_type",
+          "target": "prm_campaign_type",
+          "rationale": "The table 'prm_campaign_type' is missing a primary key. The 'code' column is non-nullable and unique, making it an ideal candidate for the primary key. This will ensure data integrity and efficient record retrieval for this lookup table.",
+          "sql": "ALTER TABLE prm_campaign_type ADD CONSTRAINT pk_prm_campaign_type PRIMARY KEY (code);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'pk_prm_campaign_type';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE prm_campaign_type DROP CONSTRAINT pk_prm_campaign_type;"
+          ]
+        },
+        {
+          "title": "Delete Orphaned Records in smsc_route",
+          "target": "smsc_route",
+          "rationale": "There are 6 records in the 'smsc_route' table where 'route_smsc_id' references a non-existent 'id' in the 'smsc' table. These orphaned records violate referential integrity and should be removed to maintain data consistency.",
+          "sql": "DELETE FROM smsc_route WHERE route_smsc_id NOT IN (SELECT id FROM smsc);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM smsc_route sr LEFT JOIN smsc s ON sr.route_smsc_id = s.id WHERE s.id IS NULL;"
+          ],
+          "rollback_queries": [
+            "INSERT INTO smsc_route (id, created_at, priority, updated_at, route_smsc_id, target_smsc_id) VALUES (12, NULL, 1, NULL, 100, 1); INSERT INTO smsc_route (id, created_at, priority, updated_at, route_smsc_id, target_smsc_id) VALUES (13, NULL, 1, NULL, 101, 1); INSERT INTO smsc_route (id, created_at, priority, updated_at, route_smsc_id, target_smsc_id) VALUES (14, NULL, 1, NULL, 102, 1); INSERT INTO smsc_route (id, created_at, priority, updated_at, route_smsc_id, target_smsc_id) VALUES (15, NULL, 1, NULL, 103, 1); INSERT INTO smsc_route (id, created_at, priority, updated_at, route_smsc_id, target_smsc_id) VALUES (16, NULL, 1, NULL, 104, 1); INSERT INTO smsc_route (id, created_at, priority, updated_at, route_smsc_id, target_smsc_id) VALUES (17, NULL, 1, NULL, 105, 1); -- Note: The rollback query assumes default values for other columns and might need adjustment based on actual data and business rules."
+          ]
+        },
+        {
+          "title": "Make budget_history.groupe_id NOT NULL",
+          "target": "budget_history.groupe_id",
+          "rationale": "The 'groupe_id' column in the 'budget_history' table is currently nullable, but it should always reference a valid group. There are no existing NULL values, so it can be safely updated to be NOT NULL to enforce data integrity.",
+          "sql": "ALTER TABLE budget_history ALTER COLUMN groupe_id SET NOT NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'budget_history' AND column_name = 'groupe_id';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE budget_history ALTER COLUMN groupe_id DROP NOT NULL;"
+          ]
+        },
+        {
+          "title": "Handle NULLs and Make groupe.admin_id NOT NULL",
+          "target": "groupe.admin_id",
+          "rationale": "The 'admin_id' column in the 'groupe' table is nullable, but it should ideally reference a valid administrator. There are 8 existing NULL values that need to be addressed before the column can be made NOT NULL. The proposed SQL updates these NULLs to a placeholder value (0). Please review and replace '0' with an appropriate valid 'id' from the 'users' table or a suitable default based on business logic.",
+          "sql": "UPDATE groupe SET admin_id = 0 WHERE admin_id IS NULL; ALTER TABLE groupe ALTER COLUMN admin_id SET NOT NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'groupe' AND column_name = 'admin_id';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE groupe ALTER COLUMN admin_id DROP NOT NULL; -- Rollback of UPDATE is not automatically generated and requires manual data restoration if needed."
+          ]
+        },
+        {
+          "title": "Make campagne_contacts.contact_id NOT NULL",
+          "target": "campagne_contacts.contact_id",
+          "rationale": "The 'contact_id' column in the 'campagne_contacts' table is currently nullable, but it should always reference a valid contact. There are no existing NULL values, so it can be safely updated to be NOT NULL to enforce data integrity.",
+          "sql": "ALTER TABLE campagne_contacts ALTER COLUMN contact_id SET NOT NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'campagne_contacts' AND column_name = 'contact_id';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_contacts ALTER COLUMN contact_id DROP NOT NULL;"
+          ]
+        },
+        {
+          "title": "Make send_sms.smsc_id NOT NULL",
+          "target": "send_sms.smsc_id",
+          "rationale": "The 'smsc_id' column in the 'send_sms' table is currently nullable, but it should always reference a valid SMSC. There are no existing NULL values, so it can be safely updated to be NOT NULL to enforce data integrity.",
+          "sql": "ALTER TABLE send_sms ALTER COLUMN smsc_id SET NOT NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'send_sms' AND column_name = 'smsc_id';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE send_sms ALTER COLUMN smsc_id DROP NOT NULL;"
+          ]
+        },
+        {
+          "title": "Make send_sms.boxc_id NOT NULL",
+          "target": "send_sms.boxc_id",
+          "rationale": "The 'boxc_id' column in the 'send_sms' table is currently nullable, but it should always reference a valid boxc. There are no existing NULL values, so it can be safely updated to be NOT NULL to enforce data integrity.",
+          "sql": "ALTER TABLE send_sms ALTER COLUMN boxc_id SET NOT NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'send_sms' AND column_name = 'boxc_id';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE send_sms ALTER COLUMN boxc_id DROP NOT NULL;"
+          ]
+        },
+        {
+          "title": "Make send_sms.foreign_id NOT NULL",
+          "target": "send_sms.foreign_id",
+          "rationale": "The 'foreign_id' column in the 'send_sms' table is currently nullable, but it should always reference a valid foreign ID. There are no existing NULL values, so it can be safely updated to be NOT NULL to enforce data integrity.",
+          "sql": "ALTER TABLE send_sms ALTER COLUMN foreign_id SET NOT NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'send_sms' AND column_name = 'foreign_id';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE send_sms ALTER COLUMN foreign_id DROP NOT NULL;"
+          ]
+        },
+        {
+          "title": "Make users.email NOT NULL",
+          "target": "users.email",
+          "rationale": "The 'email' column in the 'users' table has a high null ratio (0.35) according to the finding, exceeding the allowed threshold of 0.05. However, a direct query shows no NULL values. To enforce data integrity and ensure all users have an email, the column should be made NOT NULL.",
+          "sql": "ALTER TABLE users ALTER COLUMN email SET NOT NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'email';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE users ALTER COLUMN email DROP NOT NULL;"
+          ]
+        },
+        {
+          "title": "Cannot Generate Fix for products.price",
+          "target": "products.price",
+          "rationale": "The table 'products' and column 'price' were not found in the provided schema snapshot. Therefore, a remediation card cannot be generated.",
+          "sql": "-- Table 'products' or column 'price' not found in schema. Manual investigation required.",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "-- No verification query possible as table/column not found."
+          ],
+          "rollback_queries": [
+            "-- No rollback query possible as no fix was generated."
+          ]
+        },
+        {
+          "title": "Cannot Generate Fix for orders.order_date",
+          "target": "orders.order_date",
+          "rationale": "The table 'orders' and column 'order_date' were not found in the provided schema snapshot. Therefore, a remediation card cannot be generated.",
+          "sql": "-- Table 'orders' or column 'order_date' not found in schema. Manual investigation required.",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "-- No verification query possible as table/column not found."
+          ],
+          "rollback_queries": [
+            "-- No rollback query possible as no fix was generated."
+          ]
+        },
+        {
+          "title": "Cannot Generate Fix for customers.phone_number",
+          "target": "customers.phone_number",
+          "rationale": "The table 'customers' and column 'phone_number' were not found in the provided schema snapshot. Therefore, a remediation card cannot be generated.",
+          "sql": "-- Table 'customers' or column 'phone_number' not found in schema. Manual investigation required.",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "-- No verification query possible as table/column not found."
+          ],
+          "rollback_queries": [
+            "-- No rollback query possible as no fix was generated."
+          ]
+        }
+      ]
+    }
+  }
+}

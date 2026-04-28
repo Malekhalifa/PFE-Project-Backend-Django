@@ -44,7 +44,7 @@ backend-django/
 - `api/views.py`: HTTP contract layer
 - `api/db.py`: PostgreSQL persistence adapter for jobs/results/chat/guidelines
 - `tasks/postgres_tasks.py`: async orchestration lifecycle and status updates
-- `agents/validation_team.py`: sequential multi-agent validation pipeline
+- `agents/validation.py`: sequential multi-agent validation pipeline
 - `agents/query_executor_agent.py`: isolated transactional execution of accepted fix queries
 
 ## 4. Persistence and Data Model
@@ -117,25 +117,31 @@ Job lifecycle pattern:
 
 ## 7. PostgreSQL Agentic Validation Pipeline
 
-Production orchestrator: `agents/validation_team.py`.
+Production orchestrator: `agents/validation.py`.
 
-The runtime pipeline is sequential and guideline-driven:
+The runtime pipeline is strictly sequential:
 
-1. `running_guideline_gen_schema`
-2. `running_schema`
-3. `running_guideline_gen_column`
-4. `running_column`
-5. `running_guideline_gen_row_level`
-6. `running_row_level`
-7. `running_guideline_gen_cross_row`
-8. `running_cross_row`
-9. `running_guideline_gen_fix_planner`
-10. `running_fix_planner`
+1. `running_schema`
+2. `running_column`
+3. `running_row_level`
+4. `running_cross_row`
+5. `running_fix_planner`
+
+### 7.1 Hybrid Signal-Based Architecture
+
+The validation pipeline utilizes a **Hybrid Signal-Based Architecture** to ensure predictable AI performance, minimize token cost, and prevent LLM hallucinations. 
+
+Instead of agents passing massive strings of raw data arrays and verbose JSON explanations to one another, the pipeline strictly standardizes on `ValidationSignal` objects.
+
+Key principles of this architecture:
+- **Metric Aggregation over Raw Rows**: Native PostgreSQL features are used to compute numerical `metrics` (e.g., null ratios, outlier counts) via the `execute_pg_query` tool, rather than having the LLM guess them from row sampling `SELECT *` dumps.
+- **SQL Predicate Delivery**: Each signal structurally maps out the exact SQL `predicate` (WHERE clause) that isolates the problem. The Data Fix Planner inherently trusts these predicates to template targeted `UPDATE` fixes.
+- **Predicate Verification Safety**: Before the Data Fix Planner creates a fix card, it actively verifies the upstream signals' predicates using an `EXPLAIN` or read-only `COUNT(*)` dry-run.
+- **Minimal Context Sampling**: To retain the ability to diagnose multi-field semantic errors, signals may include a `context_samples` attribute constrained to an absolute maximum of 3 rows.
 
 Key implementation facts:
 
-- Each agent receives prior report context (`prior_reports` chain).
-- Guideline text is persisted per job in `JobGuideline`.
+- Each agent receives the prior reports' `signals` chain as minimal JSON context.
 - Final analysis payload is saved in `AnalysisResult`.
 - Final pipeline report is also persisted in `reports/`.
 
@@ -231,7 +237,7 @@ python manage.py runserver 0.0.0.0:8000
 # 3) Celery worker
 cd backend-django
 source venv/bin/activate
-celery -A config worker -l info
+celery -A config worker -l info --concurrency=1 --prefetch-multiplier=1
 ```
 
 Optional developer playground:

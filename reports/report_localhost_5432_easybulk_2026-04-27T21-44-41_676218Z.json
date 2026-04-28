@@ -1,0 +1,1961 @@
+{
+  "pipeline_run_id": "5223be91-f823-402b-a9b2-d209df3f5c76",
+  "database_id": "localhost_5432_easybulk",
+  "llm_model": "gemini-2.5-flash",
+  "run_timestamp": "2026-04-27T21:44:41.676218Z",
+  "summary": {
+    "confidence_score": 75,
+    "data_quality_score": 34,
+    "final_fix_count": 28
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "5223be91-f823-402b-a9b2-d209df3f5c76",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T21:44:41.676218Z",
+      "agent": "Schema Integrity Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 33,
+        "items_passed": 22,
+        "items_flagged": 11,
+        "critical_issues": 5,
+        "high_issues": 0,
+        "medium_issues": 6,
+        "low_issues": 0,
+        "overall_quality_score": 0.0,
+        "overall_confidence": 0.8364,
+        "flagged_tables": [
+          "budget_history",
+          "campagne_contacts",
+          "campagne_tags",
+          "contacts",
+          "expediteur_groupe",
+          "groupe",
+          "prm_campaign_type",
+          "send_sms"
+        ]
+      },
+      "metrics": {
+        "validator": "schema",
+        "findings_count": 11
+      },
+      "findings": [
+        {
+          "table": "expediteur_groupe",
+          "column": null,
+          "entity": "expediteur_groupe",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "expediteur_groupe",
+            "columns": "groupe_id, expediteur_id",
+            "primary_key_required": true
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "missing pk",
+              "evidence": {
+                "table_name": "expediteur_groupe",
+                "columns": "groupe_id, expediteur_id",
+                "primary_key_required": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_contacts",
+          "column": null,
+          "entity": "campagne_contacts",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "campagne_contacts",
+            "columns": "campagne_id, contact_id",
+            "primary_key_required": true
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "missing pk",
+              "evidence": {
+                "table_name": "campagne_contacts",
+                "columns": "campagne_id, contact_id",
+                "primary_key_required": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "contacts",
+          "column": null,
+          "entity": "contacts",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "contacts",
+            "columns": "msisdn, country_code",
+            "primary_key_required": true
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "missing pk",
+              "evidence": {
+                "table_name": "contacts",
+                "columns": "msisdn, country_code",
+                "primary_key_required": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_tags",
+          "column": null,
+          "entity": "campagne_tags",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "campagne_tags",
+            "columns": "campagne_id, tag_name",
+            "primary_key_required": true
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "missing pk",
+              "evidence": {
+                "table_name": "campagne_tags",
+                "columns": "campagne_id, tag_name",
+                "primary_key_required": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "prm_campaign_type",
+          "column": null,
+          "entity": "prm_campaign_type",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "prm_campaign_type",
+            "columns": "code, value",
+            "primary_key_required": true
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "missing pk",
+              "evidence": {
+                "table_name": "prm_campaign_type",
+                "columns": "code, value",
+                "primary_key_required": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "budget_history",
+          "column": "groupe_id",
+          "entity": "budget_history.groupe_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "budget_history",
+            "column_name": "groupe_id",
+            "is_nullable": "YES",
+            "foreign_key_validation": true
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "nullable_fk",
+              "severity": "medium",
+              "description": "nullable fk",
+              "evidence": {
+                "table_name": "budget_history",
+                "column_name": "groupe_id",
+                "is_nullable": "YES",
+                "foreign_key_validation": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "entity": "groupe.admin_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "groupe",
+            "column_name": "admin_id",
+            "is_nullable": "YES",
+            "foreign_key_validation": true
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "nullable_fk",
+              "severity": "medium",
+              "description": "nullable fk",
+              "evidence": {
+                "table_name": "groupe",
+                "column_name": "admin_id",
+                "is_nullable": "YES",
+                "foreign_key_validation": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_contacts",
+          "column": "contact_id",
+          "entity": "campagne_contacts.contact_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "campagne_contacts",
+            "column_name": "contact_id",
+            "is_nullable": "YES",
+            "foreign_key_validation": true
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "nullable_fk",
+              "severity": "medium",
+              "description": "nullable fk",
+              "evidence": {
+                "table_name": "campagne_contacts",
+                "column_name": "contact_id",
+                "is_nullable": "YES",
+                "foreign_key_validation": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "send_sms",
+          "column": "smsc_id",
+          "entity": "send_sms.smsc_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "send_sms",
+            "column_name": "smsc_id",
+            "is_nullable": "YES",
+            "foreign_key_validation": true
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "nullable_fk",
+              "severity": "medium",
+              "description": "nullable fk",
+              "evidence": {
+                "table_name": "send_sms",
+                "column_name": "smsc_id",
+                "is_nullable": "YES",
+                "foreign_key_validation": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "send_sms",
+          "column": "boxc_id",
+          "entity": "send_sms.boxc_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "send_sms",
+            "column_name": "boxc_id",
+            "is_nullable": "YES",
+            "foreign_key_validation": true
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "nullable_fk",
+              "severity": "medium",
+              "description": "nullable fk",
+              "evidence": {
+                "table_name": "send_sms",
+                "column_name": "boxc_id",
+                "is_nullable": "YES",
+                "foreign_key_validation": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "send_sms",
+          "column": "id",
+          "entity": "send_sms.id",
+          "rule": "data_quality_risk",
+          "severity": "medium",
+          "confidence": 0.7,
+          "evidence": {
+            "table_name": "send_sms",
+            "column_name": "id",
+            "is_nullable": "YES",
+            "primary_key_required": true
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "data_quality_risk",
+              "severity": "medium",
+              "description": "data quality risk",
+              "evidence": {
+                "table_name": "send_sms",
+                "column_name": "id",
+                "is_nullable": "YES",
+                "primary_key_required": true
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": []
+    },
+    "column_validator": {
+      "pipeline_run_id": "5223be91-f823-402b-a9b2-d209df3f5c76",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T21:44:41.676218Z",
+      "agent": "Column Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 33,
+        "items_passed": 18,
+        "items_flagged": 15,
+        "critical_issues": 0,
+        "high_issues": 1,
+        "medium_issues": 14,
+        "low_issues": 0,
+        "overall_quality_score": 0.0,
+        "overall_confidence": 0.4,
+        "flagged_tables": [
+          "contacts",
+          "prm_status",
+          "sent_sms",
+          "smsc",
+          "user_contact"
+        ]
+      },
+      "metrics": {
+        "validator": "column",
+        "findings_count": 15
+      },
+      "findings": [
+        {
+          "table": "contacts",
+          "column": "msisdn",
+          "entity": "contacts.msisdn",
+          "rule": "duplicate_values",
+          "severity": "high",
+          "confidence": 0.4,
+          "evidence": {
+            "table_name": "contacts",
+            "column_name": "msisdn",
+            "reason": "Column matches unique_column_patterns but actual duplicate check could not be performed due to tool limitations.",
+            "unique_column_patterns": "msisdn"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "duplicate_values",
+              "severity": "high",
+              "description": "duplicate values",
+              "evidence": {
+                "table_name": "contacts",
+                "column_name": "msisdn",
+                "reason": "Column matches unique_column_patterns but actual duplicate check could not be performed due to tool limitations.",
+                "unique_column_patterns": "msisdn"
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact",
+          "column": "attribute1",
+          "entity": "user_contact.attribute1",
+          "rule": "high_null_ratio",
+          "severity": "medium",
+          "confidence": 0.4,
+          "evidence": {
+            "table_name": "user_contact",
+            "column_name": "attribute1",
+            "is_nullable": "YES",
+            "reason": "Column is nullable, but actual null ratio could not be calculated due to tool limitations."
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "medium",
+              "description": "high null ratio",
+              "evidence": {
+                "table_name": "user_contact",
+                "column_name": "attribute1",
+                "is_nullable": "YES",
+                "reason": "Column is nullable, but actual null ratio could not be calculated due to tool limitations."
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact",
+          "column": "attribute2",
+          "entity": "user_contact.attribute2",
+          "rule": "high_null_ratio",
+          "severity": "medium",
+          "confidence": 0.4,
+          "evidence": {
+            "table_name": "user_contact",
+            "column_name": "attribute2",
+            "is_nullable": "YES",
+            "reason": "Column is nullable, but actual null ratio could not be calculated due to tool limitations."
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "medium",
+              "description": "high null ratio",
+              "evidence": {
+                "table_name": "user_contact",
+                "column_name": "attribute2",
+                "is_nullable": "YES",
+                "reason": "Column is nullable, but actual null ratio could not be calculated due to tool limitations."
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact",
+          "column": "attribute3",
+          "entity": "user_contact.attribute3",
+          "rule": "high_null_ratio",
+          "severity": "medium",
+          "confidence": 0.4,
+          "evidence": {
+            "table_name": "user_contact",
+            "column_name": "attribute3",
+            "is_nullable": "YES",
+            "reason": "Column is nullable, but actual null ratio could not be calculated due to tool limitations."
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "medium",
+              "description": "high null ratio",
+              "evidence": {
+                "table_name": "user_contact",
+                "column_name": "attribute3",
+                "is_nullable": "YES",
+                "reason": "Column is nullable, but actual null ratio could not be calculated due to tool limitations."
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact",
+          "column": "date_created",
+          "entity": "user_contact.date_created",
+          "rule": "high_null_ratio",
+          "severity": "medium",
+          "confidence": 0.4,
+          "evidence": {
+            "table_name": "user_contact",
+            "column_name": "date_created",
+            "is_nullable": "YES",
+            "reason": "Column is nullable, but actual null ratio could not be calculated due to tool limitations."
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "medium",
+              "description": "high null ratio",
+              "evidence": {
+                "table_name": "user_contact",
+                "column_name": "date_created",
+                "is_nullable": "YES",
+                "reason": "Column is nullable, but actual null ratio could not be calculated due to tool limitations."
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact",
+          "column": "date_modified",
+          "entity": "user_contact.date_modified",
+          "rule": "high_null_ratio",
+          "severity": "medium",
+          "confidence": 0.4,
+          "evidence": {
+            "table_name": "user_contact",
+            "column_name": "date_modified",
+            "is_nullable": "YES",
+            "reason": "Column is nullable, but actual null ratio could not be calculated due to tool limitations."
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "medium",
+              "description": "high null ratio",
+              "evidence": {
+                "table_name": "user_contact",
+                "column_name": "date_modified",
+                "is_nullable": "YES",
+                "reason": "Column is nullable, but actual null ratio could not be calculated due to tool limitations."
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact",
+          "column": "membership_id",
+          "entity": "user_contact.membership_id",
+          "rule": "high_null_ratio",
+          "severity": "medium",
+          "confidence": 0.4,
+          "evidence": {
+            "table_name": "user_contact",
+            "column_name": "membership_id",
+            "is_nullable": "YES",
+            "reason": "Column is nullable, but actual null ratio could not be calculated due to tool limitations."
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "medium",
+              "description": "high null ratio",
+              "evidence": {
+                "table_name": "user_contact",
+                "column_name": "membership_id",
+                "is_nullable": "YES",
+                "reason": "Column is nullable, but actual null ratio could not be calculated due to tool limitations."
+              }
+            }
+          ]
+        },
+        {
+          "table": "sent_sms",
+          "column": "momt",
+          "entity": "sent_sms.momt",
+          "rule": "high_null_ratio",
+          "severity": "medium",
+          "confidence": 0.4,
+          "evidence": {
+            "table_name": "sent_sms",
+            "column_name": "momt",
+            "is_nullable": "YES",
+            "reason": "Column is nullable, but actual null ratio could not be calculated due to tool limitations."
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "medium",
+              "description": "high null ratio",
+              "evidence": {
+                "table_name": "sent_sms",
+                "column_name": "momt",
+                "is_nullable": "YES",
+                "reason": "Column is nullable, but actual null ratio could not be calculated due to tool limitations."
+              }
+            }
+          ]
+        },
+        {
+          "table": "sent_sms",
+          "column": "sender",
+          "entity": "sent_sms.sender",
+          "rule": "high_null_ratio",
+          "severity": "medium",
+          "confidence": 0.4,
+          "evidence": {
+            "table_name": "sent_sms",
+            "column_name": "sender",
+            "is_nullable": "YES",
+            "reason": "Column is nullable, but actual null ratio could not be calculated due to tool limitations."
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "medium",
+              "description": "high null ratio",
+              "evidence": {
+                "table_name": "sent_sms",
+                "column_name": "sender",
+                "is_nullable": "YES",
+                "reason": "Column is nullable, but actual null ratio could not be calculated due to tool limitations."
+              }
+            }
+          ]
+        },
+        {
+          "table": "sent_sms",
+          "column": "receiver",
+          "entity": "sent_sms.receiver",
+          "rule": "high_null_ratio",
+          "severity": "medium",
+          "confidence": 0.4,
+          "evidence": {
+            "table_name": "sent_sms",
+            "column_name": "receiver",
+            "is_nullable": "YES",
+            "reason": "Column is nullable, but actual null ratio could not be calculated due to tool limitations."
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "medium",
+              "description": "high null ratio",
+              "evidence": {
+                "table_name": "sent_sms",
+                "column_name": "receiver",
+                "is_nullable": "YES",
+                "reason": "Column is nullable, but actual null ratio could not be calculated due to tool limitations."
+              }
+            }
+          ]
+        },
+        {
+          "table": "sent_sms",
+          "column": "msgdata",
+          "entity": "sent_sms.msgdata",
+          "rule": "high_null_ratio",
+          "severity": "medium",
+          "confidence": 0.4,
+          "evidence": {
+            "table_name": "sent_sms",
+            "column_name": "msgdata",
+            "is_nullable": "YES",
+            "reason": "Column is nullable, but actual null ratio could not be calculated due to tool limitations."
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "medium",
+              "description": "high null ratio",
+              "evidence": {
+                "table_name": "sent_sms",
+                "column_name": "msgdata",
+                "is_nullable": "YES",
+                "reason": "Column is nullable, but actual null ratio could not be calculated due to tool limitations."
+              }
+            }
+          ]
+        },
+        {
+          "table": "smsc",
+          "column": "created_at",
+          "entity": "smsc.created_at",
+          "rule": "high_null_ratio",
+          "severity": "medium",
+          "confidence": 0.4,
+          "evidence": {
+            "table_name": "smsc",
+            "column_name": "created_at",
+            "is_nullable": "YES",
+            "reason": "Column is nullable, but actual null ratio could not be calculated due to tool limitations."
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "medium",
+              "description": "high null ratio",
+              "evidence": {
+                "table_name": "smsc",
+                "column_name": "created_at",
+                "is_nullable": "YES",
+                "reason": "Column is nullable, but actual null ratio could not be calculated due to tool limitations."
+              }
+            }
+          ]
+        },
+        {
+          "table": "smsc",
+          "column": "modified_at",
+          "entity": "smsc.modified_at",
+          "rule": "high_null_ratio",
+          "severity": "medium",
+          "confidence": 0.4,
+          "evidence": {
+            "table_name": "smsc",
+            "column_name": "modified_at",
+            "is_nullable": "YES",
+            "reason": "Column is nullable, but actual null ratio could not be calculated due to tool limitations."
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "medium",
+              "description": "high null ratio",
+              "evidence": {
+                "table_name": "smsc",
+                "column_name": "modified_at",
+                "is_nullable": "YES",
+                "reason": "Column is nullable, but actual null ratio could not be calculated due to tool limitations."
+              }
+            }
+          ]
+        },
+        {
+          "table": "smsc",
+          "column": "updated_at",
+          "entity": "smsc.updated_at",
+          "rule": "high_null_ratio",
+          "severity": "medium",
+          "confidence": 0.4,
+          "evidence": {
+            "table_name": "smsc",
+            "column_name": "updated_at",
+            "is_nullable": "YES",
+            "reason": "Column is nullable, but actual null ratio could not be calculated due to tool limitations."
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "medium",
+              "description": "high null ratio",
+              "evidence": {
+                "table_name": "smsc",
+                "column_name": "updated_at",
+                "is_nullable": "YES",
+                "reason": "Column is nullable, but actual null ratio could not be calculated due to tool limitations."
+              }
+            }
+          ]
+        },
+        {
+          "table": "prm_status",
+          "column": "value",
+          "entity": "prm_status.value",
+          "rule": "high_null_ratio",
+          "severity": "medium",
+          "confidence": 0.4,
+          "evidence": {
+            "table_name": "prm_status",
+            "column_name": "value",
+            "is_nullable": "YES",
+            "reason": "Column is nullable, but actual null ratio could not be calculated due to tool limitations."
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "medium",
+              "description": "high null ratio",
+              "evidence": {
+                "table_name": "prm_status",
+                "column_name": "value",
+                "is_nullable": "YES",
+                "reason": "Column is nullable, but actual null ratio could not be calculated due to tool limitations."
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": []
+    },
+    "row_level_validator": {
+      "pipeline_run_id": "5223be91-f823-402b-a9b2-d209df3f5c76",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T21:44:41.676218Z",
+      "agent": "Row Level Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 33,
+        "items_passed": 33,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "row",
+        "findings_count": 0
+      },
+      "findings": [],
+      "prior_reports": []
+    },
+    "cross_row_validator": {
+      "pipeline_run_id": "5223be91-f823-402b-a9b2-d209df3f5c76",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T21:44:41.676218Z",
+      "agent": "Cross Row Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 33,
+        "items_passed": 31,
+        "items_flagged": 2,
+        "critical_issues": 0,
+        "high_issues": 2,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 70.0,
+        "overall_confidence": 0.9,
+        "flagged_tables": [
+          "prm_organization",
+          "smsc_route"
+        ]
+      },
+      "metrics": {
+        "validator": "crossrow",
+        "findings_count": 2
+      },
+      "findings": [
+        {
+          "table": "prm_organization",
+          "column": "code",
+          "entity": "prm_organization.code",
+          "rule": "duplicate_unique_column",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "prm_organization",
+            "column_name": "code",
+            "duplicate_count": 5,
+            "sample_duplicates": "TRACEABILITY, CAMPAIGN_TYPE_CLASSIC, CAMPAIGN_TYPE_TRANSACTIONAL, URL_NOTIFICATION, MSISDN"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "duplicate_unique_column",
+              "severity": "high",
+              "description": "duplicate unique column",
+              "evidence": {
+                "table_name": "prm_organization",
+                "column_name": "code",
+                "duplicate_count": 5,
+                "sample_duplicates": "TRACEABILITY, CAMPAIGN_TYPE_CLASSIC, CAMPAIGN_TYPE_TRANSACTIONAL, URL_NOTIFICATION, MSISDN"
+              }
+            }
+          ]
+        },
+        {
+          "table": "smsc_route",
+          "column": "route_smsc_id",
+          "entity": "smsc_route.route_smsc_id",
+          "rule": "orphaned_foreign_key",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "source_table": "smsc_route",
+            "source_column": "route_smsc_id",
+            "target_table": "smsc",
+            "target_column": "id",
+            "orphaned_record_count": 6
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "orphaned_foreign_key",
+              "severity": "high",
+              "description": "orphaned foreign key",
+              "evidence": {
+                "source_table": "smsc_route",
+                "source_column": "route_smsc_id",
+                "target_table": "smsc",
+                "target_column": "id",
+                "orphaned_record_count": 6
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": []
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "5223be91-f823-402b-a9b2-d209df3f5c76",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T21:44:41.676218Z",
+      "agent": "Data Fix Planner",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 28,
+        "items_passed": 0,
+        "items_flagged": 28,
+        "critical_issues": 7,
+        "high_issues": 2,
+        "medium_issues": 19,
+        "low_issues": 0,
+        "overall_quality_score": 0.0,
+        "overall_confidence": 0.6321,
+        "flagged_tables": [
+          "budget_history",
+          "campagne_contacts",
+          "campagne_tags",
+          "contacts",
+          "expediteur_groupe",
+          "groupe",
+          "prm_campaign_type",
+          "prm_organization",
+          "prm_status",
+          "send_sms",
+          "sent_sms",
+          "smsc",
+          "smsc_route",
+          "user_contact"
+        ]
+      },
+      "metrics": {
+        "total_issues_received": 28,
+        "fixes_generated": 28
+      },
+      "findings": [
+        {
+          "id": "fix_001_expediteur_groupe",
+          "table": "expediteur_groupe",
+          "target_table": "expediteur_groupe",
+          "problem": "Add Primary Key to expediteur_groupe",
+          "fix": "The table `expediteur_groupe` is missing a primary key, which is required by domain rules. A primary key ensures data integrity and uniqueness for each record. The columns `groupe_id` and `expediteur_id` can form a composite primary key.",
+          "severity": "critical",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE expediteur_groupe ADD PRIMARY KEY (groupe_id, expediteur_id);"
+          ],
+          "explanation": "The table `expediteur_groupe` is missing a primary key, which is required by domain rules. A primary key ensures data integrity and uniqueness for each record. The columns `groupe_id` and `expediteur_id` can form a composite primary key.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'expediteur_groupe'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE expediteur_groupe DROP CONSTRAINT expediteur_groupe_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_002_campagne_contacts",
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "Add Primary Key to campagne_contacts",
+          "fix": "The table `campagne_contacts` is missing a primary key, which is required by domain rules. A primary key ensures data integrity and uniqueness for each record. The columns `campagne_id` and `contact_id` can form a composite primary key.",
+          "severity": "critical",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE campagne_contacts ADD PRIMARY KEY (campagne_id, contact_id);"
+          ],
+          "explanation": "The table `campagne_contacts` is missing a primary key, which is required by domain rules. A primary key ensures data integrity and uniqueness for each record. The columns `campagne_id` and `contact_id` can form a composite primary key.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'campagne_contacts'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_contacts DROP CONSTRAINT campagne_contacts_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_003_contacts",
+          "table": "contacts",
+          "target_table": "contacts",
+          "problem": "Add Primary Key to contacts",
+          "fix": "The table `contacts` is missing a primary key, which is required by domain rules. A primary key ensures data integrity and uniqueness for each record. The columns `msisdn` and `country_code` can form a composite primary key.",
+          "severity": "critical",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE contacts ADD PRIMARY KEY (msisdn, country_code);"
+          ],
+          "explanation": "The table `contacts` is missing a primary key, which is required by domain rules. A primary key ensures data integrity and uniqueness for each record. The columns `msisdn` and `country_code` can form a composite primary key.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'contacts'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE contacts DROP CONSTRAINT contacts_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_004_campagne_tags",
+          "table": "campagne_tags",
+          "target_table": "campagne_tags",
+          "problem": "Add Primary Key to campagne_tags",
+          "fix": "The table `campagne_tags` is missing a primary key, which is required by domain rules. A primary key ensures data integrity and uniqueness for each record. The columns `campagne_id` and `tag_name` can form a composite primary key.",
+          "severity": "critical",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE campagne_tags ADD PRIMARY KEY (campagne_id, tag_name);"
+          ],
+          "explanation": "The table `campagne_tags` is missing a primary key, which is required by domain rules. A primary key ensures data integrity and uniqueness for each record. The columns `campagne_id` and `tag_name` can form a composite primary key.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'campagne_tags'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_tags DROP CONSTRAINT campagne_tags_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_005_prm_campaign_type",
+          "table": "prm_campaign_type",
+          "target_table": "prm_campaign_type",
+          "problem": "Add Primary Key to prm_campaign_type",
+          "fix": "The table `prm_campaign_type` is missing a primary key, which is required by domain rules. A primary key ensures data integrity and uniqueness for each record. The columns `code` and `value` can form a composite primary key.",
+          "severity": "critical",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE prm_campaign_type ADD PRIMARY KEY (code, value);"
+          ],
+          "explanation": "The table `prm_campaign_type` is missing a primary key, which is required by domain rules. A primary key ensures data integrity and uniqueness for each record. The columns `code` and `value` can form a composite primary key.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'prm_campaign_type'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE prm_campaign_type DROP CONSTRAINT prm_campaign_type_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_006_prm_organization",
+          "table": "prm_organization",
+          "target_table": "prm_organization",
+          "problem": "Remove Duplicate Values and Add Unique Constraint to prm_organization.code",
+          "fix": "The column `code` in table `prm_organization` contains duplicate values, violating data integrity. The domain rules specify that columns matching `*_code` patterns should be unique. There are 5 duplicate records found.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "DELETE FROM prm_organization WHERE id IN (SELECT id FROM (SELECT id, ROW_NUMBER() OVER (PARTITION BY code ORDER BY id) as rn FROM prm_organization) t WHERE t.rn > 1);",
+            "ALTER TABLE prm_organization ADD CONSTRAINT prm_organization_code_unique UNIQUE (code);"
+          ],
+          "explanation": "The column `code` in table `prm_organization` contains duplicate values, violating data integrity. The domain rules specify that columns matching `*_code` patterns should be unique. There are 5 duplicate records found.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM prm_organization GROUP BY code HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE prm_organization DROP CONSTRAINT prm_organization_code_unique;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_007_smsc_route",
+          "table": "smsc_route",
+          "target_table": "smsc_route",
+          "problem": "Remove Orphaned Records from smsc_route",
+          "fix": "The `route_smsc_id` column in `smsc_route` references `smsc.id`, but there are 6 records in `smsc_route` where `route_smsc_id` does not have a matching `id` in the `smsc` table. This violates referential integrity.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "DELETE FROM smsc_route WHERE route_smsc_id NOT IN (SELECT id FROM smsc);"
+          ],
+          "explanation": "The `route_smsc_id` column in `smsc_route` references `smsc.id`, but there are 6 records in `smsc_route` where `route_smsc_id` does not have a matching `id` in the `smsc` table. This violates referential integrity.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM smsc_route WHERE route_smsc_id NOT IN (SELECT id FROM smsc);"
+          ],
+          "rollback_queries": [
+            "This is a destructive operation. A direct SQL rollback is not possible without a prior backup."
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_008_contacts",
+          "table": "contacts",
+          "target_table": "contacts",
+          "problem": "Investigate Duplicate Values in contacts.msisdn",
+          "fix": "The `msisdn` column in the `contacts` table is identified as a unique column pattern by domain rules, but potential duplicate values exist. A full duplicate check could not be performed. Duplicates in this column can lead to data integrity issues.",
+          "severity": "critical",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT msisdn, COUNT(*) FROM contacts GROUP BY msisdn HAVING COUNT(*) > 1;"
+          ],
+          "explanation": "The `msisdn` column in the `contacts` table is identified as a unique column pattern by domain rules, but potential duplicate values exist. A full duplicate check could not be performed. Duplicates in this column can lead to data integrity issues.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT msisdn, COUNT(*) FROM contacts GROUP BY msisdn HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_009_budget_history",
+          "table": "budget_history",
+          "target_table": "budget_history",
+          "problem": "Review Nullable Foreign Key budget_history.groupe_id",
+          "fix": "The `groupe_id` column in `budget_history` is a foreign key to the `groupe` table but is nullable. This might indicate missing or inconsistent data, potentially violating business logic if every budget history record should always be associated with a group.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS null_count FROM budget_history WHERE groupe_id IS NULL;"
+          ],
+          "explanation": "The `groupe_id` column in `budget_history` is a foreign key to the `groupe` table but is nullable. This might indicate missing or inconsistent data, potentially violating business logic if every budget history record should always be associated with a group.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) AS null_count FROM budget_history WHERE groupe_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_010_groupe",
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "Review Nullable Foreign Key groupe.admin_id",
+          "fix": "The `admin_id` column in `groupe` is a foreign key but is nullable. This might indicate missing or inconsistent data, potentially violating business logic if every group should always have an administrator.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS null_count FROM groupe WHERE admin_id IS NULL;"
+          ],
+          "explanation": "The `admin_id` column in `groupe` is a foreign key but is nullable. This might indicate missing or inconsistent data, potentially violating business logic if every group should always have an administrator.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) AS null_count FROM groupe WHERE admin_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_011_campagne_contacts",
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "Review Nullable Foreign Key campagne_contacts.contact_id",
+          "fix": "The `contact_id` column in `campagne_contacts` is a foreign key but is nullable. This might indicate missing or inconsistent data, potentially violating business logic if every campaign contact entry should always be associated with a contact.",
+          "severity": "critical",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS null_count FROM campagne_contacts WHERE contact_id IS NULL;"
+          ],
+          "explanation": "The `contact_id` column in `campagne_contacts` is a foreign key but is nullable. This might indicate missing or inconsistent data, potentially violating business logic if every campaign contact entry should always be associated with a contact.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) AS null_count FROM campagne_contacts WHERE contact_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_012_send_sms",
+          "table": "send_sms",
+          "target_table": "send_sms",
+          "problem": "Review Nullable Foreign Key send_sms.smsc_id",
+          "fix": "The `smsc_id` column in `send_sms` is a foreign key but is nullable. This might indicate missing or inconsistent data, potentially violating business logic if every sent SMS should always be associated with an SMSC.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS null_count FROM send_sms WHERE smsc_id IS NULL;"
+          ],
+          "explanation": "The `smsc_id` column in `send_sms` is a foreign key but is nullable. This might indicate missing or inconsistent data, potentially violating business logic if every sent SMS should always be associated with an SMSC.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) AS null_count FROM send_sms WHERE smsc_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_013_send_sms",
+          "table": "send_sms",
+          "target_table": "send_sms",
+          "problem": "Review Nullable Foreign Key send_sms.boxc_id",
+          "fix": "The `boxc_id` column in `send_sms` is a foreign key but is nullable. This might indicate missing or inconsistent data, potentially violating business logic if every sent SMS should always be associated with a boxc.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS null_count FROM send_sms WHERE boxc_id IS NULL;"
+          ],
+          "explanation": "The `boxc_id` column in `send_sms` is a foreign key but is nullable. This might indicate missing or inconsistent data, potentially violating business logic if every sent SMS should always be associated with a boxc.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) AS null_count FROM send_sms WHERE boxc_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_014_send_sms",
+          "table": "send_sms",
+          "target_table": "send_sms",
+          "problem": "Review Nullable Column send_sms.id",
+          "fix": "The `id` column in `send_sms` is nullable, which is a data quality risk, especially if this column is intended to be a unique identifier or part of a primary key. Primary keys are required to be NOT NULL.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS null_count FROM send_sms WHERE id IS NULL;"
+          ],
+          "explanation": "The `id` column in `send_sms` is nullable, which is a data quality risk, especially if this column is intended to be a unique identifier or part of a primary key. Primary keys are required to be NOT NULL.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) AS null_count FROM send_sms WHERE id IS NULL;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_015_user_contact",
+          "table": "user_contact",
+          "target_table": "user_contact",
+          "problem": "Review High Null Ratio in user_contact.attribute1",
+          "fix": "The column `attribute1` in table `user_contact` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "severity": "medium",
+          "confidence": 0.4,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS total_rows, COUNT(*) FILTER (WHERE attribute1 IS NULL) AS null_rows FROM user_contact;"
+          ],
+          "explanation": "The column `attribute1` in table `user_contact` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FILTER (WHERE attribute1 IS NULL) AS null_rows FROM user_contact;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_016_user_contact",
+          "table": "user_contact",
+          "target_table": "user_contact",
+          "problem": "Review High Null Ratio in user_contact.attribute2",
+          "fix": "The column `attribute2` in table `user_contact` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "severity": "medium",
+          "confidence": 0.4,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS total_rows, COUNT(*) FILTER (WHERE attribute2 IS NULL) AS null_rows FROM user_contact;"
+          ],
+          "explanation": "The column `attribute2` in table `user_contact` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FILTER (WHERE attribute2 IS NULL) AS null_rows FROM user_contact;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_017_user_contact",
+          "table": "user_contact",
+          "target_table": "user_contact",
+          "problem": "Review High Null Ratio in user_contact.attribute3",
+          "fix": "The column `attribute3` in table `user_contact` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "severity": "medium",
+          "confidence": 0.4,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS total_rows, COUNT(*) FILTER (WHERE attribute3 IS NULL) AS null_rows FROM user_contact;"
+          ],
+          "explanation": "The column `attribute3` in table `user_contact` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FILTER (WHERE attribute3 IS NULL) AS null_rows FROM user_contact;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_018_user_contact",
+          "table": "user_contact",
+          "target_table": "user_contact",
+          "problem": "Review High Null Ratio in user_contact.date_created",
+          "fix": "The column `date_created` in table `user_contact` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "severity": "medium",
+          "confidence": 0.4,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS total_rows, COUNT(*) FILTER (WHERE date_created IS NULL) AS null_rows FROM user_contact;"
+          ],
+          "explanation": "The column `date_created` in table `user_contact` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FILTER (WHERE date_created IS NULL) AS null_rows FROM user_contact;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_019_user_contact",
+          "table": "user_contact",
+          "target_table": "user_contact",
+          "problem": "Review High Null Ratio in user_contact.date_modified",
+          "fix": "The column `date_modified` in table `user_contact` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "severity": "medium",
+          "confidence": 0.4,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS total_rows, COUNT(*) FILTER (WHERE date_modified IS NULL) AS null_rows FROM user_contact;"
+          ],
+          "explanation": "The column `date_modified` in table `user_contact` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FILTER (WHERE date_modified IS NULL) AS null_rows FROM user_contact;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_020_user_contact",
+          "table": "user_contact",
+          "target_table": "user_contact",
+          "problem": "Review High Null Ratio in user_contact.membership_id",
+          "fix": "The column `membership_id` in table `user_contact` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "severity": "medium",
+          "confidence": 0.4,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS total_rows, COUNT(*) FILTER (WHERE membership_id IS NULL) AS null_rows FROM user_contact;"
+          ],
+          "explanation": "The column `membership_id` in table `user_contact` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FILTER (WHERE membership_id IS NULL) AS null_rows FROM user_contact;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_021_sent_sms",
+          "table": "sent_sms",
+          "target_table": "sent_sms",
+          "problem": "Review High Null Ratio in sent_sms.momt",
+          "fix": "The column `momt` in table `sent_sms` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "severity": "medium",
+          "confidence": 0.4,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS total_rows, COUNT(*) FILTER (WHERE momt IS NULL) AS null_rows FROM sent_sms;"
+          ],
+          "explanation": "The column `momt` in table `sent_sms` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FILTER (WHERE momt IS NULL) AS null_rows FROM sent_sms;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_022_sent_sms",
+          "table": "sent_sms",
+          "target_table": "sent_sms",
+          "problem": "Review High Null Ratio in sent_sms.sender",
+          "fix": "The column `sender` in table `sent_sms` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "severity": "medium",
+          "confidence": 0.4,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS total_rows, COUNT(*) FILTER (WHERE sender IS NULL) AS null_rows FROM sent_sms;"
+          ],
+          "explanation": "The column `sender` in table `sent_sms` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FILTER (WHERE sender IS NULL) AS null_rows FROM sent_sms;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_023_sent_sms",
+          "table": "sent_sms",
+          "target_table": "sent_sms",
+          "problem": "Review High Null Ratio in sent_sms.receiver",
+          "fix": "The column `receiver` in table `sent_sms` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "severity": "medium",
+          "confidence": 0.4,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS total_rows, COUNT(*) FILTER (WHERE receiver IS NULL) AS null_rows FROM sent_sms;"
+          ],
+          "explanation": "The column `receiver` in table `sent_sms` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FILTER (WHERE receiver IS NULL) AS null_rows FROM sent_sms;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_024_sent_sms",
+          "table": "sent_sms",
+          "target_table": "sent_sms",
+          "problem": "Review High Null Ratio in sent_sms.msgdata",
+          "fix": "The column `msgdata` in table `sent_sms` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "severity": "medium",
+          "confidence": 0.4,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS total_rows, COUNT(*) FILTER (WHERE msgdata IS NULL) AS null_rows FROM sent_sms;"
+          ],
+          "explanation": "The column `msgdata` in table `sent_sms` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FILTER (WHERE msgdata IS NULL) AS null_rows FROM sent_sms;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_025_smsc",
+          "table": "smsc",
+          "target_table": "smsc",
+          "problem": "Review High Null Ratio in smsc.created_at",
+          "fix": "The column `created_at` in table `smsc` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "severity": "medium",
+          "confidence": 0.4,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS total_rows, COUNT(*) FILTER (WHERE created_at IS NULL) AS null_rows FROM smsc;"
+          ],
+          "explanation": "The column `created_at` in table `smsc` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FILTER (WHERE created_at IS NULL) AS null_rows FROM smsc;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_026_smsc",
+          "table": "smsc",
+          "target_table": "smsc",
+          "problem": "Review High Null Ratio in smsc.modified_at",
+          "fix": "The column `modified_at` in table `smsc` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "severity": "medium",
+          "confidence": 0.4,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS total_rows, COUNT(*) FILTER (WHERE modified_at IS NULL) AS null_rows FROM smsc;"
+          ],
+          "explanation": "The column `modified_at` in table `smsc` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FILTER (WHERE modified_at IS NULL) AS null_rows FROM smsc;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_027_smsc",
+          "table": "smsc",
+          "target_table": "smsc",
+          "problem": "Review High Null Ratio in smsc.updated_at",
+          "fix": "The column `updated_at` in table `smsc` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "severity": "medium",
+          "confidence": 0.4,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS total_rows, COUNT(*) FILTER (WHERE updated_at IS NULL) AS null_rows FROM smsc;"
+          ],
+          "explanation": "The column `updated_at` in table `smsc` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FILTER (WHERE updated_at IS NULL) AS null_rows FROM smsc;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_028_prm_status",
+          "table": "prm_status",
+          "target_table": "prm_status",
+          "problem": "Review High Null Ratio in prm_status.value",
+          "fix": "The column `value` in table `prm_status` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "severity": "medium",
+          "confidence": 0.4,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS total_rows, COUNT(*) FILTER (WHERE value IS NULL) AS null_rows FROM prm_status;"
+          ],
+          "explanation": "The column `value` in table `prm_status` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FILTER (WHERE value IS NULL) AS null_rows FROM prm_status;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ],
+          "explain_summary": null
+        }
+      ],
+      "cards": [
+        {
+          "title": "Add Primary Key to expediteur_groupe",
+          "target": "expediteur_groupe",
+          "rationale": "The table `expediteur_groupe` is missing a primary key, which is required by domain rules. A primary key ensures data integrity and uniqueness for each record. The columns `groupe_id` and `expediteur_id` can form a composite primary key.",
+          "sql": "ALTER TABLE expediteur_groupe ADD PRIMARY KEY (groupe_id, expediteur_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'expediteur_groupe'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE expediteur_groupe DROP CONSTRAINT expediteur_groupe_pkey;"
+          ]
+        },
+        {
+          "title": "Add Primary Key to campagne_contacts",
+          "target": "campagne_contacts",
+          "rationale": "The table `campagne_contacts` is missing a primary key, which is required by domain rules. A primary key ensures data integrity and uniqueness for each record. The columns `campagne_id` and `contact_id` can form a composite primary key.",
+          "sql": "ALTER TABLE campagne_contacts ADD PRIMARY KEY (campagne_id, contact_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'campagne_contacts'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_contacts DROP CONSTRAINT campagne_contacts_pkey;"
+          ]
+        },
+        {
+          "title": "Add Primary Key to contacts",
+          "target": "contacts",
+          "rationale": "The table `contacts` is missing a primary key, which is required by domain rules. A primary key ensures data integrity and uniqueness for each record. The columns `msisdn` and `country_code` can form a composite primary key.",
+          "sql": "ALTER TABLE contacts ADD PRIMARY KEY (msisdn, country_code);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'contacts'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE contacts DROP CONSTRAINT contacts_pkey;"
+          ]
+        },
+        {
+          "title": "Add Primary Key to campagne_tags",
+          "target": "campagne_tags",
+          "rationale": "The table `campagne_tags` is missing a primary key, which is required by domain rules. A primary key ensures data integrity and uniqueness for each record. The columns `campagne_id` and `tag_name` can form a composite primary key.",
+          "sql": "ALTER TABLE campagne_tags ADD PRIMARY KEY (campagne_id, tag_name);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'campagne_tags'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_tags DROP CONSTRAINT campagne_tags_pkey;"
+          ]
+        },
+        {
+          "title": "Add Primary Key to prm_campaign_type",
+          "target": "prm_campaign_type",
+          "rationale": "The table `prm_campaign_type` is missing a primary key, which is required by domain rules. A primary key ensures data integrity and uniqueness for each record. The columns `code` and `value` can form a composite primary key.",
+          "sql": "ALTER TABLE prm_campaign_type ADD PRIMARY KEY (code, value);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'prm_campaign_type'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE prm_campaign_type DROP CONSTRAINT prm_campaign_type_pkey;"
+          ]
+        },
+        {
+          "title": "Remove Duplicate Values and Add Unique Constraint to prm_organization.code",
+          "target": "prm_organization",
+          "rationale": "The column `code` in table `prm_organization` contains duplicate values, violating data integrity. The domain rules specify that columns matching `*_code` patterns should be unique. There are 5 duplicate records found.",
+          "sql": "DELETE FROM prm_organization WHERE id IN (SELECT id FROM (SELECT id, ROW_NUMBER() OVER (PARTITION BY code ORDER BY id) as rn FROM prm_organization) t WHERE t.rn > 1); ALTER TABLE prm_organization ADD CONSTRAINT prm_organization_code_unique UNIQUE (code);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM prm_organization GROUP BY code HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE prm_organization DROP CONSTRAINT prm_organization_code_unique;"
+          ]
+        },
+        {
+          "title": "Remove Orphaned Records from smsc_route",
+          "target": "smsc_route",
+          "rationale": "The `route_smsc_id` column in `smsc_route` references `smsc.id`, but there are 6 records in `smsc_route` where `route_smsc_id` does not have a matching `id` in the `smsc` table. This violates referential integrity.",
+          "sql": "DELETE FROM smsc_route WHERE route_smsc_id NOT IN (SELECT id FROM smsc);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM smsc_route WHERE route_smsc_id NOT IN (SELECT id FROM smsc);"
+          ],
+          "rollback_queries": [
+            "This is a destructive operation. A direct SQL rollback is not possible without a prior backup."
+          ]
+        },
+        {
+          "title": "Investigate Duplicate Values in contacts.msisdn",
+          "target": "contacts",
+          "rationale": "The `msisdn` column in the `contacts` table is identified as a unique column pattern by domain rules, but potential duplicate values exist. A full duplicate check could not be performed. Duplicates in this column can lead to data integrity issues.",
+          "sql": "SELECT msisdn, COUNT(*) FROM contacts GROUP BY msisdn HAVING COUNT(*) > 1;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT msisdn, COUNT(*) FROM contacts GROUP BY msisdn HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ]
+        },
+        {
+          "title": "Review Nullable Foreign Key budget_history.groupe_id",
+          "target": "budget_history",
+          "rationale": "The `groupe_id` column in `budget_history` is a foreign key to the `groupe` table but is nullable. This might indicate missing or inconsistent data, potentially violating business logic if every budget history record should always be associated with a group.",
+          "sql": "SELECT COUNT(*) AS null_count FROM budget_history WHERE groupe_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) AS null_count FROM budget_history WHERE groupe_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ]
+        },
+        {
+          "title": "Review Nullable Foreign Key groupe.admin_id",
+          "target": "groupe",
+          "rationale": "The `admin_id` column in `groupe` is a foreign key but is nullable. This might indicate missing or inconsistent data, potentially violating business logic if every group should always have an administrator.",
+          "sql": "SELECT COUNT(*) AS null_count FROM groupe WHERE admin_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) AS null_count FROM groupe WHERE admin_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ]
+        },
+        {
+          "title": "Review Nullable Foreign Key campagne_contacts.contact_id",
+          "target": "campagne_contacts",
+          "rationale": "The `contact_id` column in `campagne_contacts` is a foreign key but is nullable. This might indicate missing or inconsistent data, potentially violating business logic if every campaign contact entry should always be associated with a contact.",
+          "sql": "SELECT COUNT(*) AS null_count FROM campagne_contacts WHERE contact_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) AS null_count FROM campagne_contacts WHERE contact_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ]
+        },
+        {
+          "title": "Review Nullable Foreign Key send_sms.smsc_id",
+          "target": "send_sms",
+          "rationale": "The `smsc_id` column in `send_sms` is a foreign key but is nullable. This might indicate missing or inconsistent data, potentially violating business logic if every sent SMS should always be associated with an SMSC.",
+          "sql": "SELECT COUNT(*) AS null_count FROM send_sms WHERE smsc_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) AS null_count FROM send_sms WHERE smsc_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ]
+        },
+        {
+          "title": "Review Nullable Foreign Key send_sms.boxc_id",
+          "target": "send_sms",
+          "rationale": "The `boxc_id` column in `send_sms` is a foreign key but is nullable. This might indicate missing or inconsistent data, potentially violating business logic if every sent SMS should always be associated with a boxc.",
+          "sql": "SELECT COUNT(*) AS null_count FROM send_sms WHERE boxc_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) AS null_count FROM send_sms WHERE boxc_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ]
+        },
+        {
+          "title": "Review Nullable Column send_sms.id",
+          "target": "send_sms",
+          "rationale": "The `id` column in `send_sms` is nullable, which is a data quality risk, especially if this column is intended to be a unique identifier or part of a primary key. Primary keys are required to be NOT NULL.",
+          "sql": "SELECT COUNT(*) AS null_count FROM send_sms WHERE id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) AS null_count FROM send_sms WHERE id IS NULL;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ]
+        },
+        {
+          "title": "Review High Null Ratio in user_contact.attribute1",
+          "target": "user_contact",
+          "rationale": "The column `attribute1` in table `user_contact` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "sql": "SELECT COUNT(*) AS total_rows, COUNT(*) FILTER (WHERE attribute1 IS NULL) AS null_rows FROM user_contact;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FILTER (WHERE attribute1 IS NULL) AS null_rows FROM user_contact;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ]
+        },
+        {
+          "title": "Review High Null Ratio in user_contact.attribute2",
+          "target": "user_contact",
+          "rationale": "The column `attribute2` in table `user_contact` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "sql": "SELECT COUNT(*) AS total_rows, COUNT(*) FILTER (WHERE attribute2 IS NULL) AS null_rows FROM user_contact;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FILTER (WHERE attribute2 IS NULL) AS null_rows FROM user_contact;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ]
+        },
+        {
+          "title": "Review High Null Ratio in user_contact.attribute3",
+          "target": "user_contact",
+          "rationale": "The column `attribute3` in table `user_contact` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "sql": "SELECT COUNT(*) AS total_rows, COUNT(*) FILTER (WHERE attribute3 IS NULL) AS null_rows FROM user_contact;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FILTER (WHERE attribute3 IS NULL) AS null_rows FROM user_contact;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ]
+        },
+        {
+          "title": "Review High Null Ratio in user_contact.date_created",
+          "target": "user_contact",
+          "rationale": "The column `date_created` in table `user_contact` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "sql": "SELECT COUNT(*) AS total_rows, COUNT(*) FILTER (WHERE date_created IS NULL) AS null_rows FROM user_contact;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FILTER (WHERE date_created IS NULL) AS null_rows FROM user_contact;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ]
+        },
+        {
+          "title": "Review High Null Ratio in user_contact.date_modified",
+          "target": "user_contact",
+          "rationale": "The column `date_modified` in table `user_contact` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "sql": "SELECT COUNT(*) AS total_rows, COUNT(*) FILTER (WHERE date_modified IS NULL) AS null_rows FROM user_contact;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FILTER (WHERE date_modified IS NULL) AS null_rows FROM user_contact;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ]
+        },
+        {
+          "title": "Review High Null Ratio in user_contact.membership_id",
+          "target": "user_contact",
+          "rationale": "The column `membership_id` in table `user_contact` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "sql": "SELECT COUNT(*) AS total_rows, COUNT(*) FILTER (WHERE membership_id IS NULL) AS null_rows FROM user_contact;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FILTER (WHERE membership_id IS NULL) AS null_rows FROM user_contact;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ]
+        },
+        {
+          "title": "Review High Null Ratio in sent_sms.momt",
+          "target": "sent_sms",
+          "rationale": "The column `momt` in table `sent_sms` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "sql": "SELECT COUNT(*) AS total_rows, COUNT(*) FILTER (WHERE momt IS NULL) AS null_rows FROM sent_sms;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FILTER (WHERE momt IS NULL) AS null_rows FROM sent_sms;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ]
+        },
+        {
+          "title": "Review High Null Ratio in sent_sms.sender",
+          "target": "sent_sms",
+          "rationale": "The column `sender` in table `sent_sms` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "sql": "SELECT COUNT(*) AS total_rows, COUNT(*) FILTER (WHERE sender IS NULL) AS null_rows FROM sent_sms;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FILTER (WHERE sender IS NULL) AS null_rows FROM sent_sms;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ]
+        },
+        {
+          "title": "Review High Null Ratio in sent_sms.receiver",
+          "target": "sent_sms",
+          "rationale": "The column `receiver` in table `sent_sms` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "sql": "SELECT COUNT(*) AS total_rows, COUNT(*) FILTER (WHERE receiver IS NULL) AS null_rows FROM sent_sms;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FILTER (WHERE receiver IS NULL) AS null_rows FROM sent_sms;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ]
+        },
+        {
+          "title": "Review High Null Ratio in sent_sms.msgdata",
+          "target": "sent_sms",
+          "rationale": "The column `msgdata` in table `sent_sms` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "sql": "SELECT COUNT(*) AS total_rows, COUNT(*) FILTER (WHERE msgdata IS NULL) AS null_rows FROM sent_sms;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FILTER (WHERE msgdata IS NULL) AS null_rows FROM sent_sms;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ]
+        },
+        {
+          "title": "Review High Null Ratio in smsc.created_at",
+          "target": "smsc",
+          "rationale": "The column `created_at` in table `smsc` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "sql": "SELECT COUNT(*) AS total_rows, COUNT(*) FILTER (WHERE created_at IS NULL) AS null_rows FROM smsc;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FILTER (WHERE created_at IS NULL) AS null_rows FROM smsc;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ]
+        },
+        {
+          "title": "Review High Null Ratio in smsc.modified_at",
+          "target": "smsc",
+          "rationale": "The column `modified_at` in table `smsc` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "sql": "SELECT COUNT(*) AS total_rows, COUNT(*) FILTER (WHERE modified_at IS NULL) AS null_rows FROM smsc;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FILTER (WHERE modified_at IS NULL) AS null_rows FROM smsc;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ]
+        },
+        {
+          "title": "Review High Null Ratio in smsc.updated_at",
+          "target": "smsc",
+          "rationale": "The column `updated_at` in table `smsc` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "sql": "SELECT COUNT(*) AS total_rows, COUNT(*) FILTER (WHERE updated_at IS NULL) AS null_rows FROM smsc;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FILTER (WHERE updated_at IS NULL) AS null_rows FROM smsc;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ]
+        },
+        {
+          "title": "Review High Null Ratio in prm_status.value",
+          "target": "prm_status",
+          "rationale": "The column `value` in table `prm_status` is nullable, and the actual null ratio could not be calculated. A high null ratio might indicate missing or irrelevant data, or that the column should potentially be `NOT NULL` if the data is always expected.",
+          "sql": "SELECT COUNT(*) AS total_rows, COUNT(*) FILTER (WHERE value IS NULL) AS null_rows FROM prm_status;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FILTER (WHERE value IS NULL) AS null_rows FROM prm_status;"
+          ],
+          "rollback_queries": [
+            "No direct rollback for a diagnostic query."
+          ]
+        }
+      ]
+    }
+  }
+}

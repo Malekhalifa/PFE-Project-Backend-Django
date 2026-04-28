@@ -1,0 +1,89 @@
+# QualityLab — Domain Rules Template
+# ---------------------------------------------------------------------------
+# This file is loaded fresh on every pipeline run by agents/rules.py.
+# Edit it without restarting the process — changes take effect immediately.
+#
+# Override path: set DOMAIN_RULES_PATH env var to point to a different file.
+# Per-run override: pass dependencies={"domain_rules": {...}} to workflow.run()
+# ---------------------------------------------------------------------------
+
+# ── Null tolerance ─────────────────────────────────────────────────────────
+# Maximum acceptable fraction of NULL values in any non-key column.
+# Findings with null_ratio above this threshold are flagged as violations.
+max_null_pct: 0.05   # 5 %
+
+# ── Naming convention ──────────────────────────────────────────────────────
+# Expected identifier casing for table and column names.
+# Accepted values: snake_case | camelCase | PascalCase
+naming_convention: snake_case
+
+# ── Row-count drift ────────────────────────────────────────────────────────
+# Maximum acceptable fractional change in row count versus the previous run.
+# Set to null to disable drift checks.
+max_row_count_drift_pct: 0.20   # 20 %
+
+# ── Severity threshold ─────────────────────────────────────────────────────
+# Minimum severity level to include in the final fix plan.
+# Accepted values: low | medium | high | critical
+allowed_severity_threshold: low
+
+# ── Key integrity ──────────────────────────────────────────────────────────
+primary_key_required: true
+foreign_key_validation: true
+
+# ── Unique column patterns ─────────────────────────────────────────────────
+# Column name patterns that must be globally unique within their table.
+# Supports exact names and simple glob-style suffixes (e.g. *_code).
+unique_column_patterns:
+  - email
+  - msisdn
+  - reference
+  - "*_code"
+
+# ── Excluded tables ─────────────────────────────────────────────────────────
+# Tables matching these glob patterns are completely excluded from all agents.
+# They will not appear in the schema snapshot, receive no findings, and generate
+# no fix cards. Use this for ORM-managed tables (Hibernate Envers audit tables,
+# migration state tables, framework internals) that must not be analyzed.
+excluded_tables:
+  - "*_aud"
+
+# ── Cardinality suppression ─────────────────────────────────────────────────
+# Skip low_cardinality and categorical_drift findings for tables with fewer
+# rows than this threshold — small lookup/reference tables are expected to
+# have low cardinality by design.
+min_rows_for_cardinality: 100
+
+# ── Lookup / reference table patterns ──────────────────────────────────────
+# Tables matching these patterns are reference/lookup tables where low
+# cardinality is intentional. The column validator will not flag them.
+lookup_table_patterns:
+  - "prm_*"
+  - "*_status"
+  - "*_type"
+  - "*_permission"
+
+# ── Columns excluded from low-cardinality checks ───────────────────────────
+# Columns with inherently bounded value sets where low cardinality is expected
+# by domain design. Add column name patterns (exact or glob).
+excluded_low_cardinality_columns:
+  - "country_code"
+  - "country"
+  - "currency_code"
+  - "language_code"
+  - "timezone"
+  - "locale"
+
+# ── Duplicate-value column scope ───────────────────────────────────────────
+# The column validator should only flag duplicate values on columns whose
+# names match unique_column_patterns above. Personal name fields (first_name,
+# last_name, etc.) are explicitly excluded from duplicate checks.
+duplicate_check_scope: unique_columns_only
+
+# ── Custom business rules ──────────────────────────────────────────────────
+# Free-form rules injected verbatim into agent instructions.
+# Each entry is a plain-English sentence the agents will enforce.
+custom_rules: []
+# Examples:
+#   - "Orders with status='shipped' must have a non-null shipped_at timestamp."
+#   - "The 'amount' column in the 'invoices' table must be > 0."

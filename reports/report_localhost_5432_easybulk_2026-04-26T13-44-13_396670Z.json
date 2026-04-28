@@ -1,0 +1,268 @@
+{
+  "pipeline_run_id": "2bdde03c-b285-4d0d-99d7-0effb2f77401",
+  "database_id": "localhost_5432_easybulk",
+  "llm_model": "gemini-2.5-flash",
+  "run_timestamp": "2026-04-26T13:44:13.396670Z",
+  "summary": {
+    "confidence_score": 94,
+    "data_quality_score": 94,
+    "final_fix_count": 1
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "2bdde03c-b285-4d0d-99d7-0effb2f77401",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-26T13:44:13.396670Z",
+      "agent": "Schema Integrity Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 2,
+        "items_passed": 0,
+        "items_flagged": 2,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 1,
+        "low_issues": 1,
+        "overall_quality_score": 89.0,
+        "overall_confidence": 0.7,
+        "flagged_tables": [
+          "budget_history",
+          "campaign_schedule"
+        ]
+      },
+      "metrics": {
+        "validator": "schema",
+        "findings_count": 2
+      },
+      "findings": [
+        {
+          "table": "budget_history",
+          "column": "groupe_id",
+          "entity": "budget_history.groupe_id",
+          "rule": "nullable_foreign_key",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "is_nullable": "YES",
+            "column_type": "integer",
+            "table_description": "describe_table('budget_history')"
+          },
+          "remediation_hint": "Review the business logic for `budget_history.groupe_id`. If a `groupe` is always expected for a `budget_history` entry, consider making this column `NOT NULL` and enforcing a foreign key constraint. If it's an optional relationship, ensure application logic handles null values gracefully.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key",
+              "severity": "medium",
+              "description": "Review the business logic for `budget_history.groupe_id`. If a `groupe` is always expected for a `budget_history` entry, consider making this column `NOT NULL` and enforcing a foreign key constraint. If it's an optional relationship, ensure application logic handles null values gracefully.",
+              "evidence": {
+                "is_nullable": "YES",
+                "column_type": "integer",
+                "table_description": "describe_table('budget_history')"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_schedule",
+          "column": "code",
+          "entity": "campaign_schedule.code",
+          "rule": "potential_unique_column",
+          "severity": "low",
+          "confidence": 0.6,
+          "evidence": {
+            "column_type": "character varying",
+            "is_nullable": "NO",
+            "table_description": "describe_table('campaign_schedule')"
+          },
+          "remediation_hint": "Verify if `campaign_schedule.code` is intended to be unique. If so, add a unique constraint to the column to prevent duplicate entries and ensure data integrity.",
+          "issues": [
+            {
+              "type": "potential_unique_column",
+              "severity": "low",
+              "description": "Verify if `campaign_schedule.code` is intended to be unique. If so, add a unique constraint to the column to prevent duplicate entries and ensure data integrity.",
+              "evidence": {
+                "column_type": "character varying",
+                "is_nullable": "NO",
+                "table_description": "describe_table('campaign_schedule')"
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": []
+    },
+    "column_validator": {
+      "pipeline_run_id": "2bdde03c-b285-4d0d-99d7-0effb2f77401",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-26T13:44:13.396670Z",
+      "agent": "Column Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 0,
+        "items_passed": 0,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "column",
+        "findings_count": 0
+      },
+      "findings": [],
+      "prior_reports": []
+    },
+    "row_level_validator": {
+      "pipeline_run_id": "2bdde03c-b285-4d0d-99d7-0effb2f77401",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-26T13:44:13.396670Z",
+      "agent": "Row Level Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 0,
+        "items_passed": 0,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "row",
+        "findings_count": 0
+      },
+      "findings": [],
+      "prior_reports": []
+    },
+    "cross_row_validator": {
+      "pipeline_run_id": "2bdde03c-b285-4d0d-99d7-0effb2f77401",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-26T13:44:13.396670Z",
+      "agent": "Cross Row Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 1,
+        "items_passed": 0,
+        "items_flagged": 1,
+        "critical_issues": 0,
+        "high_issues": 1,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 85.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": [
+          "prm_organization"
+        ]
+      },
+      "metrics": {
+        "validator": "crossrow",
+        "findings_count": 1
+      },
+      "findings": [
+        {
+          "table": "prm_organization",
+          "column": "code",
+          "entity": "prm_organization.code",
+          "rule": "duplicate_unique_field",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "query": "SELECT code, COUNT(*) FROM prm_organization GROUP BY code HAVING COUNT(*) > 1;",
+            "result": "code,count\nTRACEABILITY,3\nCAMPAIGN_TYPE_CLASSIC,3\nCAMPAIGN_TYPE_TRANSACTIONAL,3\nURL_NOTIFICATION,3\nMSISDN,3"
+          },
+          "remediation_hint": "The column `prm_organization.code` contains duplicate values, violating the implicit unique constraint suggested by the 'unique_column_patterns' domain rule. Add a unique constraint to this column to prevent future duplicates and investigate the source of existing duplicates to rectify the data.",
+          "issues": [
+            {
+              "type": "duplicate_unique_field",
+              "severity": "high",
+              "description": "The column `prm_organization.code` contains duplicate values, violating the implicit unique constraint suggested by the 'unique_column_patterns' domain rule. Add a unique constraint to this column to prevent future duplicates and investigate the source of existing duplicates to rectify the data.",
+              "evidence": {
+                "query": "SELECT code, COUNT(*) FROM prm_organization GROUP BY code HAVING COUNT(*) > 1;",
+                "result": "code,count\nTRACEABILITY,3\nCAMPAIGN_TYPE_CLASSIC,3\nCAMPAIGN_TYPE_TRANSACTIONAL,3\nURL_NOTIFICATION,3\nMSISDN,3"
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": []
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "2bdde03c-b285-4d0d-99d7-0effb2f77401",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-26T13:44:13.396670Z",
+      "agent": "Data Fix Planner",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 1,
+        "items_passed": 0,
+        "items_flagged": 1,
+        "critical_issues": 0,
+        "high_issues": 1,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 95.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": [
+          "prm_organization"
+        ]
+      },
+      "metrics": {
+        "total_issues_received": 1,
+        "fixes_generated": 1
+      },
+      "findings": [
+        {
+          "id": "fix_001_prm_organization_code",
+          "table": "prm_organization",
+          "target_table": "prm_organization",
+          "problem": "Remove duplicate values and add unique constraint to prm_organization.code",
+          "fix": "The `prm_organization.code` column contains duplicate values, violating the implicit unique constraint suggested by the 'unique_column_patterns' domain rule. This can lead to data integrity issues and unexpected behavior in applications relying on the uniqueness of this field. The remediation involves removing duplicate entries, keeping one instance for each 'code', and then enforcing a unique constraint to prevent future duplicates.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "WITH cte AS (SELECT id, ROW_NUMBER() OVER (PARTITION BY code ORDER BY id) as rn FROM prm_organization) DELETE FROM prm_organization WHERE id IN (SELECT id FROM cte WHERE rn > 1);",
+            "ALTER TABLE prm_organization ADD CONSTRAINT uq_prm_organization_code UNIQUE (code);"
+          ],
+          "explanation": "The `prm_organization.code` column contains duplicate values, violating the implicit unique constraint suggested by the 'unique_column_patterns' domain rule. This can lead to data integrity issues and unexpected behavior in applications relying on the uniqueness of this field. The remediation involves removing duplicate entries, keeping one instance for each 'code', and then enforcing a unique constraint to prevent future duplicates.",
+          "preconditions": [
+            "SELECT code, COUNT(*) FROM prm_organization GROUP BY code HAVING COUNT(*) > 1;"
+          ],
+          "verification_queries": [
+            "SELECT code, COUNT(*) FROM prm_organization GROUP BY code HAVING COUNT(*) > 1;",
+            "SELECT constraint_name, constraint_type FROM information_schema.table_constraints WHERE table_name = 'prm_organization' AND constraint_type = 'UNIQUE' AND constraint_name = 'uq_prm_organization_code';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE prm_organization DROP CONSTRAINT IF EXISTS uq_prm_organization_code;"
+          ],
+          "explain_summary": null
+        }
+      ],
+      "cards": [
+        {
+          "title": "Remove duplicate values and add unique constraint to prm_organization.code",
+          "target": "prm_organization.code",
+          "rationale": "The `prm_organization.code` column contains duplicate values, violating the implicit unique constraint suggested by the 'unique_column_patterns' domain rule. This can lead to data integrity issues and unexpected behavior in applications relying on the uniqueness of this field. The remediation involves removing duplicate entries, keeping one instance for each 'code', and then enforcing a unique constraint to prevent future duplicates.",
+          "sql": "WITH cte AS (SELECT id, ROW_NUMBER() OVER (PARTITION BY code ORDER BY id) as rn FROM prm_organization) DELETE FROM prm_organization WHERE id IN (SELECT id FROM cte WHERE rn > 1); ALTER TABLE prm_organization ADD CONSTRAINT uq_prm_organization_code UNIQUE (code);",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT code, COUNT(*) FROM prm_organization GROUP BY code HAVING COUNT(*) > 1;"
+          ],
+          "verification_queries": [
+            "SELECT code, COUNT(*) FROM prm_organization GROUP BY code HAVING COUNT(*) > 1;",
+            "SELECT constraint_name, constraint_type FROM information_schema.table_constraints WHERE table_name = 'prm_organization' AND constraint_type = 'UNIQUE' AND constraint_name = 'uq_prm_organization_code';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE prm_organization DROP CONSTRAINT IF EXISTS uq_prm_organization_code;"
+          ]
+        }
+      ]
+    }
+  }
+}

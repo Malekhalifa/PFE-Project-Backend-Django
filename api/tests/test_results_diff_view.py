@@ -25,22 +25,19 @@ class ResultsDiffViewTests(TestCase):
 
         self.previous_job = Job.objects.create(
             user=self.user,
-            file_name='PostgreSQL Connection',
-            file_path='postgres://<hidden>',
+            connection_string='postgresql://user:pass@localhost:5432/demo',
             status='completed',
             mode='agentic_postgres',
         )
         self.current_job = Job.objects.create(
             user=self.user,
-            file_name='PostgreSQL Connection',
-            file_path='postgres://<hidden>',
+            connection_string='postgresql://user:pass@localhost:5432/demo',
             status='completed',
             mode='agentic_postgres',
         )
         self.override_job = Job.objects.create(
             user=self.user,
-            file_name='PostgreSQL Connection',
-            file_path='postgres://<hidden>',
+            connection_string='postgresql://user:pass@localhost:5432/demo',
             status='completed',
             mode='agentic_postgres',
         )
@@ -119,4 +116,3 @@ class ResultsDiffViewTests(TestCase):
         self.assertEqual(response.data['previous_run']['job_id'], str(self.override_job.id))
         self.assertEqual(response.data['diff']['quality_score']['delta'], 21.0)
         self.assertEqual(response.data['diff']['flagged_tables']['resolved'], ['logs', 'orders'])
-

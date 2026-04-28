@@ -29,7 +29,7 @@ class JobDeleteSerializer(serializers.Serializer):
 
 
 class AnalyzePostgresSerializer(serializers.Serializer):
-    connection_string = serializers.CharField(required=True, allow_blank=False)
+    connection_string = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     domain_rules = serializers.ListField(required=False, default=list)
     llm_model = serializers.CharField(
         required=False,
@@ -38,6 +38,13 @@ class AnalyzePostgresSerializer(serializers.Serializer):
         default='gemini-2.0-flash',
         help_text=_LLM_MODEL_HINT,
     )
+    baseline_job_id = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    target_sandbox = serializers.BooleanField(required=False, default=False)
+
+    def validate(self, attrs):
+        if not attrs.get('connection_string') and not attrs.get('baseline_job_id'):
+            raise serializers.ValidationError("Either connection_string or baseline_job_id must be provided.")
+        return attrs
 
     def validate_llm_model(self, value: str) -> str:
         model_id = (value or '').strip()

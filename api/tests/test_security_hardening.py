@@ -28,8 +28,7 @@ class SecurityHardeningTests(TestCase):
         self.job = Job.objects.create(
             id=str(uuid.uuid4()),
             user_id=str(self.user.id),
-            file_name='dataset.csv',
-            file_path='/tmp/dataset.csv',
+            connection_string='postgresql://user:pass@localhost:5432/qualitylab',
             status='starting',
             mode='normal',
         )

@@ -1,94 +1,36 @@
-import json
 import os
 import unittest
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import django
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 django.setup()
 
-from agents.reporting import report_to_markdown, build_row_report
-from agents.validation_team import _parse_column_report, orchestrator_workflow
+from agents.reporting import report_to_markdown
+from agents.schemas import Finding, FixCard, FixPlan, ReducedFindings, ValidationReport
+from agents.validation import _merge_domain_rules, orchestrator_workflow
 
 
-class ValidationTeamPipelineTests(unittest.TestCase):
-    def test_build_row_report_caps_confidence_without_findings_evidence(self):
-        raw = json.dumps(
-            {
-                "findings": [],
-                "metrics": {
-                    "total_rows_analyzed": 13,
-                    "rows_with_issues": 0,
-                    "avg_row_quality_score": 100.0,
-                    "avg_row_confidence": 1.0,
-                },
-            }
+class ValidationWorkflowTests(unittest.TestCase):
+    def test_merge_domain_rules_appends_custom_rules_for_list_payloads(self):
+        merged = _merge_domain_rules(
+            [
+                "Emails must be lowercase.",
+                {"description": "Orders with status=shipped must have shipped_at."},
+            ]
         )
 
-        report = build_row_report(
-            raw,
-            pipeline_run_id="run_test_1",
-            database_id="db_test",
-            prior_reports=[],
+        self.assertEqual(merged["max_null_pct"], 0.05)
+        self.assertEqual(merged["naming_convention"], "snake_case")
+        self.assertEqual(
+            merged["custom_rules"],
+            [
+                "Emails must be lowercase.",
+                "Orders with status=shipped must have shipped_at.",
+            ],
         )
-
-        self.assertEqual(report["metrics"]["total_rows_analyzed"], 13)
-        self.assertEqual(report["metrics"]["avg_row_confidence"], 0.73)
-        self.assertEqual(report["summary"]["overall_confidence"], 0.73)
-        self.assertEqual(report.get("status"), "partial")
-        self.assertIn("row_validator_no_findings_or_execution_evidence", report.get("errors", []))
-
-    def test_parse_column_report_accepts_fenced_json(self):
-        raw = """```json
-{
-  "agent": "ColumnValidatorAgent",
-  "database_id": "db_1",
-  "run_timestamp": "2026-04-11T12:00:00Z",
-  "findings": [],
-  "summary": {
-    "total_items_analyzed": 0,
-    "items_passed": 0,
-    "items_flagged": 0,
-    "critical_issues": 0,
-    "high_issues": 0,
-    "medium_issues": 0,
-    "low_issues": 0,
-    "overall_quality_score": 100,
-    "overall_confidence": 1.0,
-    "flagged_tables": []
-  },
-  "metrics": {
-    "total_columns_analyzed": 0,
-    "duplicate_columns_found": 0,
-    "constant_columns_found": 0,
-    "high_null_ratio_columns": 0,
-    "low_cardinality_anomalies": 0,
-    "high_cardinality_anomalies": 0,
-    "semantic_mismatches": 0,
-    "domain_violations": 0,
-    "distribution_anomalies": 0,
-    "avg_column_quality_score": 100,
-    "avg_column_confidence": 1.0
-  },
-  "prior_reports": []
-}
-```"""
-        parsed, text = _parse_column_report(raw)
-
-        self.assertEqual(parsed["agent"], "ColumnValidatorAgent")
-        self.assertEqual(parsed["database_id"], "db_1")
-        self.assertIn("summary", parsed)
-        self.assertTrue(text.startswith("{"))
-
-    def test_parse_column_report_falls_back_on_invalid_json(self):
-        parsed, text = _parse_column_report("not-json")
-
-        self.assertEqual(parsed["agent"], "ColumnValidatorAgent")
-        self.assertEqual(parsed["error"], "invalid_column_validator_json")
-        self.assertIn("not-json", parsed["raw"])
-        self.assertIn("invalid_column_validator_json", text)
 
     def test_report_to_markdown_lists_all_findings(self):
         findings = []
@@ -131,629 +73,175 @@ class ValidationTeamPipelineTests(unittest.TestCase):
         self.assertIn("#### 25. users_24 [HIGH]", markdown)
         self.assertNotIn("... and", markdown)
 
-    @patch("services.report_service.save_final_pipeline_report")
-    @patch("agents.validation_team.DatabaseGuidelineGeneratorAgent")
-    @patch("agents.validation_team.Agent")
-    @patch("agents.validation_team.postgres_tool")
-    def test_pipeline_builds_chained_reports_and_metadata(
+    @patch("agents.validation.save_final_pipeline_report")
+    @patch("agents.validation.build_validation_workflow")
+    def test_orchestrator_workflow_preserves_legacy_bundle_shape(
         self,
-        mock_postgres_tool,
-        mock_agent_cls,
-        mock_generator_cls,
+        mock_build_workflow,
         mock_save_report,
     ):
-        generator = mock_generator_cls.return_value
-        generator.generate.side_effect = [
-            "schema-guidelines",
-            "column-guidelines",
-            "row-guidelines",
-            "cross-guidelines",
-            "fix-guidelines",
-        ]
+        captured: dict[str, object] = {}
 
-        mock_save_report.return_value = {
-            "report_file_path": "/tmp/report_localhost_5432_db.json",
-            "report_file_name": "report_localhost_5432_db.json",
-            "report_timestamp": "2026-04-11T12:05:00Z",
-            "report_database_id": "localhost_5432_db",
-        }
-
-        schema_payload = {
-            "findings": [
-                {
-                    "table": "users",
-                    "issues": [
-                        {
-                            "type": "missing_primary_key",
-                            "severity": "high",
-                            "description": "users has no PK",
-                        }
-                    ],
-                    "confidence": 0.88,
-                }
-            ],
-            "metrics": {
-                "total_tables": 2,
-                "total_columns": 7,
-                "tables_with_no_primary_key": 1,
-                "missing_foreign_keys": 0,
-                "constraint_violations": 0,
-                "type_mismatches": 0,
-                "nullable_violations": 0,
-            },
-        }
-
-        column_payload = {
-            "tables": [
-                {
-                    "table": "users",
-                    "columns": [
-                        {
-                            "column": "email",
-                            "quality_score": 70,
-                            "confidence": 0.82,
-                            "status": "invalid",
-                            "issues": [
-                                {
-                                    "type": "semantic_mismatch",
-                                    "severity": "medium",
-                                    "description": "email contains invalid domains",
-                                }
-                            ],
-                            "metrics": {
-                                "null_ratio": 0.1,
-                                "distinct_ratio": 0.9,
-                                "dominant_value_ratio": 0.15,
-                                "inferred_type_distribution": {"email": 0.8, "text": 0.2},
-                            },
-                        }
-                    ],
-                }
-            ],
-            "summary": {
-                "total_columns_analyzed": 3,
-            },
-        }
-
-        row_payload = {
-            "findings": [
-                {
-                    "table": "users",
-                    "row_id": "42",
-                    "issues": [
-                        {
-                            "type": "format_violation_email",
-                            "severity": "medium",
-                            "description": "invalid email format",
-                        }
-                    ],
-                    "confidence": 0.75,
-                }
-            ],
-            "metrics": {
-                "total_rows_analyzed": 100,
-            },
-        }
-
-        cross_payload = {
-            "findings": [
-                {
-                    "table": "events",
-                    "issues": [
-                        {
-                            "type": "temporal_anomaly_spike",
-                            "severity": "high",
-                            "description": "unusual spike detected",
-                        }
-                    ],
-                    "confidence": 0.79,
-                }
-            ],
-            "metrics": {
-                "total_row_pairs_analyzed": 60,
-            },
-        }
-
-        fix_payload = {
-            "findings": [
-                {
-                    "id": "fix_001",
-                    "table": "users",
-                    "target_table": "users_clean",
-                    "problem": "invalid email formats",
-                    "fix": "normalize email values",
-                    "severity": "high",
-                    "confidence": 0.84,
-                    "estimated_rows_affected": 20,
-                    "queries": [
-                        "CREATE TABLE IF NOT EXISTS users_clean (LIKE users INCLUDING ALL);",
-                        "INSERT INTO users_clean SELECT * FROM users ON CONFLICT DO NOTHING;",
-                        "UPDATE users_clean SET email = lower(email);",
-                    ],
-                    "explanation": "Normalize to lowercase for consistency",
-                },
-                {
-                    "id": "fix_002",
-                    "table": "events",
-                    "target_table": "events_clean",
-                    "problem": "temporal anomaly outliers",
-                    "fix": "cap abnormal spikes",
-                    "severity": "medium",
-                    "confidence": 0.8,
-                    "estimated_rows_affected": 5,
-                    "queries": [
-                        "CREATE TABLE IF NOT EXISTS events_clean (LIKE events INCLUDING ALL);",
-                        "INSERT INTO events_clean SELECT * FROM events ON CONFLICT DO NOTHING;",
-                        "UPDATE events_clean SET amount = amount WHERE amount IS NOT NULL;",
-                    ],
-                    "explanation": "Preserve trends while reducing spike noise",
-                },
-            ]
-        }
-
-        responses = [
-            SimpleNamespace(content=json.dumps(schema_payload)),
-            SimpleNamespace(content=json.dumps(column_payload)),
-            SimpleNamespace(content=json.dumps(row_payload)),
-            SimpleNamespace(content=json.dumps(cross_payload)),
-            SimpleNamespace(content=json.dumps(fix_payload)),
-        ]
-
-        agent_instances = []
-        for response in responses:
-            instance = MagicMock()
-            instance.run.return_value = response
-            agent_instances.append(instance)
-        mock_agent_cls.side_effect = agent_instances
-
-        result = orchestrator_workflow(
-            connection_string="postgresql://user:pass@localhost:5432/db",
-            domain_rules="",
+        schema_finding = Finding(
+            validator="schema",
+            entity="users",
+            rule="missing_pk",
+            severity="high",
+            confidence=0.88,
+            evidence={"table": "users"},
+            suggested_action="Add a primary key on users.",
+        )
+        column_finding = Finding(
+            validator="column",
+            entity="users.email",
+            rule="invalid_domain",
+            severity="medium",
+            confidence=0.82,
+            evidence={"invalid_ratio": 0.2},
+            suggested_action="Normalize invalid email domains.",
+        )
+        row_finding = Finding(
+            validator="row",
+            entity="users.email",
+            rule="duplicate_email_rows",
+            severity="low",
+            confidence=0.71,
+            evidence={"duplicate_rows": 3},
+            suggested_action="Review duplicate rows before deduplication.",
+        )
+        crossrow_finding = Finding(
+            validator="crossrow",
+            entity="orders.user_id",
+            rule="orphaned_fk",
+            severity="critical",
+            confidence=0.93,
+            evidence={"orphaned_rows": 8},
+            suggested_action="Repair or remove orphaned order rows.",
         )
 
-        call_order = [
-            call.kwargs["target_agent"] for call in generator.generate.call_args_list
+        step_results = [
+            SimpleNamespace(
+                step_name="schema",
+                content=ValidationReport(validator="schema", findings=[schema_finding]),
+                steps=[],
+            ),
+            SimpleNamespace(
+                step_name="column",
+                content=ValidationReport(validator="column", findings=[column_finding]),
+                steps=[],
+            ),
+            SimpleNamespace(
+                step_name="row",
+                content=ValidationReport(validator="row", findings=[row_finding]),
+                steps=[],
+            ),
+            SimpleNamespace(
+                step_name="crossrow",
+                content=ValidationReport(validator="crossrow", findings=[crossrow_finding]),
+                steps=[],
+            ),
+            SimpleNamespace(
+                step_name="reduce",
+                content=ReducedFindings(findings=[crossrow_finding, column_finding]),
+                steps=[],
+            ),
+            SimpleNamespace(
+                step_name="fix_plan",
+                content=FixPlan(
+                    cards=[
+                        FixCard(
+                            title="Normalize email casing",
+                            target="users.email",
+                            rationale="Lowercasing improves match consistency.",
+                            sql="UPDATE users SET email = lower(email) WHERE email IS NOT NULL;",
+                            verification_queries=[
+                                "SELECT COUNT(*) FROM users WHERE email <> lower(email);"
+                            ],
+                            rollback_queries=[
+                                "RESTORE users FROM approved backup;"
+                            ],
+                        )
+                    ]
+                ),
+                steps=[],
+            ),
         ]
+
+        class _FakeWorkflow:
+            def run(self, **kwargs):
+                captured["run_kwargs"] = kwargs
+                return SimpleNamespace(step_results=step_results)
+
+        def _build_workflow(*, resolved_model_id, session_state, dependencies):
+            captured["resolved_model_id"] = resolved_model_id
+            captured["session_state"] = session_state
+            captured["dependencies"] = dependencies
+            return _FakeWorkflow()
+
+        mock_build_workflow.side_effect = _build_workflow
+        mock_save_report.return_value = {
+            "report_file_path": "/tmp/report_localhost_5432_qualitylab.json",
+            "report_file_name": "report_localhost_5432_qualitylab.json",
+            "report_timestamp": "2026-04-26T12:00:00Z",
+            "report_database_id": "localhost_5432_qualitylab",
+        }
+
+        result = orchestrator_workflow(
+            connection_string="postgresql://user:pass@localhost:5432/qualitylab",
+            domain_rules=[
+                "Emails must be lowercase.",
+                {"description": "Orders with status=shipped must have shipped_at."},
+            ],
+            llm_model="gemini-2.0-flash",
+            historical_signals="Previous run saw the same orphan spike.",
+        )
+
+        self.assertEqual(captured["resolved_model_id"], "gemini-2.0-flash")
         self.assertEqual(
-            call_order,
+            captured["session_state"]["connection_string"],
+            "postgresql://user:pass@localhost:5432/qualitylab",
+        )
+        self.assertEqual(
+            captured["dependencies"]["domain_rules"]["custom_rules"],
             [
+                "Emails must be lowercase.",
+                "Orders with status=shipped must have shipped_at.",
+            ],
+        )
+        self.assertIn("Historical signals", captured["run_kwargs"]["input"])
+
+        self.assertEqual(result["llm_model"], "gemini-2.0-flash")
+        self.assertEqual(result["report_file_name"], "report_localhost_5432_qualitylab.json")
+        self.assertIn("schema_analysis", result)
+        self.assertIn("column_validator_analysis", result)
+        self.assertIn("row_level_analysis", result)
+        self.assertIn("cross_row_analysis", result)
+        self.assertIn("fixes", result)
+        self.assertIn("agent_reports", result)
+        self.assertIn("download_report_json", result)
+
+        report_keys = set(result["download_report_json"]["reports"].keys())
+        self.assertEqual(
+            report_keys,
+            {
                 "schema_integrity_validator",
                 "column_validator",
                 "row_level_validator",
                 "cross_row_validator",
                 "data_fix_planner",
-            ],
+            },
         )
 
-        reports = result["agent_reports"]
-        schema_report = reports["schema_integrity_validator"]
-        column_report = reports["column_validator"]
-        row_report = reports["row_level_validator"]
-        cross_report = reports["cross_row_validator"]
-        final_report = reports["data_fix_planner"]
-
-        self.assertEqual(len(schema_report["prior_reports"]), 0)
-        self.assertEqual(len(column_report["prior_reports"]), 1)
-        self.assertEqual(len(row_report["prior_reports"]), 2)
-        self.assertEqual(len(cross_report["prior_reports"]), 3)
-        self.assertEqual(len(final_report["prior_reports"]), 4)
-        for chained_report in final_report["prior_reports"]:
-            self.assertIn("summary", chained_report)
-            self.assertIn("findings", chained_report)
-            self.assertNotIn("prior_reports", chained_report)
-
-        pipeline_run_id = schema_report["pipeline_run_id"]
-        self.assertEqual(column_report["pipeline_run_id"], pipeline_run_id)
-        self.assertEqual(row_report["pipeline_run_id"], pipeline_run_id)
-        self.assertEqual(cross_report["pipeline_run_id"], pipeline_run_id)
-        self.assertEqual(final_report["pipeline_run_id"], pipeline_run_id)
-
-        expected_total_issues = sum(
-            reports[key]["summary"]["items_flagged"]
-            for key in [
-                "schema_integrity_validator",
-                "column_validator",
-                "row_level_validator",
-                "cross_row_validator",
-            ]
-        )
+        fixes = result["fixes"]["fixes"]
+        self.assertEqual(len(fixes), 1)
+        self.assertEqual(fixes[0]["table"], "users")
+        self.assertEqual(fixes[0]["target_table"], "users")
         self.assertEqual(
-            final_report["metrics"]["total_issues_received"],
-            expected_total_issues,
+            fixes[0]["queries"],
+            ["UPDATE users SET email = lower(email) WHERE email IS NOT NULL;"],
         )
-
-        self.assertIn("report_file_path", result)
-        self.assertEqual(result["report_file_name"], "report_localhost_5432_db.json")
-        self.assertIn("fixes", result)
-        self.assertEqual(len(result["fixes"]["fixes"]), 2)
-
-    @patch("services.report_service.save_final_pipeline_report")
-    @patch("agents.validation_team.DatabaseGuidelineGeneratorAgent")
-    @patch("agents.validation_team.Agent")
-    @patch("agents.validation_team.execute_pg_query")
-    @patch("agents.validation_team.postgres_tool")
-    def test_pipeline_marks_partial_when_output_invalid(
-        self,
-        mock_postgres_tool,
-        mock_execute_pg_query,
-        mock_agent_cls,
-        mock_generator_cls,
-        mock_save_report,
-    ):
-        generator = mock_generator_cls.return_value
-        generator.generate.side_effect = [
-            "schema-guidelines",
-            "column-guidelines",
-            "row-guidelines",
-            "cross-guidelines",
-            "fix-guidelines",
-        ]
-
-        mock_save_report.return_value = {
-            "report_file_path": "/tmp/report_localhost_5432_db.json",
-            "report_file_name": "report_localhost_5432_db.json",
-            "report_timestamp": "2026-04-11T12:05:00Z",
-            "report_database_id": "localhost_5432_db",
-        }
-
-        row_payload = {
-            "findings": [],
-            "metrics": {"total_rows_analyzed": 1},
-        }
-        cross_payload = {
-            "findings": [],
-            "metrics": {"total_row_pairs_analyzed": 1},
-        }
-        fix_payload = {
-            "findings": [],
-        }
-
-        responses = [
-            SimpleNamespace(content="this-is-not-json"),
-            SimpleNamespace(content="this-is-not-json-either"),
-            SimpleNamespace(content=json.dumps(row_payload)),
-            SimpleNamespace(content=json.dumps(cross_payload)),
-            SimpleNamespace(content=json.dumps(fix_payload)),
-        ]
-
-        mock_execute_pg_query.return_value = "Database Error: not connected"
-
-        agent_instances = []
-        for response in responses:
-            instance = MagicMock()
-            instance.run.return_value = response
-            agent_instances.append(instance)
-        mock_agent_cls.side_effect = agent_instances
-
-        result = orchestrator_workflow(
-            connection_string="postgresql://user:pass@localhost:5432/db",
-            domain_rules="",
-        )
-
-        reports = result["agent_reports"]
-        self.assertEqual(reports["schema_integrity_validator"].get("status"), "partial")
-        self.assertEqual(reports["column_validator"].get("status"), "partial")
-        # Pipeline still progresses and emits final report.
-        self.assertIn("data_fix_planner", reports)
-        self.assertIn("report_file_path", result)
-
-    @patch("services.report_service.save_final_pipeline_report")
-    @patch("agents.validation_team.DatabaseGuidelineGeneratorAgent")
-    @patch("agents.validation_team.Agent")
-    @patch("agents.validation_team.execute_pg_query")
-    @patch("agents.validation_team.postgres_tool")
-    def test_pipeline_recovers_empty_schema_metrics_with_live_baseline(
-        self,
-        mock_postgres_tool,
-        mock_execute_pg_query,
-        mock_agent_cls,
-        mock_generator_cls,
-        mock_save_report,
-    ):
-        generator = mock_generator_cls.return_value
-        generator.generate.side_effect = [
-            "schema-guidelines",
-            "column-guidelines",
-            "row-guidelines",
-            "cross-guidelines",
-            "fix-guidelines",
-        ]
-
-        mock_save_report.return_value = {
-            "report_file_path": "/tmp/report_localhost_5432_db.json",
-            "report_file_name": "report_localhost_5432_db.json",
-            "report_timestamp": "2026-04-11T12:05:00Z",
-            "report_database_id": "localhost_5432_db",
-        }
-
-        schema_payload = {
-            "findings": [],
-            "metrics": {
-                "total_tables": 0,
-                "total_columns": 0,
-                "tables_with_no_primary_key": 0,
-                "missing_foreign_keys": 0,
-                "constraint_violations": 0,
-                "type_mismatches": 0,
-                "nullable_violations": 0,
-            },
-            "summary": {
-                "total_items_analyzed": 0,
-                "items_passed": 0,
-                "items_flagged": 0,
-                "critical_issues": 0,
-                "high_issues": 0,
-                "medium_issues": 0,
-                "low_issues": 0,
-                "overall_quality_score": 100,
-                "overall_confidence": 0.72,
-                "flagged_tables": [],
-            },
-        }
-        column_payload = {
-            "findings": [],
-            "metrics": {"total_columns_analyzed": 1},
-        }
-        row_payload = {
-            "findings": [],
-            "metrics": {"total_rows_analyzed": 1},
-        }
-        cross_payload = {
-            "findings": [],
-            "metrics": {"total_row_pairs_analyzed": 1},
-        }
-        fix_payload = {
-            "findings": [],
-        }
-
-        responses = [
-            SimpleNamespace(content=json.dumps(schema_payload)),
-            SimpleNamespace(content=json.dumps(column_payload)),
-            SimpleNamespace(content=json.dumps(row_payload)),
-            SimpleNamespace(content=json.dumps(cross_payload)),
-            SimpleNamespace(content=json.dumps(fix_payload)),
-        ]
-
-        agent_instances = []
-        for response in responses:
-            instance = MagicMock()
-            instance.run.return_value = response
-            agent_instances.append(instance)
-        mock_agent_cls.side_effect = agent_instances
-
-        def _baseline_counts(query: str) -> str:
-            if "FROM information_schema.tables t" in query and "PRIMARY KEY" in query:
-                return json.dumps([{"cnt": 4}])
-            if "FROM information_schema.tables" in query and "COUNT" in query and "table_type = 'BASE TABLE'" in query:
-                return json.dumps([{"cnt": 94}])
-            if "FROM information_schema.columns" in query and "COUNT" in query:
-                return json.dumps([{"cnt": 612}])
-            return json.dumps([{"cnt": 0}])
-
-        mock_execute_pg_query.side_effect = _baseline_counts
-
-        result = orchestrator_workflow(
-            connection_string="postgresql://user:pass@localhost:5432/db",
-            domain_rules="",
-        )
-
-        schema_report = result["agent_reports"]["schema_integrity_validator"]
-        self.assertEqual(schema_report["status"], "partial")
-        self.assertIn("schema_agent_returned_empty_output_for_non_empty_database", schema_report["errors"])
-        self.assertEqual(schema_report["metrics"]["total_tables"], 94)
-        self.assertEqual(schema_report["metrics"]["total_columns"], 612)
-        self.assertEqual(schema_report["metrics"]["tables_with_no_primary_key"], 4)
-        self.assertEqual(schema_report["summary"]["total_items_analyzed"], 94)
-
-    @patch("services.report_service.save_final_pipeline_report")
-    @patch("agents.validation_team.DatabaseGuidelineGeneratorAgent")
-    @patch("agents.validation_team.Agent")
-    @patch("agents.validation_team.execute_pg_query")
-    @patch("agents.validation_team.postgres_tool")
-    def test_pipeline_recalibrates_row_totals_for_overconfident_empty_row_report(
-        self,
-        mock_postgres_tool,
-        mock_execute_pg_query,
-        mock_agent_cls,
-        mock_generator_cls,
-        mock_save_report,
-    ):
-        generator = mock_generator_cls.return_value
-        generator.generate.side_effect = [
-            "schema-guidelines",
-            "column-guidelines",
-            "row-guidelines",
-            "cross-guidelines",
-            "fix-guidelines",
-        ]
-
-        mock_save_report.return_value = {
-            "report_file_path": "/tmp/report_localhost_5432_db.json",
-            "report_file_name": "report_localhost_5432_db.json",
-            "report_timestamp": "2026-04-11T12:05:00Z",
-            "report_database_id": "localhost_5432_db",
-        }
-
-        schema_payload = {
-            "findings": [
-                {
-                    "table": "users",
-                    "issues": [
-                        {
-                            "type": "missing_primary_key",
-                            "severity": "high",
-                            "description": "users has no PK",
-                        }
-                    ],
-                    "confidence": 0.88,
-                }
-            ],
-            "metrics": {
-                "total_tables": 2,
-                "total_columns": 7,
-                "tables_with_no_primary_key": 1,
-                "missing_foreign_keys": 0,
-                "constraint_violations": 0,
-                "type_mismatches": 0,
-                "nullable_violations": 0,
-            },
-        }
-        column_payload = {
-            "findings": [],
-            "metrics": {"total_columns_analyzed": 1},
-        }
-        row_payload = {
-            "findings": [],
-            "metrics": {
-                "total_rows_analyzed": 15,
-                "rows_with_issues": 0,
-                "rows_with_issues_ratio": 0.0,
-                "format_violations": 0,
-                "encoding_issues": 0,
-                "hidden_null_count": 0,
-                "outlier_rows": 0,
-                "avg_row_quality_score": 100.0,
-                "avg_row_confidence": 1.0,
-                "queries_executed": 12,
-            },
-        }
-        cross_payload = {
-            "findings": [],
-            "metrics": {"total_row_pairs_analyzed": 1},
-        }
-        fix_payload = {"findings": []}
-
-        responses = [
-            SimpleNamespace(content=json.dumps(schema_payload)),
-            SimpleNamespace(content=json.dumps(column_payload)),
-            SimpleNamespace(content=json.dumps(row_payload)),
-            SimpleNamespace(content=json.dumps(cross_payload)),
-            SimpleNamespace(content=json.dumps(fix_payload)),
-        ]
-
-        agent_instances = []
-        for response in responses:
-            instance = MagicMock()
-            instance.run.return_value = response
-            agent_instances.append(instance)
-        mock_agent_cls.side_effect = agent_instances
-
-        def _row_baseline(query: str) -> str:
-            if "query_to_xml" in query and "pg_stat_user_tables" in query:
-                return json.dumps([{"cnt": 2500}])
-            return json.dumps([{"cnt": 0}])
-
-        mock_execute_pg_query.side_effect = _row_baseline
-
-        result = orchestrator_workflow(
-            connection_string="postgresql://user:pass@localhost:5432/db",
-            domain_rules="",
-        )
-
-        row_report = result["agent_reports"]["row_level_validator"]
-        self.assertEqual(row_report["status"], "partial")
-        self.assertIn("row_total_rows_recalibrated_from_live_database", row_report["errors"])
-        self.assertEqual(row_report["metrics"]["total_rows_analyzed"], 2500)
-        self.assertEqual(row_report["metrics"]["rows_with_issues_ratio"], 0.0)
-        self.assertEqual(row_report["summary"]["total_items_analyzed"], 2500)
-
-    @patch("agents.validation_team.time.sleep", return_value=None)
-    @patch("services.report_service.save_final_pipeline_report")
-    @patch("agents.validation_team.DatabaseGuidelineGeneratorAgent")
-    @patch("agents.validation_team.Agent")
-    @patch("agents.validation_team.postgres_tool")
-    def test_pipeline_retries_transient_agent_runtime_error(
-        self,
-        mock_postgres_tool,
-        mock_agent_cls,
-        mock_generator_cls,
-        mock_save_report,
-        _mock_sleep,
-    ):
-        generator = mock_generator_cls.return_value
-        generator.generate.side_effect = [
-            "schema-guidelines",
-            "column-guidelines",
-            "row-guidelines",
-            "cross-guidelines",
-            "fix-guidelines",
-        ]
-
-        mock_save_report.return_value = {
-            "report_file_path": "/tmp/report_localhost_5432_db.json",
-            "report_file_name": "report_localhost_5432_db.json",
-            "report_timestamp": "2026-04-11T12:05:00Z",
-            "report_database_id": "localhost_5432_db",
-        }
-
-        schema_payload = {
-            "findings": [],
-            "metrics": {
-                "total_tables": 1,
-                "total_columns": 2,
-                "tables_with_no_primary_key": 0,
-                "missing_foreign_keys": 0,
-                "constraint_violations": 0,
-                "type_mismatches": 0,
-                "nullable_violations": 0,
-            },
-        }
-        column_payload = {
-            "findings": [],
-            "metrics": {
-                "total_columns_analyzed": 2,
-            },
-        }
-        row_payload = {
-            "findings": [],
-            "metrics": {
-                "total_rows_analyzed": 10,
-            },
-        }
-        cross_payload = {
-            "findings": [],
-            "metrics": {
-                "total_row_pairs_analyzed": 10,
-            },
-        }
-        fix_payload = {"findings": []}
-
-        schema_fail = MagicMock()
-        schema_fail.run.side_effect = RuntimeError("Gemini transient 429")
-
-        schema_success = MagicMock()
-        schema_success.run.return_value = SimpleNamespace(content=json.dumps(schema_payload))
-
-        column_success = MagicMock()
-        column_success.run.return_value = SimpleNamespace(content=json.dumps(column_payload))
-
-        row_success = MagicMock()
-        row_success.run.return_value = SimpleNamespace(content=json.dumps(row_payload))
-
-        cross_success = MagicMock()
-        cross_success.run.return_value = SimpleNamespace(content=json.dumps(cross_payload))
-
-        fix_success = MagicMock()
-        fix_success.run.return_value = SimpleNamespace(content=json.dumps(fix_payload))
-
-        mock_agent_cls.side_effect = [
-            schema_fail,
-            schema_success,
-            column_success,
-            row_success,
-            cross_success,
-            fix_success,
-        ]
-
-        result = orchestrator_workflow(
-            connection_string="postgresql://user:pass@localhost:5432/db",
-            domain_rules="",
-        )
-
-        self.assertEqual(mock_agent_cls.call_count, 6)
-        self.assertTrue(_mock_sleep.called)
-        self.assertIn("agent_reports", result)
-        self.assertIn("schema_integrity_validator", result["agent_reports"])
+        self.assertEqual(result["final_report"]["metrics"]["fixes_generated"], 1)
+        self.assertEqual(result["download_report_json"]["summary"]["final_fix_count"], 1)
 
 
 if __name__ == "__main__":

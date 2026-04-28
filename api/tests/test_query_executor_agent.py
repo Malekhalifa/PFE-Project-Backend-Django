@@ -19,10 +19,11 @@ class QueryExecutorAgentTests(unittest.TestCase):
 
     @patch("agents.query_executor_agent.psycopg2.connect")
     def test_execute_success_commits_and_returns_log(self, mock_connect):
+        admin_connection = MagicMock()
         connection = MagicMock()
         cursor = MagicMock()
         connection.cursor.return_value = cursor
-        mock_connect.return_value = connection
+        mock_connect.side_effect = [admin_connection, connection]
 
         rowcounts = iter([0, 3, 2])
 
@@ -32,8 +33,8 @@ class QueryExecutorAgentTests(unittest.TestCase):
         cursor.execute.side_effect = execute_side_effect
 
         queries = [
-            "UPDATE users_clean SET email = lower(email);",
-            "DELETE FROM users_clean WHERE email IS NULL;",
+            "UPDATE users SET email = lower(email);",
+            "DELETE FROM users WHERE email IS NULL;",
         ]
 
         result = self.agent.execute(queries=queries, connection_string=self.connection_string)
@@ -45,6 +46,7 @@ class QueryExecutorAgentTests(unittest.TestCase):
         self.assertTrue(all(log["status"] == "success" for log in result["query_logs"]))
         self.assertIsNone(result["error"])
 
+        admin_connection.close.assert_called_once()
         connection.commit.assert_called_once()
         connection.rollback.assert_not_called()
         cursor.close.assert_called_once()
@@ -52,10 +54,11 @@ class QueryExecutorAgentTests(unittest.TestCase):
 
     @patch("agents.query_executor_agent.psycopg2.connect")
     def test_execute_failure_rolls_back_and_returns_pg_error(self, mock_connect):
+        admin_connection = MagicMock()
         connection = MagicMock()
         cursor = MagicMock()
         connection.cursor.return_value = cursor
-        mock_connect.return_value = connection
+        mock_connect.side_effect = [admin_connection, connection]
 
         rowcounts = iter([0, 4])
 
@@ -71,7 +74,7 @@ class QueryExecutorAgentTests(unittest.TestCase):
         cursor.execute.side_effect = execute_side_effect
 
         queries = [
-            "UPDATE users_clean SET email = lower(email);",
+            "UPDATE users SET email = lower(email);",
             "BROKEN SQL",
         ]
 
@@ -88,6 +91,7 @@ class QueryExecutorAgentTests(unittest.TestCase):
         self.assertEqual(result["query_logs"][0]["status"], "success")
         self.assertEqual(result["query_logs"][1]["status"], "failure")
 
+        admin_connection.close.assert_called_once()
         connection.rollback.assert_called_once()
         connection.commit.assert_not_called()
         cursor.close.assert_called_once()

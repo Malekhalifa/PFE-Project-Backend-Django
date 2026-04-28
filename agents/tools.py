@@ -1,502 +1,354 @@
+"""
+tools.py - Custom statistical, relational, and quality-gate helpers.
+
+All generic database introspection and read-only querying is handled by Agno's
+PostgresTools. The functions in this module cover only the custom analysis
+helpers that are not already provided by that toolkit.
+"""
+
+from __future__ import annotations
+
+import contextvars as _cv
 import json
-import contextvars
 import logging
-import time
+from typing import Any
+
 import psycopg2
 from psycopg2.extras import RealDictCursor
+
+from agno.tools import tool
 
 from services.postgres_connection import assert_valid_postgres_dsn, test_postgres_connection
 
 logger = logging.getLogger(__name__)
 
 
-def _to_float(value, default: float = 0.0) -> float:
-    try:
-        if value is None:
-            return default
-        return float(value)
-    except Exception:
-        return default
-
-
-def _to_int(value, default: int = 0) -> int:
-    try:
-        if value is None:
-            return default
-        return int(value)
-    except Exception:
-        return default
-
-
-def _extract_confidence_overall(finding: dict) -> float:
-    """Extract confidence_overall from multiple compatible finding shapes."""
-    if not isinstance(finding, dict):
-        return 0.0
-
-    if isinstance(finding.get("confidence_overall"), (int, float)):
-        return max(0.0, min(1.0, float(finding["confidence_overall"])))
-
-    confidence_obj = finding.get("confidence")
-    if isinstance(confidence_obj, dict):
-        value = confidence_obj.get("confidence_overall")
-        if isinstance(value, (int, float)):
-            return max(0.0, min(1.0, float(value)))
-
-    if isinstance(confidence_obj, (int, float)):
-        return max(0.0, min(1.0, float(confidence_obj)))
-
-    severity_defaults = {
-        "critical": 0.9,
-        "high": 0.8,
-        "medium": 0.65,
-        "low": 0.55,
-    }
-    severity = str(finding.get("severity") or "").strip().lower()
-    return severity_defaults.get(severity, 0.6)
-
-
-def _extract_evidence_meta(finding: dict) -> tuple[int, bool]:
-    """
-    Return evidence row_count and whether evidence.query is present.
-    Backward-compatible defaults keep existing reports usable.
-    """
-    if not isinstance(finding, dict):
-        return 0, False
-
-    evidence = finding.get("evidence")
-    if isinstance(evidence, dict):
-        row_count = _to_int(evidence.get("row_count"), 0)
-        query_present = bool(str(evidence.get("query") or "").strip())
-        return max(row_count, 0), query_present
-
-    # Backward compatibility: many current findings do not carry evidence object yet.
-    return 1, False
-
-
-def _parse_rows_payload(payload: str) -> list[dict]:
-    """Parse tool JSON output into rows list. Returns [] on parse failure."""
-    text = str(payload or "").strip()
-    if not text or text.startswith("Error:") or text.startswith("Database Error:"):
-        return []
-    try:
-        parsed = json.loads(text)
-        if isinstance(parsed, list):
-            return [row for row in parsed if isinstance(row, dict)]
-    except Exception:
-        return []
-    return []
-
-
-class PostgresTool:
-    """
-    Manages a PostgreSQL connection for the agent session.
-    A fresh instance is bound per execution context (thread/task) to avoid
-    connection-string leakage across concurrent jobs.
-    """
+class _PgExecutor:
+    """Thread-safe read-only executor used by custom statistical helpers."""
 
     def __init__(self):
         self.connection_string: str | None = None
 
     def connect(self, connection_string: str) -> None:
-        # Never let the agents start unless the DB is actually reachable.
         test_postgres_connection(connection_string, timeout_s=3)
         self.connection_string = connection_string
 
-    def _run_query(self, query: str, limit: int = 100) -> str:
-        """Internal executor – validates, limits, and runs the SQL."""
+    def run(self, query: str, limit: int = 100) -> str:
         if not self.connection_string:
-            return "Error: Database connection not set. Call connect_to_database first."
+            return "Error: Database connection not set."
 
-        # Fast fail if the DSN is malformed (don’t leak credentials).
         try:
             assert_valid_postgres_dsn(self.connection_string)
         except Exception:
-            return "Error: Invalid database connection string. Call connect_to_database with a valid DSN."
+            return "Error: Invalid database connection string."
 
         upper = query.upper()
         banned = ["DROP", "DELETE", "UPDATE", "INSERT", "ALTER", "TRUNCATE", "GRANT", "REVOKE"]
-        if any(kw in upper for kw in banned):
-            return "Error: Query blocked. Only SELECT / read-only queries are allowed."
+        if any(keyword in upper for keyword in banned):
+            return "Error: Query blocked. Only SELECT queries are allowed."
 
-        # Enforce a row limit to protect worker memory
         if "LIMIT " not in upper:
-            query = f"SELECT * FROM ({query}) AS _agno_subquery LIMIT {limit};"
+            cleaned = query.strip().rstrip(";")
+            query = f"SELECT * FROM ({cleaned}) AS _agno_subquery LIMIT {limit};"
 
+        conn = None
         try:
-            with psycopg2.connect(self.connection_string) as conn:
-                with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                    cur.execute(query)
-                    rows = cur.fetchall()
-
+            conn = psycopg2.connect(self.connection_string)
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(query)
+                rows = cur.fetchall()
             if not rows:
-                return "Query executed successfully – no rows returned."
-
-            out = json.dumps(rows, default=str)
-            if len(out) > 20_000:
-                return out[:20_000] + "\n... [Output truncated for length]"
-            return out
-
+                return "Query executed successfully - no rows returned."
+            output = json.dumps(rows, default=str)
+            return output[:20_000] + "\n... [truncated]" if len(output) > 20_000 else output
         except Exception as exc:
-            logger.error("Postgres tool error for query '%s': %s", query, exc)
+            logger.error("DB tool error '%s': %s", query[:80], exc)
             return f"Database Error: {exc}"
+        finally:
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
 
 
-# ---------------------------------------------------------------------------
-# Context-local tool state + backward-compatible proxy.
-# ---------------------------------------------------------------------------
-_postgres_tool_ctx: contextvars.ContextVar[PostgresTool | None] = contextvars.ContextVar(
-    "postgres_tool_ctx",
-    default=None,
-)
+_exec_ctx: _cv.ContextVar[_PgExecutor | None] = _cv.ContextVar("pg_exec_ctx", default=None)
 
 
-def _get_context_postgres_tool() -> PostgresTool:
-    tool = _postgres_tool_ctx.get()
-    if tool is None:
-        tool = PostgresTool()
-        _postgres_tool_ctx.set(tool)
-    return tool
+def _executor() -> _PgExecutor:
+    ex = _exec_ctx.get()
+    if ex is None:
+        ex = _PgExecutor()
+        _exec_ctx.set(ex)
+    return ex
 
 
-class _PostgresToolProxy:
-    """
-    Compatibility proxy that preserves `postgres_tool.connect(...)` and
-    `postgres_tool._run_query(...)` call sites while isolating state per context.
-    """
-
+class _ExecutorProxy:
     def connect(self, connection_string: str) -> None:
-        _get_context_postgres_tool().connect(connection_string)
+        _executor().connect(connection_string)
 
     def _run_query(self, query: str, limit: int = 100) -> str:
-        return _get_context_postgres_tool()._run_query(query, limit=limit)
+        return _executor().run(query, limit=limit)
 
     @property
     def connection_string(self) -> str | None:
-        return _get_context_postgres_tool().connection_string
+        return _executor().connection_string
 
 
-postgres_tool = _PostgresToolProxy()
+postgres_tool = _ExecutorProxy()
 
 
-# ---------------------------------------------------------------------------
-# Agno-compatible tool functions
-#
-# Agno auto-generates the tool schema from type hints + docstrings.
-# Both functions must be passed in the agent's `tools=[...]` list.
-# ---------------------------------------------------------------------------
-
-def connect_to_database(connection_string: str) -> str:
-    """Connect to a PostgreSQL database before running any queries.
-
-    Call this tool FIRST whenever the user provides a connection string.
-    You cannot run execute_pg_query until a connection has been established.
-
-    Args:
-        connection_string: A full PostgreSQL DSN, e.g.
-            'postgresql://user:password@host:port/database'
-
-    Returns:
-        A confirmation message showing the host/database (credentials hidden).
-    """
-    postgres_tool.connect(connection_string)
-    # Only show the host/db part — never log credentials
-    host_db = connection_string.split("@")[-1] if "@" in connection_string else connection_string
-    return f"Connected successfully to: {host_db}"
+def _q(query: str) -> str:
+    return _executor().run(query)
 
 
-def execute_pg_query(query: str) -> str:
-    """Execute a read-only SQL SELECT query on the connected PostgreSQL database.
+@tool(cache_results=True)
+def detect_outliers(table_name: str, column_name: str) -> str:
+    """Detect IQR-based numerical anomalies for one column."""
+    # Require at least 30 non-null values and a non-zero IQR for meaningful outlier detection.
+    check = _q(
+        f"""
+        SELECT COUNT({column_name}) AS non_null_count,
+               percentile_cont(0.25) WITHIN GROUP (ORDER BY {column_name}::numeric) AS q1,
+               percentile_cont(0.75) WITHIN GROUP (ORDER BY {column_name}::numeric) AS q3
+        FROM {table_name}
+        WHERE {column_name} IS NOT NULL
+        """
+    )
+    try:
+        import json as _json
+        rows = _json.loads(check)
+        if isinstance(rows, list) and rows:
+            r = rows[0]
+            non_null = int(r.get("non_null_count") or 0)
+            q1 = r.get("q1")
+            q3 = r.get("q3")
+            if non_null < 30:
+                return f"Skipped: only {non_null} non-null values in {table_name}.{column_name} — IQR outlier detection requires at least 30."
+            if q1 is not None and q3 is not None:
+                iqr = float(q3) - float(q1)
+                if iqr == 0:
+                    return f"Skipped: IQR is zero for {table_name}.{column_name} — all values are identical, no outliers possible."
+                lower = float(q1) - 1.5 * iqr
+                upper = float(q3) + 1.5 * iqr
+                return _q(
+                    f"SELECT count(*) as outlier_count, {lower} as lower_bound, {upper} as upper_bound "
+                    f"FROM {table_name} "
+                    f"WHERE {column_name}::numeric < {lower} OR {column_name}::numeric > {upper}"
+                )
+    except Exception:
+        pass
 
-    IMPORTANT: You must call connect_to_database first if no connection is active.
-
-    Use this tool to inspect schema or validate data:
-      - Query information_schema for table/column metadata.
-      - Run GROUP BY / HAVING / JOIN queries to find aggregate violations.
-      - Run targeted WHERE queries to isolate row-level rule failures.
-
-    Rules:
-      - ONLY SELECT queries are allowed — destructive SQL is blocked.
-      - Never select all rows without a WHERE or LIMIT clause.
-      - Escape regex backslashes: use '\\\\d', NOT '\\d'.
-
-    Args:
-        query: The exact SQL SELECT statement to execute.
-
-    Returns:
-        A JSON string of query results, or an error message.
-    """
-    return postgres_tool._run_query(query)
-
-
-def _build_introspection_queries(schema: str) -> dict[str, str]:
-    return {
-        "tables": (
-            "SELECT table_name FROM information_schema.tables "
-            f"WHERE table_schema = '{schema}' AND table_type = 'BASE TABLE' ORDER BY table_name"
-        ),
-        "columns": (
-            "SELECT table_name, column_name, data_type, is_nullable "
-            "FROM information_schema.columns "
-            f"WHERE table_schema = '{schema}' ORDER BY table_name, ordinal_position"
-        ),
-        "constraints": (
-            "SELECT tc.table_name, tc.constraint_type, tc.constraint_name "
-            "FROM information_schema.table_constraints tc "
-            f"WHERE tc.table_schema = '{schema}' ORDER BY tc.table_name, tc.constraint_type"
-        ),
-        "indexes": (
-            "SELECT tablename AS table_name, indexname, indexdef "
-            "FROM pg_catalog.pg_indexes "
-            f"WHERE schemaname = '{schema}' ORDER BY tablename, indexname"
-        ),
-        "estimates": (
-            "SELECT relname AS table_name, n_live_tup AS estimated_rows "
-            "FROM pg_catalog.pg_stat_user_tables "
-            f"WHERE schemaname = '{schema}'"
-        ),
-    }
-
-
-def _fetch_rows(query: str, *, enabled: bool = True) -> list[dict]:
-    if not enabled:
-        return []
-    return _parse_rows_payload(execute_pg_query(query))
-
-
-def _normalize_tables(rows: list[dict], estimates: list[dict]) -> list[dict]:
-    estimates_map = {str(r.get("table_name")): _to_int(r.get("estimated_rows"), 0) for r in estimates}
-    normalized = []
-    for row in rows:
-        table_name = str(row.get("table_name") or "").strip()
-        if not table_name:
-            continue
-        normalized.append({"table": table_name, "estimated_rows": estimates_map.get(table_name, 0)})
-    return normalized
-
-
-def _normalize_columns(rows: list[dict]) -> list[dict]:
-    normalized = []
-    for row in rows:
-        table_name = str(row.get("table_name") or "").strip()
-        column_name = str(row.get("column_name") or "").strip()
-        if not table_name or not column_name:
-            continue
-        normalized.append(
-            {
-                "table": table_name,
-                "column": column_name,
-                "data_type": str(row.get("data_type") or "unknown"),
-                "nullable": str(row.get("is_nullable") or "YES").upper() == "YES",
-            }
+    # Fallback if stats parsing failed — recompute percentiles in a single CTE.
+    return _q(
+        f"""
+        WITH stats AS (
+            SELECT percentile_cont(0.25) WITHIN GROUP (ORDER BY {column_name}::numeric) AS q1,
+                   percentile_cont(0.75) WITHIN GROUP (ORDER BY {column_name}::numeric) AS q3
+            FROM {table_name}
+            WHERE {column_name} IS NOT NULL
         )
-    return normalized
+        SELECT count(*) as outlier_count,
+               MIN(q1 - 1.5 * (q3 - q1)) as lower_bound,
+               MAX(q3 + 1.5 * (q3 - q1)) as upper_bound
+        FROM {table_name}, stats
+        WHERE {column_name}::numeric < q1 - 1.5 * (q3 - q1)
+           OR {column_name}::numeric > q3 + 1.5 * (q3 - q1)
+        """
+    )
 
 
-def _map_constraint_type(value: str) -> str:
-    mapping = {
-        "PRIMARY KEY": "PK",
-        "FOREIGN KEY": "FK",
-        "UNIQUE": "UNIQUE",
-    }
-    return mapping.get(value.upper(), "CHECK")
+@tool(cache_results=True)
+def detect_patterns(table_name: str, column_name: str) -> str:
+    """Sample representative text values to detect obvious formatting patterns."""
+    return _q(
+        f"SELECT {column_name}, length({column_name}::text) as len "
+        f"FROM {table_name} WHERE {column_name} IS NOT NULL LIMIT 3"
+    )
 
 
-def _normalize_constraints(rows: list[dict]) -> list[dict]:
-    normalized = []
-    for row in rows:
-        table_name = str(row.get("table_name") or "").strip()
-        if not table_name:
-            continue
-        normalized.append(
-            {
-                "table": table_name,
-                "type": _map_constraint_type(str(row.get("constraint_type") or "")),
-                "name": str(row.get("constraint_name") or ""),
-            }
+@tool(cache_results=True)
+def describe_constraints(table_name: str) -> str:
+    """Return all PRIMARY KEY, UNIQUE, FOREIGN KEY, and CHECK constraints for a table.
+
+    Use this in the schema integrity check to determine which columns are PKs
+    or have unique/referential constraints — information not available via describe_table().
+    """
+    return _q(
+        f"""
+        SELECT
+            tc.constraint_type,
+            tc.constraint_name,
+            kcu.column_name,
+            CASE WHEN tc.constraint_type = 'FOREIGN KEY' THEN fk_target.table_name  END AS foreign_table,
+            CASE WHEN tc.constraint_type = 'FOREIGN KEY' THEN fk_target.column_name END AS foreign_column
+        FROM information_schema.table_constraints tc
+        JOIN information_schema.key_column_usage kcu
+            ON  tc.constraint_name = kcu.constraint_name
+            AND tc.table_schema    = kcu.table_schema
+            AND tc.table_name      = kcu.table_name
+        LEFT JOIN information_schema.referential_constraints rc
+            ON  tc.constraint_name  = rc.constraint_name
+            AND tc.table_schema     = rc.constraint_schema
+        LEFT JOIN information_schema.key_column_usage fk_target
+            ON  rc.unique_constraint_name   = fk_target.constraint_name
+            AND rc.unique_constraint_schema = fk_target.constraint_schema
+            AND kcu.ordinal_position        = fk_target.ordinal_position
+        WHERE tc.table_name   = '{table_name}'
+          AND tc.table_schema = 'public'
+        ORDER BY tc.constraint_type, kcu.ordinal_position
+        LIMIT 50
+        """
+    )
+
+
+@tool(cache_results=True)
+def check_categorical_drift(table_name: str, column_name: str) -> str:
+    """List low-frequency categories that may indicate typos or drift."""
+    return _q(
+        f"""
+        WITH counts AS (
+            SELECT {column_name}::text as category, COUNT(*) as cnt
+            FROM {table_name}
+            GROUP BY 1
         )
-    return normalized
+        SELECT category, cnt, ROUND(cnt * 100.0 / sum(cnt) OVER (), 4) as percentage
+        FROM counts
+        ORDER BY percentage ASC
+        LIMIT 50
+        """
+    )
 
 
-def _normalize_indexes(rows: list[dict]) -> list[dict]:
-    normalized = []
-    for row in rows:
-        table_name = str(row.get("table_name") or row.get("tablename") or "").strip()
-        if not table_name:
-            continue
-        normalized.append(
-            {
-                "table": table_name,
-                "index": str(row.get("indexname") or ""),
-                "definition": str(row.get("indexdef") or ""),
-            }
-        )
-    return normalized
+@tool(cache_results=True, cache_ttl=3600)
+def analyze_relationship(source_table: str, source_col: str, target_table: str, target_col: str) -> str:
+    """Count orphaned rows between two related tables."""
+    return _q(
+        f"SELECT count(*) as orphaned_records "
+        f"FROM {source_table} s "
+        f"LEFT JOIN {target_table} t ON s.{source_col} = t.{target_col} "
+        f"WHERE t.{target_col} IS NULL AND s.{source_col} IS NOT NULL"
+    )
 
 
-def introspect_schema_compact(
-    schemas: list[str] | None = None,
-    include_indexes: bool = True,
-    include_constraints: bool = True,
-    include_estimates: bool = True,
-) -> dict:
-    """
-    Return compact schema metadata for guideline generation and planning.
-
-    This helper runs a bounded set of SELECT-only queries and returns a
-    normalized object with tables, columns, constraints, and indexes.
-    """
-    started = time.perf_counter()
-    warnings: list[str] = []
-    requested = schemas or ["public"]
-    schema = requested[0] if requested else "public"
-    queries = _build_introspection_queries(schema)
-
-    tables = _fetch_rows(queries["tables"])
-    columns = _fetch_rows(queries["columns"])
-    constraints = _fetch_rows(queries["constraints"], enabled=include_constraints)
-    indexes = _fetch_rows(queries["indexes"], enabled=include_indexes)
-    estimates = _fetch_rows(queries["estimates"], enabled=include_estimates)
-
-    if not tables:
-        warnings.append("no_tables_found_or_query_failed")
-
-    normalized_tables = _normalize_tables(tables, estimates)
-    normalized_columns = _normalize_columns(columns)
-    normalized_constraints = _normalize_constraints(constraints)
-    normalized_indexes = _normalize_indexes(indexes)
-
-    status = "ok" if normalized_tables else "partial"
-    return {
-        "tables": normalized_tables,
-        "columns": normalized_columns,
-        "constraints": normalized_constraints,
-        "indexes": normalized_indexes,
-        "meta": {
-            "elapsed_ms": max(0, int((time.perf_counter() - started) * 1000)),
-            "status": status,
-            "warnings": warnings,
-        },
-    }
+@tool(cache_results=True, cache_ttl=3600)
+def detect_fd(table_name: str, pk_col: str, dep_col: str) -> str:
+    """Check whether one column functionally determines another."""
+    return _q(
+        f"SELECT {pk_col}, COUNT(DISTINCT {dep_col}) as variants "
+        f"FROM {table_name} GROUP BY {pk_col} "
+        f"HAVING COUNT(DISTINCT {dep_col}) > 1 LIMIT 5"
+    )
 
 
-def allocate_query_budget(
-    table_stats: list[dict] | None = None,
-    default_limits: dict | None = None,
-) -> dict:
-    """
-    Compute per-stage tool/query limits based on estimated database size.
+@tool(cache_results=True)
+def diff_tables(table1: str, table2: str, join_col: str) -> str:
+    """Find records present in one table but missing from the other."""
+    return _q(
+        f"SELECT '{table1}_missing' as type, count(*) "
+        f"FROM {table2} b LEFT JOIN {table1} a ON a.{join_col} = b.{join_col} "
+        f"WHERE a.{join_col} IS NULL"
+    )
 
-    This helper is deterministic and side-effect free. It is intended for
-    orchestrator-level budget assignment, not direct SQL execution.
-    """
-    started = time.perf_counter()
-    defaults = default_limits or {
-        "schema": 40,
-        "column": 40,
-        "row": 40,
-        "cross_row": 60,
-        "fix_planner": 30,
-    }
 
-    tables = table_stats or []
-    total_rows = 0
-    for entry in tables:
-        if not isinstance(entry, dict):
-            continue
-        total_rows += max(_to_int(entry.get("estimated_rows"), 0), 0)
+@tool(cache_results=True)
+def find_duplicate_rows(table_name: str, group_columns: str) -> str:
+    """Expose logical duplicates on composite key candidates."""
+    return _q(
+        f"SELECT {group_columns}, count(*) "
+        f"FROM {table_name} GROUP BY {group_columns} "
+        f"HAVING count(*) > 1 LIMIT 5"
+    )
 
-    scale = 1.0
-    if total_rows >= 5_000_000:
-        scale = 1.4
-    elif total_rows >= 1_000_000:
-        scale = 1.25
-    elif total_rows >= 250_000:
-        scale = 1.1
-    elif total_rows > 0:
-        scale = 0.95
 
-    limits = {
-        stage: max(10, int(round(_to_int(value, 20) * scale)))
-        for stage, value in defaults.items()
-    }
+@tool(cache_results=True)
+def suggest_indexes(table_name: str) -> str:
+    """Inspect sequential scans and index usage for one table."""
+    return _q(
+        f"SELECT seq_scan, seq_tup_read, idx_scan, idx_tup_fetch "
+        f"FROM pg_stat_user_tables WHERE relname = '{table_name}'"
+    )
 
-    return {
-        "limits": limits,
-        "meta": {
-            "elapsed_ms": max(0, int((time.perf_counter() - started) * 1000)),
-            "status": "ok",
-            "warnings": [],
-        },
-    }
+
+@tool(cache_results=True)
+def check_bloat_and_dead_tuples(table_name: str) -> str:
+    """Inspect dead tuples and vacuum stats for one table."""
+    return _q(
+        f"SELECT n_dead_tup, n_live_tup, last_vacuum, last_autovacuum "
+        f"FROM pg_stat_user_tables WHERE relname = '{table_name}'"
+    )
+
+
+def _confidence_for_finding(finding: dict[str, Any]) -> float:
+    direct = finding.get("confidence_overall")
+    if direct is not None:
+        try:
+            return float(direct)
+        except Exception:
+            return 0.0
+
+    nested = finding.get("confidence")
+    if isinstance(nested, dict):
+        value = nested.get("confidence_overall")
+        try:
+            return float(value) if value is not None else 0.0
+        except Exception:
+            return 0.0
+
+    try:
+        return float(nested) if nested is not None else 0.0
+    except Exception:
+        return 0.0
 
 
 def enforce_quality_gate(
-    findings: list[dict],
-    min_confidence: float = 0.75,
-    min_evidence_rows: int = 0,
-    require_evidence_query: bool = False,
-) -> dict:
+    *,
+    findings: list[dict[str, Any]],
+    min_confidence: float = 0.8,
+    min_evidence_rows: int = 1,
+    require_evidence_query: bool = True,
+) -> dict[str, Any]:
     """
-    Filter findings by confidence/evidence quality before passing downstream.
+    Filter findings down to ones with adequate confidence and evidence.
 
-    Returns accepted findings plus a blocked list with reasons.
+    This helper is used by downstream API tests and remains intentionally
+    framework-agnostic.
     """
-    started = time.perf_counter()
-    accepted: list[dict] = []
-    blocked: list[dict] = []
-    warnings: list[str] = []
+    accepted: list[dict[str, Any]] = []
+    blocked: list[dict[str, Any]] = []
 
-    for idx, finding in enumerate(findings or []):
-        keep, blocked_item = _gate_finding(
-            finding=finding,
-            idx=idx,
-            min_confidence=min_confidence,
-            min_evidence_rows=min_evidence_rows,
-            require_evidence_query=require_evidence_query,
-        )
-        if keep:
+    for finding in findings or []:
+        reason: list[str] = []
+        confidence = _confidence_for_finding(finding)
+        evidence = finding.get("evidence") if isinstance(finding.get("evidence"), dict) else {}
+        row_count = evidence.get("row_count") or 0
+        query = str(evidence.get("query") or "").strip()
+
+        if confidence < min_confidence:
+            reason.append("low_confidence")
+        if require_evidence_query and not query:
+            reason.append("missing_evidence_query")
+        if int(row_count or 0) < int(min_evidence_rows):
+            reason.append("insufficient_evidence_rows")
+
+        if reason:
+            blocked.append(
+                {
+                    "id": finding.get("id"),
+                    "reason": ",".join(reason),
+                    "confidence_overall": confidence,
+                }
+            )
+        else:
             accepted.append(finding)
-        elif blocked_item:
-            blocked.append(blocked_item)
-
-    if not accepted and findings:
-        warnings.append("quality_gate_blocked_all_findings")
 
     status = "ok" if not blocked else "partial"
     return {
         "accepted_findings": accepted,
         "blocked": blocked,
         "meta": {
-            "elapsed_ms": max(0, int((time.perf_counter() - started) * 1000)),
             "status": status,
-            "warnings": warnings,
+            "accepted_count": len(accepted),
+            "blocked_count": len(blocked),
         },
     }
-
-
-def _gate_finding(
-    *,
-    finding: dict,
-    idx: int,
-    min_confidence: float,
-    min_evidence_rows: int,
-    require_evidence_query: bool,
-) -> tuple[bool, dict | None]:
-    if not isinstance(finding, dict):
-        return False, {"id": f"idx_{idx}", "reason": "invalid_finding_shape"}
-
-    fid = str(finding.get("id") or finding.get("item_id") or f"idx_{idx}")
-    confidence = _extract_confidence_overall(finding)
-    row_count, has_query = _extract_evidence_meta(finding)
-
-    reasons: list[str] = []
-    if confidence < float(min_confidence):
-        reasons.append(f"low_confidence:{confidence:.4f}")
-    if row_count < int(min_evidence_rows):
-        reasons.append(f"insufficient_evidence_rows:{row_count}")
-    if require_evidence_query and not has_query:
-        reasons.append("missing_evidence_query")
-
-    if reasons:
-        return False, {"id": fid, "reason": ";".join(reasons)}
-    return True, None

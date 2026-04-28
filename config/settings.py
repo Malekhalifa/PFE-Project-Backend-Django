@@ -4,6 +4,7 @@ Django settings for QualityLab project.
 Migrated from Node.js + FastAPI to Django + DRF.
 """
 import os
+import sys
 from pathlib import Path
 from datetime import timedelta
 from email.utils import formataddr
@@ -150,17 +151,37 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Databases
 # ──────────────────────────────────────────────
 
-# PostgreSQL (Django ORM) — all data: users, jobs, results, chat, guidelines
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env('PG_DB', default='qualitylab'),
-        'USER': env('PG_USER', default='quality_user'),
-        'PASSWORD': env('PG_PASSWORD', default='strongpassword'),
-        'HOST': env('PG_HOST', default='localhost'),
-        'PORT': env('PG_PORT', default='5432'),
+_RUNNING_TESTS = any(
+    token in str(arg).lower()
+    for arg in sys.argv
+    for token in ('test', 'unittest', 'pytest')
+)
+USE_SQLITE_TEST_DB = env.bool('USE_SQLITE_TEST_DB', default=_RUNNING_TESTS)
+
+if USE_SQLITE_TEST_DB:
+    # Default test runs to a local SQLite database so `python -m unittest`
+    # remains self-contained in development and CI environments where a live
+    # PostgreSQL server is not available.
+    test_db_dir = BASE_DIR / 'tmp'
+    test_db_dir.mkdir(parents=True, exist_ok=True)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': str(test_db_dir / 'test_db.sqlite3'),
+        }
     }
-}
+else:
+    # PostgreSQL (Django ORM) — all data: users, jobs, results, chat, guidelines
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': env('PG_DB', default='qualitylab'),
+            'USER': env('PG_USER', default='quality_user'),
+            'PASSWORD': env('PG_PASSWORD', default='strongpassword'),
+            'HOST': env('PG_HOST', default='localhost'),
+            'PORT': env('PG_PORT', default='5432'),
+        }
+    }
 
 # ──────────────────────────────────────────────
 # Auth

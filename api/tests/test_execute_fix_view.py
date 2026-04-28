@@ -36,8 +36,8 @@ class ExecuteFixViewTests(unittest.TestCase):
 
         execution_log = {
             "status": "success",
-            "query": "UPDATE users_clean SET email = lower(email);",
-            "queries": ["UPDATE users_clean SET email = lower(email);"],
+            "query": "UPDATE users SET email = lower(email);",
+            "queries": ["UPDATE users SET email = lower(email);"],
             "database_id": "localhost_5432_qualitylab",
             "executed_at": "2026-04-11T12:00:00Z",
             "duration_ms": 12,
@@ -47,7 +47,7 @@ class ExecuteFixViewTests(unittest.TestCase):
             "query_logs": [
                 {
                     "index": 1,
-                    "query": "UPDATE users_clean SET email = lower(email);",
+                    "query": "UPDATE users SET email = lower(email);",
                     "status": "success",
                     "duration_ms": 12,
                     "rows_affected": 5,
@@ -57,16 +57,16 @@ class ExecuteFixViewTests(unittest.TestCase):
         }
         mock_query_executor_cls.return_value.execute.return_value = execution_log
 
-        request = self._request({"queries": ["UPDATE users_clean SET email = lower(email);"]})
+        request = self._request({"queries": ["UPDATE users SET email = lower(email);"]})
         response = ExecuteFixView().post(request, "job-1")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, execution_log)
         mock_validate_fix_queries.assert_called_once_with([
-            "UPDATE users_clean SET email = lower(email);"
+            "UPDATE users SET email = lower(email);"
         ])
         mock_query_executor_cls.return_value.execute.assert_called_once_with(
-            queries=["UPDATE users_clean SET email = lower(email);"],
+            queries=["UPDATE users SET email = lower(email);"],
             connection_string="postgresql://user:pass@localhost:5432/qualitylab",
         )
         mock_audit_log.assert_called_once()
@@ -156,7 +156,7 @@ class ExecuteFixViewTests(unittest.TestCase):
             "connection_string": "postgresql://user:pass@localhost:5432/qualitylab"
         }
 
-        request = self._request({"queries": ["UPDATE users SET email = lower(email);"]})
+        request = self._request({"queries": ["DROP TABLE users;"]})
         response = ExecuteFixView().post(request, "job-1")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

@@ -12,7 +12,13 @@ import time
 
 import psycopg2
 
-from .reporting import derive_database_id, utc_now_iso
+from urllib.parse import urlparse, urlunparse
+from datetime import datetime, timezone
+
+from .reporting import derive_database_id
+
+def utc_now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
 class QueryExecutorAgent:
@@ -30,7 +36,45 @@ class QueryExecutorAgent:
 
         executed_at = utc_now_iso()
         started_at = time.perf_counter()
-        database_id = derive_database_id(connection_string)
+        parsed = urlparse(connection_string)
+        original_db = (parsed.path or "").lstrip("/")
+        sandbox_db = f"{original_db}_clean"
+        
+        # 1. Admin setup: disconnect users and duplicate DB
+        admin_dsn = urlunparse(parsed._replace(path="/postgres"))
+        sandbox_connection_string = urlunparse(parsed._replace(path=f"/{sandbox_db}"))
+        
+        admin_conn = None
+        try:
+            admin_conn = psycopg2.connect(admin_dsn)
+            admin_conn.autocommit = True
+            with admin_conn.cursor() as admin_cursor:
+                # Terminate any connections blocking original_db and sandbox_db
+                admin_cursor.execute("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = %s AND pid <> pg_backend_pid();", [original_db])
+                admin_cursor.execute("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = %s AND pid <> pg_backend_pid();", [sandbox_db])
+                
+                admin_cursor.execute(f'DROP DATABASE IF EXISTS "{sandbox_db}";')
+                admin_cursor.execute(f'CREATE DATABASE "{sandbox_db}" WITH TEMPLATE "{original_db}";')
+        except Exception as exc:
+            return self._failure_payload(
+                queries=queries,
+                database_id=original_db,
+                executed_at=executed_at,
+                started_at=started_at,
+                query_logs=[{
+                    "index": 0,
+                    "query": f'CREATE DATABASE "{sandbox_db}" WITH TEMPLATE "{original_db}";',
+                    "status": "failure",
+                    "duration_ms": self._elapsed_ms(started_at),
+                    "rows_affected": 0,
+                    "error": self._build_db_error(exc)
+                }],
+                error=self._build_db_error(exc),
+            )
+        finally:
+            self._safe_close(admin_conn)
+
+        database_id = derive_database_id(sandbox_connection_string)
 
         connection = None
         cursor = None
@@ -38,7 +82,7 @@ class QueryExecutorAgent:
         query_logs: list[dict] = []
 
         try:
-            connection = psycopg2.connect(connection_string)
+            connection = psycopg2.connect(sandbox_connection_string)
             connection.autocommit = False
             cursor = connection.cursor()
 

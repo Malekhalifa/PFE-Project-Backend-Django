@@ -3,12 +3,13 @@ import uuid
 from datetime import timedelta
 from unittest.mock import patch
 
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+
 import django
 from django.test import TestCase, override_settings
 from django.utils import timezone as dj_tz
 from rest_framework.test import APIRequestFactory, force_authenticate
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
 from api.models import AuditLog, Job
@@ -62,8 +63,7 @@ class AdminApmEndpointTests(TestCase):
         job = Job.objects.create(
             id=str(uuid.uuid4()),
             user_id=str(user.id),
-            file_name='dataset.csv',
-            file_path='/tmp/dataset.csv',
+            connection_string='postgresql://user:pass@localhost:5432/qualitylab',
             status=status,
             mode=mode,
         )
@@ -102,16 +102,22 @@ class AdminApmEndpointTests(TestCase):
 
     def test_admin_endpoints_require_staff_user(self):
         endpoints = [
-            ('get', '/api/admin/stats/', AdminStatsView.as_view(), None),
-            ('get', '/api/admin/pipeline-performance/', AdminPipelinePerformanceView.as_view(), None),
-            ('get', '/api/admin/audit-log/', AdminAuditLogView.as_view(), None),
-            ('get', '/api/admin/error-timeline/', AdminErrorTimelineView.as_view(), None),
-            ('post', '/api/admin/test-email/', AdminTestEmailView.as_view(), {}),
-            ('get', '/api/admin/users/', AdminUsersView.as_view(), None),
-            ('patch', f'/api/admin/users/{self.staff_user.id}/', AdminUserDetailView.as_view(), {'role': 'admin'}),
+            ('get', '/api/admin/stats/', AdminStatsView.as_view(), None, {}),
+            ('get', '/api/admin/pipeline-performance/', AdminPipelinePerformanceView.as_view(), None, {}),
+            ('get', '/api/admin/audit-log/', AdminAuditLogView.as_view(), None, {}),
+            ('get', '/api/admin/error-timeline/', AdminErrorTimelineView.as_view(), None, {}),
+            ('post', '/api/admin/test-email/', AdminTestEmailView.as_view(), {}, {}),
+            ('get', '/api/admin/users/', AdminUsersView.as_view(), None, {}),
+            (
+                'patch',
+                f'/api/admin/users/{self.staff_user.id}/',
+                AdminUserDetailView.as_view(),
+                {'role': 'admin'},
+                {'user_id': str(self.staff_user.id)},
+            ),
         ]
 
-        for method, path, view, payload in endpoints:
+        for method, path, view, payload, kwargs in endpoints:
             with self.subTest(endpoint=path):
                 request = self._auth_request(
                     method=method,
@@ -119,7 +125,7 @@ class AdminApmEndpointTests(TestCase):
                     user=self.regular_user,
                     data=payload,
                 )
-                response = view(request)
+                response = view(request, **kwargs)
 
                 self.assertEqual(response.status_code, 403)
                 self.assertEqual(response.data.get('code'), 'admin_required')

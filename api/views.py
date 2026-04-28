@@ -23,7 +23,7 @@ from django.http import FileResponse
 from django.utils import timezone as dj_tz
 from django.utils.dateparse import parse_date, parse_datetime
 from rest_framework import status
-from rest_framework.parsers import MultiPartParser
+
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
@@ -55,7 +55,6 @@ from api.serializers import (
 )
 from api.fix_safety import validate_fix_queries
 from agents.query_executor_agent import QueryExecutorAgent
-from agents.reporting import synthesize_fixes_from_prior_reports
 from services.notification_service import notify_user_fix_executed, notify_user_job_cancelled
 from services.postgres_connection import (
     looks_like_postgres_dsn,
@@ -311,7 +310,11 @@ def _ensure_fix_cards_result(job_id: str, result: dict, analysis_type: str = 'po
     if not fix_cards:
         prior_reports = final_report_dict.get('prior_reports')
         if isinstance(prior_reports, list):
-            fix_cards = synthesize_fixes_from_prior_reports(prior_reports)
+            for pr in prior_reports:
+                if isinstance(pr, dict) and isinstance(pr.get('findings'), list):
+                    for item in pr['findings']:
+                        if isinstance(item, dict):
+                            fix_cards.append(item)
 
     if not fix_cards:
         return payload
@@ -637,9 +640,28 @@ class AnalyzePostgresView(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        conn_str = serializer.validated_data['connection_string']
+        conn_str = serializer.validated_data.get('connection_string')
         domain_rules = serializer.validated_data.get('domain_rules', [])
         llm_model = serializer.validated_data.get('llm_model', 'gemini-2.0-flash').strip() or 'gemini-2.0-flash'
+        target_sandbox = serializer.validated_data.get('target_sandbox', False)
+        baseline_job_id = serializer.validated_data.get('baseline_job_id')
+        
+        if not conn_str and baseline_job_id:
+            baseline_job = get_job(baseline_job_id)
+            if baseline_job and baseline_job.get('connection_string'):
+                conn_str = baseline_job.get('connection_string')
+
+        # If targeting sandbox, append _clean to the database name
+        if target_sandbox and conn_str:
+            try:
+                from urllib.parse import urlparse, urlunparse
+                p = urlparse(conn_str)
+                if p.path and not p.path.endswith('_clean'):
+                    new_path = p.path + "_clean"
+                    p = p._replace(path=new_path)
+                    conn_str = urlunparse(p)
+            except Exception:
+                pass
 
         # 1) Quick format check (pattern) to fail fast on obvious mistakes.
         if not looks_like_postgres_dsn(conn_str):
@@ -700,6 +722,7 @@ class AnalyzePostgresView(APIView):
             connection_string=conn_str,
             domain_rules=domain_rules,
             llm_model=llm_model,
+            baseline_job_id=baseline_job_id,
         )
         task_id = str(getattr(async_result, 'id', '') or '')
         if task_id:
@@ -757,6 +780,14 @@ class ResultsView(APIView):
             result = _ensure_column_validator_result(jobId, analysis)
             result = _ensure_fix_cards_result(jobId, result, analysis.get('analysis_type', 'postgres_agentic'))
             result = _enrich_report_download_meta(jobId, result)
+            
+            # Check if any fix was successfully executed for this job
+            has_executed_fixes = AuditLog.objects.filter(
+                job_id=jobId,
+                event_type='FIX_EXECUTED',
+                payload__status_code=200
+            ).exists()
+            result['has_executed_fixes'] = has_executed_fixes
 
         return Response(_sanitize_for_json(result))
 
@@ -2245,8 +2276,7 @@ class GuidelinesView(APIView):
     for each pipeline phase, stored during the analysis run.
 
         Lookup order:
-            1. Per-run DB `job_guidelines` entry (primary)
-            2. File-based GuidelinesStore latest version (fallback)
+            1. Per-run DB entries from `job.guidelines`
 
         Returns a partial map when analysis is still running instead of 404,
         so the frontend can progressively reveal available guideline stages.
@@ -2273,23 +2303,7 @@ class GuidelinesView(APIView):
         # ── 1. Primary: per-run DB entry ───────────────────────────────
         persisted = dict(get_job_guidelines(jobId) or {})
 
-        # ── 2. Fallback: file-based GuidelinesStore ────────────────────
-        fallback = {}
-        connection_string = job.get('connection_string')
-        if connection_string:
-            try:
-                from agents.guidelines_store import GuidelinesStore
-                store = GuidelinesStore(connection_string)
-                latest = store.load_latest()
-                if latest:
-                    fallback = {
-                        k: v for k, v in latest.items()
-                        if not k.startswith('_') and isinstance(v, str)
-                    }
-            except Exception:
-                pass  # never let the fallback crash the endpoint
-
-        merged = {**fallback, **persisted}
+        merged = persisted
 
         ordered = {}
         for key in _GUIDELINE_KEYS:

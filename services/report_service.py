@@ -3,7 +3,10 @@ from pathlib import Path
 
 from django.conf import settings
 
-from agents.reporting import safe_file_component
+import re
+
+def safe_file_component(name: str) -> str:
+    return re.sub(r'[^a-zA-Z0-9_\-]', '_', name)
 
 
 def _safe_report_timestamp(run_timestamp: str) -> str:

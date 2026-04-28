@@ -1,0 +1,1541 @@
+{
+  "pipeline_run_id": "26c5f08d-f129-422c-8403-b53f56fdb6ca",
+  "database_id": "localhost_5432_easybulk",
+  "llm_model": "gemini-2.5-flash",
+  "run_timestamp": "2026-04-27T11:22:15.623338Z",
+  "summary": {
+    "confidence_score": 85,
+    "data_quality_score": 27,
+    "final_fix_count": 20
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "26c5f08d-f129-422c-8403-b53f56fdb6ca",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T11:22:15.623338Z",
+      "agent": "Schema Integrity Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 3,
+        "items_passed": 0,
+        "items_flagged": 3,
+        "critical_issues": 2,
+        "high_issues": 1,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 35.0,
+        "overall_confidence": 0.9,
+        "flagged_tables": [
+          "budget_history",
+          "campaign_schedule"
+        ]
+      },
+      "metrics": {
+        "validator": "schema",
+        "findings_count": 3
+      },
+      "findings": [
+        {
+          "table": "budget_history",
+          "column": null,
+          "entity": "budget_history",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 0.9,
+          "evidence": {
+            "table": "budget_history",
+            "column_candidates": "id",
+            "details": "No explicit primary key constraint found."
+          },
+          "remediation_hint": "Add an explicit primary key constraint to the 'budget_history' table, potentially on the 'id' column, to ensure data integrity and optimize performance.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "Add an explicit primary key constraint to the 'budget_history' table, potentially on the 'id' column, to ensure data integrity and optimize performance.",
+              "evidence": {
+                "table": "budget_history",
+                "column_candidates": "id",
+                "details": "No explicit primary key constraint found."
+              }
+            }
+          ]
+        },
+        {
+          "table": "budget_history",
+          "column": "groupe_id",
+          "entity": "budget_history.groupe_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "table": "budget_history",
+            "column": "groupe_id",
+            "is_nullable": "YES"
+          },
+          "remediation_hint": "Consider making the foreign key column 'groupe_id' in table 'budget_history' NOT NULL if it should always reference an existing parent record, to prevent referential integrity issues.",
+          "issues": [
+            {
+              "type": "nullable_fk",
+              "severity": "high",
+              "description": "Consider making the foreign key column 'groupe_id' in table 'budget_history' NOT NULL if it should always reference an existing parent record, to prevent referential integrity issues.",
+              "evidence": {
+                "table": "budget_history",
+                "column": "groupe_id",
+                "is_nullable": "YES"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_schedule",
+          "column": null,
+          "entity": "campaign_schedule",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 0.9,
+          "evidence": {
+            "table": "campaign_schedule",
+            "column_candidates": "id",
+            "details": "No explicit primary key constraint found."
+          },
+          "remediation_hint": "Add an explicit primary key constraint to the 'campaign_schedule' table, potentially on the 'id' column, to ensure data integrity and optimize performance.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "Add an explicit primary key constraint to the 'campaign_schedule' table, potentially on the 'id' column, to ensure data integrity and optimize performance.",
+              "evidence": {
+                "table": "campaign_schedule",
+                "column_candidates": "id",
+                "details": "No explicit primary key constraint found."
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": []
+    },
+    "column_validator": {
+      "pipeline_run_id": "26c5f08d-f129-422c-8403-b53f56fdb6ca",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T11:22:15.623338Z",
+      "agent": "Column Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 15,
+        "items_passed": 0,
+        "items_flagged": 15,
+        "critical_issues": 0,
+        "high_issues": 1,
+        "medium_issues": 12,
+        "low_issues": 2,
+        "overall_quality_score": 0.0,
+        "overall_confidence": 0.6867,
+        "flagged_tables": [
+          "campaign_schedule",
+          "campaign_spool_state",
+          "expediteur_groupe_aud",
+          "groupe"
+        ]
+      },
+      "metrics": {
+        "validator": "column",
+        "findings_count": 15
+      },
+      "findings": [
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "entity": "groupe.admin_id",
+          "rule": "null_ratio",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "column": "admin_id",
+            "null_ratio": 0.888,
+            "max_null_pct": 0.05
+          },
+          "remediation_hint": "Investigate the high null ratio (88.8%) for 'groupe.admin_id'. If 'admin_id' is expected to be present, data imputation or a review of data entry processes may be necessary. If nulls are acceptable, consider updating the schema to reflect this.",
+          "issues": [
+            {
+              "type": "null_ratio",
+              "severity": "high",
+              "description": "Investigate the high null ratio (88.8%) for 'groupe.admin_id'. If 'admin_id' is expected to be present, data imputation or a review of data entry processes may be necessary. If nulls are acceptable, consider updating the schema to reflect this.",
+              "evidence": {
+                "column": "admin_id",
+                "null_ratio": 0.888,
+                "max_null_pct": 0.05
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "send_sms_table_size",
+          "entity": "campaign_spool_state.send_sms_table_size",
+          "rule": "distribution_constant_value",
+          "severity": "medium",
+          "confidence": 0.7,
+          "evidence": {
+            "column": "send_sms_table_size",
+            "min": 0,
+            "max": 0,
+            "average": 0,
+            "std_deviation": 0
+          },
+          "remediation_hint": "Investigate why 'send_sms_table_size' column only contains zero values. This could indicate an issue with data collection or an unexpected data pattern.",
+          "issues": [
+            {
+              "type": "distribution_constant_value",
+              "severity": "medium",
+              "description": "Investigate why 'send_sms_table_size' column only contains zero values. This could indicate an issue with data collection or an unexpected data pattern.",
+              "evidence": {
+                "column": "send_sms_table_size",
+                "min": 0,
+                "max": 0,
+                "average": 0,
+                "std_deviation": 0
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "spool_size",
+          "entity": "campaign_spool_state.spool_size",
+          "rule": "distribution_constant_value",
+          "severity": "medium",
+          "confidence": 0.7,
+          "evidence": {
+            "column": "spool_size",
+            "min": 0,
+            "max": 0,
+            "average": 0,
+            "std_deviation": 0
+          },
+          "remediation_hint": "Investigate why 'spool_size' column only contains zero values. This could indicate an issue with data collection or an unexpected data pattern.",
+          "issues": [
+            {
+              "type": "distribution_constant_value",
+              "severity": "medium",
+              "description": "Investigate why 'spool_size' column only contains zero values. This could indicate an issue with data collection or an unexpected data pattern.",
+              "evidence": {
+                "column": "spool_size",
+                "min": 0,
+                "max": 0,
+                "average": 0,
+                "std_deviation": 0
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "sms_received",
+          "entity": "campaign_spool_state.sms_received",
+          "rule": "distribution_constant_value",
+          "severity": "medium",
+          "confidence": 0.7,
+          "evidence": {
+            "column": "sms_received",
+            "min": 0,
+            "max": 0,
+            "average": 0,
+            "std_deviation": 0
+          },
+          "remediation_hint": "Investigate why 'sms_received' column only contains zero values. This could indicate an issue with data collection or an unexpected data pattern.",
+          "issues": [
+            {
+              "type": "distribution_constant_value",
+              "severity": "medium",
+              "description": "Investigate why 'sms_received' column only contains zero values. This could indicate an issue with data collection or an unexpected data pattern.",
+              "evidence": {
+                "column": "sms_received",
+                "min": 0,
+                "max": 0,
+                "average": 0,
+                "std_deviation": 0
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "sms_received_queued",
+          "entity": "campaign_spool_state.sms_received_queued",
+          "rule": "distribution_constant_value",
+          "severity": "medium",
+          "confidence": 0.7,
+          "evidence": {
+            "column": "sms_received_queued",
+            "min": 0,
+            "max": 0,
+            "average": 0,
+            "std_deviation": 0
+          },
+          "remediation_hint": "Investigate why 'sms_received_queued' column only contains zero values. This could indicate an issue with data collection or an unexpected data pattern.",
+          "issues": [
+            {
+              "type": "distribution_constant_value",
+              "severity": "medium",
+              "description": "Investigate why 'sms_received_queued' column only contains zero values. This could indicate an issue with data collection or an unexpected data pattern.",
+              "evidence": {
+                "column": "sms_received_queued",
+                "min": 0,
+                "max": 0,
+                "average": 0,
+                "std_deviation": 0
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "sms_sent_queued",
+          "entity": "campaign_spool_state.sms_sent_queued",
+          "rule": "distribution_constant_value",
+          "severity": "medium",
+          "confidence": 0.7,
+          "evidence": {
+            "column": "sms_sent_queued",
+            "min": 0,
+            "max": 0,
+            "average": 0,
+            "std_deviation": 0
+          },
+          "remediation_hint": "Investigate why 'sms_sent_queued' column only contains zero values. This could indicate an issue with data collection or an unexpected data pattern.",
+          "issues": [
+            {
+              "type": "distribution_constant_value",
+              "severity": "medium",
+              "description": "Investigate why 'sms_sent_queued' column only contains zero values. This could indicate an issue with data collection or an unexpected data pattern.",
+              "evidence": {
+                "column": "sms_sent_queued",
+                "min": 0,
+                "max": 0,
+                "average": 0,
+                "std_deviation": 0
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "store_size",
+          "entity": "campaign_spool_state.store_size",
+          "rule": "distribution_constant_value",
+          "severity": "medium",
+          "confidence": 0.7,
+          "evidence": {
+            "column": "store_size",
+            "min": 0,
+            "max": 0,
+            "average": 0,
+            "std_deviation": 0
+          },
+          "remediation_hint": "Investigate why 'store_size' column only contains zero values. This could indicate an issue with data collection or an unexpected data pattern.",
+          "issues": [
+            {
+              "type": "distribution_constant_value",
+              "severity": "medium",
+              "description": "Investigate why 'store_size' column only contains zero values. This could indicate an issue with data collection or an unexpected data pattern.",
+              "evidence": {
+                "column": "store_size",
+                "min": 0,
+                "max": 0,
+                "average": 0,
+                "std_deviation": 0
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "dlr_sent",
+          "entity": "campaign_spool_state.dlr_sent",
+          "rule": "distribution_constant_value",
+          "severity": "medium",
+          "confidence": 0.7,
+          "evidence": {
+            "column": "dlr_sent",
+            "min": 0,
+            "max": 0,
+            "average": 0,
+            "std_deviation": 0
+          },
+          "remediation_hint": "Investigate why 'dlr_sent' column only contains zero values. This could indicate an issue with data collection or an unexpected data pattern.",
+          "issues": [
+            {
+              "type": "distribution_constant_value",
+              "severity": "medium",
+              "description": "Investigate why 'dlr_sent' column only contains zero values. This could indicate an issue with data collection or an unexpected data pattern.",
+              "evidence": {
+                "column": "dlr_sent",
+                "min": 0,
+                "max": 0,
+                "average": 0,
+                "std_deviation": 0
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "sms_inbound_msg_per_sec",
+          "entity": "campaign_spool_state.sms_inbound_msg_per_sec",
+          "rule": "distribution_constant_value",
+          "severity": "medium",
+          "confidence": 0.7,
+          "evidence": {
+            "column": "sms_inbound_msg_per_sec",
+            "unique_values": 1,
+            "total_rows": 7
+          },
+          "remediation_hint": "Investigate why 'sms_inbound_msg_per_sec' column has only one unique value. This could indicate an issue with data collection or an unexpected data pattern.",
+          "issues": [
+            {
+              "type": "distribution_constant_value",
+              "severity": "medium",
+              "description": "Investigate why 'sms_inbound_msg_per_sec' column has only one unique value. This could indicate an issue with data collection or an unexpected data pattern.",
+              "evidence": {
+                "column": "sms_inbound_msg_per_sec",
+                "unique_values": 1,
+                "total_rows": 7
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "sms_outbound_msg_per_sec",
+          "entity": "campaign_spool_state.sms_outbound_msg_per_sec",
+          "rule": "distribution_constant_value",
+          "severity": "medium",
+          "confidence": 0.7,
+          "evidence": {
+            "column": "sms_outbound_msg_per_sec",
+            "unique_values": 1,
+            "total_rows": 7
+          },
+          "remediation_hint": "Investigate why 'sms_outbound_msg_per_sec' column has only one unique value. This could indicate an issue with data collection or an unexpected data pattern.",
+          "issues": [
+            {
+              "type": "distribution_constant_value",
+              "severity": "medium",
+              "description": "Investigate why 'sms_outbound_msg_per_sec' column has only one unique value. This could indicate an issue with data collection or an unexpected data pattern.",
+              "evidence": {
+                "column": "sms_outbound_msg_per_sec",
+                "unique_values": 1,
+                "total_rows": 7
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "dlr_outbound_msg_per_sec",
+          "entity": "campaign_spool_state.dlr_outbound_msg_per_sec",
+          "rule": "distribution_constant_value",
+          "severity": "medium",
+          "confidence": 0.7,
+          "evidence": {
+            "column": "dlr_outbound_msg_per_sec",
+            "unique_values": 1,
+            "total_rows": 7
+          },
+          "remediation_hint": "Investigate why 'dlr_outbound_msg_per_sec' column has only one unique value. This could indicate an issue with data collection or an unexpected data pattern.",
+          "issues": [
+            {
+              "type": "distribution_constant_value",
+              "severity": "medium",
+              "description": "Investigate why 'dlr_outbound_msg_per_sec' column has only one unique value. This could indicate an issue with data collection or an unexpected data pattern.",
+              "evidence": {
+                "column": "dlr_outbound_msg_per_sec",
+                "unique_values": 1,
+                "total_rows": 7
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur_groupe_aud",
+          "column": "revtype",
+          "entity": "expediteur_groupe_aud.revtype",
+          "rule": "distribution_constant_value",
+          "severity": "medium",
+          "confidence": 0.7,
+          "evidence": {
+            "column": "revtype",
+            "min": 0,
+            "max": 0,
+            "average": 0,
+            "std_deviation": 0
+          },
+          "remediation_hint": "Investigate why 'revtype' column only contains zero values. This could indicate an issue with data collection or an unexpected data pattern.",
+          "issues": [
+            {
+              "type": "distribution_constant_value",
+              "severity": "medium",
+              "description": "Investigate why 'revtype' column only contains zero values. This could indicate an issue with data collection or an unexpected data pattern.",
+              "evidence": {
+                "column": "revtype",
+                "min": 0,
+                "max": 0,
+                "average": 0,
+                "std_deviation": 0
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": "status_id",
+          "entity": "groupe.status_id",
+          "rule": "distribution_constant_value",
+          "severity": "medium",
+          "confidence": 0.7,
+          "evidence": {
+            "column": "status_id",
+            "min": 4,
+            "max": 4,
+            "average": 4,
+            "std_deviation": 0
+          },
+          "remediation_hint": "Investigate why 'status_id' column only contains the value 4. This could indicate an issue with data collection or an unexpected data pattern.",
+          "issues": [
+            {
+              "type": "distribution_constant_value",
+              "severity": "medium",
+              "description": "Investigate why 'status_id' column only contains the value 4. This could indicate an issue with data collection or an unexpected data pattern.",
+              "evidence": {
+                "column": "status_id",
+                "min": 4,
+                "max": 4,
+                "average": 4,
+                "std_deviation": 0
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_schedule",
+          "column": "weekend",
+          "entity": "campaign_schedule.weekend",
+          "rule": "null_ratio",
+          "severity": "low",
+          "confidence": 0.5,
+          "evidence": {
+            "column": "weekend",
+            "is_nullable": "YES",
+            "max_null_pct": 0.05
+          },
+          "remediation_hint": "Verify the actual null ratio for 'campaign_schedule.weekend' to ensure it does not exceed 5%.",
+          "issues": [
+            {
+              "type": "null_ratio",
+              "severity": "low",
+              "description": "Verify the actual null ratio for 'campaign_schedule.weekend' to ensure it does not exceed 5%.",
+              "evidence": {
+                "column": "weekend",
+                "is_nullable": "YES",
+                "max_null_pct": 0.05
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "is_full",
+          "entity": "campaign_spool_state.is_full",
+          "rule": "null_ratio",
+          "severity": "low",
+          "confidence": 0.5,
+          "evidence": {
+            "column": "is_full",
+            "is_nullable": "YES",
+            "max_null_pct": 0.05
+          },
+          "remediation_hint": "Verify the actual null ratio for 'campaign_spool_state.is_full' to ensure it does not exceed 5%.",
+          "issues": [
+            {
+              "type": "null_ratio",
+              "severity": "low",
+              "description": "Verify the actual null ratio for 'campaign_spool_state.is_full' to ensure it does not exceed 5%.",
+              "evidence": {
+                "column": "is_full",
+                "is_nullable": "YES",
+                "max_null_pct": 0.05
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": []
+    },
+    "row_level_validator": {
+      "pipeline_run_id": "26c5f08d-f129-422c-8403-b53f56fdb6ca",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T11:22:15.623338Z",
+      "agent": "Row Level Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 5,
+        "items_passed": 0,
+        "items_flagged": 5,
+        "critical_issues": 3,
+        "high_issues": 2,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 0.0,
+        "overall_confidence": 0.9,
+        "flagged_tables": [
+          "contacts",
+          "organization",
+          "users"
+        ]
+      },
+      "metrics": {
+        "validator": "row",
+        "findings_count": 5
+      },
+      "findings": [
+        {
+          "table": "contacts",
+          "column": "msisdn",
+          "entity": "contacts.msisdn",
+          "rule": "blank_required_value",
+          "severity": "critical",
+          "confidence": 0.9,
+          "evidence": {
+            "table": "contacts",
+            "column": "msisdn",
+            "details": "The 'msisdn' column is marked as non-nullable but may contain NULL or empty string values. (Count: Unknown due to tool limitations)"
+          },
+          "remediation_hint": "Update rows where 'contacts.msisdn' is NULL or an empty string to a valid, non-empty value.",
+          "issues": [
+            {
+              "type": "blank_required_value",
+              "severity": "critical",
+              "description": "Update rows where 'contacts.msisdn' is NULL or an empty string to a valid, non-empty value.",
+              "evidence": {
+                "table": "contacts",
+                "column": "msisdn",
+                "details": "The 'msisdn' column is marked as non-nullable but may contain NULL or empty string values. (Count: Unknown due to tool limitations)"
+              }
+            }
+          ]
+        },
+        {
+          "table": "contacts",
+          "column": "country_code",
+          "entity": "contacts.country_code",
+          "rule": "blank_required_value",
+          "severity": "critical",
+          "confidence": 0.9,
+          "evidence": {
+            "table": "contacts",
+            "column": "country_code",
+            "details": "The 'country_code' column is marked as non-nullable but may contain NULL or empty string values. (Count: Unknown due to tool limitations)"
+          },
+          "remediation_hint": "Update rows where 'contacts.country_code' is NULL or an empty string to a valid, non-empty value.",
+          "issues": [
+            {
+              "type": "blank_required_value",
+              "severity": "critical",
+              "description": "Update rows where 'contacts.country_code' is NULL or an empty string to a valid, non-empty value.",
+              "evidence": {
+                "table": "contacts",
+                "column": "country_code",
+                "details": "The 'country_code' column is marked as non-nullable but may contain NULL or empty string values. (Count: Unknown due to tool limitations)"
+              }
+            }
+          ]
+        },
+        {
+          "table": "contacts",
+          "column": "msisdn",
+          "entity": "contacts.msisdn",
+          "rule": "duplicate_unique_column",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "table": "contacts",
+            "column": "msisdn",
+            "details": "The 'msisdn' column, expected to be unique based on domain rules, contains duplicate entries. (Count: Unknown due to tool limitations)"
+          },
+          "remediation_hint": "Identify and resolve duplicate entries in the 'contacts.msisdn' column to ensure data integrity.",
+          "issues": [
+            {
+              "type": "duplicate_unique_column",
+              "severity": "high",
+              "description": "Identify and resolve duplicate entries in the 'contacts.msisdn' column to ensure data integrity.",
+              "evidence": {
+                "table": "contacts",
+                "column": "msisdn",
+                "details": "The 'msisdn' column, expected to be unique based on domain rules, contains duplicate entries. (Count: Unknown due to tool limitations)"
+              }
+            }
+          ]
+        },
+        {
+          "table": "users",
+          "column": "email",
+          "entity": "users.email",
+          "rule": "duplicate_unique_column",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "table": "users",
+            "column": "email",
+            "details": "The 'email' column, expected to be unique based on domain rules, contains duplicate entries. (Count: Unknown due to tool limitations)"
+          },
+          "remediation_hint": "Identify and resolve duplicate entries in the 'users.email' column to ensure data integrity.",
+          "issues": [
+            {
+              "type": "duplicate_unique_column",
+              "severity": "high",
+              "description": "Identify and resolve duplicate entries in the 'users.email' column to ensure data integrity.",
+              "evidence": {
+                "table": "users",
+                "column": "email",
+                "details": "The 'email' column, expected to be unique based on domain rules, contains duplicate entries. (Count: Unknown due to tool limitations)"
+              }
+            }
+          ]
+        },
+        {
+          "table": "organization",
+          "column": "quota",
+          "entity": "organization.quota",
+          "rule": "negative_amount",
+          "severity": "critical",
+          "confidence": 0.9,
+          "evidence": {
+            "table": "organization",
+            "column": "quota",
+            "details": "The 'quota' column contains negative values, which is logically impossible for a quota. (Count: Unknown due to tool limitations)"
+          },
+          "remediation_hint": "Update rows where 'organization.quota' is negative to a non-negative value.",
+          "issues": [
+            {
+              "type": "negative_amount",
+              "severity": "critical",
+              "description": "Update rows where 'organization.quota' is negative to a non-negative value.",
+              "evidence": {
+                "table": "organization",
+                "column": "quota",
+                "details": "The 'quota' column contains negative values, which is logically impossible for a quota. (Count: Unknown due to tool limitations)"
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": []
+    },
+    "cross_row_validator": {
+      "pipeline_run_id": "26c5f08d-f129-422c-8403-b53f56fdb6ca",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T11:22:15.623338Z",
+      "agent": "Cross Row Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 0,
+        "items_passed": 0,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "column",
+        "findings_count": 0
+      },
+      "findings": [],
+      "prior_reports": []
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "26c5f08d-f129-422c-8403-b53f56fdb6ca",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-27T11:22:15.623338Z",
+      "agent": "Data Fix Planner",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 20,
+        "items_passed": 0,
+        "items_flagged": 20,
+        "critical_issues": 4,
+        "high_issues": 3,
+        "medium_issues": 12,
+        "low_issues": 1,
+        "overall_quality_score": 0.0,
+        "overall_confidence": 0.76,
+        "flagged_tables": [
+          "campaign_schedule",
+          "campaign_spool_state",
+          "contacts",
+          "expediteur_groupe_aud",
+          "groupe",
+          "organization",
+          "users"
+        ]
+      },
+      "metrics": {
+        "total_issues_received": 20,
+        "fixes_generated": 20
+      },
+      "findings": [
+        {
+          "id": "fix_001_contacts",
+          "table": "contacts",
+          "target_table": "contacts",
+          "problem": "Remediate blank or NULL 'msisdn' values in 'contacts' table",
+          "fix": "The 'msisdn' column in the 'contacts' table is defined as non-nullable, yet it contains NULL or empty string values. This violates data integrity and the 'blank_required_value' domain rule. The current count of blank or NULL 'msisdn' values is 0.",
+          "severity": "critical",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "UPDATE contacts\nSET msisdn = 'UNKNOWN_MSISDN'\nWHERE msisdn IS NULL OR msisdn = '';"
+          ],
+          "explanation": "The 'msisdn' column in the 'contacts' table is defined as non-nullable, yet it contains NULL or empty string values. This violates data integrity and the 'blank_required_value' domain rule. The current count of blank or NULL 'msisdn' values is 0.",
+          "preconditions": [
+            "SELECT COUNT(*) AS blank_or_null_msisdn_count\nFROM contacts\nWHERE msisdn IS NULL OR msisdn = '';"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) AS blank_or_null_msisdn_count_after_fix\nFROM contacts\nWHERE msisdn IS NULL OR msisdn = '';"
+          ],
+          "rollback_queries": [
+            "UPDATE contacts\nSET msisdn = ''\nWHERE msisdn = 'UNKNOWN_MSISDN';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_002_contacts",
+          "table": "contacts",
+          "target_table": "contacts",
+          "problem": "Remediate blank or NULL 'country_code' values in 'contacts' table",
+          "fix": "The 'country_code' column in the 'contacts' table is defined as non-nullable, yet it contains NULL or empty string values. This violates data integrity and the 'blank_required_value' domain rule. The current count of blank or NULL 'country_code' values is 0.",
+          "severity": "critical",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "UPDATE contacts\nSET country_code = 'XX'\nWHERE country_code IS NULL OR country_code = '';"
+          ],
+          "explanation": "The 'country_code' column in the 'contacts' table is defined as non-nullable, yet it contains NULL or empty string values. This violates data integrity and the 'blank_required_value' domain rule. The current count of blank or NULL 'country_code' values is 0.",
+          "preconditions": [
+            "SELECT COUNT(*) AS blank_or_null_country_code_count\nFROM contacts\nWHERE country_code IS NULL OR country_code = '';"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) AS blank_or_null_country_code_count_after_fix\nFROM contacts\nWHERE country_code IS NULL OR country_code = '';"
+          ],
+          "rollback_queries": [
+            "UPDATE contacts\nSET country_code = ''\nWHERE country_code = 'XX';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_003_organization",
+          "table": "organization",
+          "target_table": "organization",
+          "problem": "Remediate negative 'quota' values in 'organization' table",
+          "fix": "The 'quota' column in the 'organization' table contains negative values, which is logically impossible for a quota. This violates the 'negative_amount' domain rule. The current count of negative 'quota' values is 0.",
+          "severity": "critical",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "UPDATE organization\nSET quota = 0\nWHERE quota < 0;"
+          ],
+          "explanation": "The 'quota' column in the 'organization' table contains negative values, which is logically impossible for a quota. This violates the 'negative_amount' domain rule. The current count of negative 'quota' values is 0.",
+          "preconditions": [
+            "SELECT COUNT(*) AS negative_quota_count\nFROM organization\nWHERE quota < 0;"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) AS negative_quota_count_after_fix\nFROM organization\nWHERE quota < 0;"
+          ],
+          "rollback_queries": [
+            "-- Direct SQL rollback to the exact original negative values is not possible without a prior snapshot.\n-- It is recommended to perform a full database backup before applying this fix if a precise rollback is required.\n-- This query will set the 'quota' back to a generic negative placeholder (-1) for the affected rows.\nUPDATE organization\nSET quota = -1\nWHERE quota = 0;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_004_contacts",
+          "table": "contacts",
+          "target_table": "contacts",
+          "problem": "Remediate duplicate 'msisdn' values in 'contacts' table",
+          "fix": "The 'msisdn' column in the 'contacts' table is expected to be unique, but it contains duplicate entries. This violates data integrity and the 'duplicate_unique_column' domain rule. This fix will keep one arbitrary record for each duplicate 'msisdn' and delete the rest. There are currently no duplicate 'msisdn' values.",
+          "severity": "critical",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "DELETE FROM contacts\nWHERE ctid IN (\n    SELECT ctid\n    FROM (\n        SELECT\n            ctid,\n            ROW_NUMBER() OVER (PARTITION BY msisdn ORDER BY ctid) as rn\n        FROM contacts\n    ) AS sub\n    WHERE sub.rn > 1\n);"
+          ],
+          "explanation": "The 'msisdn' column in the 'contacts' table is expected to be unique, but it contains duplicate entries. This violates data integrity and the 'duplicate_unique_column' domain rule. This fix will keep one arbitrary record for each duplicate 'msisdn' and delete the rest. There are currently no duplicate 'msisdn' values.",
+          "preconditions": [
+            "SELECT msisdn, COUNT(*)\nFROM contacts\nGROUP BY msisdn\nHAVING COUNT(*) > 1;"
+          ],
+          "verification_queries": [
+            "SELECT msisdn, COUNT(*)\nFROM contacts\nGROUP BY msisdn\nHAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "-- Direct SQL rollback for deleted duplicate rows is not possible without a prior database backup.\n-- It is strongly recommended to perform a full database backup before applying this fix."
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_005_users",
+          "table": "users",
+          "target_table": "users",
+          "problem": "Remediate duplicate 'email' values in 'users' table",
+          "fix": "The 'email' column in the 'users' table is expected to be unique, but it contains duplicate entries. This violates data integrity and the 'duplicate_unique_column' domain rule. This fix will keep the record with the minimum 'id' for each duplicate 'email' and delete the rest. There are currently no duplicate 'email' values.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "DELETE FROM users\nWHERE id IN (\n    SELECT id\n    FROM (\n        SELECT\n            id,\n            ROW_NUMBER() OVER (PARTITION BY email ORDER BY id) as rn\n        FROM users\n    ) AS sub\n    WHERE sub.rn > 1\n);"
+          ],
+          "explanation": "The 'email' column in the 'users' table is expected to be unique, but it contains duplicate entries. This violates data integrity and the 'duplicate_unique_column' domain rule. This fix will keep the record with the minimum 'id' for each duplicate 'email' and delete the rest. There are currently no duplicate 'email' values.",
+          "preconditions": [
+            "SELECT email, COUNT(*)\nFROM users\nGROUP BY email\nHAVING COUNT(*) > 1;"
+          ],
+          "verification_queries": [
+            "SELECT email, COUNT(*)\nFROM users\nGROUP BY email\nHAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "-- Direct SQL rollback for deleted duplicate rows is not possible without a prior database backup.\n-- It is strongly recommended to perform a full database backup before applying this fix."
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_006_groupe",
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "Investigate and potentially remediate high null ratio for 'groupe.admin_id'",
+          "fix": "The 'admin_id' column in the 'groupe' table has a high null ratio (88.88888888888889%) based on 8 nulls out of 9 total rows, exceeding the allowed threshold of 5%. While the column is nullable, such a high percentage of nulls might indicate missing data or an unexpected data pattern that requires investigation. If 'admin_id' is expected to be present, a default value or data imputation strategy should be considered.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- No direct SQL fix is provided as the appropriate action depends on business logic.\n-- If a decision is made to set a default value for NULLs, an example update is:\n-- UPDATE groupe\n-- SET admin_id = 0 -- Replace 0 with an appropriate default admin ID\n-- WHERE admin_id IS NULL;"
+          ],
+          "explanation": "The 'admin_id' column in the 'groupe' table has a high null ratio (88.88888888888889%) based on 8 nulls out of 9 total rows, exceeding the allowed threshold of 5%. While the column is nullable, such a high percentage of nulls might indicate missing data or an unexpected data pattern that requires investigation. If 'admin_id' is expected to be present, a default value or data imputation strategy should be considered.",
+          "preconditions": [
+            "SELECT\n        COUNT(*) AS total_rows,\n        COUNT(admin_id) AS non_null_admin_id_count,\n        COUNT(*) - COUNT(admin_id) AS null_admin_id_count,\n        (CAST(COUNT(*) - COUNT(admin_id) AS NUMERIC) / COUNT(*)) * 100 AS null_percentage\nFROM groupe;"
+          ],
+          "verification_queries": [
+            "SELECT\n        COUNT(*) AS total_rows,\n        COUNT(admin_id) AS non_null_admin_id_count,\n        COUNT(*) - COUNT(admin_id) AS null_admin_id_count,\n        (CAST(COUNT(*) - COUNT(admin_id) AS NUMERIC) / COUNT(*)) * 100 AS null_percentage\nFROM groupe;"
+          ],
+          "rollback_queries": [
+            "-- Rollback would depend on the specific fix applied.\n-- If a default value was set, rollback would involve setting it back to NULL, e.g.:\n-- UPDATE groupe\n-- SET admin_id = NULL\n-- WHERE admin_id = 0; -- Assuming 0 was the default value set"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_007_campaign_spool_state",
+          "table": "campaign_spool_state",
+          "target_table": "campaign_spool_state",
+          "problem": "Investigate constant value in 'campaign_spool_state.send_sms_table_size'",
+          "fix": "The 'send_sms_table_size' column in the 'campaign_spool_state' table consistently holds a value of 0. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The current min, max, and average values are all 0, with 1 unique value across 7 rows.",
+          "severity": "medium",
+          "confidence": 0.7,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- No direct SQL fix is applicable for this finding. Investigation into data collection or application logic is required.;"
+          ],
+          "explanation": "The 'send_sms_table_size' column in the 'campaign_spool_state' table consistently holds a value of 0. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The current min, max, and average values are all 0, with 1 unique value across 7 rows.",
+          "preconditions": [
+            "SELECT\n        MIN(send_sms_table_size) AS min_value,\n        MAX(send_sms_table_size) AS max_value,\n        AVG(send_sms_table_size) AS average_value,\n        COUNT(DISTINCT send_sms_table_size) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM campaign_spool_state;"
+          ],
+          "verification_queries": [
+            "SELECT\n        MIN(send_sms_table_size) AS min_value,\n        MAX(send_sms_table_size) AS max_value,\n        AVG(send_sms_table_size) AS average_value,\n        COUNT(DISTINCT send_sms_table_size) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM campaign_spool_state;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_008_campaign_spool_state",
+          "table": "campaign_spool_state",
+          "target_table": "campaign_spool_state",
+          "problem": "Investigate constant value in 'campaign_spool_state.spool_size'",
+          "fix": "The 'spool_size' column in the 'campaign_spool_state' table consistently holds a value of 0. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The current min, max, and average values are all 0, with 1 unique value across 7 rows.",
+          "severity": "medium",
+          "confidence": 0.7,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- No direct SQL fix is applicable for this finding. Investigation into data collection or application logic is required.;"
+          ],
+          "explanation": "The 'spool_size' column in the 'campaign_spool_state' table consistently holds a value of 0. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The current min, max, and average values are all 0, with 1 unique value across 7 rows.",
+          "preconditions": [
+            "SELECT\n        MIN(spool_size) AS min_value,\n        MAX(spool_size) AS max_value,\n        AVG(spool_size) AS average_value,\n        COUNT(DISTINCT spool_size) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM campaign_spool_state;"
+          ],
+          "verification_queries": [
+            "SELECT\n        MIN(spool_size) AS min_value,\n        MAX(spool_size) AS max_value,\n        AVG(spool_size) AS average_value,\n        COUNT(DISTINCT spool_size) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM campaign_spool_state;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_009_campaign_spool_state",
+          "table": "campaign_spool_state",
+          "target_table": "campaign_spool_state",
+          "problem": "Investigate constant value in 'campaign_spool_state.sms_received'",
+          "fix": "The 'sms_received' column in the 'campaign_spool_state' table consistently holds a value of 0. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The current min, max, and average values are all 0, with 1 unique value across 7 rows.",
+          "severity": "medium",
+          "confidence": 0.7,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- No direct SQL fix is applicable for this finding. Investigation into data collection or application logic is required.;"
+          ],
+          "explanation": "The 'sms_received' column in the 'campaign_spool_state' table consistently holds a value of 0. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The current min, max, and average values are all 0, with 1 unique value across 7 rows.",
+          "preconditions": [
+            "SELECT\n        MIN(sms_received) AS min_value,\n        MAX(sms_received) AS max_value,\n        AVG(sms_received) AS average_value,\n        COUNT(DISTINCT sms_received) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM campaign_spool_state;"
+          ],
+          "verification_queries": [
+            "SELECT\n        MIN(sms_received) AS min_value,\n        MAX(sms_received) AS max_value,\n        AVG(sms_received) AS average_value,\n        COUNT(DISTINCT sms_received) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM campaign_spool_state;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_010_campaign_spool_state",
+          "table": "campaign_spool_state",
+          "target_table": "campaign_spool_state",
+          "problem": "Investigate constant value in 'campaign_spool_state.sms_received_queued'",
+          "fix": "The 'sms_received_queued' column in the 'campaign_spool_state' table consistently holds a value of 0. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The current min, max, and average values are all 0, with 1 unique value across 7 rows.",
+          "severity": "medium",
+          "confidence": 0.7,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- No direct SQL fix is applicable for this finding. Investigation into data collection or application logic is required.;"
+          ],
+          "explanation": "The 'sms_received_queued' column in the 'campaign_spool_state' table consistently holds a value of 0. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The current min, max, and average values are all 0, with 1 unique value across 7 rows.",
+          "preconditions": [
+            "SELECT\n        MIN(sms_received_queued) AS min_value,\n        MAX(sms_received_queued) AS max_value,\n        AVG(sms_received_queued) AS average_value,\n        COUNT(DISTINCT sms_received_queued) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM campaign_spool_state;"
+          ],
+          "verification_queries": [
+            "SELECT\n        MIN(sms_received_queued) AS min_value,\n        MAX(sms_received_queued) AS max_value,\n        AVG(sms_received_queued) AS average_value,\n        COUNT(DISTINCT sms_received_queued) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM campaign_spool_state;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_011_campaign_spool_state",
+          "table": "campaign_spool_state",
+          "target_table": "campaign_spool_state",
+          "problem": "Investigate constant value in 'campaign_spool_state.sms_sent_queued'",
+          "fix": "The 'sms_sent_queued' column in the 'campaign_spool_state' table consistently holds a value of 0. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The current min, max, and average values are all 0, with 1 unique value across 7 rows.",
+          "severity": "medium",
+          "confidence": 0.7,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- No direct SQL fix is applicable for this finding. Investigation into data collection or application logic is required.;"
+          ],
+          "explanation": "The 'sms_sent_queued' column in the 'campaign_spool_state' table consistently holds a value of 0. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The current min, max, and average values are all 0, with 1 unique value across 7 rows.",
+          "preconditions": [
+            "SELECT\n        MIN(sms_sent_queued) AS min_value,\n        MAX(sms_sent_queued) AS max_value,\n        AVG(sms_sent_queued) AS average_value,\n        COUNT(DISTINCT sms_sent_queued) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM campaign_spool_state;"
+          ],
+          "verification_queries": [
+            "SELECT\n        MIN(sms_sent_queued) AS min_value,\n        MAX(sms_sent_queued) AS max_value,\n        AVG(sms_sent_queued) AS average_value,\n        COUNT(DISTINCT sms_sent_queued) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM campaign_spool_state;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_012_campaign_spool_state",
+          "table": "campaign_spool_state",
+          "target_table": "campaign_spool_state",
+          "problem": "Investigate constant value in 'campaign_spool_state.store_size'",
+          "fix": "The 'store_size' column in the 'campaign_spool_state' table consistently holds a value of 0. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The current min, max, and average values are all 0, with 1 unique value across 7 rows.",
+          "severity": "medium",
+          "confidence": 0.7,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- No direct SQL fix is applicable for this finding. Investigation into data collection or application logic is required.;"
+          ],
+          "explanation": "The 'store_size' column in the 'campaign_spool_state' table consistently holds a value of 0. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The current min, max, and average values are all 0, with 1 unique value across 7 rows.",
+          "preconditions": [
+            "SELECT\n        MIN(store_size) AS min_value,\n        MAX(store_size) AS max_value,\n        AVG(store_size) AS average_value,\n        COUNT(DISTINCT store_size) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM campaign_spool_state;"
+          ],
+          "verification_queries": [
+            "SELECT\n        MIN(store_size) AS min_value,\n        MAX(store_size) AS max_value,\n        AVG(store_size) AS average_value,\n        COUNT(DISTINCT store_size) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM campaign_spool_state;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_013_campaign_spool_state",
+          "table": "campaign_spool_state",
+          "target_table": "campaign_spool_state",
+          "problem": "Investigate constant value in 'campaign_spool_state.dlr_sent'",
+          "fix": "The 'dlr_sent' column in the 'campaign_spool_state' table consistently holds a value of 0. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The current min, max, and average values are all 0, with 1 unique value across 7 rows.",
+          "severity": "medium",
+          "confidence": 0.7,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- No direct SQL fix is applicable for this finding. Investigation into data collection or application logic is required.;"
+          ],
+          "explanation": "The 'dlr_sent' column in the 'campaign_spool_state' table consistently holds a value of 0. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The current min, max, and average values are all 0, with 1 unique value across 7 rows.",
+          "preconditions": [
+            "SELECT\n        MIN(dlr_sent) AS min_value,\n        MAX(dlr_sent) AS max_value,\n        AVG(dlr_sent) AS average_value,\n        COUNT(DISTINCT dlr_sent) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM campaign_spool_state;"
+          ],
+          "verification_queries": [
+            "SELECT\n        MIN(dlr_sent) AS min_value,\n        MAX(dlr_sent) AS max_value,\n        AVG(dlr_sent) AS average_value,\n        COUNT(DISTINCT dlr_sent) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM campaign_spool_state;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_014_campaign_spool_state",
+          "table": "campaign_spool_state",
+          "target_table": "campaign_spool_state",
+          "problem": "Investigate constant value in 'campaign_spool_state.sms_inbound_msg_per_sec'",
+          "fix": "The 'sms_inbound_msg_per_sec' column in the 'campaign_spool_state' table has only one unique value. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The column has 1 unique value across 7 rows.",
+          "severity": "medium",
+          "confidence": 0.7,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- No direct SQL fix is applicable for this finding. Investigation into data collection or application logic is required.;"
+          ],
+          "explanation": "The 'sms_inbound_msg_per_sec' column in the 'campaign_spool_state' table has only one unique value. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The column has 1 unique value across 7 rows.",
+          "preconditions": [
+            "SELECT\n        COUNT(DISTINCT sms_inbound_msg_per_sec) AS unique_values_count,\n        COUNT(*) AS total_rows,\n        (SELECT sms_inbound_msg_per_sec FROM campaign_spool_state LIMIT 1) AS constant_value\nFROM campaign_spool_state;"
+          ],
+          "verification_queries": [
+            "SELECT\n        COUNT(DISTINCT sms_inbound_msg_per_sec) AS unique_values_count,\n        COUNT(*) AS total_rows,\n        (SELECT sms_inbound_msg_per_sec FROM campaign_spool_state LIMIT 1) AS constant_value\nFROM campaign_spool_state;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_015_campaign_spool_state",
+          "table": "campaign_spool_state",
+          "target_table": "campaign_spool_state",
+          "problem": "Investigate constant value in 'campaign_spool_state.sms_outbound_msg_per_sec'",
+          "fix": "The 'sms_outbound_msg_per_sec' column in the 'campaign_spool_state' table has only one unique value. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The column has 1 unique value across 7 rows.",
+          "severity": "medium",
+          "confidence": 0.7,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- No direct SQL fix is applicable for this finding. Investigation into data collection or application logic is required.;"
+          ],
+          "explanation": "The 'sms_outbound_msg_per_sec' column in the 'campaign_spool_state' table has only one unique value. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The column has 1 unique value across 7 rows.",
+          "preconditions": [
+            "SELECT\n        COUNT(DISTINCT sms_outbound_msg_per_sec) AS unique_values_count,\n        COUNT(*) AS total_rows,\n        (SELECT sms_outbound_msg_per_sec FROM campaign_spool_state LIMIT 1) AS constant_value\nFROM campaign_spool_state;"
+          ],
+          "verification_queries": [
+            "SELECT\n        COUNT(DISTINCT sms_outbound_msg_per_sec) AS unique_values_count,\n        COUNT(*) AS total_rows,\n        (SELECT sms_outbound_msg_per_sec FROM campaign_spool_state LIMIT 1) AS constant_value\nFROM campaign_spool_state;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_016_campaign_spool_state",
+          "table": "campaign_spool_state",
+          "target_table": "campaign_spool_state",
+          "problem": "Investigate constant value in 'campaign_spool_state.dlr_outbound_msg_per_sec'",
+          "fix": "The 'dlr_outbound_msg_per_sec' column in the 'campaign_spool_state' table has only one unique value. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The column has 1 unique value across 7 rows.",
+          "severity": "medium",
+          "confidence": 0.7,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- No direct SQL fix is applicable for this finding. Investigation into data collection or application logic is required.;"
+          ],
+          "explanation": "The 'dlr_outbound_msg_per_sec' column in the 'campaign_spool_state' table has only one unique value. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The column has 1 unique value across 7 rows.",
+          "preconditions": [
+            "SELECT\n        COUNT(DISTINCT dlr_outbound_msg_per_sec) AS unique_values_count,\n        COUNT(*) AS total_rows,\n        (SELECT dlr_outbound_msg_per_sec FROM campaign_spool_state LIMIT 1) AS constant_value\nFROM campaign_spool_state;"
+          ],
+          "verification_queries": [
+            "SELECT\n        COUNT(DISTINCT dlr_outbound_msg_per_sec) AS unique_values_count,\n        COUNT(*) AS total_rows,\n        (SELECT dlr_outbound_msg_per_sec FROM campaign_spool_state LIMIT 1) AS constant_value\nFROM campaign_spool_state;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_017_expediteur_groupe_aud",
+          "table": "expediteur_groupe_aud",
+          "target_table": "expediteur_groupe_aud",
+          "problem": "Investigate constant value in 'expediteur_groupe_aud.revtype'",
+          "fix": "The 'revtype' column in the 'expediteur_groupe_aud' table consistently holds a value of 0. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The current min, max, and average values are all 0, with 1 unique value across 7 rows.",
+          "severity": "medium",
+          "confidence": 0.7,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- No direct SQL fix is applicable for this finding. Investigation into data collection or application logic is required.;"
+          ],
+          "explanation": "The 'revtype' column in the 'expediteur_groupe_aud' table consistently holds a value of 0. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The current min, max, and average values are all 0, with 1 unique value across 7 rows.",
+          "preconditions": [
+            "SELECT\n        MIN(revtype) AS min_value,\n        MAX(revtype) AS max_value,\n        AVG(revtype) AS average_value,\n        COUNT(DISTINCT revtype) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM expediteur_groupe_aud;"
+          ],
+          "verification_queries": [
+            "SELECT\n        MIN(revtype) AS min_value,\n        MAX(revtype) AS max_value,\n        AVG(revtype) AS average_value,\n        COUNT(DISTINCT revtype) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM expediteur_groupe_aud;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_018_groupe",
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "Investigate constant value in 'groupe.status_id'",
+          "fix": "The 'status_id' column in the 'groupe' table consistently holds a value of 4. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The current min, max, and average values are all 4, with 1 unique value across 9 rows.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- No direct SQL fix is applicable for this finding. Investigation into data collection or application logic is required.;"
+          ],
+          "explanation": "The 'status_id' column in the 'groupe' table consistently holds a value of 4. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The current min, max, and average values are all 4, with 1 unique value across 9 rows.",
+          "preconditions": [
+            "SELECT\n        MIN(status_id) AS min_value,\n        MAX(status_id) AS max_value,\n        AVG(status_id) AS average_value,\n        COUNT(DISTINCT status_id) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM groupe;"
+          ],
+          "verification_queries": [
+            "SELECT\n        MIN(status_id) AS min_value,\n        MAX(status_id) AS max_value,\n        AVG(status_id) AS average_value,\n        COUNT(DISTINCT status_id) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM groupe;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_019_campaign_schedule",
+          "table": "campaign_schedule",
+          "target_table": "campaign_schedule",
+          "problem": "Verify null ratio for 'campaign_schedule.weekend'",
+          "fix": "The 'weekend' column in the 'campaign_schedule' table is nullable. The domain rule 'max_null_pct' (5%) requires verification to ensure the actual null ratio does not exceed this threshold. The current null percentage is 0.0%.",
+          "severity": "low",
+          "confidence": 0.5,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- No direct SQL fix is applicable for this finding. Verification of the null ratio is required.;"
+          ],
+          "explanation": "The 'weekend' column in the 'campaign_schedule' table is nullable. The domain rule 'max_null_pct' (5%) requires verification to ensure the actual null ratio does not exceed this threshold. The current null percentage is 0.0%.",
+          "preconditions": [
+            "SELECT\n        COUNT(*) AS total_rows,\n        COUNT(weekend) AS non_null_weekend_count,\n        COUNT(*) - COUNT(weekend) AS null_weekend_count,\n        (CAST(COUNT(*) - COUNT(weekend) AS NUMERIC) / COUNT(*)) * 100 AS null_percentage\nFROM campaign_schedule;"
+          ],
+          "verification_queries": [
+            "SELECT\n        COUNT(*) AS total_rows,\n        COUNT(weekend) AS non_null_weekend_count,\n        COUNT(*) - COUNT(weekend) AS null_weekend_count,\n        (CAST(COUNT(*) - COUNT(weekend) AS NUMERIC) / COUNT(*)) * 100 AS null_percentage\nFROM campaign_schedule;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_020_campaign_spool_state",
+          "table": "campaign_spool_state",
+          "target_table": "campaign_spool_state",
+          "problem": "Verify null ratio for 'campaign_spool_state.is_full'",
+          "fix": "The 'is_full' column in the 'campaign_spool_state' table is nullable. The domain rule 'max_null_pct' (5%) requires verification to ensure the actual null ratio does not exceed this threshold. The current null percentage is 0.0%.",
+          "severity": "medium",
+          "confidence": 0.7,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- No direct SQL fix is applicable for this finding. Verification of the null ratio is required.;"
+          ],
+          "explanation": "The 'is_full' column in the 'campaign_spool_state' table is nullable. The domain rule 'max_null_pct' (5%) requires verification to ensure the actual null ratio does not exceed this threshold. The current null percentage is 0.0%.",
+          "preconditions": [
+            "SELECT\n        COUNT(*) AS total_rows,\n        COUNT(is_full) AS non_null_is_full_count,\n        COUNT(*) - COUNT(is_full) AS null_is_full_count,\n        (CAST(COUNT(*) - COUNT(is_full) AS NUMERIC) / COUNT(*)) * 100 AS null_percentage\nFROM campaign_spool_state;"
+          ],
+          "verification_queries": [
+            "SELECT\n        COUNT(*) AS total_rows,\n        COUNT(is_full) AS non_null_is_full_count,\n        COUNT(*) - COUNT(is_full) AS null_is_full_count,\n        (CAST(COUNT(*) - COUNT(is_full) AS NUMERIC) / COUNT(*)) * 100 AS null_percentage\nFROM campaign_spool_state;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        }
+      ],
+      "cards": [
+        {
+          "title": "Remediate blank or NULL 'msisdn' values in 'contacts' table",
+          "target": "contacts",
+          "rationale": "The 'msisdn' column in the 'contacts' table is defined as non-nullable, yet it contains NULL or empty string values. This violates data integrity and the 'blank_required_value' domain rule. The current count of blank or NULL 'msisdn' values is 0.",
+          "sql": "UPDATE contacts\nSET msisdn = 'UNKNOWN_MSISDN'\nWHERE msisdn IS NULL OR msisdn = '';",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT COUNT(*) AS blank_or_null_msisdn_count\nFROM contacts\nWHERE msisdn IS NULL OR msisdn = '';"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) AS blank_or_null_msisdn_count_after_fix\nFROM contacts\nWHERE msisdn IS NULL OR msisdn = '';"
+          ],
+          "rollback_queries": [
+            "UPDATE contacts\nSET msisdn = ''\nWHERE msisdn = 'UNKNOWN_MSISDN';"
+          ]
+        },
+        {
+          "title": "Remediate blank or NULL 'country_code' values in 'contacts' table",
+          "target": "contacts",
+          "rationale": "The 'country_code' column in the 'contacts' table is defined as non-nullable, yet it contains NULL or empty string values. This violates data integrity and the 'blank_required_value' domain rule. The current count of blank or NULL 'country_code' values is 0.",
+          "sql": "UPDATE contacts\nSET country_code = 'XX'\nWHERE country_code IS NULL OR country_code = '';",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT COUNT(*) AS blank_or_null_country_code_count\nFROM contacts\nWHERE country_code IS NULL OR country_code = '';"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) AS blank_or_null_country_code_count_after_fix\nFROM contacts\nWHERE country_code IS NULL OR country_code = '';"
+          ],
+          "rollback_queries": [
+            "UPDATE contacts\nSET country_code = ''\nWHERE country_code = 'XX';"
+          ]
+        },
+        {
+          "title": "Remediate negative 'quota' values in 'organization' table",
+          "target": "organization",
+          "rationale": "The 'quota' column in the 'organization' table contains negative values, which is logically impossible for a quota. This violates the 'negative_amount' domain rule. The current count of negative 'quota' values is 0.",
+          "sql": "UPDATE organization\nSET quota = 0\nWHERE quota < 0;",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT COUNT(*) AS negative_quota_count\nFROM organization\nWHERE quota < 0;"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) AS negative_quota_count_after_fix\nFROM organization\nWHERE quota < 0;"
+          ],
+          "rollback_queries": [
+            "-- Direct SQL rollback to the exact original negative values is not possible without a prior snapshot.\n-- It is recommended to perform a full database backup before applying this fix if a precise rollback is required.\n-- This query will set the 'quota' back to a generic negative placeholder (-1) for the affected rows.\nUPDATE organization\nSET quota = -1\nWHERE quota = 0;"
+          ]
+        },
+        {
+          "title": "Remediate duplicate 'msisdn' values in 'contacts' table",
+          "target": "contacts",
+          "rationale": "The 'msisdn' column in the 'contacts' table is expected to be unique, but it contains duplicate entries. This violates data integrity and the 'duplicate_unique_column' domain rule. This fix will keep one arbitrary record for each duplicate 'msisdn' and delete the rest. There are currently no duplicate 'msisdn' values.",
+          "sql": "DELETE FROM contacts\nWHERE ctid IN (\n    SELECT ctid\n    FROM (\n        SELECT\n            ctid,\n            ROW_NUMBER() OVER (PARTITION BY msisdn ORDER BY ctid) as rn\n        FROM contacts\n    ) AS sub\n    WHERE sub.rn > 1\n);",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT msisdn, COUNT(*)\nFROM contacts\nGROUP BY msisdn\nHAVING COUNT(*) > 1;"
+          ],
+          "verification_queries": [
+            "SELECT msisdn, COUNT(*)\nFROM contacts\nGROUP BY msisdn\nHAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "-- Direct SQL rollback for deleted duplicate rows is not possible without a prior database backup.\n-- It is strongly recommended to perform a full database backup before applying this fix."
+          ]
+        },
+        {
+          "title": "Remediate duplicate 'email' values in 'users' table",
+          "target": "users",
+          "rationale": "The 'email' column in the 'users' table is expected to be unique, but it contains duplicate entries. This violates data integrity and the 'duplicate_unique_column' domain rule. This fix will keep the record with the minimum 'id' for each duplicate 'email' and delete the rest. There are currently no duplicate 'email' values.",
+          "sql": "DELETE FROM users\nWHERE id IN (\n    SELECT id\n    FROM (\n        SELECT\n            id,\n            ROW_NUMBER() OVER (PARTITION BY email ORDER BY id) as rn\n        FROM users\n    ) AS sub\n    WHERE sub.rn > 1\n);\n",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT email, COUNT(*)\nFROM users\nGROUP BY email\nHAVING COUNT(*) > 1;"
+          ],
+          "verification_queries": [
+            "SELECT email, COUNT(*)\nFROM users\nGROUP BY email\nHAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "-- Direct SQL rollback for deleted duplicate rows is not possible without a prior database backup.\n-- It is strongly recommended to perform a full database backup before applying this fix."
+          ]
+        },
+        {
+          "title": "Investigate and potentially remediate high null ratio for 'groupe.admin_id'",
+          "target": "groupe",
+          "rationale": "The 'admin_id' column in the 'groupe' table has a high null ratio (88.88888888888889%) based on 8 nulls out of 9 total rows, exceeding the allowed threshold of 5%. While the column is nullable, such a high percentage of nulls might indicate missing data or an unexpected data pattern that requires investigation. If 'admin_id' is expected to be present, a default value or data imputation strategy should be considered.",
+          "sql": "-- No direct SQL fix is provided as the appropriate action depends on business logic.\n-- If a decision is made to set a default value for NULLs, an example update is:\n-- UPDATE groupe\n-- SET admin_id = 0 -- Replace 0 with an appropriate default admin ID\n-- WHERE admin_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT\n        COUNT(*) AS total_rows,\n        COUNT(admin_id) AS non_null_admin_id_count,\n        COUNT(*) - COUNT(admin_id) AS null_admin_id_count,\n        (CAST(COUNT(*) - COUNT(admin_id) AS NUMERIC) / COUNT(*)) * 100 AS null_percentage\nFROM groupe;"
+          ],
+          "verification_queries": [
+            "SELECT\n        COUNT(*) AS total_rows,\n        COUNT(admin_id) AS non_null_admin_id_count,\n        COUNT(*) - COUNT(admin_id) AS null_admin_id_count,\n        (CAST(COUNT(*) - COUNT(admin_id) AS NUMERIC) / COUNT(*)) * 100 AS null_percentage\nFROM groupe;"
+          ],
+          "rollback_queries": [
+            "-- Rollback would depend on the specific fix applied.\n-- If a default value was set, rollback would involve setting it back to NULL, e.g.:\n-- UPDATE groupe\n-- SET admin_id = NULL\n-- WHERE admin_id = 0; -- Assuming 0 was the default value set"
+          ]
+        },
+        {
+          "title": "Investigate constant value in 'campaign_spool_state.send_sms_table_size'",
+          "target": "campaign_spool_state",
+          "rationale": "The 'send_sms_table_size' column in the 'campaign_spool_state' table consistently holds a value of 0. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The current min, max, and average values are all 0, with 1 unique value across 7 rows.",
+          "sql": "-- No direct SQL fix is applicable for this finding. Investigation into data collection or application logic is required.",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT\n        MIN(send_sms_table_size) AS min_value,\n        MAX(send_sms_table_size) AS max_value,\n        AVG(send_sms_table_size) AS average_value,\n        COUNT(DISTINCT send_sms_table_size) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM campaign_spool_state;"
+          ],
+          "verification_queries": [
+            "SELECT\n        MIN(send_sms_table_size) AS min_value,\n        MAX(send_sms_table_size) AS max_value,\n        AVG(send_sms_table_size) AS average_value,\n        COUNT(DISTINCT send_sms_table_size) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM campaign_spool_state;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate constant value in 'campaign_spool_state.spool_size'",
+          "target": "campaign_spool_state",
+          "rationale": "The 'spool_size' column in the 'campaign_spool_state' table consistently holds a value of 0. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The current min, max, and average values are all 0, with 1 unique value across 7 rows.",
+          "sql": "-- No direct SQL fix is applicable for this finding. Investigation into data collection or application logic is required.",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT\n        MIN(spool_size) AS min_value,\n        MAX(spool_size) AS max_value,\n        AVG(spool_size) AS average_value,\n        COUNT(DISTINCT spool_size) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM campaign_spool_state;"
+          ],
+          "verification_queries": [
+            "SELECT\n        MIN(spool_size) AS min_value,\n        MAX(spool_size) AS max_value,\n        AVG(spool_size) AS average_value,\n        COUNT(DISTINCT spool_size) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM campaign_spool_state;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate constant value in 'campaign_spool_state.sms_received'",
+          "target": "campaign_spool_state",
+          "rationale": "The 'sms_received' column in the 'campaign_spool_state' table consistently holds a value of 0. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The current min, max, and average values are all 0, with 1 unique value across 7 rows.",
+          "sql": "-- No direct SQL fix is applicable for this finding. Investigation into data collection or application logic is required.",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT\n        MIN(sms_received) AS min_value,\n        MAX(sms_received) AS max_value,\n        AVG(sms_received) AS average_value,\n        COUNT(DISTINCT sms_received) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM campaign_spool_state;"
+          ],
+          "verification_queries": [
+            "SELECT\n        MIN(sms_received) AS min_value,\n        MAX(sms_received) AS max_value,\n        AVG(sms_received) AS average_value,\n        COUNT(DISTINCT sms_received) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM campaign_spool_state;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate constant value in 'campaign_spool_state.sms_received_queued'",
+          "target": "campaign_spool_state",
+          "rationale": "The 'sms_received_queued' column in the 'campaign_spool_state' table consistently holds a value of 0. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The current min, max, and average values are all 0, with 1 unique value across 7 rows.",
+          "sql": "-- No direct SQL fix is applicable for this finding. Investigation into data collection or application logic is required.",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT\n        MIN(sms_received_queued) AS min_value,\n        MAX(sms_received_queued) AS max_value,\n        AVG(sms_received_queued) AS average_value,\n        COUNT(DISTINCT sms_received_queued) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM campaign_spool_state;"
+          ],
+          "verification_queries": [
+            "SELECT\n        MIN(sms_received_queued) AS min_value,\n        MAX(sms_received_queued) AS max_value,\n        AVG(sms_received_queued) AS average_value,\n        COUNT(DISTINCT sms_received_queued) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM campaign_spool_state;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate constant value in 'campaign_spool_state.sms_sent_queued'",
+          "target": "campaign_spool_state",
+          "rationale": "The 'sms_sent_queued' column in the 'campaign_spool_state' table consistently holds a value of 0. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The current min, max, and average values are all 0, with 1 unique value across 7 rows.",
+          "sql": "-- No direct SQL fix is applicable for this finding. Investigation into data collection or application logic is required.",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT\n        MIN(sms_sent_queued) AS min_value,\n        MAX(sms_sent_queued) AS max_value,\n        AVG(sms_sent_queued) AS average_value,\n        COUNT(DISTINCT sms_sent_queued) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM campaign_spool_state;"
+          ],
+          "verification_queries": [
+            "SELECT\n        MIN(sms_sent_queued) AS min_value,\n        MAX(sms_sent_queued) AS max_value,\n        AVG(sms_sent_queued) AS average_value,\n        COUNT(DISTINCT sms_sent_queued) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM campaign_spool_state;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate constant value in 'campaign_spool_state.store_size'",
+          "target": "campaign_spool_state",
+          "rationale": "The 'store_size' column in the 'campaign_spool_state' table consistently holds a value of 0. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The current min, max, and average values are all 0, with 1 unique value across 7 rows.",
+          "sql": "-- No direct SQL fix is applicable for this finding. Investigation into data collection or application logic is required.",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT\n        MIN(store_size) AS min_value,\n        MAX(store_size) AS max_value,\n        AVG(store_size) AS average_value,\n        COUNT(DISTINCT store_size) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM campaign_spool_state;"
+          ],
+          "verification_queries": [
+            "SELECT\n        MIN(store_size) AS min_value,\n        MAX(store_size) AS max_value,\n        AVG(store_size) AS average_value,\n        COUNT(DISTINCT store_size) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM campaign_spool_state;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate constant value in 'campaign_spool_state.dlr_sent'",
+          "target": "campaign_spool_state",
+          "rationale": "The 'dlr_sent' column in the 'campaign_spool_state' table consistently holds a value of 0. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The current min, max, and average values are all 0, with 1 unique value across 7 rows.",
+          "sql": "-- No direct SQL fix is applicable for this finding. Investigation into data collection or application logic is required.",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT\n        MIN(dlr_sent) AS min_value,\n        MAX(dlr_sent) AS max_value,\n        AVG(dlr_sent) AS average_value,\n        COUNT(DISTINCT dlr_sent) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM campaign_spool_state;"
+          ],
+          "verification_queries": [
+            "SELECT\n        MIN(dlr_sent) AS min_value,\n        MAX(dlr_sent) AS max_value,\n        AVG(dlr_sent) AS average_value,\n        COUNT(DISTINCT dlr_sent) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM campaign_spool_state;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate constant value in 'campaign_spool_state.sms_inbound_msg_per_sec'",
+          "target": "campaign_spool_state",
+          "rationale": "The 'sms_inbound_msg_per_sec' column in the 'campaign_spool_state' table has only one unique value. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The column has 1 unique value across 7 rows.",
+          "sql": "-- No direct SQL fix is applicable for this finding. Investigation into data collection or application logic is required.",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT\n        COUNT(DISTINCT sms_inbound_msg_per_sec) AS unique_values_count,\n        COUNT(*) AS total_rows,\n        (SELECT sms_inbound_msg_per_sec FROM campaign_spool_state LIMIT 1) AS constant_value\nFROM campaign_spool_state;"
+          ],
+          "verification_queries": [
+            "SELECT\n        COUNT(DISTINCT sms_inbound_msg_per_sec) AS unique_values_count,\n        COUNT(*) AS total_rows,\n        (SELECT sms_inbound_msg_per_sec FROM campaign_spool_state LIMIT 1) AS constant_value\nFROM campaign_spool_state;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate constant value in 'campaign_spool_state.sms_outbound_msg_per_sec'",
+          "target": "campaign_spool_state",
+          "rationale": "The 'sms_outbound_msg_per_sec' column in the 'campaign_spool_state' table has only one unique value. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The column has 1 unique value across 7 rows.",
+          "sql": "-- No direct SQL fix is applicable for this finding. Investigation into data collection or application logic is required.",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT\n        COUNT(DISTINCT sms_outbound_msg_per_sec) AS unique_values_count,\n        COUNT(*) AS total_rows,\n        (SELECT sms_outbound_msg_per_sec FROM campaign_spool_state LIMIT 1) AS constant_value\nFROM campaign_spool_state;"
+          ],
+          "verification_queries": [
+            "SELECT\n        COUNT(DISTINCT sms_outbound_msg_per_sec) AS unique_values_count,\n        COUNT(*) AS total_rows,\n        (SELECT sms_outbound_msg_per_sec FROM campaign_spool_state LIMIT 1) AS constant_value\nFROM campaign_spool_state;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate constant value in 'campaign_spool_state.dlr_outbound_msg_per_sec'",
+          "target": "campaign_spool_state",
+          "rationale": "The 'dlr_outbound_msg_per_sec' column in the 'campaign_spool_state' table has only one unique value. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The column has 1 unique value across 7 rows.",
+          "sql": "-- No direct SQL fix is applicable for this finding. Investigation into data collection or application logic is required.",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT\n        COUNT(DISTINCT dlr_outbound_msg_per_sec) AS unique_values_count,\n        COUNT(*) AS total_rows,\n        (SELECT dlr_outbound_msg_per_sec FROM campaign_spool_state LIMIT 1) AS constant_value\nFROM campaign_spool_state;"
+          ],
+          "verification_queries": [
+            "SELECT\n        COUNT(DISTINCT dlr_outbound_msg_per_sec) AS unique_values_count,\n        COUNT(*) AS total_rows,\n        (SELECT dlr_outbound_msg_per_sec FROM campaign_spool_state LIMIT 1) AS constant_value\nFROM campaign_spool_state;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate constant value in 'expediteur_groupe_aud.revtype'",
+          "target": "expediteur_groupe_aud",
+          "rationale": "The 'revtype' column in the 'expediteur_groupe_aud' table consistently holds a value of 0. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The current min, max, and average values are all 0, with 1 unique value across 7 rows.",
+          "sql": "-- No direct SQL fix is applicable for this finding. Investigation into data collection or application logic is required.",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT\n        MIN(revtype) AS min_value,\n        MAX(revtype) AS max_value,\n        AVG(revtype) AS average_value,\n        COUNT(DISTINCT revtype) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM expediteur_groupe_aud;"
+          ],
+          "verification_queries": [
+            "SELECT\n        MIN(revtype) AS min_value,\n        MAX(revtype) AS max_value,\n        AVG(revtype) AS average_value,\n        COUNT(DISTINCT revtype) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM expediteur_groupe_aud;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Investigate constant value in 'groupe.status_id'",
+          "target": "groupe",
+          "rationale": "The 'status_id' column in the 'groupe' table consistently holds a value of 4. This constant distribution might indicate an issue with data collection, an unexpected system behavior, or that the metric is not being actively used or updated. Further investigation is required to understand the root cause. The current min, max, and average values are all 4, with 1 unique value across 9 rows.",
+          "sql": "-- No direct SQL fix is applicable for this finding. Investigation into data collection or application logic is required.",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT\n        MIN(status_id) AS min_value,\n        MAX(status_id) AS max_value,\n        AVG(status_id) AS average_value,\n        COUNT(DISTINCT status_id) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM groupe;"
+          ],
+          "verification_queries": [
+            "SELECT\n        MIN(status_id) AS min_value,\n        MAX(status_id) AS max_value,\n        AVG(status_id) AS average_value,\n        COUNT(DISTINCT status_id) AS unique_values_count,\n        COUNT(*) AS total_rows\nFROM groupe;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Verify null ratio for 'campaign_schedule.weekend'",
+          "target": "campaign_schedule",
+          "rationale": "The 'weekend' column in the 'campaign_schedule' table is nullable. The domain rule 'max_null_pct' (5%) requires verification to ensure the actual null ratio does not exceed this threshold. The current null percentage is 0.0%.",
+          "sql": "-- No direct SQL fix is applicable for this finding. Verification of the null ratio is required.",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT\n        COUNT(*) AS total_rows,\n        COUNT(weekend) AS non_null_weekend_count,\n        COUNT(*) - COUNT(weekend) AS null_weekend_count,\n        (CAST(COUNT(*) - COUNT(weekend) AS NUMERIC) / COUNT(*)) * 100 AS null_percentage\nFROM campaign_schedule;"
+          ],
+          "verification_queries": [
+            "SELECT\n        COUNT(*) AS total_rows,\n        COUNT(weekend) AS non_null_weekend_count,\n        COUNT(*) - COUNT(weekend) AS null_weekend_count,\n        (CAST(COUNT(*) - COUNT(weekend) AS NUMERIC) / COUNT(*)) * 100 AS null_percentage\nFROM campaign_schedule;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Verify null ratio for 'campaign_spool_state.is_full'",
+          "target": "campaign_spool_state",
+          "rationale": "The 'is_full' column in the 'campaign_spool_state' table is nullable. The domain rule 'max_null_pct' (5%) requires verification to ensure the actual null ratio does not exceed this threshold. The current null percentage is 0.0%.",
+          "sql": "-- No direct SQL fix is applicable for this finding. Verification of the null ratio is required.",
+          "explain_summary": null,
+          "preconditions": [
+            "SELECT\n        COUNT(*) AS total_rows,\n        COUNT(is_full) AS non_null_is_full_count,\n        COUNT(*) - COUNT(is_full) AS null_is_full_count,\n        (CAST(COUNT(*) - COUNT(is_full) AS NUMERIC) / COUNT(*)) * 100 AS null_percentage\nFROM campaign_spool_state;"
+          ],
+          "verification_queries": [
+            "SELECT\n        COUNT(*) AS total_rows,\n        COUNT(is_full) AS non_null_is_full_count,\n        COUNT(*) - COUNT(is_full) AS null_is_full_count,\n        (CAST(COUNT(*) - COUNT(is_full) AS NUMERIC) / COUNT(*)) * 100 AS null_percentage\nFROM campaign_spool_state;"
+          ],
+          "rollback_queries": []
+        }
+      ]
+    }
+  }
+}

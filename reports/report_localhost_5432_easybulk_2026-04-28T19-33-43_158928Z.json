@@ -1,0 +1,1018 @@
+{
+  "pipeline_run_id": "d62ab8cb-c667-49af-ad9d-e765a9c47295",
+  "database_id": "localhost_5432_easybulk",
+  "llm_model": "gemini-2.5-flash",
+  "run_timestamp": "2026-04-28T19:33:43.158928Z",
+  "summary": {
+    "confidence_score": 84,
+    "data_quality_score": 49,
+    "final_fix_count": 0
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "d62ab8cb-c667-49af-ad9d-e765a9c47295",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-28T19:33:43.158928Z",
+      "agent": "Schema Integrity Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 33,
+        "items_passed": 18,
+        "items_flagged": 15,
+        "critical_issues": 3,
+        "high_issues": 12,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 0.0,
+        "overall_confidence": 0.6733,
+        "flagged_tables": [
+          "budget_history",
+          "campagne_contacts",
+          "campagne_tags",
+          "campaign_schedule",
+          "campaign_spool_state",
+          "campaign_type_permission",
+          "contacts",
+          "expediteur",
+          "expediteur_groupe",
+          "groupe",
+          "membership",
+          "mention",
+          "organization",
+          "prm_organization",
+          "send_sms"
+        ]
+      },
+      "metrics": {
+        "validator": "schema",
+        "findings_count": 15
+      },
+      "findings": [
+        {
+          "table": "campagne_contacts",
+          "column": null,
+          "entity": "campagne_contacts",
+          "rule": "missing_primary_key",
+          "severity": "critical",
+          "confidence": 0.9,
+          "evidence": {
+            "table": "campagne_contacts",
+            "columns_inspected": [
+              "campagne_id",
+              "contact_id"
+            ],
+            "nullable_columns": [
+              "contact_id"
+            ]
+          },
+          "remediation_hint": "Consider adding a primary key to the 'campagne_contacts' table. If 'campagne_id' and 'contact_id' are intended to form a composite primary key, ensure 'contact_id' is not nullable.",
+          "issues": [
+            {
+              "type": "missing_primary_key",
+              "severity": "critical",
+              "description": "Consider adding a primary key to the 'campagne_contacts' table. If 'campagne_id' and 'contact_id' are intended to form a composite primary key, ensure 'contact_id' is not nullable.",
+              "evidence": {
+                "table": "campagne_contacts",
+                "columns_inspected": [
+                  "campagne_id",
+                  "contact_id"
+                ],
+                "nullable_columns": [
+                  "contact_id"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_tags",
+          "column": null,
+          "entity": "campagne_tags",
+          "rule": "missing_primary_key",
+          "severity": "critical",
+          "confidence": 0.9,
+          "evidence": {
+            "table": "campagne_tags",
+            "columns_inspected": [
+              "campagne_id",
+              "tag_name"
+            ],
+            "nullable_columns": [
+              "tag_name"
+            ]
+          },
+          "remediation_hint": "Consider adding a primary key to the 'campagne_tags' table. If 'campagne_id' and 'tag_name' are intended to form a composite primary key, ensure 'tag_name' is not nullable.",
+          "issues": [
+            {
+              "type": "missing_primary_key",
+              "severity": "critical",
+              "description": "Consider adding a primary key to the 'campagne_tags' table. If 'campagne_id' and 'tag_name' are intended to form a composite primary key, ensure 'tag_name' is not nullable.",
+              "evidence": {
+                "table": "campagne_tags",
+                "columns_inspected": [
+                  "campagne_id",
+                  "tag_name"
+                ],
+                "nullable_columns": [
+                  "tag_name"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "send_sms",
+          "column": null,
+          "entity": "send_sms",
+          "rule": "missing_primary_key",
+          "severity": "critical",
+          "confidence": 0.9,
+          "evidence": {
+            "table": "send_sms",
+            "columns_inspected": [
+              "sql_id",
+              "id"
+            ],
+            "nullable_columns": [
+              "id"
+            ]
+          },
+          "remediation_hint": "Define a primary key for the 'send_sms' table. If 'id' is intended to be the primary key, it must be made non-nullable. If 'sql_id' is the intended primary key, explicitly mark it as such.",
+          "issues": [
+            {
+              "type": "missing_primary_key",
+              "severity": "critical",
+              "description": "Define a primary key for the 'send_sms' table. If 'id' is intended to be the primary key, it must be made non-nullable. If 'sql_id' is the intended primary key, explicitly mark it as such.",
+              "evidence": {
+                "table": "send_sms",
+                "columns_inspected": [
+                  "sql_id",
+                  "id"
+                ],
+                "nullable_columns": [
+                  "id"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "budget_history",
+          "column": "id",
+          "entity": "budget_history.id",
+          "rule": "missing_primary_key",
+          "severity": "high",
+          "confidence": 0.6,
+          "evidence": {
+            "table": "budget_history",
+            "column": "id",
+            "is_nullable": "NO"
+          },
+          "remediation_hint": "Explicitly mark the 'id' column in 'budget_history' as a primary key, as it is non-nullable and likely serves this purpose.",
+          "issues": [
+            {
+              "type": "missing_primary_key",
+              "severity": "high",
+              "description": "Explicitly mark the 'id' column in 'budget_history' as a primary key, as it is non-nullable and likely serves this purpose.",
+              "evidence": {
+                "table": "budget_history",
+                "column": "id",
+                "is_nullable": "NO"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_schedule",
+          "column": "id",
+          "entity": "campaign_schedule.id",
+          "rule": "missing_primary_key",
+          "severity": "high",
+          "confidence": 0.6,
+          "evidence": {
+            "table": "campaign_schedule",
+            "column": "id",
+            "is_nullable": "NO"
+          },
+          "remediation_hint": "Explicitly mark the 'id' column in 'campaign_schedule' as a primary key, as it is non-nullable and likely serves this purpose.",
+          "issues": [
+            {
+              "type": "missing_primary_key",
+              "severity": "high",
+              "description": "Explicitly mark the 'id' column in 'campaign_schedule' as a primary key, as it is non-nullable and likely serves this purpose.",
+              "evidence": {
+                "table": "campaign_schedule",
+                "column": "id",
+                "is_nullable": "NO"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "id",
+          "entity": "campaign_spool_state.id",
+          "rule": "missing_primary_key",
+          "severity": "high",
+          "confidence": 0.6,
+          "evidence": {
+            "table": "campaign_spool_state",
+            "column": "id",
+            "is_nullable": "NO"
+          },
+          "remediation_hint": "Explicitly mark the 'id' column in 'campaign_spool_state' as a primary key, as it is non-nullable and likely serves this purpose.",
+          "issues": [
+            {
+              "type": "missing_primary_key",
+              "severity": "high",
+              "description": "Explicitly mark the 'id' column in 'campaign_spool_state' as a primary key, as it is non-nullable and likely serves this purpose.",
+              "evidence": {
+                "table": "campaign_spool_state",
+                "column": "id",
+                "is_nullable": "NO"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_type_permission",
+          "column": "id",
+          "entity": "campaign_type_permission.id",
+          "rule": "missing_primary_key",
+          "severity": "high",
+          "confidence": 0.6,
+          "evidence": {
+            "table": "campaign_type_permission",
+            "column": "id",
+            "is_nullable": "NO"
+          },
+          "remediation_hint": "Explicitly mark the 'id' column in 'campaign_type_permission' as a primary key, as it is non-nullable and likely serves this purpose.",
+          "issues": [
+            {
+              "type": "missing_primary_key",
+              "severity": "high",
+              "description": "Explicitly mark the 'id' column in 'campaign_type_permission' as a primary key, as it is non-nullable and likely serves this purpose.",
+              "evidence": {
+                "table": "campaign_type_permission",
+                "column": "id",
+                "is_nullable": "NO"
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": "id",
+          "entity": "groupe.id",
+          "rule": "missing_primary_key",
+          "severity": "high",
+          "confidence": 0.6,
+          "evidence": {
+            "table": "groupe",
+            "column": "id",
+            "is_nullable": "NO"
+          },
+          "remediation_hint": "Explicitly mark the 'id' column in 'groupe' as a primary key, as it is non-nullable and likely serves this purpose.",
+          "issues": [
+            {
+              "type": "missing_primary_key",
+              "severity": "high",
+              "description": "Explicitly mark the 'id' column in 'groupe' as a primary key, as it is non-nullable and likely serves this purpose.",
+              "evidence": {
+                "table": "groupe",
+                "column": "id",
+                "is_nullable": "NO"
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur",
+          "column": "id",
+          "entity": "expediteur.id",
+          "rule": "missing_primary_key",
+          "severity": "high",
+          "confidence": 0.6,
+          "evidence": {
+            "table": "expediteur",
+            "column": "id",
+            "is_nullable": "NO"
+          },
+          "remediation_hint": "Explicitly mark the 'id' column in 'expediteur' as a primary key, as it is non-nullable and likely serves this purpose.",
+          "issues": [
+            {
+              "type": "missing_primary_key",
+              "severity": "high",
+              "description": "Explicitly mark the 'id' column in 'expediteur' as a primary key, as it is non-nullable and likely serves this purpose.",
+              "evidence": {
+                "table": "expediteur",
+                "column": "id",
+                "is_nullable": "NO"
+              }
+            }
+          ]
+        },
+        {
+          "table": "membership",
+          "column": "id",
+          "entity": "membership.id",
+          "rule": "missing_primary_key",
+          "severity": "high",
+          "confidence": 0.6,
+          "evidence": {
+            "table": "membership",
+            "column": "id",
+            "is_nullable": "NO"
+          },
+          "remediation_hint": "Explicitly mark the 'id' column in 'membership' as a primary key, as it is non-nullable and likely serves this purpose.",
+          "issues": [
+            {
+              "type": "missing_primary_key",
+              "severity": "high",
+              "description": "Explicitly mark the 'id' column in 'membership' as a primary key, as it is non-nullable and likely serves this purpose.",
+              "evidence": {
+                "table": "membership",
+                "column": "id",
+                "is_nullable": "NO"
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur_groupe",
+          "column": null,
+          "entity": "expediteur_groupe",
+          "rule": "missing_primary_key",
+          "severity": "high",
+          "confidence": 0.7,
+          "evidence": {
+            "table": "expediteur_groupe",
+            "columns_inspected": [
+              "groupe_id",
+              "expediteur_id"
+            ],
+            "nullable_columns": []
+          },
+          "remediation_hint": "Define a composite primary key on `(groupe_id, expediteur_id)` for the 'expediteur_groupe' table, as these columns are non-nullable and likely form a unique identifier.",
+          "issues": [
+            {
+              "type": "missing_primary_key",
+              "severity": "high",
+              "description": "Define a composite primary key on `(groupe_id, expediteur_id)` for the 'expediteur_groupe' table, as these columns are non-nullable and likely form a unique identifier.",
+              "evidence": {
+                "table": "expediteur_groupe",
+                "columns_inspected": [
+                  "groupe_id",
+                  "expediteur_id"
+                ],
+                "nullable_columns": []
+              }
+            }
+          ]
+        },
+        {
+          "table": "contacts",
+          "column": null,
+          "entity": "contacts",
+          "rule": "missing_primary_key",
+          "severity": "high",
+          "confidence": 0.7,
+          "evidence": {
+            "table": "contacts",
+            "columns_inspected": [
+              "msisdn",
+              "country_code"
+            ],
+            "nullable_columns": []
+          },
+          "remediation_hint": "Define a composite primary key on `(msisdn, country_code)` for the 'contacts' table, as these columns are non-nullable and likely form a unique identifier.",
+          "issues": [
+            {
+              "type": "missing_primary_key",
+              "severity": "high",
+              "description": "Define a composite primary key on `(msisdn, country_code)` for the 'contacts' table, as these columns are non-nullable and likely form a unique identifier.",
+              "evidence": {
+                "table": "contacts",
+                "columns_inspected": [
+                  "msisdn",
+                  "country_code"
+                ],
+                "nullable_columns": []
+              }
+            }
+          ]
+        },
+        {
+          "table": "mention",
+          "column": "id",
+          "entity": "mention.id",
+          "rule": "missing_primary_key",
+          "severity": "high",
+          "confidence": 0.6,
+          "evidence": {
+            "table": "mention",
+            "column": "id",
+            "is_nullable": "NO"
+          },
+          "remediation_hint": "Explicitly mark the 'id' column in 'mention' as a primary key, as it is non-nullable and likely serves this purpose.",
+          "issues": [
+            {
+              "type": "missing_primary_key",
+              "severity": "high",
+              "description": "Explicitly mark the 'id' column in 'mention' as a primary key, as it is non-nullable and likely serves this purpose.",
+              "evidence": {
+                "table": "mention",
+                "column": "id",
+                "is_nullable": "NO"
+              }
+            }
+          ]
+        },
+        {
+          "table": "organization",
+          "column": "id",
+          "entity": "organization.id",
+          "rule": "missing_primary_key",
+          "severity": "high",
+          "confidence": 0.6,
+          "evidence": {
+            "table": "organization",
+            "column": "id",
+            "is_nullable": "NO"
+          },
+          "remediation_hint": "Explicitly mark the 'id' column in 'organization' as a primary key, as it is non-nullable and likely serves this purpose.",
+          "issues": [
+            {
+              "type": "missing_primary_key",
+              "severity": "high",
+              "description": "Explicitly mark the 'id' column in 'organization' as a primary key, as it is non-nullable and likely serves this purpose.",
+              "evidence": {
+                "table": "organization",
+                "column": "id",
+                "is_nullable": "NO"
+              }
+            }
+          ]
+        },
+        {
+          "table": "prm_organization",
+          "column": "id",
+          "entity": "prm_organization.id",
+          "rule": "missing_primary_key",
+          "severity": "high",
+          "confidence": 0.6,
+          "evidence": {
+            "table": "prm_organization",
+            "column": "id",
+            "is_nullable": "NO"
+          },
+          "remediation_hint": "Explicitly mark the 'id' column in 'prm_organization' as a primary key, as it is non-nullable and likely serves this purpose.",
+          "issues": [
+            {
+              "type": "missing_primary_key",
+              "severity": "high",
+              "description": "Explicitly mark the 'id' column in 'prm_organization' as a primary key, as it is non-nullable and likely serves this purpose.",
+              "evidence": {
+                "table": "prm_organization",
+                "column": "id",
+                "is_nullable": "NO"
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": []
+    },
+    "column_validator": {
+      "pipeline_run_id": "d62ab8cb-c667-49af-ad9d-e765a9c47295",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-28T19:33:43.158928Z",
+      "agent": "Column Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 33,
+        "items_passed": 22,
+        "items_flagged": 11,
+        "critical_issues": 4,
+        "high_issues": 6,
+        "medium_issues": 1,
+        "low_issues": 0,
+        "overall_quality_score": 0.0,
+        "overall_confidence": 0.7273,
+        "flagged_tables": [
+          "campagne_contacts",
+          "campaign_schedule",
+          "contacts",
+          "prm_campaign_type",
+          "prm_organization",
+          "prm_status",
+          "user_contact",
+          "user_contact_tags",
+          "users"
+        ]
+      },
+      "metrics": {
+        "validator": "column",
+        "findings_count": 11
+      },
+      "findings": [
+        {
+          "table": "campagne_contacts",
+          "column": "contact_id",
+          "entity": "campagne_contacts.contact_id",
+          "rule": "high_null_ratio",
+          "severity": "medium",
+          "confidence": 0.6,
+          "evidence": {
+            "table": "campagne_contacts",
+            "column": "contact_id",
+            "is_nullable": "YES",
+            "row_count": 31
+          },
+          "remediation_hint": "The column 'contact_id' in 'campagne_contacts' is nullable. Investigate if this column is intended to be mandatory, as a high null ratio could indicate missing data or referential integrity issues.",
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "medium",
+              "description": "The column 'contact_id' in 'campagne_contacts' is nullable. Investigate if this column is intended to be mandatory, as a high null ratio could indicate missing data or referential integrity issues.",
+              "evidence": {
+                "table": "campagne_contacts",
+                "column": "contact_id",
+                "is_nullable": "YES",
+                "row_count": 31
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_schedule",
+          "column": "code",
+          "entity": "campaign_schedule.code",
+          "rule": "duplicate_values",
+          "severity": "high",
+          "confidence": 0.7,
+          "evidence": {
+            "table": "campaign_schedule",
+            "column": "code",
+            "is_nullable": "NO",
+            "pattern_match": "*_code",
+            "row_count": 3
+          },
+          "remediation_hint": "The column 'code' in 'campaign_schedule' is non-nullable and matches a unique column pattern. Verify that all values in this column are unique to maintain data integrity.",
+          "issues": [
+            {
+              "type": "duplicate_values",
+              "severity": "high",
+              "description": "The column 'code' in 'campaign_schedule' is non-nullable and matches a unique column pattern. Verify that all values in this column are unique to maintain data integrity.",
+              "evidence": {
+                "table": "campaign_schedule",
+                "column": "code",
+                "is_nullable": "NO",
+                "pattern_match": "*_code",
+                "row_count": 3
+              }
+            }
+          ]
+        },
+        {
+          "table": "contacts",
+          "column": "msisdn",
+          "entity": "contacts.msisdn",
+          "rule": "duplicate_values",
+          "severity": "critical",
+          "confidence": 0.8,
+          "evidence": {
+            "table": "contacts",
+            "column": "msisdn",
+            "is_nullable": "NO",
+            "pattern_match": "msisdn",
+            "row_count": 10043
+          },
+          "remediation_hint": "The column 'msisdn' in 'contacts' is non-nullable and matches a unique column pattern. It is crucial to ensure all values are unique to prevent data integrity issues related to contact identification.",
+          "issues": [
+            {
+              "type": "duplicate_values",
+              "severity": "critical",
+              "description": "The column 'msisdn' in 'contacts' is non-nullable and matches a unique column pattern. It is crucial to ensure all values are unique to prevent data integrity issues related to contact identification.",
+              "evidence": {
+                "table": "contacts",
+                "column": "msisdn",
+                "is_nullable": "NO",
+                "pattern_match": "msisdn",
+                "row_count": 10043
+              }
+            }
+          ]
+        },
+        {
+          "table": "prm_organization",
+          "column": "code",
+          "entity": "prm_organization.code",
+          "rule": "duplicate_values",
+          "severity": "high",
+          "confidence": 0.7,
+          "evidence": {
+            "table": "prm_organization",
+            "column": "code",
+            "is_nullable": "NO",
+            "pattern_match": "*_code",
+            "row_count": 17
+          },
+          "remediation_hint": "The column 'code' in 'prm_organization' is non-nullable and matches a unique column pattern. Verify that all values in this column are unique to maintain data integrity.",
+          "issues": [
+            {
+              "type": "duplicate_values",
+              "severity": "high",
+              "description": "The column 'code' in 'prm_organization' is non-nullable and matches a unique column pattern. Verify that all values in this column are unique to maintain data integrity.",
+              "evidence": {
+                "table": "prm_organization",
+                "column": "code",
+                "is_nullable": "NO",
+                "pattern_match": "*_code",
+                "row_count": 17
+              }
+            }
+          ]
+        },
+        {
+          "table": "prm_campaign_type",
+          "column": "code",
+          "entity": "prm_campaign_type.code",
+          "rule": "duplicate_values",
+          "severity": "high",
+          "confidence": 0.7,
+          "evidence": {
+            "table": "prm_campaign_type",
+            "column": "code",
+            "is_nullable": "NO",
+            "pattern_match": "*_code",
+            "row_count": 2
+          },
+          "remediation_hint": "The column 'code' in 'prm_campaign_type' is non-nullable and matches a unique column pattern. Verify that all values in this column are unique to maintain data integrity.",
+          "issues": [
+            {
+              "type": "duplicate_values",
+              "severity": "high",
+              "description": "The column 'code' in 'prm_campaign_type' is non-nullable and matches a unique column pattern. Verify that all values in this column are unique to maintain data integrity.",
+              "evidence": {
+                "table": "prm_campaign_type",
+                "column": "code",
+                "is_nullable": "NO",
+                "pattern_match": "*_code",
+                "row_count": 2
+              }
+            }
+          ]
+        },
+        {
+          "table": "prm_status",
+          "column": "code",
+          "entity": "prm_status.code",
+          "rule": "duplicate_values",
+          "severity": "high",
+          "confidence": 0.7,
+          "evidence": {
+            "table": "prm_status",
+            "column": "code",
+            "is_nullable": "NO",
+            "pattern_match": "*_code",
+            "row_count": 25
+          },
+          "remediation_hint": "The column 'code' in 'prm_status' is non-nullable and matches a unique column pattern. Verify that all values in this column are unique to maintain data integrity.",
+          "issues": [
+            {
+              "type": "duplicate_values",
+              "severity": "high",
+              "description": "The column 'code' in 'prm_status' is non-nullable and matches a unique column pattern. Verify that all values in this column are unique to maintain data integrity.",
+              "evidence": {
+                "table": "prm_status",
+                "column": "code",
+                "is_nullable": "NO",
+                "pattern_match": "*_code",
+                "row_count": 25
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact",
+          "column": "contact_id",
+          "entity": "user_contact.contact_id",
+          "rule": "duplicate_values",
+          "severity": "critical",
+          "confidence": 0.8,
+          "evidence": {
+            "table": "user_contact",
+            "column": "contact_id",
+            "is_nullable": "NO",
+            "pattern_match": "*_id",
+            "row_count": 20042
+          },
+          "remediation_hint": "The column 'contact_id' in 'user_contact' is non-nullable and matches a unique column pattern. It is crucial to ensure all values are unique to prevent data integrity issues related to contact identification.",
+          "issues": [
+            {
+              "type": "duplicate_values",
+              "severity": "critical",
+              "description": "The column 'contact_id' in 'user_contact' is non-nullable and matches a unique column pattern. It is crucial to ensure all values are unique to prevent data integrity issues related to contact identification.",
+              "evidence": {
+                "table": "user_contact",
+                "column": "contact_id",
+                "is_nullable": "NO",
+                "pattern_match": "*_id",
+                "row_count": 20042
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact_tags",
+          "column": "user_contact_id",
+          "entity": "user_contact_tags.user_contact_id",
+          "rule": "duplicate_values",
+          "severity": "high",
+          "confidence": 0.7,
+          "evidence": {
+            "table": "user_contact_tags",
+            "column": "user_contact_id",
+            "is_nullable": "NO",
+            "pattern_match": "*_id",
+            "row_count": 20051
+          },
+          "remediation_hint": "The column 'user_contact_id' in 'user_contact_tags' is non-nullable and matches a unique column pattern. Verify that all values in this column are unique to maintain data integrity.",
+          "issues": [
+            {
+              "type": "duplicate_values",
+              "severity": "high",
+              "description": "The column 'user_contact_id' in 'user_contact_tags' is non-nullable and matches a unique column pattern. Verify that all values in this column are unique to maintain data integrity.",
+              "evidence": {
+                "table": "user_contact_tags",
+                "column": "user_contact_id",
+                "is_nullable": "NO",
+                "pattern_match": "*_id",
+                "row_count": 20051
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact_tags",
+          "column": "tag_id",
+          "entity": "user_contact_tags.tag_id",
+          "rule": "duplicate_values",
+          "severity": "high",
+          "confidence": 0.7,
+          "evidence": {
+            "table": "user_contact_tags",
+            "column": "tag_id",
+            "is_nullable": "NO",
+            "pattern_match": "*_id",
+            "row_count": 20051
+          },
+          "remediation_hint": "The column 'tag_id' in 'user_contact_tags' is non-nullable and matches a unique column pattern. Verify that all values in this column are unique to maintain data integrity.",
+          "issues": [
+            {
+              "type": "duplicate_values",
+              "severity": "high",
+              "description": "The column 'tag_id' in 'user_contact_tags' is non-nullable and matches a unique column pattern. Verify that all values in this column are unique to maintain data integrity.",
+              "evidence": {
+                "table": "user_contact_tags",
+                "column": "tag_id",
+                "is_nullable": "NO",
+                "pattern_match": "*_id",
+                "row_count": 20051
+              }
+            }
+          ]
+        },
+        {
+          "table": "users",
+          "column": "email",
+          "entity": "users.email",
+          "rule": "duplicate_values",
+          "severity": "critical",
+          "confidence": 0.8,
+          "evidence": {
+            "table": "users",
+            "column": "email",
+            "is_nullable": "NO",
+            "pattern_match": "email",
+            "row_count": 7
+          },
+          "remediation_hint": "The column 'email' in 'users' is non-nullable and matches a unique column pattern. It is crucial to ensure all values are unique to prevent data integrity issues related to user identification.",
+          "issues": [
+            {
+              "type": "duplicate_values",
+              "severity": "critical",
+              "description": "The column 'email' in 'users' is non-nullable and matches a unique column pattern. It is crucial to ensure all values are unique to prevent data integrity issues related to user identification.",
+              "evidence": {
+                "table": "users",
+                "column": "email",
+                "is_nullable": "NO",
+                "pattern_match": "email",
+                "row_count": 7
+              }
+            }
+          ]
+        },
+        {
+          "table": "users",
+          "column": "id_user_keycloak",
+          "entity": "users.id_user_keycloak",
+          "rule": "duplicate_values",
+          "severity": "critical",
+          "confidence": 0.8,
+          "evidence": {
+            "table": "users",
+            "column": "id_user_keycloak",
+            "is_nullable": "NO",
+            "pattern_match": "*_id",
+            "row_count": 7
+          },
+          "remediation_hint": "The column 'id_user_keycloak' in 'users' is non-nullable and matches a unique column pattern. It is crucial to ensure all values are unique to prevent data integrity issues related to user identification.",
+          "issues": [
+            {
+              "type": "duplicate_values",
+              "severity": "critical",
+              "description": "The column 'id_user_keycloak' in 'users' is non-nullable and matches a unique column pattern. It is crucial to ensure all values are unique to prevent data integrity issues related to user identification.",
+              "evidence": {
+                "table": "users",
+                "column": "id_user_keycloak",
+                "is_nullable": "NO",
+                "pattern_match": "*_id",
+                "row_count": 7
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": []
+    },
+    "row_level_validator": {
+      "pipeline_run_id": "d62ab8cb-c667-49af-ad9d-e765a9c47295",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-28T19:33:43.158928Z",
+      "agent": "Row Level Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 33,
+        "items_passed": 31,
+        "items_flagged": 2,
+        "critical_issues": 0,
+        "high_issues": 2,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 70.0,
+        "overall_confidence": 0.9,
+        "flagged_tables": [
+          "sent_sms"
+        ]
+      },
+      "metrics": {
+        "validator": "row",
+        "findings_count": 2
+      },
+      "findings": [
+        {
+          "table": "sent_sms",
+          "column": null,
+          "entity": "sent_sms",
+          "rule": "negative_or_zero_amount",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "table": "sent_sms",
+            "columns_checked": "sql_id, time, id, sms_type, mclass, mwi, coding, compress, validity, deferred, dlr_mask, pid, alt_dcs, rpi",
+            "violating_rows": 6
+          },
+          "remediation_hint": "Investigate rows in `sent_sms` where `sql_id`, `time`, `id`, `sms_type`, `mclass`, `mwi`, `coding`, `compress`, `validity`, `deferred`, `dlr_mask`, `pid`, `alt_dcs`, or `rpi` are less than or equal to zero, as these values are typically expected to be positive identifiers or counts.",
+          "issues": [
+            {
+              "type": "negative_or_zero_amount",
+              "severity": "high",
+              "description": "Investigate rows in `sent_sms` where `sql_id`, `time`, `id`, `sms_type`, `mclass`, `mwi`, `coding`, `compress`, `validity`, `deferred`, `dlr_mask`, `pid`, `alt_dcs`, or `rpi` are less than or equal to zero, as these values are typically expected to be positive identifiers or counts.",
+              "evidence": {
+                "table": "sent_sms",
+                "columns_checked": "sql_id, time, id, sms_type, mclass, mwi, coding, compress, validity, deferred, dlr_mask, pid, alt_dcs, rpi",
+                "violating_rows": 6
+              }
+            }
+          ]
+        },
+        {
+          "table": "sent_sms",
+          "column": "time",
+          "entity": "sent_sms.time",
+          "rule": "impossible_date",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "table": "sent_sms",
+            "column": "time",
+            "violating_rows": 6,
+            "min_expected_timestamp": 946684800,
+            "max_expected_timestamp": 2524608000
+          },
+          "remediation_hint": "Review the `time` column in `sent_sms` for values outside the expected Unix timestamp range (e.g., before 2000-01-01 or after 2050-01-01) and correct the data.",
+          "issues": [
+            {
+              "type": "impossible_date",
+              "severity": "high",
+              "description": "Review the `time` column in `sent_sms` for values outside the expected Unix timestamp range (e.g., before 2000-01-01 or after 2050-01-01) and correct the data.",
+              "evidence": {
+                "table": "sent_sms",
+                "column": "time",
+                "violating_rows": 6,
+                "min_expected_timestamp": 946684800,
+                "max_expected_timestamp": 2524608000
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": []
+    },
+    "cross_row_validator": {
+      "pipeline_run_id": "d62ab8cb-c667-49af-ad9d-e765a9c47295",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-28T19:33:43.158928Z",
+      "agent": "Cross Row Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 33,
+        "items_passed": 32,
+        "items_flagged": 1,
+        "critical_issues": 1,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 75.0,
+        "overall_confidence": 0.9,
+        "flagged_tables": [
+          "smsc_route"
+        ]
+      },
+      "metrics": {
+        "validator": "crossrow",
+        "findings_count": 1
+      },
+      "findings": [
+        {
+          "table": "smsc_route",
+          "column": "route_smsc_id",
+          "entity": "smsc_route.route_smsc_id",
+          "rule": "orphaned_records",
+          "severity": "critical",
+          "confidence": 0.9,
+          "evidence": {
+            "source_table": "smsc_route",
+            "source_col": "route_smsc_id",
+            "target_table": "smsc",
+            "target_col": "id",
+            "orphaned_records_count": 6
+          },
+          "remediation_hint": "Investigate why there are 6 records in 'smsc_route' with 'route_smsc_id' values that do not exist in 'smsc.id'. These orphaned records indicate a data integrity issue.",
+          "issues": [
+            {
+              "type": "orphaned_records",
+              "severity": "critical",
+              "description": "Investigate why there are 6 records in 'smsc_route' with 'route_smsc_id' values that do not exist in 'smsc.id'. These orphaned records indicate a data integrity issue.",
+              "evidence": {
+                "source_table": "smsc_route",
+                "source_col": "route_smsc_id",
+                "target_table": "smsc",
+                "target_col": "id",
+                "orphaned_records_count": 6
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": []
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "d62ab8cb-c667-49af-ad9d-e765a9c47295",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-04-28T19:33:43.158928Z",
+      "agent": "Data Fix Planner",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 0,
+        "items_passed": 0,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "total_issues_received": 0,
+        "fixes_generated": 0
+      },
+      "findings": [],
+      "cards": []
+    }
+  }
+}
