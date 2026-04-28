@@ -300,6 +300,39 @@ def validate_findings_entities(run_output: RunOutput, run_context: RunContext) -
             )
 
 
+_AGENT_STEP_STATUS: dict[str, str] = {
+    "schema-validator": "running_schema",
+    "column-validator": "running_column",
+    "row-validator": "running_row_level",
+    "crossrow-validator": "running_cross_row",
+    "fix-planner": "running_fix_planner",
+}
+
+
+def emit_pipeline_status(run_input: RunInput, run_context: RunContext) -> None:
+    """Before each pipeline agent runs, push the matching job status to the DB.
+
+    The loading screen polls /api/status/:jobId every 5 s and advances the
+    step indicator when the status changes.  Requires job_id in session_state
+    (set by orchestrator_workflow via _initial_session_state).
+    """
+    agent_id = getattr(getattr(run_context, "agent", None), "id", "") or ""
+    step_status = _AGENT_STEP_STATUS.get(agent_id)
+    if not step_status:
+        return
+
+    job_id = (run_context.session_state or {}).get("job_id")
+    if not job_id:
+        return
+
+    try:
+        from api.db import update_job_status
+        update_job_status(job_id, step_status)
+        logger.debug("emit_pipeline_status: %s → %s", agent_id, step_status)
+    except Exception as exc:
+        logger.warning("emit_pipeline_status: failed to update job status for %s: %s", agent_id, exc)
+
+
 def log_run_metrics(run_output: RunOutput, run_context: RunContext) -> None:
     state = run_context.session_state
     elapsed_ms = (time.time() - state.get("_run_start", time.time())) * 1000

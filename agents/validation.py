@@ -115,12 +115,14 @@ def _initial_session_state(
     *,
     connection_string: str,
     database_id: str,
+    job_id: str | None = None,
 ) -> dict[str, Any]:
     return {
         "ql_mode": "pipeline",
         "require_database": True,
         "connection_string": connection_string,
         "database_id": database_id,
+        "job_id": job_id,
         "schema": None,
         "last_reduced_findings": [],
         "_tool_calls_seen": {},
@@ -438,6 +440,7 @@ def orchestrator_workflow(
     session_state = _initial_session_state(
         connection_string=connection_string,
         database_id=database_id,
+        job_id=job_id,
     )
 
     workflow = build_validation_workflow(
@@ -506,6 +509,31 @@ def orchestrator_workflow(
         [schema_dict, column_dict, row_dict, cross_dict, fix_dict]
     )
 
+    # Build agent_reports with markdown report fields so the frontend's
+    # agent panel can render each validator's output without a fallback.
+    agent_reports = {
+        "schema_integrity_validator": {
+            **schema_dict,
+            "report": report_to_markdown(schema_dict, "Schema Integrity Validator"),
+        },
+        "column_validator": {
+            **column_dict,
+            "report": report_to_markdown(column_dict, "Column Validator"),
+        },
+        "row_level_validator": {
+            **row_dict,
+            "report": report_to_markdown(row_dict, "Row Level Validator"),
+        },
+        "cross_row_validator": {
+            **cross_dict,
+            "report": report_to_markdown(cross_dict, "Cross Row Validator"),
+        },
+        "data_fix_planner": {
+            **fix_dict,
+            "report": report_to_markdown(fix_dict, "Data Fix Planner"),
+        },
+    }
+
     download_report_bundle = {
         "pipeline_run_id": pipeline_run_id,
         "database_id": database_id,
@@ -516,13 +544,7 @@ def orchestrator_workflow(
             "data_quality_score": data_quality_score,
             "final_fix_count": len(legacy_fixes),
         },
-        "reports": {
-            "schema_integrity_validator": schema_dict,
-            "column_validator": column_dict,
-            "row_level_validator": row_dict,
-            "cross_row_validator": cross_dict,
-            "data_fix_planner": fix_dict,
-        },
+        "reports": agent_reports,
     }
 
     try:
@@ -560,7 +582,7 @@ def orchestrator_workflow(
         "fixes": {
             "fixes": legacy_fixes,
         },
-        "agent_reports": download_report_bundle["reports"],
+        "agent_reports": agent_reports,
         "final_report": fix_dict,
         "download_report_json": download_report_bundle,
         "confidence_score": confidence_score,

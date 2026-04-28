@@ -111,17 +111,11 @@ def _sanitize_for_json(obj):
 _ADMIN_ACTIVE_JOB_STATUSES = {'starting', 'running'}
 _TERMINAL_ACTIVE_PREFIX_EXCLUSIONS: set[str] = set()
 _PIPELINE_STEP_DEFINITIONS = [
-    ('guideline_gen_schema', 'Guideline Generation - Schema'),
-    ('schema_validation', 'Schema Validation'),
-    ('guideline_gen_column', 'Guideline Generation - Column'),
-    ('column_validation', 'Column Validation'),
-    ('guideline_gen_row_level', 'Guideline Generation - Row Level'),
-    ('row_level_validation', 'Row Level Validation'),
-    ('guideline_gen_cross_row', 'Guideline Generation - Cross Row'),
-    ('cross_row_validation', 'Cross Row Validation'),
-    ('guideline_gen_fix_planner', 'Guideline Generation - Fix Planner'),
-    ('fix_planner', 'Fix Planner'),
-    ('saving_guidelines', 'Saving Guidelines'),
+    ('running_schema', 'Schema Integrity Validator'),
+    ('running_column', 'Column Validator'),
+    ('running_row_level', 'Row Level Validator'),
+    ('running_cross_row', 'Cross Row Validator'),
+    ('running_fix_planner', 'Data Fix Planner'),
 ]
 
 

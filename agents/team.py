@@ -28,6 +28,7 @@ from .agent_config import (
     SCHEMA_AGENT_CONFIG,
 )
 from .hooks import (
+    emit_pipeline_status,
     ensure_schema_primed,
     inject_domain_rules,
     log_run_metrics,
@@ -134,6 +135,15 @@ def build_members(
         dependencies=shared_dependencies,
         playground_mode=playground_mode,
     )
+
+    if not playground_mode:
+        # Inject real-time step status updates for the pipeline loading screen.
+        # emit_pipeline_status reads job_id from session_state and calls
+        # update_job_status so the frontend poll can advance the step indicator.
+        agent_kwargs = {
+            **agent_kwargs,
+            "pre_hooks": list(agent_kwargs.get("pre_hooks", [])) + [emit_pipeline_status],
+        }
 
     schema_validator = Agent(
         id="schema-validator",
