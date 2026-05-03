@@ -640,10 +640,14 @@ class AnalyzePostgresView(APIView):
         target_sandbox = serializer.validated_data.get('target_sandbox', False)
         baseline_job_id = serializer.validated_data.get('baseline_job_id')
         
-        if not conn_str and baseline_job_id:
-            baseline_job = get_job(baseline_job_id)
-            if baseline_job and baseline_job.get('connection_string'):
+        baseline_job = get_job(baseline_job_id) if baseline_job_id else None
+        if baseline_job:
+            if not conn_str and baseline_job.get('connection_string'):
                 conn_str = baseline_job.get('connection_string')
+            # Re-runs always use the original job's model, not the request default.
+            original_model = (baseline_job.get('llm_model') or '').strip()
+            if original_model:
+                llm_model = original_model
 
         # If targeting sandbox, append _clean to the database name
         if target_sandbox and conn_str:
@@ -1501,10 +1505,23 @@ class ExecuteFixView(APIView):
             )
             return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 4 — Execute all queries via isolated execution agent
+        # 4 — Execute all queries via isolated execution agent.
+        # Build an admin DSN from the app's own DB credentials pointing at the
+        # same host/port as the target database.  m6l9k holds CREATEDB so it can
+        # run CREATE DATABASE without requiring the job DSN's user to have that role.
+        from urllib.parse import urlparse, urlunparse
+        from django.conf import settings
+        _target = urlparse(connection_string)
+        _db = settings.DATABASES['default']
+        _admin_dsn = urlunparse((
+            'postgresql',
+            f"{_db['USER']}:{_db['PASSWORD']}@{_target.hostname}:{_target.port or 5432}",
+            '/postgres', '', '', '',
+        ))
         execution_log = QueryExecutorAgent().execute(
             queries=queries,
             connection_string=connection_string,
+            admin_dsn=_admin_dsn,
         )
 
         if execution_log.get('status') == 'success':

@@ -26,11 +26,15 @@ class QueryExecutorAgent:
 
     name = "QueryExecutorAgent"
 
-    def execute(self, *, queries: list[str], connection_string: str) -> dict:
+    def execute(self, *, queries: list[str], connection_string: str, admin_dsn: str | None = None) -> dict:
         """
         Execute all queries in order within one transaction and return an execution log.
 
         The payload is designed for direct frontend rendering.
+
+        admin_dsn: privileged DSN used only for CREATE/DROP DATABASE on the target server.
+                   Must belong to a role with CREATEDB.  Defaults to the job DSN's own user
+                   (which requires that user to hold CREATEDB on the target server).
         """
         self._validate_queries(queries)
 
@@ -39,22 +43,75 @@ class QueryExecutorAgent:
         parsed = urlparse(connection_string)
         original_db = (parsed.path or "").lstrip("/")
         sandbox_db = f"{original_db}_clean"
-        
-        # 1. Admin setup: disconnect users and duplicate DB
-        admin_dsn = urlunparse(parsed._replace(path="/postgres"))
+
+        # 1. Admin setup: disconnect users and duplicate DB.
+        # Use the supplied admin_dsn (app admin credentials) when available so that
+        # the job DSN's user does not need CREATEDB on the target server.
+        if admin_dsn:
+            admin_parsed = urlparse(admin_dsn)
+            _admin_dsn = urlunparse(admin_parsed._replace(path="/postgres"))
+        else:
+            _admin_dsn = urlunparse(parsed._replace(path="/postgres"))
         sandbox_connection_string = urlunparse(parsed._replace(path=f"/{sandbox_db}"))
         
         admin_conn = None
         try:
-            admin_conn = psycopg2.connect(admin_dsn)
+            admin_conn = psycopg2.connect(_admin_dsn)
             admin_conn.autocommit = True
             with admin_conn.cursor() as admin_cursor:
                 # Terminate any connections blocking original_db and sandbox_db
-                admin_cursor.execute("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = %s AND pid <> pg_backend_pid();", [original_db])
-                admin_cursor.execute("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = %s AND pid <> pg_backend_pid();", [sandbox_db])
-                
+                admin_cursor.execute(
+                    "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
+                    "WHERE datname = %s AND pid <> pg_backend_pid();",
+                    [original_db],
+                )
+                admin_cursor.execute(
+                    "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
+                    "WHERE datname = %s AND pid <> pg_backend_pid();",
+                    [sandbox_db],
+                )
+
                 admin_cursor.execute(f'DROP DATABASE IF EXISTS "{sandbox_db}";')
-                admin_cursor.execute(f'CREATE DATABASE "{sandbox_db}" WITH TEMPLATE "{original_db}";')
+                admin_cursor.execute(
+                    f'CREATE DATABASE "{sandbox_db}" WITH TEMPLATE "{original_db}";'
+                )
+
+                # Look up the owner of the original database so the sandbox has
+                # the same owner — this ensures the job DSN's user can connect
+                # and execute DDL inside the sandbox without needing extra grants.
+                admin_cursor.execute(
+                    "SELECT pg_catalog.pg_get_userbyid(datdba) "
+                    "FROM pg_catalog.pg_database WHERE datname = %s;",
+                    [original_db],
+                )
+                row = admin_cursor.fetchone()
+                original_owner = row[0] if row else None
+
+                if original_owner:
+                    try:
+                        # Preferred: transfer ownership so the original user fully
+                        # controls the sandbox.  Requires the admin to be a superuser
+                        # or a member of the original_owner role.
+                        admin_cursor.execute(
+                            f'ALTER DATABASE "{sandbox_db}" OWNER TO "{original_owner}";'
+                        )
+                    except Exception:
+                        # Admin lacks the privilege to reassign ownership; fall back
+                        # to an explicit grant so the user can at least connect and
+                        # run DDL on objects they already own inside the sandbox.
+                        admin_cursor.execute(
+                            f'GRANT ALL PRIVILEGES ON DATABASE "{sandbox_db}" '
+                            f'TO "{original_owner}";'
+                        )
+
+                # Also grant the job DSN user in case it differs from the DB owner
+                # (e.g. a service account with write access but not owner status).
+                job_user = parsed.username
+                if job_user and job_user != original_owner:
+                    admin_cursor.execute(
+                        f'GRANT ALL PRIVILEGES ON DATABASE "{sandbox_db}" '
+                        f'TO "{job_user}";'
+                    )
         except Exception as exc:
             return self._failure_payload(
                 queries=queries,
