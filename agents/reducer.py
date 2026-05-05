@@ -1,14 +1,10 @@
 """
 reducer.py — Pure-Python signal reduction step for the QualityLab pipeline.
 
-Replaces:
-  - reduce_signals()       in validation.py  (DSL string parser)
-  - final_reduce_signals() in validation.py  (DSL string parser)
-
-This step consumes typed ValidationReport objects from the three parallel
-validator steps (column, row, crossrow), deduplicates findings, ranks them
-by (severity, confidence), caps at top-N, and emits a ReducedFindings model
-for the Fix Planner.
+Consumes typed ValidationReport objects from the three parallel validator steps
+(statistical, structural, relational), deduplicates findings, ranks them by
+(severity, confidence), caps at top-N, infers fix-ordering dependencies, and
+emits a FixDependencyGraph for the Fix Planner.
 
 Zero LLM tokens consumed here — this is plain Python.
 """
@@ -19,7 +15,13 @@ import re
 
 from agno.workflow.types import StepInput, StepOutput
 
-from .schemas import _SEVERITY_RANK, Finding, ValidationReport, ReducedFindings
+from .schemas import (
+    _SEVERITY_RANK,
+    Finding,
+    FixDependencyEdge,
+    FixDependencyGraph,
+    ValidationReport,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -127,6 +129,87 @@ def _rank(f: Finding) -> tuple:
     return (_SEVERITY_RANK.get(f.severity, 0), f.confidence)
 
 
+def _build_dependency_edges(findings: list[Finding]) -> list[FixDependencyEdge]:
+    """Infer fix-ordering dependencies from ranked findings.
+
+    Uses entity strings as stable proxy IDs because actual FixCard fix_ids
+    don't exist at reducer time. The Fix Planner maps these to real fix_id
+    values when populating FixCard.depends_on.
+
+    Three ordering rules:
+      1. missing_pk   → orphaned_fk   (FK integrity requires a PK target)
+      2. duplicate    → unique_constr (UNIQUE constraint needs clean data first)
+      3. null_high    → orphaned_fk   (NULLs always appear as orphaned refs)
+    """
+    if not findings:
+        return []
+
+    by_table: dict[str, list[Finding]] = {}
+    for f in findings:
+        table = f.entity.split(".")[0]
+        by_table.setdefault(table, []).append(f)
+
+    def _matches(f: Finding, families: set[str], exact: set[str]) -> bool:
+        return f.rule in exact or f.rule.split("_")[0] in families
+
+    edges: list[FixDependencyEdge] = []
+
+    for _table, group in by_table.items():
+        pk_findings   = [f for f in group if _matches(f, {"missing"}, {"missing_pk", "missing_primary_key"})]
+        fk_findings   = [f for f in group if _matches(f, {"orphaned"}, {"orphaned_fk", "orphaned_foreign_key", "referential_integrity"})]
+        dupe_findings = [f for f in group if _matches(f, {"duplicate"}, {"duplicate_values", "unique_violation"})]
+        uniq_findings = [f for f in group if _matches(f, {"unique"}, {"missing_unique", "unique_constraint"})]
+        null_findings = [f for f in group if _matches(f, {"null"}, {"null_ratio_high", "high_null_ratio"})]
+
+        for pk_f in pk_findings:
+            for fk_f in fk_findings:
+                edges.append(FixDependencyEdge(
+                    fix_id=fk_f.entity,
+                    depends_on=pk_f.entity,
+                    reason=(
+                        f"Orphaned FK on '{fk_f.entity}' must be resolved after the missing PK "
+                        f"on '{pk_f.entity}' is added — FK references cannot be validated without a PK target."
+                    ),
+                ))
+
+        for dupe_f in dupe_findings:
+            for uniq_f in uniq_findings:
+                if dupe_f.entity.split(".")[0] == uniq_f.entity.split(".")[0]:
+                    edges.append(FixDependencyEdge(
+                        fix_id=uniq_f.entity,
+                        depends_on=dupe_f.entity,
+                        reason=(
+                            f"UNIQUE constraint on '{uniq_f.entity}' cannot be added until "
+                            f"duplicate values in '{dupe_f.entity}' are removed first."
+                        ),
+                    ))
+
+        for null_f in null_findings:
+            for fk_f in fk_findings:
+                if null_f.entity == fk_f.entity:
+                    edges.append(FixDependencyEdge(
+                        fix_id=fk_f.entity,
+                        depends_on=null_f.entity,
+                        reason=(
+                            f"FK integrity fix on '{fk_f.entity}' should run after null remediation "
+                            f"— NULL values always appear as orphaned references."
+                        ),
+                    ))
+
+    # Deduplicate edges by (fix_id, depends_on) pair
+    seen: set[tuple[str, str]] = set()
+    deduped: list[FixDependencyEdge] = []
+    for e in edges:
+        key = (e.fix_id, e.depends_on)
+        if key not in seen:
+            seen.add(key)
+            deduped.append(e)
+
+    if deduped:
+        logger.info("reducer: inferred %d dependency edge(s)", len(deduped))
+    return deduped
+
+
 class ReduceSignals:
     """
     Configurable reducer step.
@@ -141,20 +224,36 @@ class ReduceSignals:
         self.top_n = top_n
 
     def __call__(self, step_input: StepInput) -> StepOutput:
-        # Resolve schema from session state for entity validation.
+        # Resolve schema, profiler baseline, and learned patterns from session state.
         schema: dict = {}
+        profiler_tables: set[str] = set()
+        # Set of (rule_family, entity) pairs the user has previously rejected.
+        rejected_patterns: set[tuple[str, str]] = set()
         try:
             ws = step_input.workflow_session
             if ws is not None:
-                schema = (ws.session_data or {}).get("schema") or {}
+                sd = ws.session_data or {}
+                schema = sd.get("schema") or {}
+                profiler_data = sd.get("profiler_report") or {}
+                if isinstance(profiler_data, dict):
+                    for tbl in profiler_data.get("tables", []):
+                        if isinstance(tbl, dict) and tbl.get("table_name"):
+                            profiler_tables.add(tbl["table_name"])
+                for pattern in sd.get("learned_patterns") or []:
+                    if isinstance(pattern, dict) and pattern.get("decision") == "reject":
+                        rf = str(pattern.get("rule_family") or "").strip()
+                        ent = str(pattern.get("entity") or "").strip()
+                        if rf and ent:
+                            rejected_patterns.add((rf, ent))
         except Exception:
             pass
 
         # ── 1. Pull typed reports from all validator steps ────────────────
-        # "schema" runs before the parallel phase; column/row/crossrow run in parallel.
-        # All four are accessible via step_input.get_step_content().
+        # "schema" runs before the parallel phase; statistical/structural/relational run in parallel.
+        # "profiler" is skipped here — it returns ProfilerReport, not ValidationReport.
+        # All steps are accessible via step_input.get_step_content().
         reports: list[ValidationReport] = []
-        for step_name in ("schema", "column", "row", "crossrow"):
+        for step_name in ("schema", "statistical", "structural", "relational"):
             content = step_input.get_step_content(step_name)
             if isinstance(content, ValidationReport):
                 reports.append(content)
@@ -187,6 +286,93 @@ class ReduceSignals:
 
         # ── 3. Confidence filter ──────────────────────────────────────────
         filtered = [f for f in all_findings if f.confidence >= self.min_confidence]
+
+        # ── 3-learning. Downweight findings matching previously rejected patterns ──
+        # A rejected pattern means the user decided this (rule_family, entity) was a
+        # false positive. We halve confidence so these findings sort below genuine
+        # issues but are not silently dropped — the user can still act on them.
+        if rejected_patterns:
+            downweighted = 0
+            adjusted: list[Finding] = []
+            for f in filtered:
+                table = f.entity.split(".")[0] if "." in f.entity else f.entity
+                rule_family = f.rule.split("_")[0]
+                # Match on exact entity OR table-level entity (e.g. "users.email" matches "users")
+                if (
+                    (rule_family, f.entity) in rejected_patterns
+                    or (rule_family, table) in rejected_patterns
+                ):
+                    # model_copy is Pydantic v2; use model_copy with update
+                    adjusted.append(f.model_copy(update={"confidence": f.confidence * 0.5}))
+                    downweighted += 1
+                else:
+                    adjusted.append(f)
+            if downweighted:
+                logger.info(
+                    "reducer: downweighted %d finding(s) matching rejected learning patterns",
+                    downweighted,
+                )
+            filtered = adjusted
+
+        # ── 3a. Row-level violation percentage filter ─────────────────────
+        try:
+            from .rules import domain_rules as load_domain_rules
+            _dr_vio = load_domain_rules()
+            _max_vio_pct = _dr_vio.get("max_violation_row_pct")
+            if _max_vio_pct is not None:
+                _max_vio_pct = float(_max_vio_pct)
+        except Exception:
+            _max_vio_pct = None
+
+        if _max_vio_pct is not None:
+            before_vio = len(filtered)
+            filtered = [
+                f for f in filtered
+                if f.rule not in ("row_level", "impossible_date", "negative_amount", "blank_required",
+                                  "domain_rule_failure", "row_violation")
+                or float((f.evidence or {}).get("violation_pct", 1.0)) >= _max_vio_pct
+            ]
+            dropped_vio = before_vio - len(filtered)
+            if dropped_vio:
+                logger.info(
+                    "reducer: suppressed %d row-level finding(s) below violation_pct threshold %.4f",
+                    dropped_vio,
+                    _max_vio_pct,
+                )
+
+        # ── 3a-2. Zero-violation backstop ────────────────────────────────────
+        # Drop row-level findings where evidence explicitly shows 0 violations.
+        # Catches LLM false positives where the COUNT(*) returned 0 rows but the
+        # agent still emitted a finding (e.g. created_at < '1900-01-01' on 2026 data).
+        # Checks both violation_count == 0 and violation_pct == 0.0 since agents
+        # are instructed to include violation_pct rather than violation_count.
+        def _is_zero_violation(f: Finding) -> bool:
+            # "structural" is the new name; "row"/"row_level" kept for backward compat with old jobs
+            if f.validator not in ("row", "row_level", "structural"):
+                return False
+            ev = f.evidence or {}
+            viol_count = ev.get("violation_count")
+            if viol_count is not None:
+                try:
+                    return int(viol_count) == 0
+                except (ValueError, TypeError):
+                    pass
+            viol_pct = ev.get("violation_pct")
+            if viol_pct is not None:
+                try:
+                    return float(viol_pct) == 0.0
+                except (ValueError, TypeError):
+                    pass
+            return False
+
+        before_zero = len(filtered)
+        filtered = [f for f in filtered if not _is_zero_violation(f)]
+        dropped_zero = before_zero - len(filtered)
+        if dropped_zero:
+            logger.info(
+                "reducer: suppressed %d row-level finding(s) with zero violations in evidence",
+                dropped_zero,
+            )
 
         # ── 3b. Domain-rule low-cardinality suppressions ──────────────────
         # These are code-enforced to close the gap between the domain_rules
@@ -229,9 +415,9 @@ class ReduceSignals:
                 dropped_lc,
             )
 
-        # ── 3c. Schema entity filter — drop hallucinated table/column refs ─
-        if schema:
-            valid_tables = set(schema.keys()) | {"general", "database"}
+        # ── 3c. Schema + profiler entity filter — drop hallucinated table/column refs ─
+        if schema or profiler_tables:
+            valid_tables = set(schema.keys()) | profiler_tables | {"general", "database"}
             valid_pairs = {
                 f"{t}.{c}"
                 for t, info in schema.items()
@@ -307,19 +493,21 @@ class ReduceSignals:
             self.min_confidence,
         )
 
-        reduced = ReducedFindings(findings=top)
+        # ── 7. Build dependency graph ─────────────────────────────────────
+        dependency_edges = _build_dependency_edges(top)
+        result = FixDependencyGraph(findings=top, dependency_edges=dependency_edges)
 
-        # ── 7. Persist for Playground continuity ─────────────────────────
+        # ── 8. Persist for Playground continuity ─────────────────────────
         try:
             ws = step_input.workflow_session
             if ws is not None:
                 ss = ws.session_data or {}
-                ss["last_reduced_findings"] = reduced.model_dump()
+                ss["last_reduced_findings"] = result.to_reduced_findings().model_dump()
                 ws.session_data = ss
         except Exception:
             pass  # session_state may not exist in all execution contexts
 
-        return StepOutput(content=reduced)
+        return StepOutput(content=result)
 
 
 # Default singleton — used by the Workflow step wiring.

@@ -21,11 +21,12 @@ from agno.team import Team
 from agno.team.mode import TeamMode
 
 from .agent_config import (
-    COLUMN_AGENT_CONFIG,
-    CROSSROW_AGENT_CONFIG,
     FIX_PLANNER_AGENT_CONFIG,
-    ROW_AGENT_CONFIG,
+    PROFILER_AGENT_CONFIG,
+    RELATIONAL_AGENT_CONFIG,
     SCHEMA_AGENT_CONFIG,
+    STATISTICAL_AGENT_CONFIG,
+    STRUCTURAL_AGENT_CONFIG,
 )
 from .hooks import (
     emit_pipeline_status,
@@ -35,11 +36,12 @@ from .hooks import (
     mark_run_start,
     prime_connection_from_prompt,
     qualitylab_tool_hook,
+    store_profiler_output,
     validate_findings_entities,
     validate_fix_sql_safety,
 )
 from .rules import common_rules, domain_rules, policy_rules
-from .tool_factories import column_tools, crossrow_tools, fixplanner_tools, row_tools, schema_tools
+from .tool_factories import fixplanner_tools, profiler_tools, relational_tools, schema_tools, statistical_tools, structural_tools
 
 _BASE_DIR = Path(__file__).resolve().parent.parent
 _AGENTOS_DB = SqliteDb(db_file=str(Path(__file__).resolve().parent / "tmp" / "agentos_sessions.db"))
@@ -152,25 +154,35 @@ def build_members(
         **SCHEMA_AGENT_CONFIG,
         **agent_kwargs,
     )
-    column_validator = Agent(
-        id="column-validator",
-        tools=column_tools,
+    # Profiler runs after schema validation and stores a statistical baseline in
+    # session_state["profiler_report"] for all parallel validators to reference.
+    profiler = Agent(
+        id="profiler",
+        tools=profiler_tools,
         model=build_model(model_id),
-        **COLUMN_AGENT_CONFIG,
+        post_hooks=[store_profiler_output, log_run_metrics],
+        **PROFILER_AGENT_CONFIG,
+        **{k: v for k, v in agent_kwargs.items() if k != "post_hooks"},
+    )
+    statistical_validator = Agent(
+        id="statistical-validator",
+        tools=statistical_tools,
+        model=build_model(model_id),
+        **STATISTICAL_AGENT_CONFIG,
         **agent_kwargs,
     )
-    row_validator = Agent(
-        id="row-validator",
-        tools=row_tools,
+    structural_validator = Agent(
+        id="structural-validator",
+        tools=structural_tools,
         model=build_model(model_id),
-        **ROW_AGENT_CONFIG,
+        **STRUCTURAL_AGENT_CONFIG,
         **agent_kwargs,
     )
-    crossrow_validator = Agent(
-        id="crossrow-validator",
-        tools=crossrow_tools,
+    relational_validator = Agent(
+        id="relational-validator",
+        tools=relational_tools,
         model=build_model(model_id),
-        **CROSSROW_AGENT_CONFIG,
+        **RELATIONAL_AGENT_CONFIG,
         **agent_kwargs,
     )
     fix_planner = Agent(
@@ -184,9 +196,10 @@ def build_members(
 
     return SimpleNamespace(
         schema_validator=schema_validator,
-        column_validator=column_validator,
-        row_validator=row_validator,
-        crossrow_validator=crossrow_validator,
+        profiler=profiler,
+        statistical_validator=statistical_validator,
+        structural_validator=structural_validator,
+        relational_validator=relational_validator,
         fix_planner=fix_planner,
     )
 
@@ -221,9 +234,10 @@ def create_qualitylab_team(
         model=build_model(model_id),
         members=[
             members.schema_validator,
-            members.column_validator,
-            members.row_validator,
-            members.crossrow_validator,
+            members.profiler,
+            members.statistical_validator,
+            members.structural_validator,
+            members.relational_validator,
             members.fix_planner,
         ],
         description=(
@@ -233,9 +247,10 @@ def create_qualitylab_team(
         instructions=[
             "If the user provides a PostgreSQL DSN, treat it as the active connection for this session.",
             "Delegate schema-only requests to the schema specialist.",
-            "Delegate column-distribution issues to the column specialist.",
-            "Delegate row logic issues to the row-level specialist.",
-            "Delegate cross-row and relational issues to the cross-row specialist.",
+            "Delegate statistical baseline requests (null rates, cardinality, distributions) to the profiler.",
+            "Delegate distribution anomalies, outliers, and drift to the statistical validator.",
+            "Delegate row-level data conformance issues (impossible dates, blank required fields, negative amounts) to the structural validator.",
+            "Delegate cross-row and cross-table relational issues (orphaned FKs, duplicates, functional dependencies) to the relational validator.",
             "Delegate remediation planning to the fix planner only after findings are established.",
             "Return concise, well-structured markdown unless the user explicitly asks for raw JSON.",
         ],

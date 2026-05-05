@@ -151,21 +151,22 @@ def notify_user_job_cancelled(user_email: str, job_id: str, db_name: str | None 
 
 
 
-def notify_user_fix_executed(user_email: str, job_id: str, status: str) -> int:
+def notify_user_fix_executed(user_email: str, job_id: str, status: str, db_name: str | None = None) -> int:
     normalized = str(status or '').strip().lower()
     success = normalized in {'success', 'applied', 'committed'}
+    display_db = db_name or 'your database'
 
     if success:
         subject = '🔧 QualityLab — Fix Applied'
         message_html = (
-            f'<p>Your requested fix for job <strong>#{job_id}</strong> was executed successfully.</p>'
+            f'<p>Your requested fix for database <strong>{display_db}</strong> was executed successfully.</p>'
             '<p>The transaction was committed and changes are now available in your database.</p>'
         )
         title = 'Fix applied successfully'
     else:
         subject = '🔧 QualityLab — Fix Failed'
         message_html = (
-            f'<p>The requested fix for job <strong>#{job_id}</strong> did not complete.</p>'
+            f'<p>The requested fix for database <strong>{display_db}</strong> did not complete.</p>'
             '<p>The transaction was rolled back. You can review the error details and retry safely.</p>'
         )
         title = 'Fix execution failed'

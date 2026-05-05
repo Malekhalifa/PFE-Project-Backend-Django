@@ -11,6 +11,7 @@ from __future__ import annotations
 import contextvars as _cv
 import json
 import logging
+import re as _re
 from typing import Any
 
 import psycopg2
@@ -22,6 +23,10 @@ from services.postgres_connection import assert_valid_postgres_dsn, test_postgre
 
 logger = logging.getLogger(__name__)
 
+_BANNED_STMT_RE = _re.compile(
+    r"\b(?:DROP|DELETE|UPDATE|INSERT|ALTER|TRUNCATE|GRANT|REVOKE)\b",
+    _re.IGNORECASE,
+)
 
 class _PgExecutor:
     """Thread-safe read-only executor used by custom statistical helpers."""
@@ -42,12 +47,10 @@ class _PgExecutor:
         except Exception:
             return "Error: Invalid database connection string."
 
-        upper = query.upper()
-        banned = ["DROP", "DELETE", "UPDATE", "INSERT", "ALTER", "TRUNCATE", "GRANT", "REVOKE"]
-        if any(keyword in upper for keyword in banned):
+        if _BANNED_STMT_RE.search(query):
             return "Error: Query blocked. Only SELECT queries are allowed."
 
-        if "LIMIT " not in upper:
+        if "LIMIT " not in query.upper():
             cleaned = query.strip().rstrip(";")
             query = f"SELECT * FROM ({cleaned}) AS _agno_subquery LIMIT {limit};"
 
@@ -100,6 +103,47 @@ postgres_tool = _ExecutorProxy()
 
 def _q(query: str) -> str:
     return _executor().run(query)
+
+
+_DDL_EXPLAIN_RE = _re.compile(
+    r"^\s*(ALTER|CREATE|DROP|TRUNCATE|INSERT|UPDATE|DELETE)\b",
+    _re.IGNORECASE,
+)
+
+
+@tool(cache_results=True)
+def inspect_query(query: str) -> str:
+    """
+    Shows the EXPLAIN execution plan for a SELECT query.
+    DDL statements (ALTER TABLE, CREATE INDEX, etc.) cannot be EXPLAINed in
+    PostgreSQL — for those, returns a validation note so the caller knows the
+    syntax was reviewed without triggering a database error.
+    """
+    if _DDL_EXPLAIN_RE.match(query.strip()):
+        return (
+            "DDL statement — EXPLAIN is not applicable in PostgreSQL. "
+            "The statement looks structurally valid. "
+            "To dry-run it safely, use run_query inside an explicit BEGIN/ROLLBACK transaction."
+        )
+    conn_str = _executor().connection_string
+    if not conn_str:
+        return "Error: Database connection not set."
+    conn = None
+    try:
+        conn = psycopg2.connect(conn_str)
+        with conn.cursor() as cur:
+            cur.execute(f"EXPLAIN {query}")
+            rows = cur.fetchall()
+        return "\n".join(str(r[0]) for r in rows) if rows else "No plan returned."
+    except Exception as exc:
+        logger.error("inspect_query error '%s': %s", query[:80], exc)
+        return f"Error: {exc}"
+    finally:
+        if conn is not None:
+            try:
+                conn.close()
+            except Exception:
+                pass
 
 
 @tool(cache_results=True)

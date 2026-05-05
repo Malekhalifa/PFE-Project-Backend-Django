@@ -54,8 +54,8 @@ ANALYZE_POSTGRES_RATE_LIMIT = _normalize_throttle_rate(
     default='10/hour',
 )
 EXECUTE_FIX_RATE_LIMIT = _normalize_throttle_rate(
-    env('EXECUTE_FIX_RATE_LIMIT', default='30/hour'),
-    default='30/hour',
+    env('EXECUTE_FIX_RATE_LIMIT', default='200/hour'),
+    default='200/hour',
 )
 USER_RATE_LIMIT = _normalize_throttle_rate(
     env('USER_RATE_LIMIT', default='1200/hour'),
@@ -107,6 +107,9 @@ INSTALLED_APPS = [
     # Project apps
     'users',
     'api',
+
+    # WebSocket support
+    'channels',
 ]
 
 # ──────────────────────────────────────────────
@@ -312,6 +315,19 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
+
+# ──────────────────────────────────────────────
+# Django Channels (WebSocket)
+# ──────────────────────────────────────────────
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [env('REDIS_URL', default='redis://localhost:6379/0')],
+        },
+    },
+}
 
 # ──────────────────────────────────────────────
 # File uploads

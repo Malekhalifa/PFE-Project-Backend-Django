@@ -128,6 +128,19 @@ def build_postgres_tools(
     return PostgresTools(**toolkit_kwargs)
 
 
+def profiler_tools(
+    *,
+    session_state: dict[str, Any] | None = None,
+    run_context: Any | None = None,
+) -> list[Any]:
+    mode = _resolve_mode(session_state=session_state, run_context=run_context)
+    include = None if mode == "playground" else ["summarize_table", "run_query"]
+    pg = build_postgres_tools(include=include, session_state=session_state, run_context=run_context)
+    tools: list[Any] = [pg] if pg is not None else []
+    tools.extend(_custom_tools("detect_outliers", "detect_patterns"))
+    return tools
+
+
 def schema_tools(
     *,
     session_state: dict[str, Any] | None = None,
@@ -143,7 +156,7 @@ def schema_tools(
     return tools
 
 
-def column_tools(
+def statistical_tools(
     *,
     session_state: dict[str, Any] | None = None,
     run_context: Any | None = None,
@@ -156,7 +169,7 @@ def column_tools(
     return tools
 
 
-def row_tools(
+def structural_tools(
     *,
     session_state: dict[str, Any] | None = None,
     run_context: Any | None = None,
@@ -169,7 +182,7 @@ def row_tools(
     return tools
 
 
-def crossrow_tools(
+def relational_tools(
     *,
     session_state: dict[str, Any] | None = None,
     run_context: Any | None = None,
@@ -178,7 +191,11 @@ def crossrow_tools(
     include = None if mode == "playground" else ["describe_table", "run_query"]
     pg = build_postgres_tools(include=include, session_state=session_state, run_context=run_context)
     tools: list[Any] = [pg] if pg is not None else []
-    tools.extend(_custom_tools("analyze_relationship", "detect_fd", "diff_tables"))
+    # describe_constraints is critical: without it the agent cannot see existing
+    # UNIQUE/composite constraints and will falsely flag columns that already have
+    # composite uniqueness enforced (e.g. UNIQUE (groupe_id, campaign_type)).
+    # It also exposes the actual FK target table for orphan-reference checks.
+    tools.extend(_custom_tools("describe_constraints", "analyze_relationship", "detect_fd", "diff_tables"))
     return tools
 
 
@@ -188,8 +205,11 @@ def fixplanner_tools(
     run_context: Any | None = None,
 ) -> list[Any]:
     mode = _resolve_mode(session_state=session_state, run_context=run_context)
-    include = None if mode == "playground" else ["inspect_query", "run_query"]
+    # inspect_query is provided by our custom tool (tools.py) which handles DDL
+    # gracefully. Exclude it from the agno PostgresTools include list to avoid the
+    # agno version blindly prepending EXPLAIN to DDL statements.
+    include = None if mode == "playground" else ["run_query"]
     pg = build_postgres_tools(include=include, session_state=session_state, run_context=run_context)
     tools: list[Any] = [pg] if pg is not None else []
-    tools.extend(_custom_tools("suggest_indexes", "check_bloat_and_dead_tuples"))
+    tools.extend(_custom_tools("inspect_query", "suggest_indexes", "check_bloat_and_dead_tuples"))
     return tools

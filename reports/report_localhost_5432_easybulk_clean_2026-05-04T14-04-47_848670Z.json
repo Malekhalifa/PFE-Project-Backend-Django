@@ -1,0 +1,926 @@
+{
+  "pipeline_run_id": "4d02bb1e-c6d7-4756-a570-ddba7359c8d3",
+  "database_id": "localhost_5432_easybulk_clean",
+  "llm_model": "gemini-2.5-flash",
+  "run_timestamp": "2026-05-04T14:04:47.848670Z",
+  "summary": {
+    "confidence_score": 100,
+    "data_quality_score": 61,
+    "final_fix_count": 8
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "4d02bb1e-c6d7-4756-a570-ddba7359c8d3",
+      "database_id": "localhost_5432_easybulk_clean",
+      "run_timestamp": "2026-05-04T14:04:47.848670Z",
+      "agent": "Schema Integrity Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 33,
+        "items_passed": 21,
+        "items_flagged": 12,
+        "critical_issues": 3,
+        "high_issues": 9,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 0.0,
+        "overall_confidence": 0.9833,
+        "flagged_tables": [
+          "budget_history",
+          "campagne",
+          "campagne_contacts",
+          "campagne_tags",
+          "expediteur_groupe",
+          "groupe",
+          "modele"
+        ]
+      },
+      "metrics": {
+        "validator": "schema",
+        "findings_count": 12
+      },
+      "findings": [
+        {
+          "table": "campagne_contacts",
+          "column": null,
+          "entity": "campagne_contacts",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campagne_contacts",
+            "primary_key_required": true,
+            "constraint_type": null
+          },
+          "remediation_hint": "Define a primary key for the 'campagne_contacts' table to meet domain rules.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "Define a primary key for the 'campagne_contacts' table to meet domain rules.",
+              "evidence": {
+                "table_name": "campagne_contacts",
+                "primary_key_required": true,
+                "constraint_type": null
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_contacts",
+          "column": "contact_id",
+          "entity": "campagne_contacts.contact_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campagne_contacts",
+            "column_name": "contact_id",
+            "is_nullable": true,
+            "foreign_key_validation": true
+          },
+          "remediation_hint": "Ensure the 'campagne_contacts.contact_id' column is not nullable if it is intended to be a foreign key.",
+          "issues": [
+            {
+              "type": "nullable_fk",
+              "severity": "high",
+              "description": "Ensure the 'campagne_contacts.contact_id' column is not nullable if it is intended to be a foreign key.",
+              "evidence": {
+                "table_name": "campagne_contacts",
+                "column_name": "contact_id",
+                "is_nullable": true,
+                "foreign_key_validation": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur_groupe",
+          "column": null,
+          "entity": "expediteur_groupe",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "expediteur_groupe",
+            "primary_key_required": true,
+            "constraint_type": null
+          },
+          "remediation_hint": "Define a primary key for the 'expediteur_groupe' table to meet domain rules.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "Define a primary key for the 'expediteur_groupe' table to meet domain rules.",
+              "evidence": {
+                "table_name": "expediteur_groupe",
+                "primary_key_required": true,
+                "constraint_type": null
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_tags",
+          "column": null,
+          "entity": "campagne_tags",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campagne_tags",
+            "primary_key_required": true,
+            "constraint_type": null
+          },
+          "remediation_hint": "Define a primary key for the 'campagne_tags' table to meet domain rules.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "Define a primary key for the 'campagne_tags' table to meet domain rules.",
+              "evidence": {
+                "table_name": "campagne_tags",
+                "primary_key_required": true,
+                "constraint_type": null
+              }
+            }
+          ]
+        },
+        {
+          "table": "budget_history",
+          "column": "groupe_id",
+          "entity": "budget_history.groupe_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "budget_history",
+            "column_name": "groupe_id",
+            "is_nullable": true,
+            "foreign_key_validation": true
+          },
+          "remediation_hint": "Ensure the 'budget_history.groupe_id' column is not nullable if it is intended to be a foreign key.",
+          "issues": [
+            {
+              "type": "nullable_fk",
+              "severity": "high",
+              "description": "Ensure the 'budget_history.groupe_id' column is not nullable if it is intended to be a foreign key.",
+              "evidence": {
+                "table_name": "budget_history",
+                "column_name": "groupe_id",
+                "is_nullable": true,
+                "foreign_key_validation": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "entity": "groupe.admin_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "groupe",
+            "column_name": "admin_id",
+            "is_nullable": true,
+            "foreign_key_validation": true
+          },
+          "remediation_hint": "Ensure the 'groupe.admin_id' column is not nullable if it is intended to be a foreign key.",
+          "issues": [
+            {
+              "type": "nullable_fk",
+              "severity": "high",
+              "description": "Ensure the 'groupe.admin_id' column is not nullable if it is intended to be a foreign key.",
+              "evidence": {
+                "table_name": "groupe",
+                "column_name": "admin_id",
+                "is_nullable": true,
+                "foreign_key_validation": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne",
+          "column": null,
+          "entity": "campagne",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campagne",
+            "column_name": "schedule_id",
+            "is_nullable": true,
+            "foreign_key_validation": true,
+            "columns_with_high_nulls": [
+              "schedule_id",
+              "campaign_type_permission_id",
+              "expediteur_id",
+              "modele_id",
+              "user_id"
+            ]
+          },
+          "remediation_hint": "Ensure the 'campagne.schedule_id' column is not nullable if it is intended to be a foreign key.",
+          "issues": [
+            {
+              "type": "nullable_fk",
+              "severity": "high",
+              "description": "Ensure the 'campagne.schedule_id' column is not nullable if it is intended to be a foreign key.",
+              "evidence": {
+                "table_name": "campagne",
+                "column_name": "schedule_id",
+                "is_nullable": true,
+                "foreign_key_validation": true,
+                "columns_with_high_nulls": [
+                  "schedule_id",
+                  "campaign_type_permission_id",
+                  "expediteur_id",
+                  "modele_id",
+                  "user_id"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne",
+          "column": "campaign_type_permission_id",
+          "entity": "campagne.campaign_type_permission_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campagne",
+            "column_name": "campaign_type_permission_id",
+            "is_nullable": true,
+            "foreign_key_validation": true
+          },
+          "remediation_hint": "Ensure the 'campagne.campaign_type_permission_id' column is not nullable if it is intended to be a foreign key.",
+          "issues": [
+            {
+              "type": "nullable_fk",
+              "severity": "high",
+              "description": "Ensure the 'campagne.campaign_type_permission_id' column is not nullable if it is intended to be a foreign key.",
+              "evidence": {
+                "table_name": "campagne",
+                "column_name": "campaign_type_permission_id",
+                "is_nullable": true,
+                "foreign_key_validation": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne",
+          "column": "expediteur_id",
+          "entity": "campagne.expediteur_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campagne",
+            "column_name": "expediteur_id",
+            "is_nullable": true,
+            "foreign_key_validation": true
+          },
+          "remediation_hint": "Ensure the 'campagne.expediteur_id' column is not nullable if it is intended to be a foreign key.",
+          "issues": [
+            {
+              "type": "nullable_fk",
+              "severity": "high",
+              "description": "Ensure the 'campagne.expediteur_id' column is not nullable if it is intended to be a foreign key.",
+              "evidence": {
+                "table_name": "campagne",
+                "column_name": "expediteur_id",
+                "is_nullable": true,
+                "foreign_key_validation": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne",
+          "column": "modele_id",
+          "entity": "campagne.modele_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campagne",
+            "column_name": "modele_id",
+            "is_nullable": true,
+            "foreign_key_validation": true
+          },
+          "remediation_hint": "Ensure the 'campagne.modele_id' column is not nullable if it is intended to be a foreign key.",
+          "issues": [
+            {
+              "type": "nullable_fk",
+              "severity": "high",
+              "description": "Ensure the 'campagne.modele_id' column is not nullable if it is intended to be a foreign key.",
+              "evidence": {
+                "table_name": "campagne",
+                "column_name": "modele_id",
+                "is_nullable": true,
+                "foreign_key_validation": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne",
+          "column": "user_id",
+          "entity": "campagne.user_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campagne",
+            "column_name": "user_id",
+            "is_nullable": true,
+            "foreign_key_validation": true
+          },
+          "remediation_hint": "Ensure the 'campagne.user_id' column is not nullable if it is intended to be a foreign key.",
+          "issues": [
+            {
+              "type": "nullable_fk",
+              "severity": "high",
+              "description": "Ensure the 'campagne.user_id' column is not nullable if it is intended to be a foreign key.",
+              "evidence": {
+                "table_name": "campagne",
+                "column_name": "user_id",
+                "is_nullable": true,
+                "foreign_key_validation": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "modele",
+          "column": "membership_id",
+          "entity": "modele.membership_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "modele",
+            "column_name": "membership_id",
+            "is_nullable": true,
+            "foreign_key_validation": true
+          },
+          "remediation_hint": "Ensure the 'modele.membership_id' column is not nullable if it is intended to be a foreign key.",
+          "issues": [
+            {
+              "type": "nullable_fk",
+              "severity": "high",
+              "description": "Ensure the 'modele.membership_id' column is not nullable if it is intended to be a foreign key.",
+              "evidence": {
+                "table_name": "modele",
+                "column_name": "membership_id",
+                "is_nullable": true,
+                "foreign_key_validation": true
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": [],
+      "report": "## Schema Integrity Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 33\n- Passed: 21\n- Flagged: 12\n- Severity split: critical=3, high=9, medium=0, low=0\n- Quality score: 0.0 / 100\n- Confidence: 0.9833\n- Flagged tables: budget_history, campagne, campagne_contacts, campagne_tags, expediteur_groupe, groupe, modele\n\n### Metrics\n- Findings count: 12\n- Validator: schema\n\n### Findings (12)\n\n#### 1. campagne_contacts [CRITICAL]\n- Problem: Define a primary key for the 'campagne_contacts' table to meet domain rules.\n- Confidence: 1.0\n- Column: None\n- Recommendation: Define a primary key for the 'campagne_contacts' table to meet domain rules.\n- Detailed issues:\n  - [CRITICAL] Define a primary key for the 'campagne_contacts' table to meet domain rules.\n\n#### 2. campagne_contacts [HIGH]\n- Problem: Ensure the 'campagne_contacts.contact_id' column is not nullable if it is intended to be a foreign key.\n- Confidence: 1.0\n- Column: contact_id\n- Recommendation: Ensure the 'campagne_contacts.contact_id' column is not nullable if it is intended to be a foreign key.\n- Detailed issues:\n  - [HIGH] Ensure the 'campagne_contacts.contact_id' column is not nullable if it is intended to be a foreign key.\n\n#### 3. expediteur_groupe [CRITICAL]\n- Problem: Define a primary key for the 'expediteur_groupe' table to meet domain rules.\n- Confidence: 1.0\n- Column: None\n- Recommendation: Define a primary key for the 'expediteur_groupe' table to meet domain rules.\n- Detailed issues:\n  - [CRITICAL] Define a primary key for the 'expediteur_groupe' table to meet domain rules.\n\n#### 4. campagne_tags [CRITICAL]\n- Problem: Define a primary key for the 'campagne_tags' table to meet domain rules.\n- Confidence: 1.0\n- Column: None\n- Recommendation: Define a primary key for the 'campagne_tags' table to meet domain rules.\n- Detailed issues:\n  - [CRITICAL] Define a primary key for the 'campagne_tags' table to meet domain rules.\n\n#### 5. budget_history [HIGH]\n- Problem: Ensure the 'budget_history.groupe_id' column is not nullable if it is intended to be a foreign key.\n- Confidence: 1.0\n- Column: groupe_id\n- Recommendation: Ensure the 'budget_history.groupe_id' column is not nullable if it is intended to be a foreign key.\n- Detailed issues:\n  - [HIGH] Ensure the 'budget_history.groupe_id' column is not nullable if it is intended to be a foreign key.\n\n#### 6. groupe [HIGH]\n- Problem: Ensure the 'groupe.admin_id' column is not nullable if it is intended to be a foreign key.\n- Confidence: 1.0\n- Column: admin_id\n- Recommendation: Ensure the 'groupe.admin_id' column is not nullable if it is intended to be a foreign key.\n- Detailed issues:\n  - [HIGH] Ensure the 'groupe.admin_id' column is not nullable if it is intended to be a foreign key.\n\n#### 7. campagne [HIGH]\n- Problem: Ensure the 'campagne.schedule_id' column is not nullable if it is intended to be a foreign key.\n- Confidence: 1.0\n- Column: None\n- Recommendation: Ensure the 'campagne.schedule_id' column is not nullable if it is intended to be a foreign key.\n- Detailed issues:\n  - [HIGH] Ensure the 'campagne.schedule_id' column is not nullable if it is intended to be a foreign key.\n\n#### 8. campagne [HIGH]\n- Problem: Ensure the 'campagne.campaign_type_permission_id' column is not nullable if it is intended to be a foreign key.\n- Confidence: 1.0\n- Column: campaign_type_permission_id\n- Recommendation: Ensure the 'campagne.campaign_type_permission_id' column is not nullable if it is intended to be a foreign key.\n- Detailed issues:\n  - [HIGH] Ensure the 'campagne.campaign_type_permission_id' column is not nullable if it is intended to be a foreign key.\n\n#### 9. campagne [HIGH]\n- Problem: Ensure the 'campagne.expediteur_id' column is not nullable if it is intended to be a foreign key.\n- Confidence: 1.0\n- Column: expediteur_id\n- Recommendation: Ensure the 'campagne.expediteur_id' column is not nullable if it is intended to be a foreign key.\n- Detailed issues:\n  - [HIGH] Ensure the 'campagne.expediteur_id' column is not nullable if it is intended to be a foreign key.\n\n#### 10. campagne [HIGH]\n- Problem: Ensure the 'campagne.modele_id' column is not nullable if it is intended to be a foreign key.\n- Confidence: 1.0\n- Column: modele_id\n- Recommendation: Ensure the 'campagne.modele_id' column is not nullable if it is intended to be a foreign key.\n- Detailed issues:\n  - [HIGH] Ensure the 'campagne.modele_id' column is not nullable if it is intended to be a foreign key.\n\n#### 11. campagne [HIGH]\n- Problem: Ensure the 'campagne.user_id' column is not nullable if it is intended to be a foreign key.\n- Confidence: 1.0\n- Column: user_id\n- Recommendation: Ensure the 'campagne.user_id' column is not nullable if it is intended to be a foreign key.\n- Detailed issues:\n  - [HIGH] Ensure the 'campagne.user_id' column is not nullable if it is intended to be a foreign key.\n\n#### 12. modele [HIGH]\n- Problem: Ensure the 'modele.membership_id' column is not nullable if it is intended to be a foreign key.\n- Confidence: 0.8\n- Column: membership_id\n- Recommendation: Ensure the 'modele.membership_id' column is not nullable if it is intended to be a foreign key.\n- Detailed issues:\n  - [HIGH] Ensure the 'modele.membership_id' column is not nullable if it is intended to be a foreign key."
+    },
+    "column_validator": {
+      "pipeline_run_id": "4d02bb1e-c6d7-4756-a570-ddba7359c8d3",
+      "database_id": "localhost_5432_easybulk_clean",
+      "run_timestamp": "2026-05-04T14:04:47.848670Z",
+      "agent": "Column Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 33,
+        "items_passed": 31,
+        "items_flagged": 2,
+        "critical_issues": 0,
+        "high_issues": 1,
+        "medium_issues": 1,
+        "low_issues": 0,
+        "overall_quality_score": 77.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": [
+          "groupe",
+          "prm_organization"
+        ]
+      },
+      "metrics": {
+        "validator": "column",
+        "findings_count": 2
+      },
+      "findings": [
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "entity": "groupe.admin_id",
+          "rule": "high_null_ratio",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "groupe",
+            "column_name": "admin_id",
+            "total_rows": 9,
+            "null_rows": 8,
+            "null_ratio": 0.8888888888888888,
+            "max_null_pct": 0.05
+          },
+          "remediation_hint": "Investigate the high null ratio in 'groupe.admin_id' and consider if it should be nullable.",
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "high",
+              "description": "Investigate the high null ratio in 'groupe.admin_id' and consider if it should be nullable.",
+              "evidence": {
+                "table_name": "groupe",
+                "column_name": "admin_id",
+                "total_rows": 9,
+                "null_rows": 8,
+                "null_ratio": 0.8888888888888888,
+                "max_null_pct": 0.05
+              }
+            }
+          ]
+        },
+        {
+          "table": "prm_organization",
+          "column": "code",
+          "entity": "prm_organization.code",
+          "rule": "duplicate_values",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "prm_organization",
+            "column_name": "code",
+            "total_rows": 17,
+            "unique_values": 7,
+            "duplicate_count": 10
+          },
+          "remediation_hint": "Investigate why 'prm_organization.code' contains duplicate values, as it is expected to be unique based on naming convention.",
+          "issues": [
+            {
+              "type": "duplicate_values",
+              "severity": "medium",
+              "description": "Investigate why 'prm_organization.code' contains duplicate values, as it is expected to be unique based on naming convention.",
+              "evidence": {
+                "table_name": "prm_organization",
+                "column_name": "code",
+                "total_rows": 17,
+                "unique_values": 7,
+                "duplicate_count": 10
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": [],
+      "report": "## Column Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 33\n- Passed: 31\n- Flagged: 2\n- Severity split: critical=0, high=1, medium=1, low=0\n- Quality score: 77.0 / 100\n- Confidence: 1.0\n- Flagged tables: groupe, prm_organization\n\n### Metrics\n- Findings count: 2\n- Validator: column\n\n### Findings (2)\n\n#### 1. groupe [HIGH]\n- Problem: Investigate the high null ratio in 'groupe.admin_id' and consider if it should be nullable.\n- Confidence: 1.0\n- Column: admin_id\n- Recommendation: Investigate the high null ratio in 'groupe.admin_id' and consider if it should be nullable.\n- Detailed issues:\n  - [HIGH] Investigate the high null ratio in 'groupe.admin_id' and consider if it should be nullable.\n\n#### 2. prm_organization [MEDIUM]\n- Problem: Investigate why 'prm_organization.code' contains duplicate values, as it is expected to be unique based on naming convention.\n- Confidence: 1.0\n- Column: code\n- Recommendation: Investigate why 'prm_organization.code' contains duplicate values, as it is expected to be unique based on naming convention.\n- Detailed issues:\n  - [MEDIUM] Investigate why 'prm_organization.code' contains duplicate values, as it is expected to be unique based on naming convention."
+    },
+    "row_level_validator": {
+      "pipeline_run_id": "4d02bb1e-c6d7-4756-a570-ddba7359c8d3",
+      "database_id": "localhost_5432_easybulk_clean",
+      "run_timestamp": "2026-05-04T14:04:47.848670Z",
+      "agent": "Row Level Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 33,
+        "items_passed": 32,
+        "items_flagged": 1,
+        "critical_issues": 0,
+        "high_issues": 1,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 85.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": [
+          "sent_sms"
+        ]
+      },
+      "metrics": {
+        "validator": "row",
+        "findings_count": 1
+      },
+      "findings": [
+        {
+          "table": "sent_sms",
+          "column": null,
+          "entity": "sent_sms",
+          "rule": "negative_or_zero_amount",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "sent_sms",
+            "violated_columns": "sql_id, time, id, sms_type, mclass, mwi, coding, compress, validity, deferred, dlr_mask, pid, alt_dcs, rpi",
+            "violation_count": 6
+          },
+          "remediation_hint": "Investigate rows in `sent_sms` where numeric columns (`sql_id`, `time`, `id`, `sms_type`, `mclass`, `mwi`, `coding`, `compress`, `validity`, `deferred`, `dlr_mask`, `pid`, `alt_dcs`, `rpi`) contain negative or zero values.",
+          "issues": [
+            {
+              "type": "negative_or_zero_amount",
+              "severity": "high",
+              "description": "Investigate rows in `sent_sms` where numeric columns (`sql_id`, `time`, `id`, `sms_type`, `mclass`, `mwi`, `coding`, `compress`, `validity`, `deferred`, `dlr_mask`, `pid`, `alt_dcs`, `rpi`) contain negative or zero values.",
+              "evidence": {
+                "table_name": "sent_sms",
+                "violated_columns": "sql_id, time, id, sms_type, mclass, mwi, coding, compress, validity, deferred, dlr_mask, pid, alt_dcs, rpi",
+                "violation_count": 6
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": [],
+      "report": "## Row Level Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 33\n- Passed: 32\n- Flagged: 1\n- Severity split: critical=0, high=1, medium=0, low=0\n- Quality score: 85.0 / 100\n- Confidence: 1.0\n- Flagged tables: sent_sms\n\n### Metrics\n- Findings count: 1\n- Validator: row\n\n### Findings (1)\n\n#### 1. sent_sms [HIGH]\n- Problem: Investigate rows in `sent_sms` where numeric columns (`sql_id`, `time`, `id`, `sms_type`, `mclass`, `mwi`, `coding`, `compress`, `validity`, `deferred`, `dlr_mask`, `pid`, `alt_dcs`, `rpi`) contain negative or zero values.\n- Confidence: 1.0\n- Column: None\n- Recommendation: Investigate rows in `sent_sms` where numeric columns (`sql_id`, `time`, `id`, `sms_type`, `mclass`, `mwi`, `coding`, `compress`, `validity`, `deferred`, `dlr_mask`, `pid`, `alt_dcs`, `rpi`) contain negative or zero values.\n- Detailed issues:\n  - [HIGH] Investigate rows in `sent_sms` where numeric columns (`sql_id`, `time`, `id`, `sms_type`, `mclass`, `mwi`, `coding`, `compress`, `validity`, `deferred`, `dlr_mask`, `pid`, `alt_dcs`, `rpi`) contain negative or zero values."
+    },
+    "cross_row_validator": {
+      "pipeline_run_id": "4d02bb1e-c6d7-4756-a570-ddba7359c8d3",
+      "database_id": "localhost_5432_easybulk_clean",
+      "run_timestamp": "2026-05-04T14:04:47.848670Z",
+      "agent": "Cross Row Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 33,
+        "items_passed": 32,
+        "items_flagged": 1,
+        "critical_issues": 0,
+        "high_issues": 1,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 85.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": [
+          "smsc_route"
+        ]
+      },
+      "metrics": {
+        "validator": "crossrow",
+        "findings_count": 1
+      },
+      "findings": [
+        {
+          "table": "smsc_route",
+          "column": "route_smsc_id",
+          "entity": "smsc_route.route_smsc_id",
+          "rule": "orphaned_records",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "source_table": "smsc_route",
+            "source_column": "route_smsc_id",
+            "target_table": "smsc",
+            "target_column": "id",
+            "orphaned_record_count": 6
+          },
+          "remediation_hint": "Investigate and reconcile the 6 orphaned records in 'smsc_route' where 'route_smsc_id' does not have a corresponding 'id' in the 'smsc' table.",
+          "issues": [
+            {
+              "type": "orphaned_records",
+              "severity": "high",
+              "description": "Investigate and reconcile the 6 orphaned records in 'smsc_route' where 'route_smsc_id' does not have a corresponding 'id' in the 'smsc' table.",
+              "evidence": {
+                "source_table": "smsc_route",
+                "source_column": "route_smsc_id",
+                "target_table": "smsc",
+                "target_column": "id",
+                "orphaned_record_count": 6
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": [],
+      "report": "## Cross Row Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 33\n- Passed: 32\n- Flagged: 1\n- Severity split: critical=0, high=1, medium=0, low=0\n- Quality score: 85.0 / 100\n- Confidence: 1.0\n- Flagged tables: smsc_route\n\n### Metrics\n- Findings count: 1\n- Validator: crossrow\n\n### Findings (1)\n\n#### 1. smsc_route [HIGH]\n- Problem: Investigate and reconcile the 6 orphaned records in 'smsc_route' where 'route_smsc_id' does not have a corresponding 'id' in the 'smsc' table.\n- Confidence: 1.0\n- Column: route_smsc_id\n- Recommendation: Investigate and reconcile the 6 orphaned records in 'smsc_route' where 'route_smsc_id' does not have a corresponding 'id' in the 'smsc' table.\n- Detailed issues:\n  - [HIGH] Investigate and reconcile the 6 orphaned records in 'smsc_route' where 'route_smsc_id' does not have a corresponding 'id' in the 'smsc' table."
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "4d02bb1e-c6d7-4756-a570-ddba7359c8d3",
+      "database_id": "localhost_5432_easybulk_clean",
+      "run_timestamp": "2026-05-04T14:04:47.848670Z",
+      "agent": "Data Fix Planner",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 12,
+        "items_passed": 4,
+        "items_flagged": 8,
+        "critical_issues": 3,
+        "high_issues": 4,
+        "medium_issues": 1,
+        "low_issues": 0,
+        "overall_quality_score": 60.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": [
+          "campagne",
+          "campagne_contacts",
+          "campagne_tags",
+          "expediteur_groupe",
+          "groupe",
+          "prm_organization",
+          "sent_sms",
+          "smsc_route"
+        ]
+      },
+      "metrics": {
+        "total_issues_received": 12,
+        "fixes_generated": 8
+      },
+      "findings": [
+        {
+          "id": "fix_001_campagne_contacts",
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "Define Primary Key for 'campagne_contacts'",
+          "fix": "The 'campagne_contacts' table is missing a primary key, which is required to ensure data integrity and uniquely identify each record, as per domain rules. A composite primary key on `(campagne_id, contact_id)` is appropriate for this join table.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE campagne_contacts ADD PRIMARY KEY (campagne_id, contact_id);"
+          ],
+          "explanation": "The 'campagne_contacts' table is missing a primary key, which is required to ensure data integrity and uniquely identify each record, as per domain rules. A composite primary key on `(campagne_id, contact_id)` is appropriate for this join table.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'campagne_contacts'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_contacts DROP CONSTRAINT campagne_contacts_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_002_expediteur_groupe",
+          "table": "expediteur_groupe",
+          "target_table": "expediteur_groupe",
+          "problem": "Define Primary Key for 'expediteur_groupe'",
+          "fix": "The 'expediteur_groupe' table is missing a primary key, which is required to ensure data integrity and uniquely identify each record, as per domain rules. A composite primary key on `(groupe_id, expediteur_id)` is appropriate for this join table.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE expediteur_groupe ADD PRIMARY KEY (groupe_id, expediteur_id);"
+          ],
+          "explanation": "The 'expediteur_groupe' table is missing a primary key, which is required to ensure data integrity and uniquely identify each record, as per domain rules. A composite primary key on `(groupe_id, expediteur_id)` is appropriate for this join table.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'expediteur_groupe'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE expediteur_groupe DROP CONSTRAINT expediteur_groupe_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_003_campagne_tags",
+          "table": "campagne_tags",
+          "target_table": "campagne_tags",
+          "problem": "Define Primary Key for 'campagne_tags'",
+          "fix": "The 'campagne_tags' table is missing a primary key, which is required to ensure data integrity and uniquely identify each record, as per domain rules. A composite primary key on `(campagne_id, tag_name)` is appropriate for this join table.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE campagne_tags ADD PRIMARY KEY (campagne_id, tag_name);"
+          ],
+          "explanation": "The 'campagne_tags' table is missing a primary key, which is required to ensure data integrity and uniquely identify each record, as per domain rules. A composite primary key on `(campagne_id, tag_name)` is appropriate for this join table.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'campagne_tags'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_tags DROP CONSTRAINT campagne_tags_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_004_campagne",
+          "table": "campagne",
+          "target_table": "campagne",
+          "problem": "Investigate Nullable Foreign Keys in 'campagne' Table",
+          "fix": "The columns `schedule_id`, `campaign_type_permission_id`, `expediteur_id`, `modele_id`, and `user_id` in the `campagne` table are identified as potential foreign keys but are nullable. This might indicate a potential for referential integrity issues if these relationships are intended to be mandatory. Review these columns to ensure they correctly reflect the intended data model.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'schedule_id' AS column_name, COUNT(*) AS null_count FROM campagne WHERE schedule_id IS NULL UNION ALL SELECT 'campaign_type_permission_id' AS column_name, COUNT(*) AS null_count FROM campagne WHERE campaign_type_permission_id IS NULL UNION ALL SELECT 'expediteur_id' AS column_name, COUNT(*) AS null_count FROM campagne WHERE expediteur_id IS NULL UNION ALL SELECT 'modele_id' AS column_name, COUNT(*) AS null_count FROM campagne WHERE modele_id IS NULL UNION ALL SELECT 'user_id' AS column_name, COUNT(*) AS null_count FROM campagne WHERE user_id IS NULL;"
+          ],
+          "explanation": "The columns `schedule_id`, `campaign_type_permission_id`, `expediteur_id`, `modele_id`, and `user_id` in the `campagne` table are identified as potential foreign keys but are nullable. This might indicate a potential for referential integrity issues if these relationships are intended to be mandatory. Review these columns to ensure they correctly reflect the intended data model.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'schedule_id' AS column_name, COUNT(*) AS null_count FROM campagne WHERE schedule_id IS NULL UNION ALL SELECT 'campaign_type_permission_id' AS column_name, COUNT(*) AS null_count FROM campagne WHERE campaign_type_permission_id IS NULL UNION ALL SELECT 'expediteur_id' AS column_name, COUNT(*) AS null_count FROM campagne WHERE expediteur_id IS NULL UNION ALL SELECT 'modele_id' AS column_name, COUNT(*) AS null_count FROM campagne WHERE modele_id IS NULL UNION ALL SELECT 'user_id' AS column_name, COUNT(*) AS null_count FROM campagne WHERE user_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "N/A"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_005_groupe_admin_id",
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "Investigate High Null Ratio in 'groupe.admin_id'",
+          "fix": "The column 'admin_id' in the 'groupe' table has a high null ratio (88.89% of 9 rows are null). This significantly exceeds the allowed maximum null percentage of 5%. This suggests that the column might not be consistently populated or its nullable status should be re-evaluated based on business requirements.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT admin_id FROM groupe WHERE admin_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "The column 'admin_id' in the 'groupe' table has a high null ratio (88.89% of 9 rows are null). This significantly exceeds the allowed maximum null percentage of 5%. This suggests that the column might not be consistently populated or its nullable status should be re-evaluated based on business requirements.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM groupe WHERE admin_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "N/A"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_006_sent_sms",
+          "table": "sent_sms",
+          "target_table": "sent_sms",
+          "problem": "Investigate Negative or Zero Values in 'sent_sms' Numeric Columns",
+          "fix": "The 'sent_sms' table contains 6 rows where numeric columns (`sql_id`, `time`, `id`, `sms_type`, `mclass`, `mwi`, `coding`, `compress`, `validity`, `deferred`, `dlr_mask`, `pid`, `alt_dcs`, `rpi`) have negative or zero values. This may indicate data quality issues or unexpected behavior in data generation. Further investigation is needed to determine the appropriate remediation, which could involve data correction or deletion.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT sql_id, time, id, sms_type, mclass, mwi, coding, compress, validity, deferred, dlr_mask, pid, alt_dcs, rpi FROM sent_sms WHERE sql_id <= 0 OR time <= 0 OR id <= 0 OR sms_type <= 0 OR mclass <= 0 OR mwi <= 0 OR coding <= 0 OR compress <= 0 OR validity <= 0 OR deferred <= 0 OR dlr_mask <= 0 OR pid <= 0 OR alt_dcs <= 0 OR rpi <= 0 LIMIT 10;"
+          ],
+          "explanation": "The 'sent_sms' table contains 6 rows where numeric columns (`sql_id`, `time`, `id`, `sms_type`, `mclass`, `mwi`, `coding`, `compress`, `validity`, `deferred`, `dlr_mask`, `pid`, `alt_dcs`, `rpi`) have negative or zero values. This may indicate data quality issues or unexpected behavior in data generation. Further investigation is needed to determine the appropriate remediation, which could involve data correction or deletion.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM sent_sms WHERE sql_id <= 0 OR time <= 0 OR id <= 0 OR sms_type <= 0 OR mclass <= 0 OR mwi <= 0 OR coding <= 0 OR compress <= 0 OR validity <= 0 OR deferred <= 0 OR dlr_mask <= 0 OR pid <= 0 OR alt_dcs <= 0 OR rpi <= 0;"
+          ],
+          "rollback_queries": [
+            "N/A"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_007_smsc_route_route_smsc_id",
+          "table": "smsc_route",
+          "target_table": "smsc_route",
+          "problem": "Investigate Orphaned Records in 'smsc_route.route_smsc_id'",
+          "fix": "The finding indicates 6 orphaned records in 'smsc_route' where 'route_smsc_id' does not have a corresponding 'id' in the 'smsc' table. However, a live query shows 0 orphaned records. This discrepancy suggests that the issue might have been resolved or the initial finding was based on outdated information. It is recommended to re-verify the presence of orphaned records. If orphaned records are found, they should be deleted to maintain referential integrity.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT route_smsc_id FROM smsc_route WHERE route_smsc_id NOT IN (SELECT id FROM smsc) LIMIT 10;"
+          ],
+          "explanation": "The finding indicates 6 orphaned records in 'smsc_route' where 'route_smsc_id' does not have a corresponding 'id' in the 'smsc' table. However, a live query shows 0 orphaned records. This discrepancy suggests that the issue might have been resolved or the initial finding was based on outdated information. It is recommended to re-verify the presence of orphaned records. If orphaned records are found, they should be deleted to maintain referential integrity.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM smsc_route WHERE route_smsc_id NOT IN (SELECT id FROM smsc);"
+          ],
+          "rollback_queries": [
+            "N/A"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_008_prm_organization_code",
+          "table": "prm_organization",
+          "target_table": "prm_organization",
+          "problem": "Remove Duplicate Values and Add Unique Constraint to 'prm_organization.code'",
+          "fix": "The 'prm_organization.code' column contains 10 duplicate values, violating the expectation of uniqueness based on naming conventions. This can lead to data inconsistencies. The proposed fix will remove duplicate rows, keeping the oldest version (based on `ctid`), and then add a unique constraint to prevent future duplicates. **Note: Data deleted cannot be rolled back.**",
+          "severity": "medium",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "DELETE FROM prm_organization WHERE ctid NOT IN (SELECT MIN(ctid) FROM prm_organization GROUP BY code);",
+            "ALTER TABLE prm_organization ADD CONSTRAINT prm_organization_code_unique UNIQUE (code);"
+          ],
+          "explanation": "The 'prm_organization.code' column contains 10 duplicate values, violating the expectation of uniqueness based on naming conventions. This can lead to data inconsistencies. The proposed fix will remove duplicate rows, keeping the oldest version (based on `ctid`), and then add a unique constraint to prevent future duplicates. **Note: Data deleted cannot be rolled back.**",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(code), code FROM prm_organization GROUP BY code HAVING COUNT(code) > 1",
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'prm_organization'::regclass AND conname = 'prm_organization_code_unique';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE prm_organization DROP CONSTRAINT prm_organization_code_unique;"
+          ],
+          "explain_summary": null
+        }
+      ],
+      "cards": [
+        {
+          "title": "Define Primary Key for 'campagne_contacts'",
+          "target": "campagne_contacts",
+          "rationale": "The 'campagne_contacts' table is missing a primary key, which is required to ensure data integrity and uniquely identify each record, as per domain rules. A composite primary key on `(campagne_id, contact_id)` is appropriate for this join table.",
+          "sql": "ALTER TABLE campagne_contacts ADD PRIMARY KEY (campagne_id, contact_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'campagne_contacts'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_contacts DROP CONSTRAINT campagne_contacts_pkey;"
+          ]
+        },
+        {
+          "title": "Define Primary Key for 'expediteur_groupe'",
+          "target": "expediteur_groupe",
+          "rationale": "The 'expediteur_groupe' table is missing a primary key, which is required to ensure data integrity and uniquely identify each record, as per domain rules. A composite primary key on `(groupe_id, expediteur_id)` is appropriate for this join table.",
+          "sql": "ALTER TABLE expediteur_groupe ADD PRIMARY KEY (groupe_id, expediteur_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'expediteur_groupe'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE expediteur_groupe DROP CONSTRAINT expediteur_groupe_pkey;"
+          ]
+        },
+        {
+          "title": "Define Primary Key for 'campagne_tags'",
+          "target": "campagne_tags",
+          "rationale": "The 'campagne_tags' table is missing a primary key, which is required to ensure data integrity and uniquely identify each record, as per domain rules. A composite primary key on `(campagne_id, tag_name)` is appropriate for this join table.",
+          "sql": "ALTER TABLE campagne_tags ADD PRIMARY KEY (campagne_id, tag_name);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'campagne_tags'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_tags DROP CONSTRAINT campagne_tags_pkey;"
+          ]
+        },
+        {
+          "title": "Investigate Nullable Foreign Keys in 'campagne' Table",
+          "target": "campagne",
+          "rationale": "The columns `schedule_id`, `campaign_type_permission_id`, `expediteur_id`, `modele_id`, and `user_id` in the `campagne` table are identified as potential foreign keys but are nullable. This might indicate a potential for referential integrity issues if these relationships are intended to be mandatory. Review these columns to ensure they correctly reflect the intended data model.",
+          "sql": "SELECT 'schedule_id' AS column_name, COUNT(*) AS null_count FROM campagne WHERE schedule_id IS NULL UNION ALL SELECT 'campaign_type_permission_id' AS column_name, COUNT(*) AS null_count FROM campagne WHERE campaign_type_permission_id IS NULL UNION ALL SELECT 'expediteur_id' AS column_name, COUNT(*) AS null_count FROM campagne WHERE expediteur_id IS NULL UNION ALL SELECT 'modele_id' AS column_name, COUNT(*) AS null_count FROM campagne WHERE modele_id IS NULL UNION ALL SELECT 'user_id' AS column_name, COUNT(*) AS null_count FROM campagne WHERE user_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'schedule_id' AS column_name, COUNT(*) AS null_count FROM campagne WHERE schedule_id IS NULL UNION ALL SELECT 'campaign_type_permission_id' AS column_name, COUNT(*) AS null_count FROM campagne WHERE campaign_type_permission_id IS NULL UNION ALL SELECT 'expediteur_id' AS column_name, COUNT(*) AS null_count FROM campagne WHERE expediteur_id IS NULL UNION ALL SELECT 'modele_id' AS column_name, COUNT(*) AS null_count FROM campagne WHERE modele_id IS NULL UNION ALL SELECT 'user_id' AS column_name, COUNT(*) AS null_count FROM campagne WHERE user_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "N/A"
+          ]
+        },
+        {
+          "title": "Investigate High Null Ratio in 'groupe.admin_id'",
+          "target": "groupe.admin_id",
+          "rationale": "The column 'admin_id' in the 'groupe' table has a high null ratio (88.89% of 9 rows are null). This significantly exceeds the allowed maximum null percentage of 5%. This suggests that the column might not be consistently populated or its nullable status should be re-evaluated based on business requirements.",
+          "sql": "SELECT admin_id FROM groupe WHERE admin_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM groupe WHERE admin_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "N/A"
+          ]
+        },
+        {
+          "title": "Investigate Negative or Zero Values in 'sent_sms' Numeric Columns",
+          "target": "sent_sms",
+          "rationale": "The 'sent_sms' table contains 6 rows where numeric columns (`sql_id`, `time`, `id`, `sms_type`, `mclass`, `mwi`, `coding`, `compress`, `validity`, `deferred`, `dlr_mask`, `pid`, `alt_dcs`, `rpi`) have negative or zero values. This may indicate data quality issues or unexpected behavior in data generation. Further investigation is needed to determine the appropriate remediation, which could involve data correction or deletion.",
+          "sql": "SELECT sql_id, time, id, sms_type, mclass, mwi, coding, compress, validity, deferred, dlr_mask, pid, alt_dcs, rpi FROM sent_sms WHERE sql_id <= 0 OR time <= 0 OR id <= 0 OR sms_type <= 0 OR mclass <= 0 OR mwi <= 0 OR coding <= 0 OR compress <= 0 OR validity <= 0 OR deferred <= 0 OR dlr_mask <= 0 OR pid <= 0 OR alt_dcs <= 0 OR rpi <= 0 LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM sent_sms WHERE sql_id <= 0 OR time <= 0 OR id <= 0 OR sms_type <= 0 OR mclass <= 0 OR mwi <= 0 OR coding <= 0 OR compress <= 0 OR validity <= 0 OR deferred <= 0 OR dlr_mask <= 0 OR pid <= 0 OR alt_dcs <= 0 OR rpi <= 0;"
+          ],
+          "rollback_queries": [
+            "N/A"
+          ]
+        },
+        {
+          "title": "Investigate Orphaned Records in 'smsc_route.route_smsc_id'",
+          "target": "smsc_route.route_smsc_id",
+          "rationale": "The finding indicates 6 orphaned records in 'smsc_route' where 'route_smsc_id' does not have a corresponding 'id' in the 'smsc' table. However, a live query shows 0 orphaned records. This discrepancy suggests that the issue might have been resolved or the initial finding was based on outdated information. It is recommended to re-verify the presence of orphaned records. If orphaned records are found, they should be deleted to maintain referential integrity.",
+          "sql": "SELECT route_smsc_id FROM smsc_route WHERE route_smsc_id NOT IN (SELECT id FROM smsc) LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM smsc_route WHERE route_smsc_id NOT IN (SELECT id FROM smsc);"
+          ],
+          "rollback_queries": [
+            "N/A"
+          ]
+        },
+        {
+          "title": "Remove Duplicate Values and Add Unique Constraint to 'prm_organization.code'",
+          "target": "prm_organization.code",
+          "rationale": "The 'prm_organization.code' column contains 10 duplicate values, violating the expectation of uniqueness based on naming conventions. This can lead to data inconsistencies. The proposed fix will remove duplicate rows, keeping the oldest version (based on `ctid`), and then add a unique constraint to prevent future duplicates. **Note: Data deleted cannot be rolled back.**",
+          "sql": "DELETE FROM prm_organization WHERE ctid NOT IN (SELECT MIN(ctid) FROM prm_organization GROUP BY code); ALTER TABLE prm_organization ADD CONSTRAINT prm_organization_code_unique UNIQUE (code);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(code), code FROM prm_organization GROUP BY code HAVING COUNT(code) > 1",
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'prm_organization'::regclass AND conname = 'prm_organization_code_unique';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE prm_organization DROP CONSTRAINT prm_organization_code_unique;"
+          ]
+        }
+      ],
+      "report": "## Data Fix Planner\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 12\n- Passed: 4\n- Flagged: 8\n- Severity split: critical=3, high=4, medium=1, low=0\n- Quality score: 60.0 / 100\n- Confidence: 1.0\n- Flagged tables: campagne, campagne_contacts, campagne_tags, expediteur_groupe, groupe, prm_organization, sent_sms, smsc_route\n\n### Metrics\n- Fixes generated: 8\n- Total issues received: 12\n\n### Findings (8)\n\n#### 1. campagne_contacts [CRITICAL]\n- Problem: Define Primary Key for 'campagne_contacts'\n- Confidence: 1.0\n- Recommendation: The 'campagne_contacts' table is missing a primary key, which is required to ensure data integrity and uniquely identify each record, as per domain rules. A composite primary key on `(campagne_id, contact_id)` is appropriate for this join table.\n- Proposed SQL:\n```sql\nALTER TABLE campagne_contacts ADD PRIMARY KEY (campagne_id, contact_id);\n```\n- Explanation: The 'campagne_contacts' table is missing a primary key, which is required to ensure data integrity and uniquely identify each record, as per domain rules. A composite primary key on `(campagne_id, contact_id)` is appropriate for this join table.\n\n#### 2. expediteur_groupe [CRITICAL]\n- Problem: Define Primary Key for 'expediteur_groupe'\n- Confidence: 1.0\n- Recommendation: The 'expediteur_groupe' table is missing a primary key, which is required to ensure data integrity and uniquely identify each record, as per domain rules. A composite primary key on `(groupe_id, expediteur_id)` is appropriate for this join table.\n- Proposed SQL:\n```sql\nALTER TABLE expediteur_groupe ADD PRIMARY KEY (groupe_id, expediteur_id);\n```\n- Explanation: The 'expediteur_groupe' table is missing a primary key, which is required to ensure data integrity and uniquely identify each record, as per domain rules. A composite primary key on `(groupe_id, expediteur_id)` is appropriate for this join table.\n\n#### 3. campagne_tags [CRITICAL]\n- Problem: Define Primary Key for 'campagne_tags'\n- Confidence: 1.0\n- Recommendation: The 'campagne_tags' table is missing a primary key, which is required to ensure data integrity and uniquely identify each record, as per domain rules. A composite primary key on `(campagne_id, tag_name)` is appropriate for this join table.\n- Proposed SQL:\n```sql\nALTER TABLE campagne_tags ADD PRIMARY KEY (campagne_id, tag_name);\n```\n- Explanation: The 'campagne_tags' table is missing a primary key, which is required to ensure data integrity and uniquely identify each record, as per domain rules. A composite primary key on `(campagne_id, tag_name)` is appropriate for this join table.\n\n#### 4. campagne [HIGH]\n- Problem: Investigate Nullable Foreign Keys in 'campagne' Table\n- Confidence: 1.0\n- Recommendation: The columns `schedule_id`, `campaign_type_permission_id`, `expediteur_id`, `modele_id`, and `user_id` in the `campagne` table are identified as potential foreign keys but are nullable. This might indicate a potential for referential integrity issues if these relationships are intended to be mandatory. Review these columns to ensure they correctly reflect the intended data model.\n- Proposed SQL:\n```sql\nSELECT 'schedule_id' AS column_name, COUNT(*) AS null_count FROM campagne WHERE schedule_id IS NULL UNION ALL SELECT 'campaign_type_permission_id' AS column_name, COUNT(*) AS null_count FROM campagne WHERE campaign_type_permission_id IS NULL UNION ALL SELECT 'expediteur_id' AS column_name, COUNT(*) AS null_count FROM campagne WHERE expediteur_id IS NULL UNION ALL SELECT 'modele_id' AS column_name, COUNT(*) AS null_count FROM campagne WHERE modele_id IS NULL UNION ALL SELECT 'user_id' AS column_name, COUNT(*) AS null_count FROM campagne WHERE user_id IS NULL;\n```\n- Explanation: The columns `schedule_id`, `campaign_type_permission_id`, `expediteur_id`, `modele_id`, and `user_id` in the `campagne` table are identified as potential foreign keys but are nullable. This might indicate a potential for referential integrity issues if these relationships are intended to be mandatory. Review these columns to ensure they correctly reflect the intended data model.\n\n#### 5. groupe [HIGH]\n- Problem: Investigate High Null Ratio in 'groupe.admin_id'\n- Confidence: 1.0\n- Recommendation: The column 'admin_id' in the 'groupe' table has a high null ratio (88.89% of 9 rows are null). This significantly exceeds the allowed maximum null percentage of 5%. This suggests that the column might not be consistently populated or its nullable status should be re-evaluated based on business requirements.\n- Proposed SQL:\n```sql\nSELECT admin_id FROM groupe WHERE admin_id IS NULL LIMIT 10;\n```\n- Explanation: The column 'admin_id' in the 'groupe' table has a high null ratio (88.89% of 9 rows are null). This significantly exceeds the allowed maximum null percentage of 5%. This suggests that the column might not be consistently populated or its nullable status should be re-evaluated based on business requirements.\n\n#### 6. sent_sms [HIGH]\n- Problem: Investigate Negative or Zero Values in 'sent_sms' Numeric Columns\n- Confidence: 1.0\n- Recommendation: The 'sent_sms' table contains 6 rows where numeric columns (`sql_id`, `time`, `id`, `sms_type`, `mclass`, `mwi`, `coding`, `compress`, `validity`, `deferred`, `dlr_mask`, `pid`, `alt_dcs`, `rpi`) have negative or zero values. This may indicate data quality issues or unexpected behavior in data generation. Further investigation is needed to determine the appropriate remediation, which could involve data correction or deletion.\n- Proposed SQL:\n```sql\nSELECT sql_id, time, id, sms_type, mclass, mwi, coding, compress, validity, deferred, dlr_mask, pid, alt_dcs, rpi FROM sent_sms WHERE sql_id <= 0 OR time <= 0 OR id <= 0 OR sms_type <= 0 OR mclass <= 0 OR mwi <= 0 OR coding <= 0 OR compress <= 0 OR validity <= 0 OR deferred <= 0 OR dlr_mask <= 0 OR pid <= 0 OR alt_dcs <= 0 OR rpi <= 0 LIMIT 10;\n```\n- Explanation: The 'sent_sms' table contains 6 rows where numeric columns (`sql_id`, `time`, `id`, `sms_type`, `mclass`, `mwi`, `coding`, `compress`, `validity`, `deferred`, `dlr_mask`, `pid`, `alt_dcs`, `rpi`) have negative or zero values. This may indicate data quality issues or unexpected behavior in data generation. Further investigation is needed to determine the appropriate remediation, which could involve data correction or deletion.\n\n#### 7. smsc_route [HIGH]\n- Problem: Investigate Orphaned Records in 'smsc_route.route_smsc_id'\n- Confidence: 1.0\n- Recommendation: The finding indicates 6 orphaned records in 'smsc_route' where 'route_smsc_id' does not have a corresponding 'id' in the 'smsc' table. However, a live query shows 0 orphaned records. This discrepancy suggests that the issue might have been resolved or the initial finding was based on outdated information. It is recommended to re-verify the presence of orphaned records. If orphaned records are found, they should be deleted to maintain referential integrity.\n- Proposed SQL:\n```sql\nSELECT route_smsc_id FROM smsc_route WHERE route_smsc_id NOT IN (SELECT id FROM smsc) LIMIT 10;\n```\n- Explanation: The finding indicates 6 orphaned records in 'smsc_route' where 'route_smsc_id' does not have a corresponding 'id' in the 'smsc' table. However, a live query shows 0 orphaned records. This discrepancy suggests that the issue might have been resolved or the initial finding was based on outdated information. It is recommended to re-verify the presence of orphaned records. If orphaned records are found, they should be deleted to maintain referential integrity.\n\n#### 8. prm_organization [MEDIUM]\n- Problem: Remove Duplicate Values and Add Unique Constraint to 'prm_organization.code'\n- Confidence: 1.0\n- Recommendation: The 'prm_organization.code' column contains 10 duplicate values, violating the expectation of uniqueness based on naming conventions. This can lead to data inconsistencies. The proposed fix will remove duplicate rows, keeping the oldest version (based on `ctid`), and then add a unique constraint to prevent future duplicates. **Note: Data deleted cannot be rolled back.**\n- Proposed SQL:\n```sql\nDELETE FROM prm_organization WHERE ctid NOT IN (SELECT MIN(ctid) FROM prm_organization GROUP BY code);\n```\n```sql\nALTER TABLE prm_organization ADD CONSTRAINT prm_organization_code_unique UNIQUE (code);\n```\n- Explanation: The 'prm_organization.code' column contains 10 duplicate values, violating the expectation of uniqueness based on naming conventions. This can lead to data inconsistencies. The proposed fix will remove duplicate rows, keeping the oldest version (based on `ctid`), and then add a unique constraint to prevent future duplicates. **Note: Data deleted cannot be rolled back.**"
+    }
+  }
+}

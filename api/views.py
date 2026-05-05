@@ -111,10 +111,11 @@ def _sanitize_for_json(obj):
 _ADMIN_ACTIVE_JOB_STATUSES = {'starting', 'running'}
 _TERMINAL_ACTIVE_PREFIX_EXCLUSIONS: set[str] = set()
 _PIPELINE_STEP_DEFINITIONS = [
-    ('running_schema', 'Schema Integrity Validator'),
-    ('running_column', 'Column Validator'),
-    ('running_row_level', 'Row Level Validator'),
-    ('running_cross_row', 'Cross Row Validator'),
+    ('running_schema',      'Schema Integrity Validator'),
+    ('running_profiler',    'Database Profiler'),
+    ('running_statistical', 'Statistical Validator'),
+    ('running_structural',  'Structural Validator'),
+    ('running_relational',  'Relational Validator'),
     ('running_fix_planner', 'Data Fix Planner'),
 ]
 
@@ -212,9 +213,9 @@ def _is_active_job_status(status_value: str | None) -> bool:
 
 _GUIDELINE_KEYS = [
     'schema_integrity_validator',
-    'column_validator',
-    'row_level_validator',
-    'cross_row_validator',
+    'statistical_validator',
+    'structural_validator',
+    'relational_validator',
     'data_fix_planner',
 ]
 
@@ -1261,16 +1262,12 @@ class AgentChatProxyView(APIView):
                     context_parts = []
                     if result.get('schema_analysis', {}).get('report'):
                         context_parts.append(f"## Schema Analysis Report\n{result['schema_analysis']['report']}")
-                    column_report = (
-                        result.get('column_validator_analysis', {}).get('report')
-                        or result.get('column_validator_analysis', {}).get('markdown_report')
-                    )
-                    if column_report:
-                        context_parts.append(f"## Column Validator Analysis Report\n{column_report}")
-                    if result.get('row_level_analysis', {}).get('report'):
-                        context_parts.append(f"## Row-Level Analysis Report\n{result['row_level_analysis']['report']}")
-                    if result.get('cross_row_analysis', {}).get('report'):
-                        context_parts.append(f"## Cross-Row Analysis Report\n{result['cross_row_analysis']['report']}")
+                    if result.get('statistical_analysis', {}).get('report'):
+                        context_parts.append(f"## Statistical Validator Report\n{result['statistical_analysis']['report']}")
+                    if result.get('structural_analysis', {}).get('report'):
+                        context_parts.append(f"## Structural Validator Report\n{result['structural_analysis']['report']}")
+                    if result.get('relational_analysis', {}).get('report'):
+                        context_parts.append(f"## Relational Validator Report\n{result['relational_analysis']['report']}")
                     if context_parts:
                         analysis_context = '\n\n---\n\n'.join(context_parts)
             except Exception:
@@ -1437,14 +1434,57 @@ class GetFixesView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        return Response(fixes)
+        # Normalize to a dict so we can attach database_name for the UI.
+        if isinstance(fixes, list):
+            fixes_payload = {'fixes': fixes}
+        elif isinstance(fixes, dict):
+            fixes_payload = dict(fixes)
+        else:
+            fixes_payload = {'fixes': []}
+
+        conn_str = job.get('connection_string') or ''
+        if conn_str:
+            try:
+                from urllib.parse import urlparse as _up
+                fixes_payload['database_name'] = (_up(conn_str).path or '').lstrip('/') or ''
+            except Exception:
+                pass
+
+        return Response(fixes_payload)
+
+
+def _record_learning_pattern(user, rule_family: str, entity: str, decision: str) -> None:
+    """Upsert a LearningPattern row for the given user+rule_family+entity.
+
+    Uses get_or_create + F() increment so concurrent requests don't race.
+    """
+    from django.db.models import F
+    from .models import LearningPattern
+
+    if not rule_family or not entity or decision not in (
+        LearningPattern.DECISION_ACCEPT, LearningPattern.DECISION_REJECT
+    ):
+        return
+
+    obj, created = LearningPattern.objects.get_or_create(
+        user=user,
+        rule_family=rule_family,
+        entity=entity,
+        defaults={'decision': decision, 'frequency': 1},
+    )
+    if not created:
+        # Update decision and increment frequency atomically.
+        LearningPattern.objects.filter(pk=obj.pk).update(
+            decision=decision,
+            frequency=F('frequency') + 1,
+        )
 
 
 class ExecuteFixView(APIView):
     """
     POST /api/execute-fix/<job_id>/
 
-    Body: { "queries": ["SQL1", "SQL2", ...] }
+    Body: { "queries": ["SQL1", "SQL2", ...], "rule_family": "...", "entity": "...", "decision": "accept"|"reject" }
 
         Executes the supplied SQL statements for a single fix card against the
         user's PostgreSQL database inside one transaction.
@@ -1479,6 +1519,10 @@ class ExecuteFixView(APIView):
 
         # 3 — Validate input
         queries = request.data.get('queries')
+        rule_family = str(request.data.get('rule_family') or '').strip()
+        entity      = str(request.data.get('entity')      or '').strip()
+        decision    = str(request.data.get('decision')    or '').strip().lower()
+
         if not queries or not isinstance(queries, list) or len(queries) == 0:
             return Response(
                 {'detail': 'queries must be a non-empty list of SQL strings.'},
@@ -1518,49 +1562,67 @@ class ExecuteFixView(APIView):
             f"{_db['USER']}:{_db['PASSWORD']}@{_target.hostname}:{_target.port or 5432}",
             '/postgres', '', '', '',
         ))
-        execution_log = QueryExecutorAgent().execute(
+        _db_name = (_target.path or '').lstrip('/') or None
+        user_id_str = str(request.user.id)
+        user_email = getattr(request.user, 'email', '')
+        email_notif = bool(getattr(request.user, 'email_notifications_enabled', True))
+
+        payload = QueryExecutorAgent().execute(
             queries=queries,
             connection_string=connection_string,
             admin_dsn=_admin_dsn,
         )
 
-        if execution_log.get('status') == 'success':
-            audit_log(
-                job_id,
-                'FIX_EXECUTED',
-                {
-                    'database_id': execution_log.get('database_id'),
-                    'rows_affected': execution_log.get('rows_affected'),
-                    'duration_ms': execution_log.get('duration_ms'),
-                    'query_count': len(queries),
-                    'transaction': execution_log.get('transaction'),
-                    'status_code': 200,
-                },
-                user_id=str(request.user.id),
-            )
+        ex_status = payload.get('status')
+        if ex_status == 'success':
+            try:
+                audit_log(
+                    job_id,
+                    'FIX_EXECUTED',
+                    {
+                        'database_id': payload.get('database_id'),
+                        'rows_affected': payload.get('rows_affected'),
+                        'duration_ms': payload.get('duration_ms'),
+                        'query_count': len(queries),
+                        'transaction': payload.get('transaction'),
+                        'status_code': 200,
+                    },
+                    user_id=user_id_str,
+                )
+            except Exception:
+                logger.exception('audit_log failed for FIX_EXECUTED job %s', job_id)
+
+            if rule_family and entity and decision:
+                try:
+                    _record_learning_pattern(request.user, rule_family, entity, decision)
+                except Exception:
+                    logger.exception('_record_learning_pattern failed for job %s', job_id)
         else:
-            audit_log(
-                job_id,
-                'FIX_EXECUTION_FAILED',
-                {
-                    'database_id': execution_log.get('database_id'),
-                    'duration_ms': execution_log.get('duration_ms'),
-                    'query_count': len(queries),
-                    'transaction': execution_log.get('transaction'),
-                    'error': execution_log.get('error'),
-                    'status_code': 500,
-                },
-                user_id=str(request.user.id),
-            )
+            try:
+                audit_log(
+                    job_id,
+                    'FIX_EXECUTION_FAILED',
+                    {
+                        'database_id': payload.get('database_id'),
+                        'duration_ms': payload.get('duration_ms'),
+                        'query_count': len(queries),
+                        'transaction': payload.get('transaction'),
+                        'error': payload.get('error'),
+                        'status_code': 500,
+                    },
+                    user_id=user_id_str,
+                )
+            except Exception:
+                logger.exception('audit_log failed for FIX_EXECUTION_FAILED job %s', job_id)
 
-        try:
-            if bool(getattr(request.user, 'email_notifications_enabled', True)):
-                user_email = getattr(request.user, 'email', '')
-                notify_user_fix_executed(user_email, job_id, execution_log.get('status'))
-        except Exception:
-            logger.exception('Failed to send fix execution notification for job %s', job_id)
+        if email_notif:
+            try:
+                notify_user_fix_executed(user_email, job_id, ex_status, db_name=_db_name)
+            except Exception:
+                logger.exception('Failed to send fix execution notification for job %s', job_id)
 
-        return Response(execution_log, status=status.HTTP_200_OK)
+        http_status = status.HTTP_200_OK if ex_status == 'success' else status.HTTP_500_INTERNAL_SERVER_ERROR
+        return Response(payload, status=http_status)
 
 
 # ──────────────────────────────────────────────

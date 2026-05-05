@@ -168,6 +168,42 @@ class AuditLog(models.Model):
         return f'{self.event_type} — {self.job_id}'
 
 
+# ──────────────────────────────────────────────
+# Learning patterns
+# ──────────────────────────────────────────────
+
+class LearningPattern(models.Model):
+    """
+    Stores a user's accept/reject decision for a (rule_family, entity) pair.
+    The reducer reads these to downweight findings matching rejected patterns.
+    """
+    DECISION_ACCEPT = 'accept'
+    DECISION_REJECT = 'reject'
+    DECISION_CHOICES = [
+        (DECISION_ACCEPT, 'Accept'),
+        (DECISION_REJECT, 'Reject'),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='learning_patterns',
+        db_column='user_id',
+    )
+    rule_family = models.CharField(max_length=128)
+    entity = models.CharField(max_length=255)
+    decision = models.CharField(max_length=16, choices=DECISION_CHOICES)
+    frequency = models.PositiveIntegerField(default=1)
+    last_seen = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'learning_patterns'
+        unique_together = [('user', 'rule_family', 'entity')]
+
+    def __str__(self):
+        return f'LearningPattern({self.user_id}, {self.rule_family}, {self.entity}, {self.decision})'
+
+
 def audit_log(
     job_id: str,
     event_type: str,

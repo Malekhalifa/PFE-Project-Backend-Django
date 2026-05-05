@@ -1,0 +1,1455 @@
+{
+  "pipeline_run_id": "866f035a-d7d4-47b2-b633-cd588005d6e0",
+  "database_id": "localhost_5432_easybulk",
+  "llm_model": "gemini-2.5-flash",
+  "run_timestamp": "2026-05-04T20:29:09.402063Z",
+  "summary": {
+    "confidence_score": 89,
+    "data_quality_score": 38,
+    "final_fix_count": 17
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "866f035a-d7d4-47b2-b633-cd588005d6e0",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-04T20:29:09.402063Z",
+      "agent": "Schema Integrity Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 33,
+        "items_passed": 20,
+        "items_flagged": 13,
+        "critical_issues": 3,
+        "high_issues": 6,
+        "medium_issues": 4,
+        "low_issues": 0,
+        "overall_quality_score": 0.0,
+        "overall_confidence": 0.8923,
+        "flagged_tables": [
+          "budget_history",
+          "campagne_contacts",
+          "campagne_tags",
+          "expediteur",
+          "expediteur_groupe",
+          "groupe",
+          "membership",
+          "mention"
+        ]
+      },
+      "metrics": {
+        "validator": "schema",
+        "findings_count": 13
+      },
+      "findings": [
+        {
+          "table": "expediteur_groupe",
+          "column": null,
+          "entity": "expediteur_groupe",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "expediteur_groupe"
+          },
+          "remediation_hint": "Define a primary key for table 'expediteur_groupe'.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "Define a primary key for table 'expediteur_groupe'.",
+              "evidence": {
+                "table_name": "expediteur_groupe"
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur_groupe",
+          "column": null,
+          "entity": "expediteur_groupe",
+          "rule": "index_gap",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "expediteur_groupe",
+            "column_name": "groupe_id, expediteur_id",
+            "details": "Foreign key columns are not part of a primary key or unique constraint."
+          },
+          "remediation_hint": "Create an index on foreign key columns 'groupe_id, expediteur_id' in table 'expediteur_groupe' to improve performance.",
+          "issues": [
+            {
+              "type": "index_gap",
+              "severity": "high",
+              "description": "Create an index on foreign key columns 'groupe_id, expediteur_id' in table 'expediteur_groupe' to improve performance.",
+              "evidence": {
+                "table_name": "expediteur_groupe",
+                "column_name": "groupe_id, expediteur_id",
+                "details": "Foreign key columns are not part of a primary key or unique constraint."
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "entity": "groupe.admin_id",
+          "rule": "nullable_foreign_key_style_column",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "groupe",
+            "column_name": "admin_id",
+            "is_nullable": "YES"
+          },
+          "remediation_hint": "Consider making foreign key column 'admin_id' in table 'groupe' non-nullable if it should always reference a valid record.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key_style_column",
+              "severity": "high",
+              "description": "Consider making foreign key column 'admin_id' in table 'groupe' non-nullable if it should always reference a valid record.",
+              "evidence": {
+                "table_name": "groupe",
+                "column_name": "admin_id",
+                "is_nullable": "YES"
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": null,
+          "entity": "groupe",
+          "rule": "index_gap",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "groupe",
+            "column_name": "admin_id, status_id",
+            "details": "Foreign key columns are not part of a primary key or unique constraint."
+          },
+          "remediation_hint": "Create an index on foreign key columns 'admin_id, status_id' in table 'groupe' to improve performance.",
+          "issues": [
+            {
+              "type": "index_gap",
+              "severity": "medium",
+              "description": "Create an index on foreign key columns 'admin_id, status_id' in table 'groupe' to improve performance.",
+              "evidence": {
+                "table_name": "groupe",
+                "column_name": "admin_id, status_id",
+                "details": "Foreign key columns are not part of a primary key or unique constraint."
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur",
+          "column": "organization_id",
+          "entity": "expediteur.organization_id",
+          "rule": "index_gap",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "expediteur",
+            "column_name": "organization_id",
+            "details": "Foreign key column is not part of a primary key or unique constraint."
+          },
+          "remediation_hint": "Create an index on foreign key column 'organization_id' in table 'expediteur' to improve performance.",
+          "issues": [
+            {
+              "type": "index_gap",
+              "severity": "medium",
+              "description": "Create an index on foreign key column 'organization_id' in table 'expediteur' to improve performance.",
+              "evidence": {
+                "table_name": "expediteur",
+                "column_name": "organization_id",
+                "details": "Foreign key column is not part of a primary key or unique constraint."
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_contacts",
+          "column": null,
+          "entity": "campagne_contacts",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campagne_contacts"
+          },
+          "remediation_hint": "Define a primary key for table 'campagne_contacts'.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "Define a primary key for table 'campagne_contacts'.",
+              "evidence": {
+                "table_name": "campagne_contacts"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_contacts",
+          "column": "contact_id",
+          "entity": "campagne_contacts.contact_id",
+          "rule": "nullable_foreign_key_style_column",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "campagne_contacts",
+            "column_name": "contact_id",
+            "is_nullable": "YES"
+          },
+          "remediation_hint": "Consider making foreign key column 'contact_id' in table 'campagne_contacts' non-nullable if it should always reference a valid record.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key_style_column",
+              "severity": "high",
+              "description": "Consider making foreign key column 'contact_id' in table 'campagne_contacts' non-nullable if it should always reference a valid record.",
+              "evidence": {
+                "table_name": "campagne_contacts",
+                "column_name": "contact_id",
+                "is_nullable": "YES"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_contacts",
+          "column": null,
+          "entity": "campagne_contacts",
+          "rule": "index_gap",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "campagne_contacts",
+            "column_name": "campagne_id, contact_id",
+            "details": "Foreign key style columns are not part of a primary key or unique constraint."
+          },
+          "remediation_hint": "Create an index on foreign key columns 'campagne_id, contact_id' in table 'campagne_contacts' to improve performance.",
+          "issues": [
+            {
+              "type": "index_gap",
+              "severity": "high",
+              "description": "Create an index on foreign key columns 'campagne_id, contact_id' in table 'campagne_contacts' to improve performance.",
+              "evidence": {
+                "table_name": "campagne_contacts",
+                "column_name": "campagne_id, contact_id",
+                "details": "Foreign key style columns are not part of a primary key or unique constraint."
+              }
+            }
+          ]
+        },
+        {
+          "table": "membership",
+          "column": "status_id",
+          "entity": "membership.status_id",
+          "rule": "index_gap",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "membership",
+            "column_name": "status_id",
+            "details": "Foreign key column is not part of a primary key or unique constraint."
+          },
+          "remediation_hint": "Create an index on foreign key column 'status_id' in table 'membership' to improve performance.",
+          "issues": [
+            {
+              "type": "index_gap",
+              "severity": "medium",
+              "description": "Create an index on foreign key column 'status_id' in table 'membership' to improve performance.",
+              "evidence": {
+                "table_name": "membership",
+                "column_name": "status_id",
+                "details": "Foreign key column is not part of a primary key or unique constraint."
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_tags",
+          "column": null,
+          "entity": "campagne_tags",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campagne_tags"
+          },
+          "remediation_hint": "Define a primary key for table 'campagne_tags'.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "Define a primary key for table 'campagne_tags'.",
+              "evidence": {
+                "table_name": "campagne_tags"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_tags",
+          "column": "campagne_id",
+          "entity": "campagne_tags.campagne_id",
+          "rule": "index_gap",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "campagne_tags",
+            "column_name": "campagne_id",
+            "details": "Foreign key style column is not part of a primary key or unique constraint."
+          },
+          "remediation_hint": "Create an index on foreign key column 'campagne_id' in table 'campagne_tags' to improve performance.",
+          "issues": [
+            {
+              "type": "index_gap",
+              "severity": "high",
+              "description": "Create an index on foreign key column 'campagne_id' in table 'campagne_tags' to improve performance.",
+              "evidence": {
+                "table_name": "campagne_tags",
+                "column_name": "campagne_id",
+                "details": "Foreign key style column is not part of a primary key or unique constraint."
+              }
+            }
+          ]
+        },
+        {
+          "table": "mention",
+          "column": "modele_id",
+          "entity": "mention.modele_id",
+          "rule": "index_gap",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "mention",
+            "column_name": "modele_id",
+            "details": "Foreign key column is not part of a primary key or unique constraint."
+          },
+          "remediation_hint": "Create an index on foreign key column 'modele_id' in table 'mention' to improve performance.",
+          "issues": [
+            {
+              "type": "index_gap",
+              "severity": "medium",
+              "description": "Create an index on foreign key column 'modele_id' in table 'mention' to improve performance.",
+              "evidence": {
+                "table_name": "mention",
+                "column_name": "modele_id",
+                "details": "Foreign key column is not part of a primary key or unique constraint."
+              }
+            }
+          ]
+        },
+        {
+          "table": "budget_history",
+          "column": "groupe_id",
+          "entity": "budget_history.groupe_id",
+          "rule": "nullable_foreign_key_style_column",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "budget_history",
+            "column_name": "groupe_id",
+            "is_nullable": "YES"
+          },
+          "remediation_hint": "Consider making foreign key column 'groupe_id' in table 'budget_history' non-nullable if it should always reference a valid record.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key_style_column",
+              "severity": "high",
+              "description": "Consider making foreign key column 'groupe_id' in table 'budget_history' non-nullable if it should always reference a valid record.",
+              "evidence": {
+                "table_name": "budget_history",
+                "column_name": "groupe_id",
+                "is_nullable": "YES"
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": [],
+      "report": "## Schema Integrity Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 33\n- Passed: 20\n- Flagged: 13\n- Severity split: critical=3, high=6, medium=4, low=0\n- Quality score: 0.0 / 100\n- Confidence: 0.8923\n- Flagged tables: budget_history, campagne_contacts, campagne_tags, expediteur, expediteur_groupe, groupe, membership, mention\n\n### Metrics\n- Findings count: 13\n- Validator: schema\n\n### Findings (13)\n\n#### 1. expediteur_groupe [CRITICAL]\n- Problem: Define a primary key for table 'expediteur_groupe'.\n- Confidence: 1.0\n- Column: None\n- Recommendation: Define a primary key for table 'expediteur_groupe'.\n- Detailed issues:\n  - [CRITICAL] Define a primary key for table 'expediteur_groupe'.\n\n#### 2. expediteur_groupe [HIGH]\n- Problem: Create an index on foreign key columns 'groupe_id, expediteur_id' in table 'expediteur_groupe' to improve performance.\n- Confidence: 0.9\n- Column: None\n- Recommendation: Create an index on foreign key columns 'groupe_id, expediteur_id' in table 'expediteur_groupe' to improve performance.\n- Detailed issues:\n  - [HIGH] Create an index on foreign key columns 'groupe_id, expediteur_id' in table 'expediteur_groupe' to improve performance.\n\n#### 3. groupe [HIGH]\n- Problem: Consider making foreign key column 'admin_id' in table 'groupe' non-nullable if it should always reference a valid record.\n- Confidence: 0.9\n- Column: admin_id\n- Recommendation: Consider making foreign key column 'admin_id' in table 'groupe' non-nullable if it should always reference a valid record.\n- Detailed issues:\n  - [HIGH] Consider making foreign key column 'admin_id' in table 'groupe' non-nullable if it should always reference a valid record.\n\n#### 4. groupe [MEDIUM]\n- Problem: Create an index on foreign key columns 'admin_id, status_id' in table 'groupe' to improve performance.\n- Confidence: 0.8\n- Column: None\n- Recommendation: Create an index on foreign key columns 'admin_id, status_id' in table 'groupe' to improve performance.\n- Detailed issues:\n  - [MEDIUM] Create an index on foreign key columns 'admin_id, status_id' in table 'groupe' to improve performance.\n\n#### 5. expediteur [MEDIUM]\n- Problem: Create an index on foreign key column 'organization_id' in table 'expediteur' to improve performance.\n- Confidence: 0.8\n- Column: organization_id\n- Recommendation: Create an index on foreign key column 'organization_id' in table 'expediteur' to improve performance.\n- Detailed issues:\n  - [MEDIUM] Create an index on foreign key column 'organization_id' in table 'expediteur' to improve performance.\n\n#### 6. campagne_contacts [CRITICAL]\n- Problem: Define a primary key for table 'campagne_contacts'.\n- Confidence: 1.0\n- Column: None\n- Recommendation: Define a primary key for table 'campagne_contacts'.\n- Detailed issues:\n  - [CRITICAL] Define a primary key for table 'campagne_contacts'.\n\n#### 7. campagne_contacts [HIGH]\n- Problem: Consider making foreign key column 'contact_id' in table 'campagne_contacts' non-nullable if it should always reference a valid record.\n- Confidence: 0.9\n- Column: contact_id\n- Recommendation: Consider making foreign key column 'contact_id' in table 'campagne_contacts' non-nullable if it should always reference a valid record.\n- Detailed issues:\n  - [HIGH] Consider making foreign key column 'contact_id' in table 'campagne_contacts' non-nullable if it should always reference a valid record.\n\n#### 8. campagne_contacts [HIGH]\n- Problem: Create an index on foreign key columns 'campagne_id, contact_id' in table 'campagne_contacts' to improve performance.\n- Confidence: 0.9\n- Column: None\n- Recommendation: Create an index on foreign key columns 'campagne_id, contact_id' in table 'campagne_contacts' to improve performance.\n- Detailed issues:\n  - [HIGH] Create an index on foreign key columns 'campagne_id, contact_id' in table 'campagne_contacts' to improve performance.\n\n#### 9. membership [MEDIUM]\n- Problem: Create an index on foreign key column 'status_id' in table 'membership' to improve performance.\n- Confidence: 0.8\n- Column: status_id\n- Recommendation: Create an index on foreign key column 'status_id' in table 'membership' to improve performance.\n- Detailed issues:\n  - [MEDIUM] Create an index on foreign key column 'status_id' in table 'membership' to improve performance.\n\n#### 10. campagne_tags [CRITICAL]\n- Problem: Define a primary key for table 'campagne_tags'.\n- Confidence: 1.0\n- Column: None\n- Recommendation: Define a primary key for table 'campagne_tags'.\n- Detailed issues:\n  - [CRITICAL] Define a primary key for table 'campagne_tags'.\n\n#### 11. campagne_tags [HIGH]\n- Problem: Create an index on foreign key column 'campagne_id' in table 'campagne_tags' to improve performance.\n- Confidence: 0.9\n- Column: campagne_id\n- Recommendation: Create an index on foreign key column 'campagne_id' in table 'campagne_tags' to improve performance.\n- Detailed issues:\n  - [HIGH] Create an index on foreign key column 'campagne_id' in table 'campagne_tags' to improve performance.\n\n#### 12. mention [MEDIUM]\n- Problem: Create an index on foreign key column 'modele_id' in table 'mention' to improve performance.\n- Confidence: 0.8\n- Column: modele_id\n- Recommendation: Create an index on foreign key column 'modele_id' in table 'mention' to improve performance.\n- Detailed issues:\n  - [MEDIUM] Create an index on foreign key column 'modele_id' in table 'mention' to improve performance.\n\n#### 13. budget_history [HIGH]\n- Problem: Consider making foreign key column 'groupe_id' in table 'budget_history' non-nullable if it should always reference a valid record.\n- Confidence: 0.9\n- Column: groupe_id\n- Recommendation: Consider making foreign key column 'groupe_id' in table 'budget_history' non-nullable if it should always reference a valid record.\n- Detailed issues:\n  - [HIGH] Consider making foreign key column 'groupe_id' in table 'budget_history' non-nullable if it should always reference a valid record."
+    },
+    "column_validator": {
+      "pipeline_run_id": "866f035a-d7d4-47b2-b633-cd588005d6e0",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-04T20:29:09.402063Z",
+      "agent": "Column Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 33,
+        "items_passed": 31,
+        "items_flagged": 2,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 2,
+        "low_issues": 0,
+        "overall_quality_score": 84.0,
+        "overall_confidence": 0.7,
+        "flagged_tables": [
+          "user_contact",
+          "user_contact_tags"
+        ]
+      },
+      "metrics": {
+        "validator": "column",
+        "findings_count": 2
+      },
+      "findings": [
+        {
+          "table": "user_contact",
+          "column": null,
+          "entity": "user_contact",
+          "rule": "low_cardinality",
+          "severity": "medium",
+          "confidence": 0.7,
+          "evidence": {
+            "table_name": "user_contact",
+            "columns": "attribute1, attribute2, attribute3, membership_id",
+            "details": "Multiple columns have very low cardinality relative to the total number of rows (20042). attribute1 has 37 unique values, attribute2 has 36, attribute3 has 34, and membership_id has 6 unique values."
+          },
+          "remediation_hint": "Investigate if these columns are intended to be categorical with a limited set of values. If not, this could indicate data entry issues or a lack of meaningful data.",
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "medium",
+              "description": "Investigate if these columns are intended to be categorical with a limited set of values. If not, this could indicate data entry issues or a lack of meaningful data.",
+              "evidence": {
+                "table_name": "user_contact",
+                "columns": "attribute1, attribute2, attribute3, membership_id",
+                "details": "Multiple columns have very low cardinality relative to the total number of rows (20042). attribute1 has 37 unique values, attribute2 has 36, attribute3 has 34, and membership_id has 6 unique values."
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact_tags",
+          "column": "tag_id",
+          "entity": "user_contact_tags.tag_id",
+          "rule": "low_cardinality",
+          "severity": "medium",
+          "confidence": 0.7,
+          "evidence": {
+            "table_name": "user_contact_tags",
+            "column_name": "tag_id",
+            "unique_values": 7,
+            "total_rows": 20051
+          },
+          "remediation_hint": "Investigate if 'tag_id' is intended to be a categorical column with a limited set of values. If not, this could indicate data entry issues or a lack of meaningful data.",
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "medium",
+              "description": "Investigate if 'tag_id' is intended to be a categorical column with a limited set of values. If not, this could indicate data entry issues or a lack of meaningful data.",
+              "evidence": {
+                "table_name": "user_contact_tags",
+                "column_name": "tag_id",
+                "unique_values": 7,
+                "total_rows": 20051
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": [],
+      "report": "## Column Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 33\n- Passed: 31\n- Flagged: 2\n- Severity split: critical=0, high=0, medium=2, low=0\n- Quality score: 84.0 / 100\n- Confidence: 0.7\n- Flagged tables: user_contact, user_contact_tags\n\n### Metrics\n- Findings count: 2\n- Validator: column\n\n### Findings (2)\n\n#### 1. user_contact [MEDIUM]\n- Problem: Investigate if these columns are intended to be categorical with a limited set of values. If not, this could indicate data entry issues or a lack of meaningful data.\n- Confidence: 0.7\n- Column: None\n- Recommendation: Investigate if these columns are intended to be categorical with a limited set of values. If not, this could indicate data entry issues or a lack of meaningful data.\n- Detailed issues:\n  - [MEDIUM] Investigate if these columns are intended to be categorical with a limited set of values. If not, this could indicate data entry issues or a lack of meaningful data.\n\n#### 2. user_contact_tags [MEDIUM]\n- Problem: Investigate if 'tag_id' is intended to be a categorical column with a limited set of values. If not, this could indicate data entry issues or a lack of meaningful data.\n- Confidence: 0.7\n- Column: tag_id\n- Recommendation: Investigate if 'tag_id' is intended to be a categorical column with a limited set of values. If not, this could indicate data entry issues or a lack of meaningful data.\n- Detailed issues:\n  - [MEDIUM] Investigate if 'tag_id' is intended to be a categorical column with a limited set of values. If not, this could indicate data entry issues or a lack of meaningful data."
+    },
+    "row_level_validator": {
+      "pipeline_run_id": "866f035a-d7d4-47b2-b633-cd588005d6e0",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-04T20:29:09.402063Z",
+      "agent": "Row Level Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 33,
+        "items_passed": 28,
+        "items_flagged": 5,
+        "critical_issues": 0,
+        "high_issues": 4,
+        "medium_issues": 1,
+        "low_issues": 0,
+        "overall_quality_score": 32.0,
+        "overall_confidence": 0.98,
+        "flagged_tables": [
+          "campaign_type_permission",
+          "rev_info",
+          "sent_sms",
+          "smsc",
+          "user_contact"
+        ]
+      },
+      "metrics": {
+        "validator": "row",
+        "findings_count": 5
+      },
+      "findings": [
+        {
+          "table": "user_contact",
+          "column": "contact_id",
+          "entity": "user_contact.contact_id",
+          "rule": "duplicate_value",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "user_contact",
+            "column_name": "contact_id",
+            "duplicate_count": 5,
+            "sample_duplicates": [
+              "21697310869",
+              "21697310870",
+              "21697310871",
+              "21697310872",
+              "21697310873"
+            ]
+          },
+          "remediation_hint": "Ensure that `contact_id` in `user_contact` contains only unique values as per the domain rule `unique_column_patterns`.",
+          "issues": [
+            {
+              "type": "duplicate_value",
+              "severity": "high",
+              "description": "Ensure that `contact_id` in `user_contact` contains only unique values as per the domain rule `unique_column_patterns`.",
+              "evidence": {
+                "table_name": "user_contact",
+                "column_name": "contact_id",
+                "duplicate_count": 5,
+                "sample_duplicates": [
+                  "21697310869",
+                  "21697310870",
+                  "21697310871",
+                  "21697310872",
+                  "21697310873"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "rev_info",
+          "column": "email",
+          "entity": "rev_info.email",
+          "rule": "duplicate_value",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "rev_info",
+            "column_name": "email",
+            "duplicate_count": 4,
+            "sample_duplicates": [
+              "ranimt1@yopmail.com",
+              "SYSTEM",
+              "null",
+              "ebs@yopmail.com"
+            ]
+          },
+          "remediation_hint": "Ensure that `email` in `rev_info` contains only unique values as per the domain rule `unique_column_patterns`.",
+          "issues": [
+            {
+              "type": "duplicate_value",
+              "severity": "high",
+              "description": "Ensure that `email` in `rev_info` contains only unique values as per the domain rule `unique_column_patterns`.",
+              "evidence": {
+                "table_name": "rev_info",
+                "column_name": "email",
+                "duplicate_count": 4,
+                "sample_duplicates": [
+                  "ranimt1@yopmail.com",
+                  "SYSTEM",
+                  "null",
+                  "ebs@yopmail.com"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_type_permission",
+          "column": "campaign_type",
+          "entity": "campaign_type_permission.campaign_type",
+          "rule": "duplicate_value",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campaign_type_permission",
+            "column_name": "campaign_type",
+            "duplicate_count": 2,
+            "sample_duplicates": [
+              "TRANSACTIONAL",
+              "CLASSIC"
+            ]
+          },
+          "remediation_hint": "Ensure that `campaign_type` in `campaign_type_permission` contains only unique values as per the domain rule `unique_column_patterns`.",
+          "issues": [
+            {
+              "type": "duplicate_value",
+              "severity": "high",
+              "description": "Ensure that `campaign_type` in `campaign_type_permission` contains only unique values as per the domain rule `unique_column_patterns`.",
+              "evidence": {
+                "table_name": "campaign_type_permission",
+                "column_name": "campaign_type",
+                "duplicate_count": 2,
+                "sample_duplicates": [
+                  "TRANSACTIONAL",
+                  "CLASSIC"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "smsc",
+          "column": "type",
+          "entity": "smsc.type",
+          "rule": "duplicate_value",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "smsc",
+            "column_name": "type",
+            "duplicate_count": 3,
+            "sample_duplicates": [
+              "NATIVE",
+              "LOADBALANCER",
+              "FAILOVER"
+            ]
+          },
+          "remediation_hint": "Ensure that `type` in `smsc` contains only unique values as per the domain rule `unique_column_patterns`.",
+          "issues": [
+            {
+              "type": "duplicate_value",
+              "severity": "high",
+              "description": "Ensure that `type` in `smsc` contains only unique values as per the domain rule `unique_column_patterns`.",
+              "evidence": {
+                "table_name": "smsc",
+                "column_name": "type",
+                "duplicate_count": 3,
+                "sample_duplicates": [
+                  "NATIVE",
+                  "LOADBALANCER",
+                  "FAILOVER"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "sent_sms",
+          "column": null,
+          "entity": "sent_sms",
+          "rule": "non_positive_numeric_value",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "sent_sms",
+            "violating_rows_count": 6,
+            "columns_checked": [
+              "sql_id",
+              "time",
+              "id",
+              "sms_type",
+              "mclass",
+              "mwi",
+              "coding",
+              "compress",
+              "validity",
+              "deferred",
+              "dlr_mask",
+              "pid",
+              "alt_dcs",
+              "rpi"
+            ]
+          },
+          "remediation_hint": "Investigate rows in `sent_sms` where numeric columns like `sql_id`, `time`, `id`, `sms_type`, `mclass`, `mwi`, `coding`, `compress`, `validity`, `deferred`, `dlr_mask`, `pid`, `alt_dcs`, `rpi` contain non-positive values.",
+          "issues": [
+            {
+              "type": "non_positive_numeric_value",
+              "severity": "medium",
+              "description": "Investigate rows in `sent_sms` where numeric columns like `sql_id`, `time`, `id`, `sms_type`, `mclass`, `mwi`, `coding`, `compress`, `validity`, `deferred`, `dlr_mask`, `pid`, `alt_dcs`, `rpi` contain non-positive values.",
+              "evidence": {
+                "table_name": "sent_sms",
+                "violating_rows_count": 6,
+                "columns_checked": [
+                  "sql_id",
+                  "time",
+                  "id",
+                  "sms_type",
+                  "mclass",
+                  "mwi",
+                  "coding",
+                  "compress",
+                  "validity",
+                  "deferred",
+                  "dlr_mask",
+                  "pid",
+                  "alt_dcs",
+                  "rpi"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": [],
+      "report": "## Row Level Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 33\n- Passed: 28\n- Flagged: 5\n- Severity split: critical=0, high=4, medium=1, low=0\n- Quality score: 32.0 / 100\n- Confidence: 0.98\n- Flagged tables: campaign_type_permission, rev_info, sent_sms, smsc, user_contact\n\n### Metrics\n- Findings count: 5\n- Validator: row\n\n### Findings (5)\n\n#### 1. user_contact [HIGH]\n- Problem: Ensure that `contact_id` in `user_contact` contains only unique values as per the domain rule `unique_column_patterns`.\n- Confidence: 1.0\n- Column: contact_id\n- Recommendation: Ensure that `contact_id` in `user_contact` contains only unique values as per the domain rule `unique_column_patterns`.\n- Detailed issues:\n  - [HIGH] Ensure that `contact_id` in `user_contact` contains only unique values as per the domain rule `unique_column_patterns`.\n\n#### 2. rev_info [HIGH]\n- Problem: Ensure that `email` in `rev_info` contains only unique values as per the domain rule `unique_column_patterns`.\n- Confidence: 1.0\n- Column: email\n- Recommendation: Ensure that `email` in `rev_info` contains only unique values as per the domain rule `unique_column_patterns`.\n- Detailed issues:\n  - [HIGH] Ensure that `email` in `rev_info` contains only unique values as per the domain rule `unique_column_patterns`.\n\n#### 3. campaign_type_permission [HIGH]\n- Problem: Ensure that `campaign_type` in `campaign_type_permission` contains only unique values as per the domain rule `unique_column_patterns`.\n- Confidence: 1.0\n- Column: campaign_type\n- Recommendation: Ensure that `campaign_type` in `campaign_type_permission` contains only unique values as per the domain rule `unique_column_patterns`.\n- Detailed issues:\n  - [HIGH] Ensure that `campaign_type` in `campaign_type_permission` contains only unique values as per the domain rule `unique_column_patterns`.\n\n#### 4. smsc [HIGH]\n- Problem: Ensure that `type` in `smsc` contains only unique values as per the domain rule `unique_column_patterns`.\n- Confidence: 1.0\n- Column: type\n- Recommendation: Ensure that `type` in `smsc` contains only unique values as per the domain rule `unique_column_patterns`.\n- Detailed issues:\n  - [HIGH] Ensure that `type` in `smsc` contains only unique values as per the domain rule `unique_column_patterns`.\n\n#### 5. sent_sms [MEDIUM]\n- Problem: Investigate rows in `sent_sms` where numeric columns like `sql_id`, `time`, `id`, `sms_type`, `mclass`, `mwi`, `coding`, `compress`, `validity`, `deferred`, `dlr_mask`, `pid`, `alt_dcs`, `rpi` contain non-positive values.\n- Confidence: 0.9\n- Column: None\n- Recommendation: Investigate rows in `sent_sms` where numeric columns like `sql_id`, `time`, `id`, `sms_type`, `mclass`, `mwi`, `coding`, `compress`, `validity`, `deferred`, `dlr_mask`, `pid`, `alt_dcs`, `rpi` contain non-positive values.\n- Detailed issues:\n  - [MEDIUM] Investigate rows in `sent_sms` where numeric columns like `sql_id`, `time`, `id`, `sms_type`, `mclass`, `mwi`, `coding`, `compress`, `validity`, `deferred`, `dlr_mask`, `pid`, `alt_dcs`, `rpi` contain non-positive values."
+    },
+    "cross_row_validator": {
+      "pipeline_run_id": "866f035a-d7d4-47b2-b633-cd588005d6e0",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-04T20:29:09.402063Z",
+      "agent": "Cross Row Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 33,
+        "items_passed": 31,
+        "items_flagged": 2,
+        "critical_issues": 1,
+        "high_issues": 1,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 60.0,
+        "overall_confidence": 0.95,
+        "flagged_tables": [
+          "prm_organization",
+          "smsc_route"
+        ]
+      },
+      "metrics": {
+        "validator": "crossrow",
+        "findings_count": 2
+      },
+      "findings": [
+        {
+          "table": "smsc_route",
+          "column": "route_smsc_id",
+          "entity": "smsc_route.route_smsc_id",
+          "rule": "orphaned_foreign_key_reference",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "source_table": "smsc_route",
+            "source_column": "route_smsc_id",
+            "target_table": "smsc",
+            "target_column": "id",
+            "orphaned_records_count": 6
+          },
+          "remediation_hint": "Remove or update the 6 records in 'smsc_route' where 'route_smsc_id' does not have a matching 'id' in 'smsc'.",
+          "issues": [
+            {
+              "type": "orphaned_foreign_key_reference",
+              "severity": "critical",
+              "description": "Remove or update the 6 records in 'smsc_route' where 'route_smsc_id' does not have a matching 'id' in 'smsc'.",
+              "evidence": {
+                "source_table": "smsc_route",
+                "source_column": "route_smsc_id",
+                "target_table": "smsc",
+                "target_column": "id",
+                "orphaned_records_count": 6
+              }
+            }
+          ]
+        },
+        {
+          "table": "prm_organization",
+          "column": "code",
+          "entity": "prm_organization.code",
+          "rule": "duplicate_unique_field",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "prm_organization",
+            "column_name": "code",
+            "total_rows": 17,
+            "distinct_values": 7,
+            "duplicate_count": 10
+          },
+          "remediation_hint": "Investigate and resolve duplicate 'code' values in 'prm_organization' to ensure uniqueness.",
+          "issues": [
+            {
+              "type": "duplicate_unique_field",
+              "severity": "high",
+              "description": "Investigate and resolve duplicate 'code' values in 'prm_organization' to ensure uniqueness.",
+              "evidence": {
+                "table_name": "prm_organization",
+                "column_name": "code",
+                "total_rows": 17,
+                "distinct_values": 7,
+                "duplicate_count": 10
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": [],
+      "report": "## Cross Row Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 33\n- Passed: 31\n- Flagged: 2\n- Severity split: critical=1, high=1, medium=0, low=0\n- Quality score: 60.0 / 100\n- Confidence: 0.95\n- Flagged tables: prm_organization, smsc_route\n\n### Metrics\n- Findings count: 2\n- Validator: crossrow\n\n### Findings (2)\n\n#### 1. smsc_route [CRITICAL]\n- Problem: Remove or update the 6 records in 'smsc_route' where 'route_smsc_id' does not have a matching 'id' in 'smsc'.\n- Confidence: 1.0\n- Column: route_smsc_id\n- Recommendation: Remove or update the 6 records in 'smsc_route' where 'route_smsc_id' does not have a matching 'id' in 'smsc'.\n- Detailed issues:\n  - [CRITICAL] Remove or update the 6 records in 'smsc_route' where 'route_smsc_id' does not have a matching 'id' in 'smsc'.\n\n#### 2. prm_organization [HIGH]\n- Problem: Investigate and resolve duplicate 'code' values in 'prm_organization' to ensure uniqueness.\n- Confidence: 0.9\n- Column: code\n- Recommendation: Investigate and resolve duplicate 'code' values in 'prm_organization' to ensure uniqueness.\n- Detailed issues:\n  - [HIGH] Investigate and resolve duplicate 'code' values in 'prm_organization' to ensure uniqueness."
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "866f035a-d7d4-47b2-b633-cd588005d6e0",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-04T20:29:09.402063Z",
+      "agent": "Data Fix Planner",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 21,
+        "items_passed": 4,
+        "items_flagged": 17,
+        "critical_issues": 4,
+        "high_issues": 9,
+        "medium_issues": 4,
+        "low_issues": 0,
+        "overall_quality_score": 15.0,
+        "overall_confidence": 0.9353,
+        "flagged_tables": [
+          "budget_history",
+          "campagne_contacts",
+          "campagne_tags",
+          "campaign_type_permission",
+          "expediteur",
+          "expediteur_groupe",
+          "groupe",
+          "membership",
+          "mention",
+          "prm_organization",
+          "rev_info",
+          "sent_sms",
+          "smsc",
+          "smsc_route",
+          "user_contact"
+        ]
+      },
+      "metrics": {
+        "total_issues_received": 21,
+        "fixes_generated": 17
+      },
+      "findings": [
+        {
+          "id": "fix_001_expediteur_groupe",
+          "table": "expediteur_groupe",
+          "target_table": "expediteur_groupe",
+          "problem": "Define Primary Key and Index for 'expediteur_groupe'",
+          "fix": "The table 'expediteur_groupe' is missing a primary key, which is crucial for data integrity and efficient data retrieval. The columns 'groupe_id' and 'expediteur_id' are both non-nullable and together form a natural composite primary key. Additionally, these foreign key columns lack an index, which can lead to performance issues during joins and lookups. Defining a composite primary key will automatically create a unique index, addressing both issues.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE expediteur_groupe ADD PRIMARY KEY (groupe_id, expediteur_id);"
+          ],
+          "explanation": "The table 'expediteur_groupe' is missing a primary key, which is crucial for data integrity and efficient data retrieval. The columns 'groupe_id' and 'expediteur_id' are both non-nullable and together form a natural composite primary key. Additionally, these foreign key columns lack an index, which can lead to performance issues during joins and lookups. Defining a composite primary key will automatically create a unique index, addressing both issues.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'expediteur_groupe'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE expediteur_groupe DROP CONSTRAINT expediteur_groupe_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_002_campagne_contacts",
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "Define Primary Key and Index for 'campagne_contacts'",
+          "fix": "The table 'campagne_contacts' is missing a primary key. The columns 'campagne_id' and 'contact_id' are identified as foreign key style columns and together could form a composite primary key. However, 'contact_id' is currently nullable. To establish a primary key on these columns, 'contact_id' must first be made non-nullable. This remediation will first update 'contact_id' to be NOT NULL (assuming no existing NULLs or that NULLs are not desired for a PK) and then define a composite primary key, which will also create a unique index, improving performance and ensuring data integrity. Data deleted cannot be rolled back.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE campagne_contacts ALTER COLUMN contact_id SET NOT NULL;",
+            "ALTER TABLE campagne_contacts ADD PRIMARY KEY (campagne_id, contact_id);"
+          ],
+          "explanation": "The table 'campagne_contacts' is missing a primary key. The columns 'campagne_id' and 'contact_id' are identified as foreign key style columns and together could form a composite primary key. However, 'contact_id' is currently nullable. To establish a primary key on these columns, 'contact_id' must first be made non-nullable. This remediation will first update 'contact_id' to be NOT NULL (assuming no existing NULLs or that NULLs are not desired for a PK) and then define a composite primary key, which will also create a unique index, improving performance and ensuring data integrity. Data deleted cannot be rolled back.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'campagne_contacts'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_contacts DROP CONSTRAINT campagne_contacts_pkey; ALTER TABLE campagne_contacts ALTER COLUMN contact_id DROP NOT NULL;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_003_campagne_tags",
+          "table": "campagne_tags",
+          "target_table": "campagne_tags",
+          "problem": "Define Primary Key and Index for 'campagne_tags'",
+          "fix": "The table 'campagne_tags' is missing a primary key. The columns 'campagne_id' and 'tag_name' are identified as foreign key style columns and together could form a composite primary key. However, 'tag_name' is currently nullable. To establish a primary key on these columns, 'tag_name' must first be made non-nullable. This remediation will first update 'tag_name' to be NOT NULL (assuming no existing NULLs or that NULLs are not desired for a PK) and then define a composite primary key, which will also create a unique index, improving performance and ensuring data integrity. Data deleted cannot be rolled back.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE campagne_tags ALTER COLUMN tag_name SET NOT NULL;",
+            "ALTER TABLE campagne_tags ADD PRIMARY KEY (campagne_id, tag_name);"
+          ],
+          "explanation": "The table 'campagne_tags' is missing a primary key. The columns 'campagne_id' and 'tag_name' are identified as foreign key style columns and together could form a composite primary key. However, 'tag_name' is currently nullable. To establish a primary key on these columns, 'tag_name' must first be made non-nullable. This remediation will first update 'tag_name' to be NOT NULL (assuming no existing NULLs or that NULLs are not desired for a PK) and then define a composite primary key, which will also create a unique index, improving performance and ensuring data integrity. Data deleted cannot be rolled back.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'campagne_tags'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_tags DROP CONSTRAINT campagne_tags_pkey; ALTER TABLE campagne_tags ALTER COLUMN tag_name DROP NOT NULL;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_004_smsc_route_route_smsc_id",
+          "table": "smsc_route",
+          "target_table": "smsc_route",
+          "problem": "Remove Orphaned Foreign Key References in 'smsc_route.route_smsc_id'",
+          "fix": "There are 6 records in 'smsc_route' where 'route_smsc_id' references an 'id' that does not exist in the 'smsc' table. This indicates a referential integrity violation. Deleting these orphaned records will restore data consistency. Data deleted cannot be rolled back.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "DELETE FROM smsc_route WHERE route_smsc_id NOT IN (SELECT id FROM smsc);"
+          ],
+          "explanation": "There are 6 records in 'smsc_route' where 'route_smsc_id' references an 'id' that does not exist in the 'smsc' table. This indicates a referential integrity violation. Deleting these orphaned records will restore data consistency. Data deleted cannot be rolled back.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM smsc_route WHERE route_smsc_id NOT IN (SELECT id FROM smsc);"
+          ],
+          "rollback_queries": [
+            "Data deleted cannot be rolled back."
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_005_user_contact_contact_id",
+          "table": "user_contact",
+          "target_table": "user_contact",
+          "problem": "Enforce Uniqueness for 'user_contact.contact_id'",
+          "fix": "The column 'contact_id' in 'user_contact' contains 5 duplicate values, violating the unique column pattern domain rule. This can lead to data integrity issues. The remediation will delete duplicate rows, keeping one arbitrary row for each 'contact_id', and then add a unique constraint to prevent future duplicates. Data deleted cannot be rolled back.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "DELETE FROM user_contact WHERE ctid NOT IN (SELECT MIN(ctid) FROM user_contact GROUP BY contact_id);",
+            "ALTER TABLE user_contact ADD CONSTRAINT user_contact_contact_id_unique UNIQUE (contact_id);"
+          ],
+          "explanation": "The column 'contact_id' in 'user_contact' contains 5 duplicate values, violating the unique column pattern domain rule. This can lead to data integrity issues. The remediation will delete duplicate rows, keeping one arbitrary row for each 'contact_id', and then add a unique constraint to prevent future duplicates. Data deleted cannot be rolled back.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM user_contact GROUP BY contact_id HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE user_contact DROP CONSTRAINT user_contact_contact_id_unique;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_006_rev_info_email",
+          "table": "rev_info",
+          "target_table": "rev_info",
+          "problem": "Enforce Uniqueness for 'rev_info.email'",
+          "fix": "The column 'email' in 'rev_info' contains 4 duplicate values, violating the unique column pattern domain rule. This can lead to data integrity issues. The remediation will delete duplicate rows, keeping one arbitrary row for each 'email', and then add a unique constraint to prevent future duplicates. Note that a unique constraint in PostgreSQL allows multiple NULL values. Data deleted cannot be rolled back.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "DELETE FROM rev_info WHERE ctid NOT IN (SELECT MIN(ctid) FROM rev_info GROUP BY email);",
+            "ALTER TABLE rev_info ADD CONSTRAINT rev_info_email_unique UNIQUE (email);"
+          ],
+          "explanation": "The column 'email' in 'rev_info' contains 4 duplicate values, violating the unique column pattern domain rule. This can lead to data integrity issues. The remediation will delete duplicate rows, keeping one arbitrary row for each 'email', and then add a unique constraint to prevent future duplicates. Note that a unique constraint in PostgreSQL allows multiple NULL values. Data deleted cannot be rolled back.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM rev_info GROUP BY email HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE rev_info DROP CONSTRAINT rev_info_email_unique;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_007_campaign_type_permission_campaign_type",
+          "table": "campaign_type_permission",
+          "target_table": "campaign_type_permission",
+          "problem": "Enforce Uniqueness for 'campaign_type_permission.campaign_type'",
+          "fix": "The column 'campaign_type' in 'campaign_type_permission' contains 2 duplicate values, violating the unique column pattern domain rule. This can lead to data integrity issues. The remediation will delete duplicate rows, keeping one arbitrary row for each 'campaign_type', and then add a unique constraint to prevent future duplicates. Data deleted cannot be rolled back.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "DELETE FROM campaign_type_permission WHERE ctid NOT IN (SELECT MIN(ctid) FROM campaign_type_permission GROUP BY campaign_type);",
+            "ALTER TABLE campaign_type_permission ADD CONSTRAINT campaign_type_permission_campaign_type_unique UNIQUE (campaign_type);"
+          ],
+          "explanation": "The column 'campaign_type' in 'campaign_type_permission' contains 2 duplicate values, violating the unique column pattern domain rule. This can lead to data integrity issues. The remediation will delete duplicate rows, keeping one arbitrary row for each 'campaign_type', and then add a unique constraint to prevent future duplicates. Data deleted cannot be rolled back.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM campaign_type_permission GROUP BY campaign_type HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campaign_type_permission DROP CONSTRAINT campaign_type_permission_campaign_type_unique;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_008_smsc_type",
+          "table": "smsc",
+          "target_table": "smsc",
+          "problem": "Enforce Uniqueness for 'smsc.type'",
+          "fix": "The column 'type' in 'smsc' contains 3 duplicate values, violating the unique column pattern domain rule. This can lead to data integrity issues. The remediation will delete duplicate rows, keeping one arbitrary row for each 'type', and then add a unique constraint to prevent future duplicates. Data deleted cannot be rolled back.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "DELETE FROM smsc WHERE ctid NOT IN (SELECT MIN(ctid) FROM smsc GROUP BY type);",
+            "ALTER TABLE smsc ADD CONSTRAINT smsc_type_unique UNIQUE (type);"
+          ],
+          "explanation": "The column 'type' in 'smsc' contains 3 duplicate values, violating the unique column pattern domain rule. This can lead to data integrity issues. The remediation will delete duplicate rows, keeping one arbitrary row for each 'type', and then add a unique constraint to prevent future duplicates. Data deleted cannot be rolled back.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM smsc GROUP BY type HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE smsc DROP CONSTRAINT smsc_type_unique;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_009_prm_organization_code",
+          "table": "prm_organization",
+          "target_table": "prm_organization",
+          "problem": "Enforce Uniqueness for 'prm_organization.code'",
+          "fix": "The column 'code' in 'prm_organization' contains 10 duplicate values, violating the unique column pattern domain rule. This can lead to data integrity issues. The remediation will delete duplicate rows, keeping one arbitrary row for each 'code', and then add a unique constraint to prevent future duplicates. Data deleted cannot be rolled back.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "DELETE FROM prm_organization WHERE ctid NOT IN (SELECT MIN(ctid) FROM prm_organization GROUP BY code);",
+            "ALTER TABLE prm_organization ADD CONSTRAINT prm_organization_code_unique UNIQUE (code);"
+          ],
+          "explanation": "The column 'code' in 'prm_organization' contains 10 duplicate values, violating the unique column pattern domain rule. This can lead to data integrity issues. The remediation will delete duplicate rows, keeping one arbitrary row for each 'code', and then add a unique constraint to prevent future duplicates. Data deleted cannot be rolled back.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM prm_organization GROUP BY code HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE prm_organization DROP CONSTRAINT prm_organization_code_unique;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_010_groupe_admin_id",
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "Review Nullability of Foreign Key Column 'groupe.admin_id'",
+          "fix": "The foreign key column 'admin_id' in table 'groupe' is nullable. While sometimes intentional, foreign keys are often expected to be non-nullable to ensure that every record always references a valid parent record. Review if 'admin_id' should always have a value. If so, consider making it non-nullable after ensuring no existing NULLs or handling them appropriately.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'Consider ALTER TABLE groupe ALTER COLUMN admin_id SET NOT NULL;",
+            "' AS advisory_sql;"
+          ],
+          "explanation": "The foreign key column 'admin_id' in table 'groupe' is nullable. While sometimes intentional, foreign keys are often expected to be non-nullable to ensure that every record always references a valid parent record. Review if 'admin_id' should always have a value. If so, consider making it non-nullable after ensuring no existing NULLs or handling them appropriately.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'groupe' AND column_name = 'admin_id';"
+          ],
+          "rollback_queries": [
+            "SELECT 'Consider ALTER TABLE groupe ALTER COLUMN admin_id DROP NOT NULL;' AS advisory_sql;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_011_campagne_contacts_contact_id",
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "Review Nullability of Foreign Key Column 'campagne_contacts.contact_id'",
+          "fix": "The foreign key column 'contact_id' in table 'campagne_contacts' is nullable. While sometimes intentional, foreign keys are often expected to be non-nullable to ensure that every record always references a valid parent record. Review if 'contact_id' should always have a value. If so, consider making it non-nullable after ensuring no existing NULLs or handling them appropriately.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'Consider ALTER TABLE campagne_contacts ALTER COLUMN contact_id SET NOT NULL;",
+            "' AS advisory_sql;"
+          ],
+          "explanation": "The foreign key column 'contact_id' in table 'campagne_contacts' is nullable. While sometimes intentional, foreign keys are often expected to be non-nullable to ensure that every record always references a valid parent record. Review if 'contact_id' should always have a value. If so, consider making it non-nullable after ensuring no existing NULLs or handling them appropriately.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'campagne_contacts' AND column_name = 'contact_id';"
+          ],
+          "rollback_queries": [
+            "SELECT 'Consider ALTER TABLE campagne_contacts ALTER COLUMN contact_id DROP NOT NULL;' AS advisory_sql;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_012_budget_history_groupe_id",
+          "table": "budget_history",
+          "target_table": "budget_history",
+          "problem": "Review Nullability of Foreign Key Column 'budget_history.groupe_id'",
+          "fix": "The foreign key column 'groupe_id' in table 'budget_history' is nullable. While sometimes intentional, foreign keys are often expected to be non-nullable to ensure that every record always references a valid parent record. Review if 'groupe_id' should always have a value. If so, consider making it non-nullable after ensuring no existing NULLs or handling them appropriately.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'Consider ALTER TABLE budget_history ALTER COLUMN groupe_id SET NOT NULL;",
+            "' AS advisory_sql;"
+          ],
+          "explanation": "The foreign key column 'groupe_id' in table 'budget_history' is nullable. While sometimes intentional, foreign keys are often expected to be non-nullable to ensure that every record always references a valid parent record. Review if 'groupe_id' should always have a value. If so, consider making it non-nullable after ensuring no existing NULLs or handling them appropriately.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'budget_history' AND column_name = 'groupe_id';"
+          ],
+          "rollback_queries": [
+            "SELECT 'Consider ALTER TABLE budget_history ALTER COLUMN groupe_id DROP NOT NULL;' AS advisory_sql;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_013_sent_sms",
+          "table": "sent_sms",
+          "target_table": "sent_sms",
+          "problem": "Investigate Non-Positive Numeric Values in 'sent_sms'",
+          "fix": "The table 'sent_sms' contains 6 rows with non-positive numeric values in columns such as 'sql_id', 'time', 'id', 'sms_type', 'mclass', 'mwi', 'coding', 'compress', 'validity', 'deferred', 'dlr_mask', 'pid', 'alt_dcs', 'rpi'. This might indicate data quality issues or unexpected data. Further investigation is recommended to understand the source and impact of these values.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT sql_id, time, id, sms_type, mclass, mwi, coding, compress, validity, deferred, dlr_mask, pid, alt_dcs, rpi FROM sent_sms WHERE sql_id <= 0 OR time <= 0 OR id <= 0 OR sms_type <= 0 OR mclass <= 0 OR mwi <= 0 OR coding <= 0 OR compress <= 0 OR validity <= 0 OR deferred <= 0 OR dlr_mask <= 0 OR pid <= 0 OR alt_dcs <= 0 OR rpi <= 0;"
+          ],
+          "explanation": "The table 'sent_sms' contains 6 rows with non-positive numeric values in columns such as 'sql_id', 'time', 'id', 'sms_type', 'mclass', 'mwi', 'coding', 'compress', 'validity', 'deferred', 'dlr_mask', 'pid', 'alt_dcs', 'rpi'. This might indicate data quality issues or unexpected data. Further investigation is recommended to understand the source and impact of these values.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM sent_sms WHERE sql_id <= 0 OR time <= 0 OR id <= 0 OR sms_type <= 0 OR mclass <= 0 OR mwi <= 0 OR coding <= 0 OR compress <= 0 OR validity <= 0 OR deferred <= 0 OR dlr_mask <= 0 OR pid <= 0 OR alt_dcs <= 0 OR rpi <= 0;"
+          ],
+          "rollback_queries": [
+            "N/A (Diagnostic query)"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_014_expediteur_organization_id",
+          "table": "expediteur",
+          "target_table": "expediteur",
+          "problem": "Create Index on Foreign Key Column 'expediteur.organization_id'",
+          "fix": "The foreign key column 'organization_id' in table 'expediteur' is not part of a primary key or unique constraint, leading to an index gap. Creating an index on this column will improve the performance of queries involving joins or lookups on this column.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX idx_expediteur_organization_id ON expediteur (organization_id);"
+          ],
+          "explanation": "The foreign key column 'organization_id' in table 'expediteur' is not part of a primary key or unique constraint, leading to an index gap. Creating an index on this column will improve the performance of queries involving joins or lookups on this column.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'expediteur' AND indexname = 'idx_expediteur_organization_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX idx_expediteur_organization_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_015_membership_status_id",
+          "table": "membership",
+          "target_table": "membership",
+          "problem": "Create Index on Foreign Key Column 'membership.status_id'",
+          "fix": "The foreign key column 'status_id' in table 'membership' is not part of a primary key or unique constraint, leading to an index gap. Creating an index on this column will improve the performance of queries involving joins or lookups on this column.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX idx_membership_status_id ON membership (status_id);"
+          ],
+          "explanation": "The foreign key column 'status_id' in table 'membership' is not part of a primary key or unique constraint, leading to an index gap. Creating an index on this column will improve the performance of queries involving joins or lookups on this column.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'membership' AND indexname = 'idx_membership_status_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX idx_membership_status_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_016_mention_modele_id",
+          "table": "mention",
+          "target_table": "mention",
+          "problem": "Create Index on Foreign Key Column 'mention.modele_id'",
+          "fix": "The foreign key column 'modele_id' in table 'mention' is not part of a primary key or unique constraint, leading to an index gap. Creating an index on this column will improve the performance of queries involving joins or lookups on this column.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX idx_mention_modele_id ON mention (modele_id);"
+          ],
+          "explanation": "The foreign key column 'modele_id' in table 'mention' is not part of a primary key or unique constraint, leading to an index gap. Creating an index on this column will improve the performance of queries involving joins or lookups on this column.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'mention' AND indexname = 'idx_mention_modele_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX idx_mention_modele_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_017_user_contact",
+          "table": "user_contact",
+          "target_table": "user_contact",
+          "problem": "Investigate Low Cardinality Columns in 'user_contact'",
+          "fix": "The columns 'attribute1', 'attribute2', 'attribute3', and 'membership_id' in 'user_contact' exhibit very low cardinality relative to the total number of rows (20042). 'attribute1' has 37 unique values, 'attribute2' has 36, 'attribute3' has 34, and 'membership_id' has 6 unique values. This could indicate that these columns are intended to be categorical with a limited set of values, or it might point to data entry issues or a lack of meaningful data. Further investigation is recommended to understand the intended use and data quality of these columns.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT attribute1, COUNT(*) FROM user_contact GROUP BY attribute1 ORDER BY COUNT(*) DESC;",
+            "SELECT attribute2, COUNT(*) FROM user_contact GROUP BY attribute2 ORDER BY COUNT(*) DESC;",
+            "SELECT attribute3, COUNT(*) FROM user_contact GROUP BY attribute3 ORDER BY COUNT(*) DESC;",
+            "SELECT membership_id, COUNT(*) FROM user_contact GROUP BY membership_id ORDER BY COUNT(*) DESC;"
+          ],
+          "explanation": "The columns 'attribute1', 'attribute2', 'attribute3', and 'membership_id' in 'user_contact' exhibit very low cardinality relative to the total number of rows (20042). 'attribute1' has 37 unique values, 'attribute2' has 36, 'attribute3' has 34, and 'membership_id' has 6 unique values. This could indicate that these columns are intended to be categorical with a limited set of values, or it might point to data entry issues or a lack of meaningful data. Further investigation is recommended to understand the intended use and data quality of these columns.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(DISTINCT attribute1) AS distinct_attribute1, COUNT(DISTINCT attribute2) AS distinct_attribute2, COUNT(DISTINCT attribute3) AS distinct_attribute3, COUNT(DISTINCT membership_id) AS distinct_membership_id FROM user_contact;"
+          ],
+          "rollback_queries": [
+            "N/A (Diagnostic query)"
+          ],
+          "explain_summary": null
+        }
+      ],
+      "cards": [
+        {
+          "title": "Define Primary Key and Index for 'expediteur_groupe'",
+          "target": "expediteur_groupe",
+          "rationale": "The table 'expediteur_groupe' is missing a primary key, which is crucial for data integrity and efficient data retrieval. The columns 'groupe_id' and 'expediteur_id' are both non-nullable and together form a natural composite primary key. Additionally, these foreign key columns lack an index, which can lead to performance issues during joins and lookups. Defining a composite primary key will automatically create a unique index, addressing both issues.",
+          "sql": "ALTER TABLE expediteur_groupe ADD PRIMARY KEY (groupe_id, expediteur_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'expediteur_groupe'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE expediteur_groupe DROP CONSTRAINT expediteur_groupe_pkey;"
+          ]
+        },
+        {
+          "title": "Define Primary Key and Index for 'campagne_contacts'",
+          "target": "campagne_contacts",
+          "rationale": "The table 'campagne_contacts' is missing a primary key. The columns 'campagne_id' and 'contact_id' are identified as foreign key style columns and together could form a composite primary key. However, 'contact_id' is currently nullable. To establish a primary key on these columns, 'contact_id' must first be made non-nullable. This remediation will first update 'contact_id' to be NOT NULL (assuming no existing NULLs or that NULLs are not desired for a PK) and then define a composite primary key, which will also create a unique index, improving performance and ensuring data integrity. Data deleted cannot be rolled back.",
+          "sql": "ALTER TABLE campagne_contacts ALTER COLUMN contact_id SET NOT NULL; ALTER TABLE campagne_contacts ADD PRIMARY KEY (campagne_id, contact_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'campagne_contacts'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_contacts DROP CONSTRAINT campagne_contacts_pkey; ALTER TABLE campagne_contacts ALTER COLUMN contact_id DROP NOT NULL;"
+          ]
+        },
+        {
+          "title": "Define Primary Key and Index for 'campagne_tags'",
+          "target": "campagne_tags",
+          "rationale": "The table 'campagne_tags' is missing a primary key. The columns 'campagne_id' and 'tag_name' are identified as foreign key style columns and together could form a composite primary key. However, 'tag_name' is currently nullable. To establish a primary key on these columns, 'tag_name' must first be made non-nullable. This remediation will first update 'tag_name' to be NOT NULL (assuming no existing NULLs or that NULLs are not desired for a PK) and then define a composite primary key, which will also create a unique index, improving performance and ensuring data integrity. Data deleted cannot be rolled back.",
+          "sql": "ALTER TABLE campagne_tags ALTER COLUMN tag_name SET NOT NULL; ALTER TABLE campagne_tags ADD PRIMARY KEY (campagne_id, tag_name);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'campagne_tags'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_tags DROP CONSTRAINT campagne_tags_pkey; ALTER TABLE campagne_tags ALTER COLUMN tag_name DROP NOT NULL;"
+          ]
+        },
+        {
+          "title": "Remove Orphaned Foreign Key References in 'smsc_route.route_smsc_id'",
+          "target": "smsc_route.route_smsc_id",
+          "rationale": "There are 6 records in 'smsc_route' where 'route_smsc_id' references an 'id' that does not exist in the 'smsc' table. This indicates a referential integrity violation. Deleting these orphaned records will restore data consistency. Data deleted cannot be rolled back.",
+          "sql": "DELETE FROM smsc_route WHERE route_smsc_id NOT IN (SELECT id FROM smsc);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM smsc_route WHERE route_smsc_id NOT IN (SELECT id FROM smsc);"
+          ],
+          "rollback_queries": [
+            "Data deleted cannot be rolled back."
+          ]
+        },
+        {
+          "title": "Enforce Uniqueness for 'user_contact.contact_id'",
+          "target": "user_contact.contact_id",
+          "rationale": "The column 'contact_id' in 'user_contact' contains 5 duplicate values, violating the unique column pattern domain rule. This can lead to data integrity issues. The remediation will delete duplicate rows, keeping one arbitrary row for each 'contact_id', and then add a unique constraint to prevent future duplicates. Data deleted cannot be rolled back.",
+          "sql": "DELETE FROM user_contact WHERE ctid NOT IN (SELECT MIN(ctid) FROM user_contact GROUP BY contact_id); ALTER TABLE user_contact ADD CONSTRAINT user_contact_contact_id_unique UNIQUE (contact_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM user_contact GROUP BY contact_id HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE user_contact DROP CONSTRAINT user_contact_contact_id_unique;"
+          ]
+        },
+        {
+          "title": "Enforce Uniqueness for 'rev_info.email'",
+          "target": "rev_info.email",
+          "rationale": "The column 'email' in 'rev_info' contains 4 duplicate values, violating the unique column pattern domain rule. This can lead to data integrity issues. The remediation will delete duplicate rows, keeping one arbitrary row for each 'email', and then add a unique constraint to prevent future duplicates. Note that a unique constraint in PostgreSQL allows multiple NULL values. Data deleted cannot be rolled back.",
+          "sql": "DELETE FROM rev_info WHERE ctid NOT IN (SELECT MIN(ctid) FROM rev_info GROUP BY email); ALTER TABLE rev_info ADD CONSTRAINT rev_info_email_unique UNIQUE (email);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM rev_info GROUP BY email HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE rev_info DROP CONSTRAINT rev_info_email_unique;"
+          ]
+        },
+        {
+          "title": "Enforce Uniqueness for 'campaign_type_permission.campaign_type'",
+          "target": "campaign_type_permission.campaign_type",
+          "rationale": "The column 'campaign_type' in 'campaign_type_permission' contains 2 duplicate values, violating the unique column pattern domain rule. This can lead to data integrity issues. The remediation will delete duplicate rows, keeping one arbitrary row for each 'campaign_type', and then add a unique constraint to prevent future duplicates. Data deleted cannot be rolled back.",
+          "sql": "DELETE FROM campaign_type_permission WHERE ctid NOT IN (SELECT MIN(ctid) FROM campaign_type_permission GROUP BY campaign_type); ALTER TABLE campaign_type_permission ADD CONSTRAINT campaign_type_permission_campaign_type_unique UNIQUE (campaign_type);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM campaign_type_permission GROUP BY campaign_type HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campaign_type_permission DROP CONSTRAINT campaign_type_permission_campaign_type_unique;"
+          ]
+        },
+        {
+          "title": "Enforce Uniqueness for 'smsc.type'",
+          "target": "smsc.type",
+          "rationale": "The column 'type' in 'smsc' contains 3 duplicate values, violating the unique column pattern domain rule. This can lead to data integrity issues. The remediation will delete duplicate rows, keeping one arbitrary row for each 'type', and then add a unique constraint to prevent future duplicates. Data deleted cannot be rolled back.",
+          "sql": "DELETE FROM smsc WHERE ctid NOT IN (SELECT MIN(ctid) FROM smsc GROUP BY type); ALTER TABLE smsc ADD CONSTRAINT smsc_type_unique UNIQUE (type);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM smsc GROUP BY type HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE smsc DROP CONSTRAINT smsc_type_unique;"
+          ]
+        },
+        {
+          "title": "Enforce Uniqueness for 'prm_organization.code'",
+          "target": "prm_organization.code",
+          "rationale": "The column 'code' in 'prm_organization' contains 10 duplicate values, violating the unique column pattern domain rule. This can lead to data integrity issues. The remediation will delete duplicate rows, keeping one arbitrary row for each 'code', and then add a unique constraint to prevent future duplicates. Data deleted cannot be rolled back.",
+          "sql": "DELETE FROM prm_organization WHERE ctid NOT IN (SELECT MIN(ctid) FROM prm_organization GROUP BY code); ALTER TABLE prm_organization ADD CONSTRAINT prm_organization_code_unique UNIQUE (code);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM prm_organization GROUP BY code HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE prm_organization DROP CONSTRAINT prm_organization_code_unique;"
+          ]
+        },
+        {
+          "title": "Review Nullability of Foreign Key Column 'groupe.admin_id'",
+          "target": "groupe.admin_id",
+          "rationale": "The foreign key column 'admin_id' in table 'groupe' is nullable. While sometimes intentional, foreign keys are often expected to be non-nullable to ensure that every record always references a valid parent record. Review if 'admin_id' should always have a value. If so, consider making it non-nullable after ensuring no existing NULLs or handling them appropriately.",
+          "sql": "SELECT 'Consider ALTER TABLE groupe ALTER COLUMN admin_id SET NOT NULL;' AS advisory_sql;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'groupe' AND column_name = 'admin_id';"
+          ],
+          "rollback_queries": [
+            "SELECT 'Consider ALTER TABLE groupe ALTER COLUMN admin_id DROP NOT NULL;' AS advisory_sql;"
+          ]
+        },
+        {
+          "title": "Review Nullability of Foreign Key Column 'campagne_contacts.contact_id'",
+          "target": "campagne_contacts.contact_id",
+          "rationale": "The foreign key column 'contact_id' in table 'campagne_contacts' is nullable. While sometimes intentional, foreign keys are often expected to be non-nullable to ensure that every record always references a valid parent record. Review if 'contact_id' should always have a value. If so, consider making it non-nullable after ensuring no existing NULLs or handling them appropriately.",
+          "sql": "SELECT 'Consider ALTER TABLE campagne_contacts ALTER COLUMN contact_id SET NOT NULL;' AS advisory_sql;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'campagne_contacts' AND column_name = 'contact_id';"
+          ],
+          "rollback_queries": [
+            "SELECT 'Consider ALTER TABLE campagne_contacts ALTER COLUMN contact_id DROP NOT NULL;' AS advisory_sql;"
+          ]
+        },
+        {
+          "title": "Review Nullability of Foreign Key Column 'budget_history.groupe_id'",
+          "target": "budget_history.groupe_id",
+          "rationale": "The foreign key column 'groupe_id' in table 'budget_history' is nullable. While sometimes intentional, foreign keys are often expected to be non-nullable to ensure that every record always references a valid parent record. Review if 'groupe_id' should always have a value. If so, consider making it non-nullable after ensuring no existing NULLs or handling them appropriately.",
+          "sql": "SELECT 'Consider ALTER TABLE budget_history ALTER COLUMN groupe_id SET NOT NULL;' AS advisory_sql;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'budget_history' AND column_name = 'groupe_id';"
+          ],
+          "rollback_queries": [
+            "SELECT 'Consider ALTER TABLE budget_history ALTER COLUMN groupe_id DROP NOT NULL;' AS advisory_sql;"
+          ]
+        },
+        {
+          "title": "Investigate Non-Positive Numeric Values in 'sent_sms'",
+          "target": "sent_sms",
+          "rationale": "The table 'sent_sms' contains 6 rows with non-positive numeric values in columns such as 'sql_id', 'time', 'id', 'sms_type', 'mclass', 'mwi', 'coding', 'compress', 'validity', 'deferred', 'dlr_mask', 'pid', 'alt_dcs', 'rpi'. This might indicate data quality issues or unexpected data. Further investigation is recommended to understand the source and impact of these values.",
+          "sql": "SELECT sql_id, time, id, sms_type, mclass, mwi, coding, compress, validity, deferred, dlr_mask, pid, alt_dcs, rpi FROM sent_sms WHERE sql_id <= 0 OR time <= 0 OR id <= 0 OR sms_type <= 0 OR mclass <= 0 OR mwi <= 0 OR coding <= 0 OR compress <= 0 OR validity <= 0 OR deferred <= 0 OR dlr_mask <= 0 OR pid <= 0 OR alt_dcs <= 0 OR rpi <= 0;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM sent_sms WHERE sql_id <= 0 OR time <= 0 OR id <= 0 OR sms_type <= 0 OR mclass <= 0 OR mwi <= 0 OR coding <= 0 OR compress <= 0 OR validity <= 0 OR deferred <= 0 OR dlr_mask <= 0 OR pid <= 0 OR alt_dcs <= 0 OR rpi <= 0;"
+          ],
+          "rollback_queries": [
+            "N/A (Diagnostic query)"
+          ]
+        },
+        {
+          "title": "Create Index on Foreign Key Column 'expediteur.organization_id'",
+          "target": "expediteur.organization_id",
+          "rationale": "The foreign key column 'organization_id' in table 'expediteur' is not part of a primary key or unique constraint, leading to an index gap. Creating an index on this column will improve the performance of queries involving joins or lookups on this column.",
+          "sql": "CREATE INDEX idx_expediteur_organization_id ON expediteur (organization_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'expediteur' AND indexname = 'idx_expediteur_organization_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX idx_expediteur_organization_id;"
+          ]
+        },
+        {
+          "title": "Create Index on Foreign Key Column 'membership.status_id'",
+          "target": "membership.status_id",
+          "rationale": "The foreign key column 'status_id' in table 'membership' is not part of a primary key or unique constraint, leading to an index gap. Creating an index on this column will improve the performance of queries involving joins or lookups on this column.",
+          "sql": "CREATE INDEX idx_membership_status_id ON membership (status_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'membership' AND indexname = 'idx_membership_status_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX idx_membership_status_id;"
+          ]
+        },
+        {
+          "title": "Create Index on Foreign Key Column 'mention.modele_id'",
+          "target": "mention.modele_id",
+          "rationale": "The foreign key column 'modele_id' in table 'mention' is not part of a primary key or unique constraint, leading to an index gap. Creating an index on this column will improve the performance of queries involving joins or lookups on this column.",
+          "sql": "CREATE INDEX idx_mention_modele_id ON mention (modele_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'mention' AND indexname = 'idx_mention_modele_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX idx_mention_modele_id;"
+          ]
+        },
+        {
+          "title": "Investigate Low Cardinality Columns in 'user_contact'",
+          "target": "user_contact",
+          "rationale": "The columns 'attribute1', 'attribute2', 'attribute3', and 'membership_id' in 'user_contact' exhibit very low cardinality relative to the total number of rows (20042). 'attribute1' has 37 unique values, 'attribute2' has 36, 'attribute3' has 34, and 'membership_id' has 6 unique values. This could indicate that these columns are intended to be categorical with a limited set of values, or it might point to data entry issues or a lack of meaningful data. Further investigation is recommended to understand the intended use and data quality of these columns.",
+          "sql": "SELECT attribute1, COUNT(*) FROM user_contact GROUP BY attribute1 ORDER BY COUNT(*) DESC; SELECT attribute2, COUNT(*) FROM user_contact GROUP BY attribute2 ORDER BY COUNT(*) DESC; SELECT attribute3, COUNT(*) FROM user_contact GROUP BY attribute3 ORDER BY COUNT(*) DESC; SELECT membership_id, COUNT(*) FROM user_contact GROUP BY membership_id ORDER BY COUNT(*) DESC;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(DISTINCT attribute1) AS distinct_attribute1, COUNT(DISTINCT attribute2) AS distinct_attribute2, COUNT(DISTINCT attribute3) AS distinct_attribute3, COUNT(DISTINCT membership_id) AS distinct_membership_id FROM user_contact;"
+          ],
+          "rollback_queries": [
+            "N/A (Diagnostic query)"
+          ]
+        }
+      ],
+      "report": "## Data Fix Planner\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 21\n- Passed: 4\n- Flagged: 17\n- Severity split: critical=4, high=9, medium=4, low=0\n- Quality score: 15.0 / 100\n- Confidence: 0.9353\n- Flagged tables: budget_history, campagne_contacts, campagne_tags, campaign_type_permission, expediteur, expediteur_groupe, groupe, membership, mention, prm_organization, rev_info, sent_sms, smsc, smsc_route, user_contact\n\n### Metrics\n- Fixes generated: 17\n- Total issues received: 21\n\n### Findings (17)\n\n#### 1. expediteur_groupe [CRITICAL]\n- Problem: Define Primary Key and Index for 'expediteur_groupe'\n- Confidence: 1.0\n- Recommendation: The table 'expediteur_groupe' is missing a primary key, which is crucial for data integrity and efficient data retrieval. The columns 'groupe_id' and 'expediteur_id' are both non-nullable and together form a natural composite primary key. Additionally, these foreign key columns lack an index, which can lead to performance issues during joins and lookups. Defining a composite primary key will automatically create a unique index, addressing both issues.\n- Proposed SQL:\n```sql\nALTER TABLE expediteur_groupe ADD PRIMARY KEY (groupe_id, expediteur_id);\n```\n- Explanation: The table 'expediteur_groupe' is missing a primary key, which is crucial for data integrity and efficient data retrieval. The columns 'groupe_id' and 'expediteur_id' are both non-nullable and together form a natural composite primary key. Additionally, these foreign key columns lack an index, which can lead to performance issues during joins and lookups. Defining a composite primary key will automatically create a unique index, addressing both issues.\n\n#### 2. campagne_contacts [CRITICAL]\n- Problem: Define Primary Key and Index for 'campagne_contacts'\n- Confidence: 1.0\n- Recommendation: The table 'campagne_contacts' is missing a primary key. The columns 'campagne_id' and 'contact_id' are identified as foreign key style columns and together could form a composite primary key. However, 'contact_id' is currently nullable. To establish a primary key on these columns, 'contact_id' must first be made non-nullable. This remediation will first update 'contact_id' to be NOT NULL (assuming no existing NULLs or that NULLs are not desired for a PK) and then define a composite primary key, which will also create a unique index, improving performance and ensuring data integrity. Data deleted cannot be rolled back.\n- Proposed SQL:\n```sql\nALTER TABLE campagne_contacts ALTER COLUMN contact_id SET NOT NULL;\n```\n```sql\nALTER TABLE campagne_contacts ADD PRIMARY KEY (campagne_id, contact_id);\n```\n- Explanation: The table 'campagne_contacts' is missing a primary key. The columns 'campagne_id' and 'contact_id' are identified as foreign key style columns and together could form a composite primary key. However, 'contact_id' is currently nullable. To establish a primary key on these columns, 'contact_id' must first be made non-nullable. This remediation will first update 'contact_id' to be NOT NULL (assuming no existing NULLs or that NULLs are not desired for a PK) and then define a composite primary ke...\n\n#### 3. campagne_tags [CRITICAL]\n- Problem: Define Primary Key and Index for 'campagne_tags'\n- Confidence: 1.0\n- Recommendation: The table 'campagne_tags' is missing a primary key. The columns 'campagne_id' and 'tag_name' are identified as foreign key style columns and together could form a composite primary key. However, 'tag_name' is currently nullable. To establish a primary key on these columns, 'tag_name' must first be made non-nullable. This remediation will first update 'tag_name' to be NOT NULL (assuming no existing NULLs or that NULLs are not desired for a PK) and then define a composite primary key, which will also create a unique index, improving performance and ensuring data integrity. Data deleted cannot be rolled back.\n- Proposed SQL:\n```sql\nALTER TABLE campagne_tags ALTER COLUMN tag_name SET NOT NULL;\n```\n```sql\nALTER TABLE campagne_tags ADD PRIMARY KEY (campagne_id, tag_name);\n```\n- Explanation: The table 'campagne_tags' is missing a primary key. The columns 'campagne_id' and 'tag_name' are identified as foreign key style columns and together could form a composite primary key. However, 'tag_name' is currently nullable. To establish a primary key on these columns, 'tag_name' must first be made non-nullable. This remediation will first update 'tag_name' to be NOT NULL (assuming no existing NULLs or that NULLs are not desired for a PK) and then define a composite primary key, which wil...\n\n#### 4. smsc_route [CRITICAL]\n- Problem: Remove Orphaned Foreign Key References in 'smsc_route.route_smsc_id'\n- Confidence: 1.0\n- Recommendation: There are 6 records in 'smsc_route' where 'route_smsc_id' references an 'id' that does not exist in the 'smsc' table. This indicates a referential integrity violation. Deleting these orphaned records will restore data consistency. Data deleted cannot be rolled back.\n- Proposed SQL:\n```sql\nDELETE FROM smsc_route WHERE route_smsc_id NOT IN (SELECT id FROM smsc);\n```\n- Explanation: There are 6 records in 'smsc_route' where 'route_smsc_id' references an 'id' that does not exist in the 'smsc' table. This indicates a referential integrity violation. Deleting these orphaned records will restore data consistency. Data deleted cannot be rolled back.\n\n#### 5. user_contact [HIGH]\n- Problem: Enforce Uniqueness for 'user_contact.contact_id'\n- Confidence: 1.0\n- Recommendation: The column 'contact_id' in 'user_contact' contains 5 duplicate values, violating the unique column pattern domain rule. This can lead to data integrity issues. The remediation will delete duplicate rows, keeping one arbitrary row for each 'contact_id', and then add a unique constraint to prevent future duplicates. Data deleted cannot be rolled back.\n- Proposed SQL:\n```sql\nDELETE FROM user_contact WHERE ctid NOT IN (SELECT MIN(ctid) FROM user_contact GROUP BY contact_id);\n```\n```sql\nALTER TABLE user_contact ADD CONSTRAINT user_contact_contact_id_unique UNIQUE (contact_id);\n```\n- Explanation: The column 'contact_id' in 'user_contact' contains 5 duplicate values, violating the unique column pattern domain rule. This can lead to data integrity issues. The remediation will delete duplicate rows, keeping one arbitrary row for each 'contact_id', and then add a unique constraint to prevent future duplicates. Data deleted cannot be rolled back.\n\n#### 6. rev_info [HIGH]\n- Problem: Enforce Uniqueness for 'rev_info.email'\n- Confidence: 1.0\n- Recommendation: The column 'email' in 'rev_info' contains 4 duplicate values, violating the unique column pattern domain rule. This can lead to data integrity issues. The remediation will delete duplicate rows, keeping one arbitrary row for each 'email', and then add a unique constraint to prevent future duplicates. Note that a unique constraint in PostgreSQL allows multiple NULL values. Data deleted cannot be rolled back.\n- Proposed SQL:\n```sql\nDELETE FROM rev_info WHERE ctid NOT IN (SELECT MIN(ctid) FROM rev_info GROUP BY email);\n```\n```sql\nALTER TABLE rev_info ADD CONSTRAINT rev_info_email_unique UNIQUE (email);\n```\n- Explanation: The column 'email' in 'rev_info' contains 4 duplicate values, violating the unique column pattern domain rule. This can lead to data integrity issues. The remediation will delete duplicate rows, keeping one arbitrary row for each 'email', and then add a unique constraint to prevent future duplicates. Note that a unique constraint in PostgreSQL allows multiple NULL values. Data deleted cannot be rolled back.\n\n#### 7. campaign_type_permission [HIGH]\n- Problem: Enforce Uniqueness for 'campaign_type_permission.campaign_type'\n- Confidence: 1.0\n- Recommendation: The column 'campaign_type' in 'campaign_type_permission' contains 2 duplicate values, violating the unique column pattern domain rule. This can lead to data integrity issues. The remediation will delete duplicate rows, keeping one arbitrary row for each 'campaign_type', and then add a unique constraint to prevent future duplicates. Data deleted cannot be rolled back.\n- Proposed SQL:\n```sql\nDELETE FROM campaign_type_permission WHERE ctid NOT IN (SELECT MIN(ctid) FROM campaign_type_permission GROUP BY campaign_type);\n```\n```sql\nALTER TABLE campaign_type_permission ADD CONSTRAINT campaign_type_permission_campaign_type_unique UNIQUE (campaign_type);\n```\n- Explanation: The column 'campaign_type' in 'campaign_type_permission' contains 2 duplicate values, violating the unique column pattern domain rule. This can lead to data integrity issues. The remediation will delete duplicate rows, keeping one arbitrary row for each 'campaign_type', and then add a unique constraint to prevent future duplicates. Data deleted cannot be rolled back.\n\n#### 8. smsc [HIGH]\n- Problem: Enforce Uniqueness for 'smsc.type'\n- Confidence: 1.0\n- Recommendation: The column 'type' in 'smsc' contains 3 duplicate values, violating the unique column pattern domain rule. This can lead to data integrity issues. The remediation will delete duplicate rows, keeping one arbitrary row for each 'type', and then add a unique constraint to prevent future duplicates. Data deleted cannot be rolled back.\n- Proposed SQL:\n```sql\nDELETE FROM smsc WHERE ctid NOT IN (SELECT MIN(ctid) FROM smsc GROUP BY type);\n```\n```sql\nALTER TABLE smsc ADD CONSTRAINT smsc_type_unique UNIQUE (type);\n```\n- Explanation: The column 'type' in 'smsc' contains 3 duplicate values, violating the unique column pattern domain rule. This can lead to data integrity issues. The remediation will delete duplicate rows, keeping one arbitrary row for each 'type', and then add a unique constraint to prevent future duplicates. Data deleted cannot be rolled back.\n\n#### 9. prm_organization [HIGH]\n- Problem: Enforce Uniqueness for 'prm_organization.code'\n- Confidence: 0.9\n- Recommendation: The column 'code' in 'prm_organization' contains 10 duplicate values, violating the unique column pattern domain rule. This can lead to data integrity issues. The remediation will delete duplicate rows, keeping one arbitrary row for each 'code', and then add a unique constraint to prevent future duplicates. Data deleted cannot be rolled back.\n- Proposed SQL:\n```sql\nDELETE FROM prm_organization WHERE ctid NOT IN (SELECT MIN(ctid) FROM prm_organization GROUP BY code);\n```\n```sql\nALTER TABLE prm_organization ADD CONSTRAINT prm_organization_code_unique UNIQUE (code);\n```\n- Explanation: The column 'code' in 'prm_organization' contains 10 duplicate values, violating the unique column pattern domain rule. This can lead to data integrity issues. The remediation will delete duplicate rows, keeping one arbitrary row for each 'code', and then add a unique constraint to prevent future duplicates. Data deleted cannot be rolled back.\n\n#### 10. groupe [HIGH]\n- Problem: Review Nullability of Foreign Key Column 'groupe.admin_id'\n- Confidence: 0.9\n- Recommendation: The foreign key column 'admin_id' in table 'groupe' is nullable. While sometimes intentional, foreign keys are often expected to be non-nullable to ensure that every record always references a valid parent record. Review if 'admin_id' should always have a value. If so, consider making it non-nullable after ensuring no existing NULLs or handling them appropriately.\n- Proposed SQL:\n```sql\nSELECT 'Consider ALTER TABLE groupe ALTER COLUMN admin_id SET NOT NULL;\n```\n```sql\n' AS advisory_sql;\n```\n- Explanation: The foreign key column 'admin_id' in table 'groupe' is nullable. While sometimes intentional, foreign keys are often expected to be non-nullable to ensure that every record always references a valid parent record. Review if 'admin_id' should always have a value. If so, consider making it non-nullable after ensuring no existing NULLs or handling them appropriately.\n\n#### 11. campagne_contacts [HIGH]\n- Problem: Review Nullability of Foreign Key Column 'campagne_contacts.contact_id'\n- Confidence: 0.9\n- Recommendation: The foreign key column 'contact_id' in table 'campagne_contacts' is nullable. While sometimes intentional, foreign keys are often expected to be non-nullable to ensure that every record always references a valid parent record. Review if 'contact_id' should always have a value. If so, consider making it non-nullable after ensuring no existing NULLs or handling them appropriately.\n- Proposed SQL:\n```sql\nSELECT 'Consider ALTER TABLE campagne_contacts ALTER COLUMN contact_id SET NOT NULL;\n```\n```sql\n' AS advisory_sql;\n```\n- Explanation: The foreign key column 'contact_id' in table 'campagne_contacts' is nullable. While sometimes intentional, foreign keys are often expected to be non-nullable to ensure that every record always references a valid parent record. Review if 'contact_id' should always have a value. If so, consider making it non-nullable after ensuring no existing NULLs or handling them appropriately.\n\n#### 12. budget_history [HIGH]\n- Problem: Review Nullability of Foreign Key Column 'budget_history.groupe_id'\n- Confidence: 0.9\n- Recommendation: The foreign key column 'groupe_id' in table 'budget_history' is nullable. While sometimes intentional, foreign keys are often expected to be non-nullable to ensure that every record always references a valid parent record. Review if 'groupe_id' should always have a value. If so, consider making it non-nullable after ensuring no existing NULLs or handling them appropriately.\n- Proposed SQL:\n```sql\nSELECT 'Consider ALTER TABLE budget_history ALTER COLUMN groupe_id SET NOT NULL;\n```\n```sql\n' AS advisory_sql;\n```\n- Explanation: The foreign key column 'groupe_id' in table 'budget_history' is nullable. While sometimes intentional, foreign keys are often expected to be non-nullable to ensure that every record always references a valid parent record. Review if 'groupe_id' should always have a value. If so, consider making it non-nullable after ensuring no existing NULLs or handling them appropriately.\n\n#### 13. sent_sms [MEDIUM]\n- Problem: Investigate Non-Positive Numeric Values in 'sent_sms'\n- Confidence: 0.9\n- Recommendation: The table 'sent_sms' contains 6 rows with non-positive numeric values in columns such as 'sql_id', 'time', 'id', 'sms_type', 'mclass', 'mwi', 'coding', 'compress', 'validity', 'deferred', 'dlr_mask', 'pid', 'alt_dcs', 'rpi'. This might indicate data quality issues or unexpected data. Further investigation is recommended to understand the source and impact of these values.\n- Proposed SQL:\n```sql\nSELECT sql_id, time, id, sms_type, mclass, mwi, coding, compress, validity, deferred, dlr_mask, pid, alt_dcs, rpi FROM sent_sms WHERE sql_id <= 0 OR time <= 0 OR id <= 0 OR sms_type <= 0 OR mclass <= 0 OR mwi <= 0 OR coding <= 0 OR compress <= 0 OR validity <= 0 OR deferred <= 0 OR dlr_mask <= 0 OR pid <= 0 OR alt_dcs <= 0 OR rpi <= 0;\n```\n- Explanation: The table 'sent_sms' contains 6 rows with non-positive numeric values in columns such as 'sql_id', 'time', 'id', 'sms_type', 'mclass', 'mwi', 'coding', 'compress', 'validity', 'deferred', 'dlr_mask', 'pid', 'alt_dcs', 'rpi'. This might indicate data quality issues or unexpected data. Further investigation is recommended to understand the source and impact of these values.\n\n#### 14. expediteur [MEDIUM]\n- Problem: Create Index on Foreign Key Column 'expediteur.organization_id'\n- Confidence: 0.8\n- Recommendation: The foreign key column 'organization_id' in table 'expediteur' is not part of a primary key or unique constraint, leading to an index gap. Creating an index on this column will improve the performance of queries involving joins or lookups on this column.\n- Proposed SQL:\n```sql\nCREATE INDEX idx_expediteur_organization_id ON expediteur (organization_id);\n```\n- Explanation: The foreign key column 'organization_id' in table 'expediteur' is not part of a primary key or unique constraint, leading to an index gap. Creating an index on this column will improve the performance of queries involving joins or lookups on this column.\n\n#### 15. membership [MEDIUM]\n- Problem: Create Index on Foreign Key Column 'membership.status_id'\n- Confidence: 0.8\n- Recommendation: The foreign key column 'status_id' in table 'membership' is not part of a primary key or unique constraint, leading to an index gap. Creating an index on this column will improve the performance of queries involving joins or lookups on this column.\n- Proposed SQL:\n```sql\nCREATE INDEX idx_membership_status_id ON membership (status_id);\n```\n- Explanation: The foreign key column 'status_id' in table 'membership' is not part of a primary key or unique constraint, leading to an index gap. Creating an index on this column will improve the performance of queries involving joins or lookups on this column.\n\n#### 16. mention [MEDIUM]\n- Problem: Create Index on Foreign Key Column 'mention.modele_id'\n- Confidence: 0.8\n- Recommendation: The foreign key column 'modele_id' in table 'mention' is not part of a primary key or unique constraint, leading to an index gap. Creating an index on this column will improve the performance of queries involving joins or lookups on this column.\n- Proposed SQL:\n```sql\nCREATE INDEX idx_mention_modele_id ON mention (modele_id);\n```\n- Explanation: The foreign key column 'modele_id' in table 'mention' is not part of a primary key or unique constraint, leading to an index gap. Creating an index on this column will improve the performance of queries involving joins or lookups on this column.\n\n#### 17. user_contact [HIGH]\n- Problem: Investigate Low Cardinality Columns in 'user_contact'\n- Confidence: 1.0\n- Recommendation: The columns 'attribute1', 'attribute2', 'attribute3', and 'membership_id' in 'user_contact' exhibit very low cardinality relative to the total number of rows (20042). 'attribute1' has 37 unique values, 'attribute2' has 36, 'attribute3' has 34, and 'membership_id' has 6 unique values. This could indicate that these columns are intended to be categorical with a limited set of values, or it might point to data entry issues or a lack of meaningful data. Further investigation is recommended to understand the intended use and data quality of these columns.\n- Proposed SQL:\n```sql\nSELECT attribute1, COUNT(*) FROM user_contact GROUP BY attribute1 ORDER BY COUNT(*) DESC;\n```\n```sql\nSELECT attribute2, COUNT(*) FROM user_contact GROUP BY attribute2 ORDER BY COUNT(*) DESC;\n```\n```sql\nSELECT attribute3, COUNT(*) FROM user_contact GROUP BY attribute3 ORDER BY COUNT(*) DESC;\n```\n```sql\nSELECT membership_id, COUNT(*) FROM user_contact GROUP BY membership_id ORDER BY COUNT(*) DESC;\n```\n- Explanation: The columns 'attribute1', 'attribute2', 'attribute3', and 'membership_id' in 'user_contact' exhibit very low cardinality relative to the total number of rows (20042). 'attribute1' has 37 unique values, 'attribute2' has 36, 'attribute3' has 34, and 'membership_id' has 6 unique values. This could indicate that these columns are intended to be categorical with a limited set of values, or it might point to data entry issues or a lack of meaningful data. Further investigation is recommended to und..."
+    }
+  }
+}

@@ -2,6 +2,8 @@ import logging
 import os
 import time
 from datetime import datetime, timezone
+from pathlib import Path
+
 
 from django.db import close_old_connections
 from config.celery import app
@@ -26,7 +28,18 @@ from users.models import User
 
 _logger = logging.getLogger(__name__)
 
-_DEFAULT_POSTGRES_LLM_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-2.0-flash')
+_DEFAULT_POSTGRES_LLM_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-2.5-flash')
+
+_WORKFLOW_DB_DIR = Path(__file__).resolve().parent.parent / "tmp"
+
+
+def _cleanup_job_db(job_id: str) -> None:
+    db_path = _WORKFLOW_DB_DIR / f"qualitylab_{job_id}.db"
+    try:
+        if db_path.exists():
+            db_path.unlink()
+    except Exception:
+        _logger.warning("Failed to remove per-job SQLite file %s", db_path)
 
 def _safe_notify(func, *args):
     try:
@@ -118,29 +131,49 @@ def analyze_postgres_task(
         started_at = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
         t0 = time.perf_counter()
 
-        historical_signals = None
+        # Collect prior findings for post-run comparison only — NOT passed to agents.
+        # Passing them as context would bias the LLM to reproduce old findings even
+        # if the underlying issue has been fixed.  The agents run fresh against the
+        # sandbox; issues that were resolved will simply not appear in new results.
+        prior_findings: list[dict] = []
         if baseline_job_id:
             baseline_result = get_analysis_result(baseline_job_id)
             if baseline_result and baseline_result.get('result'):
                 res = baseline_result['result']
-                findings = (res.get('final_report') or {}).get('findings', [])
-                if findings:
-                    historical_signals = ""
-                    for f in findings:
-                        table = f.get('table', 'Unknown Table')
-                        prob = f.get('problem', 'Unknown Problem')
-                        historical_signals += f"- Table: {table} | Issue: {prob}\n"
+                raw_findings = (res.get('final_report') or {}).get('findings', [])
+                prior_findings = [f for f in raw_findings if isinstance(f, dict)]
 
+        # Fresh analysis — no historical_signals so agents work independently.
         raw_results = analyze_postgres_database(
             connection_string,
             custom_rules=domain_rules,
             job_id=job_id,
             llm_model=resolved_llm_model,
-            historical_signals=historical_signals,
+            historical_signals=None,
+            user_id=str(job_user.id) if job_user else None,
         )
 
         duration_ms = int((time.perf_counter() - t0) * 1000)
         completed_at = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
+
+        # Post-run: identify which prior findings are no longer detected (= fixed).
+        # Match on (table, rule-family) to be resilient to minor LLM phrasing changes.
+        resolved_findings: list[dict] = []
+        if prior_findings:
+            new_findings = (raw_results.get('final_report') or {}).get('findings', [])
+            new_keys: set[tuple[str, str]] = set()
+            for nf in new_findings:
+                if not isinstance(nf, dict):
+                    continue
+                t = (nf.get('table') or '').strip().lower()
+                r = (nf.get('rule') or nf.get('problem') or '').strip().lower().split('_')[0]
+                new_keys.add((t, r))
+
+            for pf in prior_findings:
+                t = (pf.get('table') or '').strip().lower()
+                r = (pf.get('rule') or pf.get('problem') or '').strip().lower().split('_')[0]
+                if (t, r) not in new_keys:
+                    resolved_findings.append(pf)
 
         raw_results['meta'] = {
             'job_id': job_id,
@@ -149,6 +182,15 @@ def analyze_postgres_task(
             'started_at': started_at,
             'completed_at': completed_at,
             'duration_ms': duration_ms,
+            **(
+                {
+                    'baseline_job_id': baseline_job_id,
+                    'prior_findings_count': len(prior_findings),
+                    'resolved_findings_count': len(resolved_findings),
+                    'resolved_findings': resolved_findings,
+                }
+                if baseline_job_id else {}
+            ),
         }
 
         save_analysis_result(
@@ -193,3 +235,5 @@ def analyze_postgres_task(
             _fail_db_name, _fail_date = _get_job_context(job_id)
             _safe_notify(notify_user_job_failed, failed_job_user.email, job_id, _fail_db_name, _fail_date)
         raise
+    finally:
+        _cleanup_job_db(job_id)

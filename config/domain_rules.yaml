@@ -12,6 +12,12 @@
 # Findings with null_ratio above this threshold are flagged as violations.
 max_null_pct: 0.05   # 5 %
 
+# ── Row-level violation threshold ──────────────────────────────────────────
+# Minimum fraction of rows that must violate a row-level rule before it is
+# flagged. Findings where violation_pct < this value are suppressed as noise.
+# Set to null to flag any violation regardless of count.
+max_violation_row_pct: 0.01   # 1 %
+
 # ── Naming convention ──────────────────────────────────────────────────────
 # Expected identifier casing for table and column names.
 # Accepted values: snake_case | camelCase | PascalCase
@@ -47,6 +53,9 @@ unique_column_patterns:
 # migration state tables, framework internals) that must not be analyzed.
 excluded_tables:
   - "*_aud"
+  - "rev_info"       # Hibernate Envers revision metadata — email/actor repeats by design
+  - "send_sms"       # Kannel SMS gateway spool — protocol integer fields (0 is valid)
+  - "sent_sms"       # Kannel SMS gateway log — same: mclass/coding/compress/dlr_mask are protocol constants where 0 is valid
 
 # ── Cardinality suppression ─────────────────────────────────────────────────
 # Skip low_cardinality and categorical_drift findings for tables with fewer

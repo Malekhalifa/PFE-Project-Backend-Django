@@ -1,0 +1,628 @@
+{
+  "pipeline_run_id": "4f48c5ba-cfcf-4054-ac27-f581e9d9a6d9",
+  "database_id": "localhost_5432_easybulk_clean",
+  "llm_model": "gemini-2.5-flash",
+  "run_timestamp": "2026-05-04T20:57:36.490356Z",
+  "summary": {
+    "confidence_score": 97,
+    "data_quality_score": 67,
+    "final_fix_count": 7
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "4f48c5ba-cfcf-4054-ac27-f581e9d9a6d9",
+      "database_id": "localhost_5432_easybulk_clean",
+      "run_timestamp": "2026-05-04T20:57:36.490356Z",
+      "agent": "Schema Integrity Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 24,
+        "items_flagged": 6,
+        "critical_issues": 3,
+        "high_issues": 2,
+        "medium_issues": 1,
+        "low_issues": 0,
+        "overall_quality_score": 0.0,
+        "overall_confidence": 0.9667,
+        "flagged_tables": [
+          "budget_history",
+          "campagne_contacts",
+          "campagne_tags",
+          "expediteur_groupe",
+          "groupe"
+        ]
+      },
+      "metrics": {
+        "validator": "schema",
+        "findings_count": 6
+      },
+      "findings": [
+        {
+          "table": "campagne_contacts",
+          "column": null,
+          "entity": "campagne_contacts",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table": "campagne_contacts",
+            "constraint_type": "PRIMARY KEY",
+            "is_present": false
+          },
+          "remediation_hint": "Add a primary key to the 'campagne_contacts' table.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "Add a primary key to the 'campagne_contacts' table.",
+              "evidence": {
+                "table": "campagne_contacts",
+                "constraint_type": "PRIMARY KEY",
+                "is_present": false
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur_groupe",
+          "column": null,
+          "entity": "expediteur_groupe",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table": "expediteur_groupe",
+            "constraint_type": "PRIMARY KEY",
+            "is_present": false
+          },
+          "remediation_hint": "Add a primary key to the 'expediteur_groupe' table.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "Add a primary key to the 'expediteur_groupe' table.",
+              "evidence": {
+                "table": "expediteur_groupe",
+                "constraint_type": "PRIMARY KEY",
+                "is_present": false
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_tags",
+          "column": null,
+          "entity": "campagne_tags",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table": "campagne_tags",
+            "constraint_type": "PRIMARY KEY",
+            "is_present": false
+          },
+          "remediation_hint": "Add a primary key to the 'campagne_tags' table.",
+          "issues": [
+            {
+              "type": "missing_pk",
+              "severity": "critical",
+              "description": "Add a primary key to the 'campagne_tags' table.",
+              "evidence": {
+                "table": "campagne_tags",
+                "constraint_type": "PRIMARY KEY",
+                "is_present": false
+              }
+            }
+          ]
+        },
+        {
+          "table": "budget_history",
+          "column": "groupe_id",
+          "entity": "budget_history.groupe_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table": "budget_history",
+            "column": "groupe_id",
+            "is_nullable": true,
+            "constraint_type": "FOREIGN KEY"
+          },
+          "remediation_hint": "Consider making the foreign key 'budget_history.groupe_id' non-nullable if it should always reference a parent record.",
+          "issues": [
+            {
+              "type": "nullable_fk",
+              "severity": "high",
+              "description": "Consider making the foreign key 'budget_history.groupe_id' non-nullable if it should always reference a parent record.",
+              "evidence": {
+                "table": "budget_history",
+                "column": "groupe_id",
+                "is_nullable": true,
+                "constraint_type": "FOREIGN KEY"
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "entity": "groupe.admin_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table": "groupe",
+            "column": "admin_id",
+            "is_nullable": true,
+            "constraint_type": "FOREIGN KEY"
+          },
+          "remediation_hint": "Consider making the foreign key 'groupe.admin_id' non-nullable if it should always reference a parent record.",
+          "issues": [
+            {
+              "type": "nullable_fk",
+              "severity": "high",
+              "description": "Consider making the foreign key 'groupe.admin_id' non-nullable if it should always reference a parent record.",
+              "evidence": {
+                "table": "groupe",
+                "column": "admin_id",
+                "is_nullable": true,
+                "constraint_type": "FOREIGN KEY"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_contacts",
+          "column": "contact_id",
+          "entity": "campagne_contacts.contact_id",
+          "rule": "nullable_id_column",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table": "campagne_contacts",
+            "column": "contact_id",
+            "is_nullable": true,
+            "pattern_match": "*_id"
+          },
+          "remediation_hint": "Review the nullability of 'campagne_contacts.contact_id'. If it's intended to be a foreign key, consider adding a formal foreign key constraint and making it non-nullable if appropriate.",
+          "issues": [
+            {
+              "type": "nullable_id_column",
+              "severity": "medium",
+              "description": "Review the nullability of 'campagne_contacts.contact_id'. If it's intended to be a foreign key, consider adding a formal foreign key constraint and making it non-nullable if appropriate.",
+              "evidence": {
+                "table": "campagne_contacts",
+                "column": "contact_id",
+                "is_nullable": true,
+                "pattern_match": "*_id"
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": [],
+      "report": "## Schema Integrity Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 24\n- Flagged: 6\n- Severity split: critical=3, high=2, medium=1, low=0\n- Quality score: 0.0 / 100\n- Confidence: 0.9667\n- Flagged tables: budget_history, campagne_contacts, campagne_tags, expediteur_groupe, groupe\n\n### Metrics\n- Findings count: 6\n- Validator: schema\n\n### Findings (6)\n\n#### 1. campagne_contacts [CRITICAL]\n- Problem: Add a primary key to the 'campagne_contacts' table.\n- Confidence: 1.0\n- Column: None\n- Recommendation: Add a primary key to the 'campagne_contacts' table.\n- Detailed issues:\n  - [CRITICAL] Add a primary key to the 'campagne_contacts' table.\n\n#### 2. expediteur_groupe [CRITICAL]\n- Problem: Add a primary key to the 'expediteur_groupe' table.\n- Confidence: 1.0\n- Column: None\n- Recommendation: Add a primary key to the 'expediteur_groupe' table.\n- Detailed issues:\n  - [CRITICAL] Add a primary key to the 'expediteur_groupe' table.\n\n#### 3. campagne_tags [CRITICAL]\n- Problem: Add a primary key to the 'campagne_tags' table.\n- Confidence: 1.0\n- Column: None\n- Recommendation: Add a primary key to the 'campagne_tags' table.\n- Detailed issues:\n  - [CRITICAL] Add a primary key to the 'campagne_tags' table.\n\n#### 4. budget_history [HIGH]\n- Problem: Consider making the foreign key 'budget_history.groupe_id' non-nullable if it should always reference a parent record.\n- Confidence: 1.0\n- Column: groupe_id\n- Recommendation: Consider making the foreign key 'budget_history.groupe_id' non-nullable if it should always reference a parent record.\n- Detailed issues:\n  - [HIGH] Consider making the foreign key 'budget_history.groupe_id' non-nullable if it should always reference a parent record.\n\n#### 5. groupe [HIGH]\n- Problem: Consider making the foreign key 'groupe.admin_id' non-nullable if it should always reference a parent record.\n- Confidence: 1.0\n- Column: admin_id\n- Recommendation: Consider making the foreign key 'groupe.admin_id' non-nullable if it should always reference a parent record.\n- Detailed issues:\n  - [HIGH] Consider making the foreign key 'groupe.admin_id' non-nullable if it should always reference a parent record.\n\n#### 6. campagne_contacts [MEDIUM]\n- Problem: Review the nullability of 'campagne_contacts.contact_id'. If it's intended to be a foreign key, consider adding a formal foreign key constraint and making it non-nullable if appropriate.\n- Confidence: 0.8\n- Column: contact_id\n- Recommendation: Review the nullability of 'campagne_contacts.contact_id'. If it's intended to be a foreign key, consider adding a formal foreign key constraint and making it non-nullable if appropriate.\n- Detailed issues:\n  - [MEDIUM] Review the nullability of 'campagne_contacts.contact_id'. If it's intended to be a foreign key, consider adding a formal foreign key constraint and making it non-nullable if appropriate."
+    },
+    "column_validator": {
+      "pipeline_run_id": "4f48c5ba-cfcf-4054-ac27-f581e9d9a6d9",
+      "database_id": "localhost_5432_easybulk_clean",
+      "run_timestamp": "2026-05-04T20:57:36.490356Z",
+      "agent": "Column Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 29,
+        "items_flagged": 1,
+        "critical_issues": 0,
+        "high_issues": 1,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 85.0,
+        "overall_confidence": 0.9,
+        "flagged_tables": [
+          "groupe"
+        ]
+      },
+      "metrics": {
+        "validator": "column",
+        "findings_count": 1
+      },
+      "findings": [
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "entity": "groupe.admin_id",
+          "rule": "high_null_ratio",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "table": "groupe",
+            "column": "admin_id",
+            "null_rows": 8,
+            "total_rows": 9,
+            "null_ratio": 0.8888888888888888
+          },
+          "remediation_hint": "Investigate why 'groupe.admin_id' has a high null ratio. If nulls are not expected, data cleansing or a schema change may be required.",
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "high",
+              "description": "Investigate why 'groupe.admin_id' has a high null ratio. If nulls are not expected, data cleansing or a schema change may be required.",
+              "evidence": {
+                "table": "groupe",
+                "column": "admin_id",
+                "null_rows": 8,
+                "total_rows": 9,
+                "null_ratio": 0.8888888888888888
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": [],
+      "report": "## Column Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 29\n- Flagged: 1\n- Severity split: critical=0, high=1, medium=0, low=0\n- Quality score: 85.0 / 100\n- Confidence: 0.9\n- Flagged tables: groupe\n\n### Metrics\n- Findings count: 1\n- Validator: column\n\n### Findings (1)\n\n#### 1. groupe [HIGH]\n- Problem: Investigate why 'groupe.admin_id' has a high null ratio. If nulls are not expected, data cleansing or a schema change may be required.\n- Confidence: 0.9\n- Column: admin_id\n- Recommendation: Investigate why 'groupe.admin_id' has a high null ratio. If nulls are not expected, data cleansing or a schema change may be required.\n- Detailed issues:\n  - [HIGH] Investigate why 'groupe.admin_id' has a high null ratio. If nulls are not expected, data cleansing or a schema change may be required."
+    },
+    "row_level_validator": {
+      "pipeline_run_id": "4f48c5ba-cfcf-4054-ac27-f581e9d9a6d9",
+      "database_id": "localhost_5432_easybulk_clean",
+      "run_timestamp": "2026-05-04T20:57:36.490356Z",
+      "agent": "Row Level Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 30,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "row",
+        "findings_count": 0
+      },
+      "findings": [],
+      "prior_reports": [],
+      "report": "## Row Level Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 30\n- Flagged: 0\n- Severity split: critical=0, high=0, medium=0, low=0\n- Quality score: 100.0 / 100\n- Confidence: 1.0\n\n### Metrics\n- Findings count: 0\n- Validator: row\n\nNo issues were found by this agent."
+    },
+    "cross_row_validator": {
+      "pipeline_run_id": "4f48c5ba-cfcf-4054-ac27-f581e9d9a6d9",
+      "database_id": "localhost_5432_easybulk_clean",
+      "run_timestamp": "2026-05-04T20:57:36.490356Z",
+      "agent": "Cross Row Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 29,
+        "items_flagged": 1,
+        "critical_issues": 0,
+        "high_issues": 1,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 85.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": [
+          "prm_organization"
+        ]
+      },
+      "metrics": {
+        "validator": "crossrow",
+        "findings_count": 1
+      },
+      "findings": [
+        {
+          "table": "prm_organization",
+          "column": "code",
+          "entity": "prm_organization.code",
+          "rule": "duplicate_unique_column",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table": "prm_organization",
+            "column": "code",
+            "duplicate_count": 5,
+            "sample_duplicates": "TRACEABILITY, CAMPAIGN_TYPE_CLASSIC, CAMPAIGN_TYPE_TRANSACTIONAL, URL_NOTIFICATION, MSISDN"
+          },
+          "remediation_hint": "Ensure that the 'code' column in 'prm_organization' contains only unique values.",
+          "issues": [
+            {
+              "type": "duplicate_unique_column",
+              "severity": "high",
+              "description": "Ensure that the 'code' column in 'prm_organization' contains only unique values.",
+              "evidence": {
+                "table": "prm_organization",
+                "column": "code",
+                "duplicate_count": 5,
+                "sample_duplicates": "TRACEABILITY, CAMPAIGN_TYPE_CLASSIC, CAMPAIGN_TYPE_TRANSACTIONAL, URL_NOTIFICATION, MSISDN"
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": [],
+      "report": "## Cross Row Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 29\n- Flagged: 1\n- Severity split: critical=0, high=1, medium=0, low=0\n- Quality score: 85.0 / 100\n- Confidence: 1.0\n- Flagged tables: prm_organization\n\n### Metrics\n- Findings count: 1\n- Validator: crossrow\n\n### Findings (1)\n\n#### 1. prm_organization [HIGH]\n- Problem: Ensure that the 'code' column in 'prm_organization' contains only unique values.\n- Confidence: 1.0\n- Column: code\n- Recommendation: Ensure that the 'code' column in 'prm_organization' contains only unique values.\n- Detailed issues:\n  - [HIGH] Ensure that the 'code' column in 'prm_organization' contains only unique values."
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "4f48c5ba-cfcf-4054-ac27-f581e9d9a6d9",
+      "database_id": "localhost_5432_easybulk_clean",
+      "run_timestamp": "2026-05-04T20:57:36.490356Z",
+      "agent": "Data Fix Planner",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 8,
+        "items_passed": 1,
+        "items_flagged": 7,
+        "critical_issues": 3,
+        "high_issues": 3,
+        "medium_issues": 1,
+        "low_issues": 0,
+        "overall_quality_score": 65.0,
+        "overall_confidence": 0.9714,
+        "flagged_tables": [
+          "budget_history",
+          "campagne_contacts",
+          "campagne_tags",
+          "expediteur_groupe",
+          "groupe",
+          "prm_organization"
+        ]
+      },
+      "metrics": {
+        "total_issues_received": 8,
+        "fixes_generated": 7
+      },
+      "findings": [
+        {
+          "id": "fix_001_campagne_contacts",
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "Add Primary Key to 'campagne_contacts'",
+          "fix": "The table 'campagne_contacts' is missing a primary key. Adding a primary key on (campagne_id, contact_id) will enforce uniqueness and improve data integrity and query performance. This is a critical schema finding.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE campagne_contacts ADD PRIMARY KEY (campagne_id, contact_id);"
+          ],
+          "explanation": "The table 'campagne_contacts' is missing a primary key. Adding a primary key on (campagne_id, contact_id) will enforce uniqueness and improve data integrity and query performance. This is a critical schema finding.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'campagne_contacts'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_contacts DROP CONSTRAINT campagne_contacts_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_002_expediteur_groupe",
+          "table": "expediteur_groupe",
+          "target_table": "expediteur_groupe",
+          "problem": "Add Primary Key to 'expediteur_groupe'",
+          "fix": "The table 'expediteur_groupe' is missing a primary key. Adding a primary key on (groupe_id, expediteur_id) will enforce uniqueness and improve data integrity and query performance. This is a critical schema finding.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE expediteur_groupe ADD PRIMARY KEY (groupe_id, expediteur_id);"
+          ],
+          "explanation": "The table 'expediteur_groupe' is missing a primary key. Adding a primary key on (groupe_id, expediteur_id) will enforce uniqueness and improve data integrity and query performance. This is a critical schema finding.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'expediteur_groupe'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE expediteur_groupe DROP CONSTRAINT expediteur_groupe_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_003_campagne_tags",
+          "table": "campagne_tags",
+          "target_table": "campagne_tags",
+          "problem": "Add Primary Key to 'campagne_tags'",
+          "fix": "The table 'campagne_tags' is missing a primary key. Adding a primary key on (campagne_id, tag_name) will enforce uniqueness and improve data integrity and query performance. This is a critical schema finding.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE campagne_tags ADD PRIMARY KEY (campagne_id, tag_name);"
+          ],
+          "explanation": "The table 'campagne_tags' is missing a primary key. Adding a primary key on (campagne_id, tag_name) will enforce uniqueness and improve data integrity and query performance. This is a critical schema finding.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'campagne_tags'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_tags DROP CONSTRAINT campagne_tags_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_004_budget_history_groupe_id",
+          "table": "budget_history",
+          "target_table": "budget_history",
+          "problem": "Review Nullability of Foreign Key 'budget_history.groupe_id'",
+          "fix": "The foreign key column 'budget_history.groupe_id' is nullable. This means that some budget history records might not be associated with a group. If every budget history record should always belong to a group, this column should be made non-nullable. This is an advisory finding requiring human review to determine the correct business logic. There are currently 0 rows with a NULL value in this column.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT id, groupe_id FROM budget_history WHERE groupe_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "The foreign key column 'budget_history.groupe_id' is nullable. This means that some budget history records might not be associated with a group. If every budget history record should always belong to a group, this column should be made non-nullable. This is an advisory finding requiring human review to determine the correct business logic. There are currently 0 rows with a NULL value in this column.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM budget_history WHERE groupe_id IS NULL;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_005_prm_organization_code",
+          "table": "prm_organization",
+          "target_table": "prm_organization",
+          "problem": "Address Duplicates and Add Unique Constraint on 'prm_organization.code'",
+          "fix": "The column 'prm_organization.code' contains duplicate values, which violates the expectation of uniqueness for this column. There are 5 duplicate entries. The remediation involves deleting duplicate rows, keeping one unique entry for each 'code', and then adding a unique constraint to prevent future duplicates. Please note that data deleted cannot be rolled back.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "DELETE FROM prm_organization WHERE id IN (SELECT id FROM (SELECT id, ROW_NUMBER() OVER(PARTITION BY code ORDER BY id) as rn FROM prm_organization) t WHERE t.rn > 1);",
+            "ALTER TABLE prm_organization ADD CONSTRAINT prm_organization_code_unique UNIQUE (code);"
+          ],
+          "explanation": "The column 'prm_organization.code' contains duplicate values, which violates the expectation of uniqueness for this column. There are 5 duplicate entries. The remediation involves deleting duplicate rows, keeping one unique entry for each 'code', and then adding a unique constraint to prevent future duplicates. Please note that data deleted cannot be rolled back.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM prm_organization GROUP BY code HAVING COUNT(*) > 1;",
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'prm_organization'::regclass AND conname = 'prm_organization_code_unique';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE prm_organization DROP CONSTRAINT prm_organization_code_unique;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_006_groupe_admin_id",
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "Review Nullability and High Null Ratio for 'groupe.admin_id'",
+          "fix": "The column 'groupe.admin_id' is a nullable foreign key and has a high null ratio of 88.89% (8 out of 9 rows are NULL). This suggests that most groups do not have an associated administrator. This finding is advisory and requires human review to determine if 'admin_id' should be non-nullable, if data needs to be backfilled, or if nulls are an expected and acceptable state for this column based on business requirements.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT id, admin_id FROM groupe WHERE admin_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "The column 'groupe.admin_id' is a nullable foreign key and has a high null ratio of 88.89% (8 out of 9 rows are NULL). This suggests that most groups do not have an associated administrator. This finding is advisory and requires human review to determine if 'admin_id' should be non-nullable, if data needs to be backfilled, or if nulls are an expected and acceptable state for this column based on business requirements.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT (CAST(COUNT(*) FILTER (WHERE admin_id IS NULL) AS DECIMAL) / COUNT(*)) AS null_ratio FROM groupe;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_007_campagne_contacts_contact_id",
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "Review Nullability of 'campagne_contacts.contact_id'",
+          "fix": "The column 'campagne_contacts.contact_id' is nullable, despite its name suggesting it's an identifier. If this column is intended to be a foreign key or a critical identifier that should always have a value, it should be made non-nullable. This is an advisory finding requiring human review to confirm the intended behavior. There are currently 0 rows with a NULL value in this column.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT campagne_id, contact_id FROM campagne_contacts WHERE contact_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "The column 'campagne_contacts.contact_id' is nullable, despite its name suggesting it's an identifier. If this column is intended to be a foreign key or a critical identifier that should always have a value, it should be made non-nullable. This is an advisory finding requiring human review to confirm the intended behavior. There are currently 0 rows with a NULL value in this column.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM campagne_contacts WHERE contact_id IS NULL;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        }
+      ],
+      "cards": [
+        {
+          "title": "Add Primary Key to 'campagne_contacts'",
+          "target": "campagne_contacts",
+          "rationale": "The table 'campagne_contacts' is missing a primary key. Adding a primary key on (campagne_id, contact_id) will enforce uniqueness and improve data integrity and query performance. This is a critical schema finding.",
+          "sql": "ALTER TABLE campagne_contacts ADD PRIMARY KEY (campagne_id, contact_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'campagne_contacts'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_contacts DROP CONSTRAINT campagne_contacts_pkey;"
+          ]
+        },
+        {
+          "title": "Add Primary Key to 'expediteur_groupe'",
+          "target": "expediteur_groupe",
+          "rationale": "The table 'expediteur_groupe' is missing a primary key. Adding a primary key on (groupe_id, expediteur_id) will enforce uniqueness and improve data integrity and query performance. This is a critical schema finding.",
+          "sql": "ALTER TABLE expediteur_groupe ADD PRIMARY KEY (groupe_id, expediteur_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'expediteur_groupe'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE expediteur_groupe DROP CONSTRAINT expediteur_groupe_pkey;"
+          ]
+        },
+        {
+          "title": "Add Primary Key to 'campagne_tags'",
+          "target": "campagne_tags",
+          "rationale": "The table 'campagne_tags' is missing a primary key. Adding a primary key on (campagne_id, tag_name) will enforce uniqueness and improve data integrity and query performance. This is a critical schema finding.",
+          "sql": "ALTER TABLE campagne_tags ADD PRIMARY KEY (campagne_id, tag_name);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'campagne_tags'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_tags DROP CONSTRAINT campagne_tags_pkey;"
+          ]
+        },
+        {
+          "title": "Review Nullability of Foreign Key 'budget_history.groupe_id'",
+          "target": "budget_history.groupe_id",
+          "rationale": "The foreign key column 'budget_history.groupe_id' is nullable. This means that some budget history records might not be associated with a group. If every budget history record should always belong to a group, this column should be made non-nullable. This is an advisory finding requiring human review to determine the correct business logic. There are currently 0 rows with a NULL value in this column.",
+          "sql": "SELECT id, groupe_id FROM budget_history WHERE groupe_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM budget_history WHERE groupe_id IS NULL;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Address Duplicates and Add Unique Constraint on 'prm_organization.code'",
+          "target": "prm_organization.code",
+          "rationale": "The column 'prm_organization.code' contains duplicate values, which violates the expectation of uniqueness for this column. There are 5 duplicate entries. The remediation involves deleting duplicate rows, keeping one unique entry for each 'code', and then adding a unique constraint to prevent future duplicates. Please note that data deleted cannot be rolled back.",
+          "sql": "DELETE FROM prm_organization WHERE id IN (SELECT id FROM (SELECT id, ROW_NUMBER() OVER(PARTITION BY code ORDER BY id) as rn FROM prm_organization) t WHERE t.rn > 1); ALTER TABLE prm_organization ADD CONSTRAINT prm_organization_code_unique UNIQUE (code);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM prm_organization GROUP BY code HAVING COUNT(*) > 1;",
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'prm_organization'::regclass AND conname = 'prm_organization_code_unique';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE prm_organization DROP CONSTRAINT prm_organization_code_unique;"
+          ]
+        },
+        {
+          "title": "Review Nullability and High Null Ratio for 'groupe.admin_id'",
+          "target": "groupe.admin_id",
+          "rationale": "The column 'groupe.admin_id' is a nullable foreign key and has a high null ratio of 88.89% (8 out of 9 rows are NULL). This suggests that most groups do not have an associated administrator. This finding is advisory and requires human review to determine if 'admin_id' should be non-nullable, if data needs to be backfilled, or if nulls are an expected and acceptable state for this column based on business requirements.",
+          "sql": "SELECT id, admin_id FROM groupe WHERE admin_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT (CAST(COUNT(*) FILTER (WHERE admin_id IS NULL) AS DECIMAL) / COUNT(*)) AS null_ratio FROM groupe;"
+          ],
+          "rollback_queries": []
+        },
+        {
+          "title": "Review Nullability of 'campagne_contacts.contact_id'",
+          "target": "campagne_contacts.contact_id",
+          "rationale": "The column 'campagne_contacts.contact_id' is nullable, despite its name suggesting it's an identifier. If this column is intended to be a foreign key or a critical identifier that should always have a value, it should be made non-nullable. This is an advisory finding requiring human review to confirm the intended behavior. There are currently 0 rows with a NULL value in this column.",
+          "sql": "SELECT campagne_id, contact_id FROM campagne_contacts WHERE contact_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM campagne_contacts WHERE contact_id IS NULL;"
+          ],
+          "rollback_queries": []
+        }
+      ],
+      "report": "## Data Fix Planner\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 8\n- Passed: 1\n- Flagged: 7\n- Severity split: critical=3, high=3, medium=1, low=0\n- Quality score: 65.0 / 100\n- Confidence: 0.9714\n- Flagged tables: budget_history, campagne_contacts, campagne_tags, expediteur_groupe, groupe, prm_organization\n\n### Metrics\n- Fixes generated: 7\n- Total issues received: 8\n\n### Findings (7)\n\n#### 1. campagne_contacts [CRITICAL]\n- Problem: Add Primary Key to 'campagne_contacts'\n- Confidence: 1.0\n- Recommendation: The table 'campagne_contacts' is missing a primary key. Adding a primary key on (campagne_id, contact_id) will enforce uniqueness and improve data integrity and query performance. This is a critical schema finding.\n- Proposed SQL:\n```sql\nALTER TABLE campagne_contacts ADD PRIMARY KEY (campagne_id, contact_id);\n```\n- Explanation: The table 'campagne_contacts' is missing a primary key. Adding a primary key on (campagne_id, contact_id) will enforce uniqueness and improve data integrity and query performance. This is a critical schema finding.\n\n#### 2. expediteur_groupe [CRITICAL]\n- Problem: Add Primary Key to 'expediteur_groupe'\n- Confidence: 1.0\n- Recommendation: The table 'expediteur_groupe' is missing a primary key. Adding a primary key on (groupe_id, expediteur_id) will enforce uniqueness and improve data integrity and query performance. This is a critical schema finding.\n- Proposed SQL:\n```sql\nALTER TABLE expediteur_groupe ADD PRIMARY KEY (groupe_id, expediteur_id);\n```\n- Explanation: The table 'expediteur_groupe' is missing a primary key. Adding a primary key on (groupe_id, expediteur_id) will enforce uniqueness and improve data integrity and query performance. This is a critical schema finding.\n\n#### 3. campagne_tags [CRITICAL]\n- Problem: Add Primary Key to 'campagne_tags'\n- Confidence: 1.0\n- Recommendation: The table 'campagne_tags' is missing a primary key. Adding a primary key on (campagne_id, tag_name) will enforce uniqueness and improve data integrity and query performance. This is a critical schema finding.\n- Proposed SQL:\n```sql\nALTER TABLE campagne_tags ADD PRIMARY KEY (campagne_id, tag_name);\n```\n- Explanation: The table 'campagne_tags' is missing a primary key. Adding a primary key on (campagne_id, tag_name) will enforce uniqueness and improve data integrity and query performance. This is a critical schema finding.\n\n#### 4. budget_history [HIGH]\n- Problem: Review Nullability of Foreign Key 'budget_history.groupe_id'\n- Confidence: 1.0\n- Recommendation: The foreign key column 'budget_history.groupe_id' is nullable. This means that some budget history records might not be associated with a group. If every budget history record should always belong to a group, this column should be made non-nullable. This is an advisory finding requiring human review to determine the correct business logic. There are currently 0 rows with a NULL value in this column.\n- Proposed SQL:\n```sql\nSELECT id, groupe_id FROM budget_history WHERE groupe_id IS NULL LIMIT 10;\n```\n- Explanation: The foreign key column 'budget_history.groupe_id' is nullable. This means that some budget history records might not be associated with a group. If every budget history record should always belong to a group, this column should be made non-nullable. This is an advisory finding requiring human review to determine the correct business logic. There are currently 0 rows with a NULL value in this column.\n\n#### 5. prm_organization [HIGH]\n- Problem: Address Duplicates and Add Unique Constraint on 'prm_organization.code'\n- Confidence: 1.0\n- Recommendation: The column 'prm_organization.code' contains duplicate values, which violates the expectation of uniqueness for this column. There are 5 duplicate entries. The remediation involves deleting duplicate rows, keeping one unique entry for each 'code', and then adding a unique constraint to prevent future duplicates. Please note that data deleted cannot be rolled back.\n- Proposed SQL:\n```sql\nDELETE FROM prm_organization WHERE id IN (SELECT id FROM (SELECT id, ROW_NUMBER() OVER(PARTITION BY code ORDER BY id) as rn FROM prm_organization) t WHERE t.rn > 1);\n```\n```sql\nALTER TABLE prm_organization ADD CONSTRAINT prm_organization_code_unique UNIQUE (code);\n```\n- Explanation: The column 'prm_organization.code' contains duplicate values, which violates the expectation of uniqueness for this column. There are 5 duplicate entries. The remediation involves deleting duplicate rows, keeping one unique entry for each 'code', and then adding a unique constraint to prevent future duplicates. Please note that data deleted cannot be rolled back.\n\n#### 6. groupe [HIGH]\n- Problem: Review Nullability and High Null Ratio for 'groupe.admin_id'\n- Confidence: 1.0\n- Recommendation: The column 'groupe.admin_id' is a nullable foreign key and has a high null ratio of 88.89% (8 out of 9 rows are NULL). This suggests that most groups do not have an associated administrator. This finding is advisory and requires human review to determine if 'admin_id' should be non-nullable, if data needs to be backfilled, or if nulls are an expected and acceptable state for this column based on business requirements.\n- Proposed SQL:\n```sql\nSELECT id, admin_id FROM groupe WHERE admin_id IS NULL LIMIT 10;\n```\n- Explanation: The column 'groupe.admin_id' is a nullable foreign key and has a high null ratio of 88.89% (8 out of 9 rows are NULL). This suggests that most groups do not have an associated administrator. This finding is advisory and requires human review to determine if 'admin_id' should be non-nullable, if data needs to be backfilled, or if nulls are an expected and acceptable state for this column based on business requirements.\n\n#### 7. campagne_contacts [MEDIUM]\n- Problem: Review Nullability of 'campagne_contacts.contact_id'\n- Confidence: 0.8\n- Recommendation: The column 'campagne_contacts.contact_id' is nullable, despite its name suggesting it's an identifier. If this column is intended to be a foreign key or a critical identifier that should always have a value, it should be made non-nullable. This is an advisory finding requiring human review to confirm the intended behavior. There are currently 0 rows with a NULL value in this column.\n- Proposed SQL:\n```sql\nSELECT campagne_id, contact_id FROM campagne_contacts WHERE contact_id IS NULL LIMIT 10;\n```\n- Explanation: The column 'campagne_contacts.contact_id' is nullable, despite its name suggesting it's an identifier. If this column is intended to be a foreign key or a critical identifier that should always have a value, it should be made non-nullable. This is an advisory finding requiring human review to confirm the intended behavior. There are currently 0 rows with a NULL value in this column."
+    }
+  }
+}

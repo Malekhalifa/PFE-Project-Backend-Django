@@ -9,6 +9,7 @@ import fnmatch
 import io
 import json
 import logging
+import os
 import re
 import time
 from typing import Any
@@ -19,7 +20,7 @@ from agno.run.agent import RunInput, RunOutput
 
 from services.postgres_connection import assert_valid_postgres_dsn, looks_like_postgres_dsn
 
-from .schemas import FixPlan, ValidationReport
+from .schemas import FixPlan, ProfilerReport, ValidationReport
 from .tool_factories import build_postgres_tools
 
 logger = logging.getLogger("qualitylab")
@@ -27,22 +28,52 @@ logger = logging.getLogger("qualitylab")
 _DSN_PATTERN = re.compile(r"(postgres(?:ql)?://[^\s'\"`<>]+)", re.IGNORECASE)
 
 
+def _redis_client():
+    try:
+        import redis as _redis
+        url = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+        return _redis.from_url(url, decode_responses=True, socket_connect_timeout=1)
+    except Exception:
+        return None
+
 def qualitylab_tool_hook(
     run_context: RunContext,
     function_name: str,
     function_call,
     arguments: dict,
 ):
-    """Shared tool hook for in-run deduplication and timing telemetry."""
+    """Shared tool hook for in-run deduplication and timing telemetry.
+
+    Two-layer cache: L1 = in-process dict (zero latency for same-worker repeat
+    calls); L2 = Redis (shared across parallel Celery workers for the same job).
+    """
+    job_id = (run_context.session_state or {}).get("job_id") or "nojob"
     seen: dict[str, Any] = run_context.session_state.setdefault("_tool_calls_seen", {})
     try:
-        cache_key = f"{function_name}:{json.dumps(arguments, sort_keys=True, default=str)}"
+        arg_str = json.dumps(arguments, sort_keys=True, default=str)
     except Exception:
-        cache_key = f"{function_name}:{str(arguments)}"
+        arg_str = str(arguments)
 
-    if cache_key in seen:
-        logger.debug("tool_hook: cache hit for %s", function_name)
-        return seen[cache_key]
+    local_key = f"{function_name}:{arg_str}"
+    redis_key = f"ql:tool:{job_id}:{local_key}"
+
+    if local_key in seen:
+        logger.debug("tool_hook: L1 hit for %s", function_name)
+        return seen[local_key]
+
+    # L2 — Redis hit
+    r = _redis_client()
+    if r is not None:
+        try:
+            cached = r.get(redis_key)
+            if cached is not None:
+                logger.debug("tool_hook: L2 Redis hit for %s", function_name)
+                result = json.loads(cached)
+                seen[local_key] = result
+                return result
+        except Exception:
+            pass
+
 
     t0 = time.perf_counter()
     result = function_call(**arguments)
@@ -55,7 +86,13 @@ def qualitylab_tool_hook(
         {k: v for k, v in arguments.items() if k != "password"},
     )
 
-    seen[cache_key] = result
+    seen[local_key] = result
+
+    if r is not None:
+        try:
+            r.setex(redis_key, 3600, json.dumps(result, default=str))
+        except Exception:
+            pass
     return result
 
 
@@ -300,12 +337,30 @@ def validate_findings_entities(run_output: RunOutput, run_context: RunContext) -
             )
 
 
+def store_profiler_output(run_output: RunOutput, run_context: RunContext) -> None:
+    """Serialize ProfilerReport into session_state so parallel validators can reference it.
+
+    Stored as a plain dict under session_state["profiler_report"] so it survives
+    JSON serialization across workflow steps and is resolvable via {profiler_report}
+    in agent instruction templates.
+    """
+    content = run_output.content
+    if not isinstance(content, ProfilerReport):
+        return
+    try:
+        run_context.session_state["profiler_report"] = content.model_dump()
+        logger.info("store_profiler_output: profiled %d table(s)", len(content.tables))
+    except Exception as exc:
+        logger.warning("store_profiler_output: failed to serialize profiler report: %s", exc)
+
+
 _AGENT_STEP_STATUS: dict[str, str] = {
-    "schema-validator": "running_schema",
-    "column-validator": "running_column",
-    "row-validator": "running_row_level",
-    "crossrow-validator": "running_cross_row",
-    "fix-planner": "running_fix_planner",
+    "schema-validator":      "running_schema",
+    "profiler":              "running_profiler",
+    "statistical-validator": "running_statistical",
+    "structural-validator":  "running_structural",
+    "relational-validator":  "running_relational",
+    "fix-planner":           "running_fix_planner",
 }
 
 
@@ -331,7 +386,17 @@ def emit_pipeline_status(run_input: RunInput, run_context: RunContext) -> None:
         logger.debug("emit_pipeline_status: %s → %s", agent_id, step_status)
     except Exception as exc:
         logger.warning("emit_pipeline_status: failed to update job status for %s: %s", agent_id, exc)
-
+    try:
+        from asgiref.sync import async_to_sync
+        from channels.layers import get_channel_layer
+        channel_layer = get_channel_layer()
+        if channel_layer is not None:
+            async_to_sync(channel_layer.group_send)(
+                f"job_{job_id}",
+                {"type": "job.status", "status": step_status},
+            )
+    except Exception as exc:
+        logger.debug("emit_pipeline_status: WebSocket push skipped: %s", exc)
 
 def log_run_metrics(run_output: RunOutput, run_context: RunContext) -> None:
     state = run_context.session_state
@@ -373,6 +438,12 @@ _ALLOWED_STATEMENT_TYPES = {
     "AlterTable",
     "CreateIndex",
     "CreateTable",
+    # sqlglot structural wrappers that are not destructive
+    "Union",
+    "Intersect",
+    "Except",
+    "With",
+    "Subquery",
 }
 _BLOCKED_STATEMENT_TYPES = {"Drop", "Truncate", "DropTable"}
 
@@ -402,6 +473,13 @@ def validate_fix_sql_safety(run_output: RunOutput) -> None:
             if statement_type in _BLOCKED_STATEMENT_TYPES:
                 violations.append(f"{card.target}: forbidden statement type '{statement_type}'")
             elif statement_type not in _ALLOWED_STATEMENT_TYPES:
+                # sqlglot falls back to 'Command' for valid DDL it cannot fully parse
+                # (e.g. multi-column ALTER TABLE). Check the raw text before rejecting.
+                if statement_type == "Command":
+                    raw_upper = sql_text.strip().upper()
+                    _safe_ddl = ("ALTER TABLE", "CREATE INDEX", "CREATE TABLE", "COMMENT ON")
+                    if any(raw_upper.startswith(p) for p in _safe_ddl):
+                        continue
                 violations.append(f"{card.target}: unexpected statement type '{statement_type}'")
 
     if violations:

@@ -23,7 +23,7 @@ from services.report_service import save_final_pipeline_report
 from .reducer import _try_recover_partial, reduce_signals
 from .reporting import aggregate_pipeline_scores, derive_database_id, report_to_markdown
 from .rules import common_rules, policy_rules
-from .schemas import Finding, FixCard, FixPlan, ReducedFindings, ValidationReport
+from .schemas import Finding, FixCard, FixDependencyGraph, FixPlan, ProfilerReport, ReducedFindings, ValidationReport
 from .team import build_members, resolve_model_id
 
 logger = logging.getLogger(__name__)
@@ -32,9 +32,13 @@ _WORKFLOW_DB_PATH = Path(__file__).resolve().parent.parent / "tmp" / "qualitylab
 _FIX_ID_PATTERN = re.compile(r"[^a-z0-9]+")
 
 
-def _workflow_db() -> SqliteDb:
+def _workflow_db(job_id: str | None = None) -> SqliteDb:
     _WORKFLOW_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    return SqliteDb(db_file=str(_WORKFLOW_DB_PATH))
+    if job_id:
+        path = _WORKFLOW_DB_PATH.parent / f"qualitylab_{job_id}.db"
+    else:
+        path = _WORKFLOW_DB_PATH
+    return SqliteDb(db_file=str(path))
 
 
 def _slug(value: str) -> str:
@@ -116,6 +120,7 @@ def _initial_session_state(
     connection_string: str,
     database_id: str,
     job_id: str | None = None,
+    learned_patterns: list[dict] | None = None,
 ) -> dict[str, Any]:
     return {
         "ql_mode": "pipeline",
@@ -126,6 +131,7 @@ def _initial_session_state(
         "schema": None,
         "last_reduced_findings": [],
         "_tool_calls_seen": {},
+        "learned_patterns": learned_patterns or [],
     }
 
 
@@ -144,8 +150,9 @@ def build_validation_workflow(
     resolved_model_id: str,
     session_state: dict[str, Any],
     dependencies: dict[str, Any],
+    job_id: str | None = None,
 ) -> Workflow:
-    db = _workflow_db()
+    db = _workflow_db(job_id)
     members = build_members(
         model_id=resolved_model_id,
         ql_mode="pipeline",
@@ -159,14 +166,15 @@ def build_validation_workflow(
         session_state=session_state,
         dependencies=dependencies,
         steps=[
-            Step(name="schema", agent=members.schema_validator),
+            Step(name="schema",   agent=members.schema_validator),
+            Step(name="profiler", agent=members.profiler),
             Parallel(
-                Step(name="column", agent=members.column_validator),
-                Step(name="row", agent=members.row_validator),
-                Step(name="crossrow", agent=members.crossrow_validator),
+                Step(name="statistical", agent=members.statistical_validator),
+                Step(name="structural",  agent=members.structural_validator),
+                Step(name="relational",  agent=members.relational_validator),
                 name="Validation Phase",
             ),
-            Step(name="reduce", executor=reduce_signals),
+            Step(name="reduce",   executor=reduce_signals),
             Step(name="fix_plan", agent=members.fix_planner),
         ],
     )
@@ -215,15 +223,33 @@ def _as_validation_report(value: Any, fallback_validator: str = "unknown") -> Va
     return ValidationReport(validator=fallback_validator, findings=[])
 
 
+def _as_profiler_report(value: Any) -> ProfilerReport:
+    if isinstance(value, ProfilerReport):
+        return value
+    if isinstance(value, dict):
+        try:
+            return ProfilerReport.model_validate(value)
+        except Exception:
+            pass
+    return ProfilerReport(tables=[])
+
+
 def _as_reduced_findings(value: Any) -> ReducedFindings:
     if isinstance(value, ReducedFindings):
         return value
+    if isinstance(value, FixDependencyGraph):
+        return value.to_reduced_findings()
     if isinstance(value, dict):
+        # Try FixDependencyGraph first (it's a superset of ReducedFindings)
+        try:
+            return FixDependencyGraph.model_validate(value).to_reduced_findings()
+        except Exception:
+            pass
         return ReducedFindings.model_validate(value)
     if isinstance(value, str):
         try:
             parsed = json.loads(value)
-            return ReducedFindings.model_validate(parsed)
+            return _as_reduced_findings(parsed)
         except Exception:
             logger.warning("Failed to parse ReducedFindings from string, falling back to empty. Content: %s", value[:100])
             return ReducedFindings(findings=[])
@@ -362,13 +388,18 @@ def _legacy_fix_entry(card: FixCard, index: int, reduced_findings: ReducedFindin
     queries = _split_sql_statements(card.sql)
     return {
         "id": f"fix_{index:03d}_{_slug(card.target)}",
+        # Phase 6 fields — dependency-aware fix review
+        "fix_id": card.fix_id or f"fix_{index:03d}_{_slug(card.target)}",
+        "rows_affected_estimate": card.rows_affected_estimate,
+        "tables_touched": list(card.tables_touched),
+        "depends_on": list(card.depends_on),
         "table": table_name,
         "target_table": table_name,
         "problem": card.title,
         "fix": card.rationale,
         "severity": matched.severity if matched else "medium",
         "confidence": matched.confidence if matched else 0.75,
-        "estimated_rows_affected": 0,
+        "estimated_rows_affected": card.rows_affected_estimate or 0,
         "queries": queries,
         "explanation": card.rationale,
         "preconditions": list(card.preconditions),
@@ -429,6 +460,7 @@ def orchestrator_workflow(
     job_id: str | None = None,
     llm_model: str | None = None,
     historical_signals: str | None = None,
+    learned_patterns: list[dict] | None = None,
 ) -> dict[str, Any]:
     resolved_model_id = resolve_model_id(llm_model)
     pipeline_run_id = str(uuid.uuid4())
@@ -441,12 +473,14 @@ def orchestrator_workflow(
         connection_string=connection_string,
         database_id=database_id,
         job_id=job_id,
+        learned_patterns=learned_patterns,
     )
 
     workflow = build_validation_workflow(
         resolved_model_id=resolved_model_id,
         session_state=session_state,
         dependencies=dependencies,
+        job_id=job_id,
     )
     workflow_result = workflow.run(
         input=_build_workflow_prompt(database_id, historical_signals),
@@ -455,12 +489,13 @@ def orchestrator_workflow(
     )
 
     step_outputs = _collect_step_outputs(getattr(workflow_result, "step_results", []))
-    schema_report = _as_validation_report(getattr(step_outputs.get("schema"), "content", ""), "schema")
-    column_report = _as_validation_report(getattr(step_outputs.get("column"), "content", ""), "column")
-    row_report = _as_validation_report(getattr(step_outputs.get("row"), "content", ""), "row")
-    crossrow_report = _as_validation_report(getattr(step_outputs.get("crossrow"), "content", ""), "crossrow")
-    reduced_findings = _as_reduced_findings(getattr(step_outputs.get("reduce"), "content", ""))
-    fix_plan = _as_fix_plan(getattr(step_outputs.get("fix_plan"), "content", ""))
+    schema_report      = _as_validation_report(getattr(step_outputs.get("schema"),      "content", ""), "schema")
+    profiler_report    = _as_profiler_report(  getattr(step_outputs.get("profiler"),     "content", ""))
+    statistical_report = _as_validation_report(getattr(step_outputs.get("statistical"), "content", ""), "statistical")
+    structural_report  = _as_validation_report(getattr(step_outputs.get("structural"),  "content", ""), "structural")
+    relational_report  = _as_validation_report(getattr(step_outputs.get("relational"),  "content", ""), "relational")
+    reduced_findings   = _as_reduced_findings( getattr(step_outputs.get("reduce"),      "content", ""))
+    fix_plan           = _as_fix_plan(         getattr(step_outputs.get("fix_plan"),    "content", ""))
 
     # Total tables inspected is available from the schema priming hook via session_state.
     total_tables = len(session_state.get("schema") or {})
@@ -473,25 +508,25 @@ def orchestrator_workflow(
         run_timestamp=run_timestamp,
         total_entities=total_tables,
     )
-    column_dict = _legacy_validation_report(
-        report=column_report,
-        agent_name="Column Validator",
+    statistical_dict = _legacy_validation_report(
+        report=statistical_report,
+        agent_name="Statistical Validator",
         pipeline_run_id=pipeline_run_id,
         database_id=database_id,
         run_timestamp=run_timestamp,
         total_entities=total_tables,
     )
-    row_dict = _legacy_validation_report(
-        report=row_report,
-        agent_name="Row Level Validator",
+    structural_dict = _legacy_validation_report(
+        report=structural_report,
+        agent_name="Structural Validator",
         pipeline_run_id=pipeline_run_id,
         database_id=database_id,
         run_timestamp=run_timestamp,
         total_entities=total_tables,
     )
-    cross_dict = _legacy_validation_report(
-        report=crossrow_report,
-        agent_name="Cross Row Validator",
+    relational_dict = _legacy_validation_report(
+        report=relational_report,
+        agent_name="Relational Validator",
         pipeline_run_id=pipeline_run_id,
         database_id=database_id,
         run_timestamp=run_timestamp,
@@ -506,7 +541,7 @@ def orchestrator_workflow(
     )
 
     confidence_score, data_quality_score = aggregate_pipeline_scores(
-        [schema_dict, column_dict, row_dict, cross_dict, fix_dict]
+        [schema_dict, statistical_dict, structural_dict, relational_dict, fix_dict]
     )
 
     # Build agent_reports with markdown report fields so the frontend's
@@ -516,17 +551,17 @@ def orchestrator_workflow(
             **schema_dict,
             "report": report_to_markdown(schema_dict, "Schema Integrity Validator"),
         },
-        "column_validator": {
-            **column_dict,
-            "report": report_to_markdown(column_dict, "Column Validator"),
+        "statistical_validator": {
+            **statistical_dict,
+            "report": report_to_markdown(statistical_dict, "Statistical Validator"),
         },
-        "row_level_validator": {
-            **row_dict,
-            "report": report_to_markdown(row_dict, "Row Level Validator"),
+        "structural_validator": {
+            **structural_dict,
+            "report": report_to_markdown(structural_dict, "Structural Validator"),
         },
-        "cross_row_validator": {
-            **cross_dict,
-            "report": report_to_markdown(cross_dict, "Cross Row Validator"),
+        "relational_validator": {
+            **relational_dict,
+            "report": report_to_markdown(relational_dict, "Relational Validator"),
         },
         "data_fix_planner": {
             **fix_dict,
@@ -566,19 +601,22 @@ def orchestrator_workflow(
             "report": report_to_markdown(schema_dict, "Schema Integrity Validator"),
             "json_report": schema_dict,
         },
-        "column_validator_analysis": {
-            **column_dict,
-            "report": report_to_markdown(column_dict, "Column Validator"),
-            "json_report": column_dict,
+        "statistical_analysis": {
+            **statistical_dict,
+            "report": report_to_markdown(statistical_dict, "Statistical Validator"),
+            "json_report": statistical_dict,
         },
-        "row_level_analysis": {
-            "report": report_to_markdown(row_dict, "Row Level Validator"),
-            "json_report": row_dict,
+        "structural_analysis": {
+            **structural_dict,
+            "report": report_to_markdown(structural_dict, "Structural Validator"),
+            "json_report": structural_dict,
         },
-        "cross_row_analysis": {
-            "report": report_to_markdown(cross_dict, "Cross Row Validator"),
-            "json_report": cross_dict,
+        "relational_analysis": {
+            **relational_dict,
+            "report": report_to_markdown(relational_dict, "Relational Validator"),
+            "json_report": relational_dict,
         },
+        "profiler_tables_count": len(profiler_report.tables),
         "fixes": {
             "fixes": legacy_fixes,
         },
