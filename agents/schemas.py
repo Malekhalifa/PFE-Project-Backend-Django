@@ -10,6 +10,16 @@ from pydantic import BaseModel, Field, field_validator
 
 
 # ---------------------------------------------------------------------------
+# Observability metadata — emitted by every agent
+# ---------------------------------------------------------------------------
+
+class AgentMetadata(BaseModel):
+    tables_scanned: int = 0
+    tool_calls_used: int = 0
+    skipped_tables: list[str] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
 # Controlled vocabularies
 # ---------------------------------------------------------------------------
 
@@ -78,6 +88,7 @@ class ValidationReport(BaseModel):
 
     validator: Validator
     findings: list[Finding] = Field(default_factory=list)
+    metadata: Optional[AgentMetadata] = None
 
 
 # ---------------------------------------------------------------------------
@@ -101,6 +112,14 @@ class ProfilerColumnStat(BaseModel):
         default=False,
         description="True if outliers were detected in numeric distribution",
     )
+    # Extended numeric stats (optional — populated for numeric columns only)
+    mean: Optional[float] = None
+    stddev: Optional[float] = None
+    p01: Optional[float] = None
+    p50: Optional[float] = None
+    p99: Optional[float] = None
+    # Categorical entropy: -SUM(freq * ln(freq)) — populated for non-numeric columns
+    entropy: Optional[float] = None
 
 
 class ProfilerTableStat(BaseModel):
@@ -115,6 +134,7 @@ class ProfilerReport(BaseModel):
     """Returned by the Profiler agent. Injected into session state for all parallel validators."""
 
     tables: list[ProfilerTableStat] = Field(default_factory=list)
+    metadata: Optional[AgentMetadata] = None
 
     def get_table(self, table_name: str) -> Optional[ProfilerTableStat]:
         return next((t for t in self.tables if t.table_name == table_name), None)
@@ -170,6 +190,10 @@ class FixCard(BaseModel):
     title: str = Field(..., description="Short action title, e.g. 'Fill NULL emails with mode'")
     target: str = Field(..., description="'table_name' or 'table_name.column_name'")
     rationale: str = Field(..., description="Plain-English explanation for non-technical readers")
+    risk_level: Optional[Literal["low", "medium", "high"]] = Field(
+        default=None,
+        description="Operational risk: high=DELETE/DROP/UPDATE, medium=ADD CONSTRAINT/INDEX, low=advisory/ADD COLUMN",
+    )
     sql: str = Field(
         default="",
         description=(
@@ -212,6 +236,7 @@ class FixPlan(BaseModel):
     """Returned by the Fix Planner agent. One FixCard per actionable finding."""
 
     cards: list[FixCard] = Field(default_factory=list)
+    metadata: Optional[AgentMetadata] = None
 
 
 # ---------------------------------------------------------------------------

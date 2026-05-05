@@ -415,6 +415,44 @@ class ReduceSignals:
                 dropped_lc,
             )
 
+        # ── 3c-0. Schema-constraint backstop — drop findings that contradict the
+        # enriched schema snapshot (PK/UNIQUE/index facts collected at priming time).
+        # This catches LLM false positives that slipped past agent-level guards.
+        if schema:
+            def _contradicts_known_constraints(f: Finding) -> bool:
+                table = f.entity.split(".")[0]
+                col   = f.entity.split(".", 1)[1] if "." in f.entity else ""
+                info  = schema.get(table, {})
+                rule  = f.rule.lower()
+
+                # missing_pk / missing_primary_key — table already has a PK
+                if ("missing" in rule or "primary" in rule) and "pk" in rule or "primary_key" in rule:
+                    if info.get("has_primary_key"):
+                        return True
+
+                # missing_unique_constraint — column already covered by a UNIQUE constraint
+                if "unique" in rule and col:
+                    for uc in info.get("unique_constraints", []):
+                        if col in uc.get("columns", []):
+                            return True
+
+                # missing_index — an index whose name contains the column already exists
+                if ("index" in rule or "idx" in rule) and col:
+                    for idx_name in info.get("indexes", []):
+                        if col in idx_name:
+                            return True
+
+                return False
+
+            before_cs = len(filtered)
+            filtered = [f for f in filtered if not _contradicts_known_constraints(f)]
+            dropped_cs = before_cs - len(filtered)
+            if dropped_cs:
+                logger.warning(
+                    "reducer: dropped %d finding(s) contradicted by schema-snapshot constraints",
+                    dropped_cs,
+                )
+
         # ── 3c. Schema + profiler entity filter — drop hallucinated table/column refs ─
         if schema or profiler_tables:
             valid_tables = set(schema.keys()) | profiler_tables | {"general", "database"}

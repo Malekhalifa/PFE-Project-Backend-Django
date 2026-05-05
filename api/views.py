@@ -1621,8 +1621,7 @@ class ExecuteFixView(APIView):
             except Exception:
                 logger.exception('Failed to send fix execution notification for job %s', job_id)
 
-        http_status = status.HTTP_200_OK if ex_status == 'success' else status.HTTP_500_INTERNAL_SERVER_ERROR
-        return Response(payload, status=http_status)
+        return Response(payload, status=status.HTTP_200_OK)
 
 
 # ──────────────────────────────────────────────

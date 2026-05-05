@@ -209,6 +209,79 @@ def _is_excluded(table_name: str, patterns: list[str]) -> bool:
     return any(fnmatch.fnmatch(table_name, pat) for pat in patterns)
 
 
+def _query_table_constraints(table_name: str) -> dict:
+    """Query PK, UNIQUE constraints and index names for *table_name*.
+
+    Returns a dict with:
+      primary_key_columns  – list[str], empty if no PK
+      has_primary_key      – bool
+      unique_constraints   – list[{"name": str, "columns": list[str]}]
+      indexes              – list[str] (index names, including PK/UNIQUE indexes)
+    """
+    from .tools import _q
+
+    result: dict = {
+        "primary_key_columns": [],
+        "has_primary_key": False,
+        "unique_constraints": [],
+        "indexes": [],
+    }
+
+    # PK + UNIQUE in one round-trip
+    constraints_raw = _q(
+        f"""
+        SELECT tc.constraint_type, tc.constraint_name,
+               array_agg(kcu.column_name ORDER BY kcu.ordinal_position) AS columns
+        FROM information_schema.table_constraints tc
+        JOIN information_schema.key_column_usage kcu
+            ON  tc.constraint_name = kcu.constraint_name
+            AND tc.table_schema    = kcu.table_schema
+            AND tc.table_name      = kcu.table_name
+        WHERE tc.table_schema     = 'public'
+          AND tc.table_name       = '{table_name}'
+          AND tc.constraint_type IN ('PRIMARY KEY', 'UNIQUE')
+        GROUP BY tc.constraint_type, tc.constraint_name
+        LIMIT 30
+        """
+    )
+    if constraints_raw and not constraints_raw.startswith("Error") and not constraints_raw.startswith("Query executed"):
+        try:
+            for row in json.loads(constraints_raw):
+                ctype = row.get("constraint_type", "")
+                cols = row.get("columns") or []
+                if isinstance(cols, str):
+                    cols = [c.strip().strip('"') for c in cols.strip("{}").split(",") if c.strip()]
+                if ctype == "PRIMARY KEY":
+                    result["primary_key_columns"] = cols
+                    result["has_primary_key"] = bool(cols)
+                elif ctype == "UNIQUE":
+                    result["unique_constraints"].append({
+                        "name": row.get("constraint_name", ""),
+                        "columns": cols,
+                    })
+        except Exception:
+            pass
+
+    # Index names
+    indexes_raw = _q(
+        f"""
+        SELECT indexname FROM pg_indexes
+        WHERE schemaname = 'public' AND tablename = '{table_name}'
+        LIMIT 40
+        """
+    )
+    if indexes_raw and not indexes_raw.startswith("Error") and not indexes_raw.startswith("Query executed"):
+        try:
+            result["indexes"] = [
+                r.get("indexname", "") for r in json.loads(indexes_raw)
+                if r.get("indexname")
+            ]
+        except Exception:
+            pass
+
+    return result
+
+
 def ensure_schema_primed(run_input: RunInput, run_context: RunContext) -> None:
     """
     Populate session_state["schema"] from PostgresTools.show_tables/describe_table.
@@ -236,6 +309,12 @@ def ensure_schema_primed(run_input: RunInput, run_context: RunContext) -> None:
             )
         return
 
+    # Connect postgres_tool early so _query_pk_columns can run below.
+    connection_string = state.get("connection_string")
+    if connection_string:
+        from .tools import postgres_tool
+        postgres_tool.connect(connection_string)
+
     excluded_patterns = _load_excluded_table_patterns()
     all_tables = _normalize_table_list_result(pg.show_tables())
     tables = [t for t in all_tables if not _is_excluded(t, excluded_patterns)]
@@ -247,20 +326,21 @@ def ensure_schema_primed(run_input: RunInput, run_context: RunContext) -> None:
     schema: dict[str, Any] = {}
     for table_name in tables:
         try:
-            schema[table_name] = _normalize_describe_table_result(
+            entry = _normalize_describe_table_result(
                 table_name,
                 pg.describe_table(table_name),
             )
+            # Embed full constraint info so every agent sees the definitive state
+            # without needing to call describe_constraints() themselves.
+            if connection_string:
+                constraints = _query_table_constraints(table_name)
+                entry.update(constraints)
+            schema[table_name] = entry
         except Exception as exc:
             logger.warning("ensure_schema_primed: failed to describe %s: %s", table_name, exc)
 
     state["schema"] = schema
     logger.info("ensure_schema_primed: loaded %d tables", len(schema))
-
-    connection_string = state.get("connection_string")
-    if connection_string:
-        from .tools import postgres_tool
-        postgres_tool.connect(connection_string)
 
 
 def inject_domain_rules(run_input: RunInput, run_context: RunContext) -> None:

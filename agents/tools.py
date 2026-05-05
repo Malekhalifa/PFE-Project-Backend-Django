@@ -111,7 +111,7 @@ _DDL_EXPLAIN_RE = _re.compile(
 )
 
 
-@tool(cache_results=True)
+@tool(cache_results=False)
 def inspect_query(query: str) -> str:
     """
     Shows the EXPLAIN execution plan for a SELECT query.
@@ -146,7 +146,7 @@ def inspect_query(query: str) -> str:
                 pass
 
 
-@tool(cache_results=True)
+@tool(cache_results=False)
 def detect_outliers(table_name: str, column_name: str) -> str:
     """Detect IQR-based numerical anomalies for one column."""
     # Require at least 30 non-null values and a non-zero IQR for meaningful outlier detection.
@@ -202,7 +202,7 @@ def detect_outliers(table_name: str, column_name: str) -> str:
     )
 
 
-@tool(cache_results=True)
+@tool(cache_results=False)
 def detect_patterns(table_name: str, column_name: str) -> str:
     """Sample representative text values to detect obvious formatting patterns."""
     return _q(
@@ -211,7 +211,7 @@ def detect_patterns(table_name: str, column_name: str) -> str:
     )
 
 
-@tool(cache_results=True)
+@tool(cache_results=False)
 def describe_constraints(table_name: str) -> str:
     """Return all PRIMARY KEY, UNIQUE, FOREIGN KEY, and CHECK constraints for a table.
 
@@ -246,7 +246,7 @@ def describe_constraints(table_name: str) -> str:
     )
 
 
-@tool(cache_results=True)
+@tool(cache_results=False)
 def check_categorical_drift(table_name: str, column_name: str) -> str:
     """List low-frequency categories that may indicate typos or drift."""
     return _q(
@@ -264,7 +264,7 @@ def check_categorical_drift(table_name: str, column_name: str) -> str:
     )
 
 
-@tool(cache_results=True, cache_ttl=3600)
+@tool(cache_results=False)
 def analyze_relationship(source_table: str, source_col: str, target_table: str, target_col: str) -> str:
     """Count orphaned rows between two related tables."""
     return _q(
@@ -275,7 +275,7 @@ def analyze_relationship(source_table: str, source_col: str, target_table: str, 
     )
 
 
-@tool(cache_results=True, cache_ttl=3600)
+@tool(cache_results=False)
 def detect_fd(table_name: str, pk_col: str, dep_col: str) -> str:
     """Check whether one column functionally determines another."""
     return _q(
@@ -285,7 +285,7 @@ def detect_fd(table_name: str, pk_col: str, dep_col: str) -> str:
     )
 
 
-@tool(cache_results=True)
+@tool(cache_results=False)
 def diff_tables(table1: str, table2: str, join_col: str) -> str:
     """Find records present in one table but missing from the other."""
     return _q(
@@ -295,7 +295,7 @@ def diff_tables(table1: str, table2: str, join_col: str) -> str:
     )
 
 
-@tool(cache_results=True)
+@tool(cache_results=False)
 def find_duplicate_rows(table_name: str, group_columns: str) -> str:
     """Expose logical duplicates on composite key candidates."""
     return _q(
@@ -305,7 +305,7 @@ def find_duplicate_rows(table_name: str, group_columns: str) -> str:
     )
 
 
-@tool(cache_results=True)
+@tool(cache_results=False)
 def suggest_indexes(table_name: str) -> str:
     """Inspect sequential scans and index usage for one table."""
     return _q(
@@ -314,7 +314,7 @@ def suggest_indexes(table_name: str) -> str:
     )
 
 
-@tool(cache_results=True)
+@tool(cache_results=False)
 def check_bloat_and_dead_tuples(table_name: str) -> str:
     """Inspect dead tuples and vacuum stats for one table."""
     return _q(

@@ -1,0 +1,1708 @@
+{
+  "pipeline_run_id": "8f00632f-d2ae-4e65-b76e-1d3f3e3d2efa",
+  "database_id": "localhost_5432_easybulk_clean",
+  "llm_model": "gemini-2.5-flash",
+  "run_timestamp": "2026-05-05T17:54:42.426157Z",
+  "summary": {
+    "confidence_score": 99,
+    "data_quality_score": 30,
+    "final_fix_count": 19
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "8f00632f-d2ae-4e65-b76e-1d3f3e3d2efa",
+      "database_id": "localhost_5432_easybulk_clean",
+      "run_timestamp": "2026-05-05T17:54:42.426157Z",
+      "agent": "Schema Integrity Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 22,
+        "items_flagged": 8,
+        "critical_issues": 3,
+        "high_issues": 5,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 0.0,
+        "overall_confidence": 0.975,
+        "flagged_tables": [
+          "budget_history",
+          "campagne_contacts",
+          "campagne_tags",
+          "expediteur_groupe",
+          "groupe",
+          "modele"
+        ]
+      },
+      "metrics": {
+        "validator": "schema",
+        "findings_count": 8
+      },
+      "findings": [
+        {
+          "table": "campagne_contacts",
+          "column": null,
+          "entity": "campagne_contacts",
+          "rule": "primary_key_required",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campagne_contacts",
+            "primary_key_exists": false
+          },
+          "remediation_hint": "Define a primary key for the table 'campagne_contacts' to ensure unique record identification.",
+          "issues": [
+            {
+              "type": "primary_key_required",
+              "severity": "critical",
+              "description": "Define a primary key for the table 'campagne_contacts' to ensure unique record identification.",
+              "evidence": {
+                "table_name": "campagne_contacts",
+                "primary_key_exists": false
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur_groupe",
+          "column": null,
+          "entity": "expediteur_groupe",
+          "rule": "primary_key_required",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "expediteur_groupe",
+            "primary_key_exists": false
+          },
+          "remediation_hint": "Define a primary key for the table 'expediteur_groupe' to ensure unique record identification.",
+          "issues": [
+            {
+              "type": "primary_key_required",
+              "severity": "critical",
+              "description": "Define a primary key for the table 'expediteur_groupe' to ensure unique record identification.",
+              "evidence": {
+                "table_name": "expediteur_groupe",
+                "primary_key_exists": false
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_tags",
+          "column": null,
+          "entity": "campagne_tags",
+          "rule": "primary_key_required",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campagne_tags",
+            "primary_key_exists": false
+          },
+          "remediation_hint": "Define a primary key for the table 'campagne_tags' to ensure unique record identification.",
+          "issues": [
+            {
+              "type": "primary_key_required",
+              "severity": "critical",
+              "description": "Define a primary key for the table 'campagne_tags' to ensure unique record identification.",
+              "evidence": {
+                "table_name": "campagne_tags",
+                "primary_key_exists": false
+              }
+            }
+          ]
+        },
+        {
+          "table": "budget_history",
+          "column": "groupe_id",
+          "entity": "budget_history.groupe_id",
+          "rule": "nullable_foreign_key",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "budget_history",
+            "column_name": "groupe_id",
+            "is_nullable": true,
+            "foreign_table": "groupe",
+            "foreign_column": "id"
+          },
+          "remediation_hint": "Consider making column 'budget_history.groupe_id' NOT NULL if it should always reference a valid 'groupe.id'.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key",
+              "severity": "high",
+              "description": "Consider making column 'budget_history.groupe_id' NOT NULL if it should always reference a valid 'groupe.id'.",
+              "evidence": {
+                "table_name": "budget_history",
+                "column_name": "groupe_id",
+                "is_nullable": true,
+                "foreign_table": "groupe",
+                "foreign_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "entity": "groupe.admin_id",
+          "rule": "nullable_foreign_key",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "groupe",
+            "column_name": "admin_id",
+            "is_nullable": true,
+            "foreign_table": "users",
+            "foreign_column": "id"
+          },
+          "remediation_hint": "Consider making column 'groupe.admin_id' NOT NULL if it should always reference a valid 'users.id'.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key",
+              "severity": "high",
+              "description": "Consider making column 'groupe.admin_id' NOT NULL if it should always reference a valid 'users.id'.",
+              "evidence": {
+                "table_name": "groupe",
+                "column_name": "admin_id",
+                "is_nullable": true,
+                "foreign_table": "users",
+                "foreign_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_contacts",
+          "column": "contact_id",
+          "entity": "campagne_contacts.contact_id",
+          "rule": "nullable_foreign_key_style",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "campagne_contacts",
+            "column_name": "contact_id",
+            "is_nullable": true,
+            "column_pattern": "*_id"
+          },
+          "remediation_hint": "Consider making column 'campagne_contacts.contact_id' NOT NULL if it should always reference a valid contact.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key_style",
+              "severity": "high",
+              "description": "Consider making column 'campagne_contacts.contact_id' NOT NULL if it should always reference a valid contact.",
+              "evidence": {
+                "table_name": "campagne_contacts",
+                "column_name": "contact_id",
+                "is_nullable": true,
+                "column_pattern": "*_id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_tags",
+          "column": "tag_name",
+          "entity": "campagne_tags.tag_name",
+          "rule": "nullable_foreign_key_style",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "campagne_tags",
+            "column_name": "tag_name",
+            "is_nullable": true,
+            "column_pattern": "*_name"
+          },
+          "remediation_hint": "Consider making column 'campagne_tags.tag_name' NOT NULL if it should always reference a valid tag.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key_style",
+              "severity": "high",
+              "description": "Consider making column 'campagne_tags.tag_name' NOT NULL if it should always reference a valid tag.",
+              "evidence": {
+                "table_name": "campagne_tags",
+                "column_name": "tag_name",
+                "is_nullable": true,
+                "column_pattern": "*_name"
+              }
+            }
+          ]
+        },
+        {
+          "table": "modele",
+          "column": "membership_id",
+          "entity": "modele.membership_id",
+          "rule": "nullable_foreign_key",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "modele",
+            "column_name": "membership_id",
+            "is_nullable": true,
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "remediation_hint": "Consider making column 'modele.membership_id' NOT NULL if it should always reference a valid 'membership.id'.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key",
+              "severity": "high",
+              "description": "Consider making column 'modele.membership_id' NOT NULL if it should always reference a valid 'membership.id'.",
+              "evidence": {
+                "table_name": "modele",
+                "column_name": "membership_id",
+                "is_nullable": true,
+                "foreign_table": "membership",
+                "foreign_column": "id"
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": [],
+      "report": "## Schema Integrity Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 22\n- Flagged: 8\n- Severity split: critical=3, high=5, medium=0, low=0\n- Quality score: 0.0 / 100\n- Confidence: 0.975\n- Flagged tables: budget_history, campagne_contacts, campagne_tags, expediteur_groupe, groupe, modele\n\n### Metrics\n- Findings count: 8\n- Validator: schema\n\n### Findings (8)\n\n#### 1. campagne_contacts [CRITICAL]\n- Problem: Define a primary key for the table 'campagne_contacts' to ensure unique record identification.\n- Confidence: 1.0\n- Column: None\n- Recommendation: Define a primary key for the table 'campagne_contacts' to ensure unique record identification.\n- Detailed issues:\n  - [CRITICAL] Define a primary key for the table 'campagne_contacts' to ensure unique record identification.\n\n#### 2. expediteur_groupe [CRITICAL]\n- Problem: Define a primary key for the table 'expediteur_groupe' to ensure unique record identification.\n- Confidence: 1.0\n- Column: None\n- Recommendation: Define a primary key for the table 'expediteur_groupe' to ensure unique record identification.\n- Detailed issues:\n  - [CRITICAL] Define a primary key for the table 'expediteur_groupe' to ensure unique record identification.\n\n#### 3. campagne_tags [CRITICAL]\n- Problem: Define a primary key for the table 'campagne_tags' to ensure unique record identification.\n- Confidence: 1.0\n- Column: None\n- Recommendation: Define a primary key for the table 'campagne_tags' to ensure unique record identification.\n- Detailed issues:\n  - [CRITICAL] Define a primary key for the table 'campagne_tags' to ensure unique record identification.\n\n#### 4. budget_history [HIGH]\n- Problem: Consider making column 'budget_history.groupe_id' NOT NULL if it should always reference a valid 'groupe.id'.\n- Confidence: 1.0\n- Column: groupe_id\n- Recommendation: Consider making column 'budget_history.groupe_id' NOT NULL if it should always reference a valid 'groupe.id'.\n- Detailed issues:\n  - [HIGH] Consider making column 'budget_history.groupe_id' NOT NULL if it should always reference a valid 'groupe.id'.\n\n#### 5. groupe [HIGH]\n- Problem: Consider making column 'groupe.admin_id' NOT NULL if it should always reference a valid 'users.id'.\n- Confidence: 1.0\n- Column: admin_id\n- Recommendation: Consider making column 'groupe.admin_id' NOT NULL if it should always reference a valid 'users.id'.\n- Detailed issues:\n  - [HIGH] Consider making column 'groupe.admin_id' NOT NULL if it should always reference a valid 'users.id'.\n\n#### 6. campagne_contacts [HIGH]\n- Problem: Consider making column 'campagne_contacts.contact_id' NOT NULL if it should always reference a valid contact.\n- Confidence: 0.9\n- Column: contact_id\n- Recommendation: Consider making column 'campagne_contacts.contact_id' NOT NULL if it should always reference a valid contact.\n- Detailed issues:\n  - [HIGH] Consider making column 'campagne_contacts.contact_id' NOT NULL if it should always reference a valid contact.\n\n#### 7. campagne_tags [HIGH]\n- Problem: Consider making column 'campagne_tags.tag_name' NOT NULL if it should always reference a valid tag.\n- Confidence: 0.9\n- Column: tag_name\n- Recommendation: Consider making column 'campagne_tags.tag_name' NOT NULL if it should always reference a valid tag.\n- Detailed issues:\n  - [HIGH] Consider making column 'campagne_tags.tag_name' NOT NULL if it should always reference a valid tag.\n\n#### 8. modele [HIGH]\n- Problem: Consider making column 'modele.membership_id' NOT NULL if it should always reference a valid 'membership.id'.\n- Confidence: 1.0\n- Column: membership_id\n- Recommendation: Consider making column 'modele.membership_id' NOT NULL if it should always reference a valid 'membership.id'.\n- Detailed issues:\n  - [HIGH] Consider making column 'modele.membership_id' NOT NULL if it should always reference a valid 'membership.id'."
+    },
+    "column_validator": {
+      "pipeline_run_id": "8f00632f-d2ae-4e65-b76e-1d3f3e3d2efa",
+      "database_id": "localhost_5432_easybulk_clean",
+      "run_timestamp": "2026-05-05T17:54:42.426157Z",
+      "agent": "Column Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 15,
+        "items_flagged": 15,
+        "critical_issues": 3,
+        "high_issues": 12,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 0.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": [
+          "budget_history",
+          "campagne_contacts",
+          "campagne_tags",
+          "campaign_schedule",
+          "campaign_spool_state",
+          "expediteur_groupe",
+          "groupe",
+          "modele",
+          "prm_organization",
+          "prm_status",
+          "smsc",
+          "smsc_organization",
+          "smsc_route",
+          "smsc_routing_rule"
+        ]
+      },
+      "metrics": {
+        "validator": "column",
+        "findings_count": 15
+      },
+      "findings": [
+        {
+          "table": "campagne_contacts",
+          "column": null,
+          "entity": "campagne_contacts",
+          "rule": "primary_key_required",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campagne_contacts",
+            "primary_key_exists": false
+          },
+          "remediation_hint": "Define a primary key for the table 'campagne_contacts' to ensure unique record identification.",
+          "issues": [
+            {
+              "type": "primary_key_required",
+              "severity": "critical",
+              "description": "Define a primary key for the table 'campagne_contacts' to ensure unique record identification.",
+              "evidence": {
+                "table_name": "campagne_contacts",
+                "primary_key_exists": false
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur_groupe",
+          "column": null,
+          "entity": "expediteur_groupe",
+          "rule": "primary_key_required",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "expediteur_groupe",
+            "primary_key_exists": false
+          },
+          "remediation_hint": "Define a primary key for the table 'expediteur_groupe' to ensure unique record identification.",
+          "issues": [
+            {
+              "type": "primary_key_required",
+              "severity": "critical",
+              "description": "Define a primary key for the table 'expediteur_groupe' to ensure unique record identification.",
+              "evidence": {
+                "table_name": "expediteur_groupe",
+                "primary_key_exists": false
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_tags",
+          "column": null,
+          "entity": "campagne_tags",
+          "rule": "primary_key_required",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campagne_tags",
+            "primary_key_exists": false
+          },
+          "remediation_hint": "Define a primary key for the table 'campagne_tags' to ensure unique record identification.",
+          "issues": [
+            {
+              "type": "primary_key_required",
+              "severity": "critical",
+              "description": "Define a primary key for the table 'campagne_tags' to ensure unique record identification.",
+              "evidence": {
+                "table_name": "campagne_tags",
+                "primary_key_exists": false
+              }
+            }
+          ]
+        },
+        {
+          "table": "budget_history",
+          "column": "groupe_id",
+          "entity": "budget_history.groupe_id",
+          "rule": "nullable_foreign_key",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "budget_history",
+            "column_name": "groupe_id",
+            "is_nullable": true,
+            "foreign_table": "groupe",
+            "foreign_column": "id"
+          },
+          "remediation_hint": "Consider making column 'budget_history.groupe_id' NOT NULL if it should always reference a valid 'groupe.id'.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key",
+              "severity": "high",
+              "description": "Consider making column 'budget_history.groupe_id' NOT NULL if it should always reference a valid 'groupe.id'.",
+              "evidence": {
+                "table_name": "budget_history",
+                "column_name": "groupe_id",
+                "is_nullable": true,
+                "foreign_table": "groupe",
+                "foreign_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "entity": "groupe.admin_id",
+          "rule": "nullable_foreign_key",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "groupe",
+            "column_name": "admin_id",
+            "is_nullable": true,
+            "foreign_table": "users",
+            "foreign_column": "id"
+          },
+          "remediation_hint": "Consider making column 'groupe.admin_id' NOT NULL if it should always reference a valid 'users.id'.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key",
+              "severity": "high",
+              "description": "Consider making column 'groupe.admin_id' NOT NULL if it should always reference a valid 'users.id'.",
+              "evidence": {
+                "table_name": "groupe",
+                "column_name": "admin_id",
+                "is_nullable": true,
+                "foreign_table": "users",
+                "foreign_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "modele",
+          "column": "membership_id",
+          "entity": "modele.membership_id",
+          "rule": "nullable_foreign_key",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "modele",
+            "column_name": "membership_id",
+            "is_nullable": true,
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "remediation_hint": "Consider making column 'modele.membership_id' NOT NULL if it should always reference a valid 'membership.id'.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key",
+              "severity": "high",
+              "description": "Consider making column 'modele.membership_id' NOT NULL if it should always reference a valid 'membership.id'.",
+              "evidence": {
+                "table_name": "modele",
+                "column_name": "membership_id",
+                "is_nullable": true,
+                "foreign_table": "membership",
+                "foreign_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_schedule",
+          "column": "weekend",
+          "entity": "campaign_schedule.weekend",
+          "rule": "high_null_ratio",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campaign_schedule",
+            "column_name": "weekend",
+            "null_ratio": 1.0,
+            "total_rows": 3
+          },
+          "remediation_hint": "Investigate why column 'campaign_schedule.weekend' has a high null ratio (100.00%). Consider if these nulls are expected or indicate missing data.",
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "high",
+              "description": "Investigate why column 'campaign_schedule.weekend' has a high null ratio (100.00%). Consider if these nulls are expected or indicate missing data.",
+              "evidence": {
+                "table_name": "campaign_schedule",
+                "column_name": "weekend",
+                "null_ratio": 1.0,
+                "total_rows": 3
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": null,
+          "entity": "campaign_spool_state",
+          "rule": "high_null_ratio",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campaign_spool_state",
+            "columns_with_high_null_ratio": [
+              "is_full",
+              "queued_max_size_reached"
+            ],
+            "null_ratios": {
+              "is_full": 1.0,
+              "queued_max_size_reached": 1.0
+            },
+            "total_rows": 7
+          },
+          "remediation_hint": "Investigate why columns 'is_full', 'queued_max_size_reached' in table 'campaign_spool_state' have high null ratios. Consider if these nulls are expected or indicate missing data.",
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "high",
+              "description": "Investigate why columns 'is_full', 'queued_max_size_reached' in table 'campaign_spool_state' have high null ratios. Consider if these nulls are expected or indicate missing data.",
+              "evidence": {
+                "table_name": "campaign_spool_state",
+                "columns_with_high_null_ratio": [
+                  "is_full",
+                  "queued_max_size_reached"
+                ],
+                "null_ratios": {
+                  "is_full": 1.0,
+                  "queued_max_size_reached": 1.0
+                },
+                "total_rows": 7
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": null,
+          "entity": "groupe",
+          "rule": "high_null_ratio",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "groupe",
+            "columns_with_high_null_ratio": [
+              "created_at",
+              "updated_at",
+              "admin_id"
+            ],
+            "null_ratios": {
+              "created_at": 1.0,
+              "updated_at": 1.0,
+              "admin_id": 0.8889
+            },
+            "total_rows": 9
+          },
+          "remediation_hint": "Investigate why columns 'created_at', 'updated_at', 'admin_id' in table 'groupe' have high null ratios. Consider if these nulls are expected or indicate missing data.",
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "high",
+              "description": "Investigate why columns 'created_at', 'updated_at', 'admin_id' in table 'groupe' have high null ratios. Consider if these nulls are expected or indicate missing data.",
+              "evidence": {
+                "table_name": "groupe",
+                "columns_with_high_null_ratio": [
+                  "created_at",
+                  "updated_at",
+                  "admin_id"
+                ],
+                "null_ratios": {
+                  "created_at": 1.0,
+                  "updated_at": 1.0,
+                  "admin_id": 0.8889
+                },
+                "total_rows": 9
+              }
+            }
+          ]
+        },
+        {
+          "table": "prm_organization",
+          "column": null,
+          "entity": "prm_organization",
+          "rule": "high_null_ratio",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "prm_organization",
+            "columns_with_high_null_ratio": [
+              "created_at",
+              "updated_at"
+            ],
+            "null_ratios": {
+              "created_at": 1.0,
+              "updated_at": 1.0
+            },
+            "total_rows": 17
+          },
+          "remediation_hint": "Investigate why columns 'created_at', 'updated_at' in table 'prm_organization' have high null ratios. Consider if these nulls are expected or indicate missing data.",
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "high",
+              "description": "Investigate why columns 'created_at', 'updated_at' in table 'prm_organization' have high null ratios. Consider if these nulls are expected or indicate missing data.",
+              "evidence": {
+                "table_name": "prm_organization",
+                "columns_with_high_null_ratio": [
+                  "created_at",
+                  "updated_at"
+                ],
+                "null_ratios": {
+                  "created_at": 1.0,
+                  "updated_at": 1.0
+                },
+                "total_rows": 17
+              }
+            }
+          ]
+        },
+        {
+          "table": "smsc_route",
+          "column": null,
+          "entity": "smsc_route",
+          "rule": "high_null_ratio",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "smsc_route",
+            "columns_with_high_null_ratio": [
+              "created_at",
+              "updated_at"
+            ],
+            "null_ratios": {
+              "created_at": 1.0,
+              "updated_at": 1.0
+            },
+            "total_rows": 17
+          },
+          "remediation_hint": "Investigate why columns 'created_at', 'updated_at' in table 'smsc_route' have high null ratios. Consider if these nulls are expected or indicate missing data.",
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "high",
+              "description": "Investigate why columns 'created_at', 'updated_at' in table 'smsc_route' have high null ratios. Consider if these nulls are expected or indicate missing data.",
+              "evidence": {
+                "table_name": "smsc_route",
+                "columns_with_high_null_ratio": [
+                  "created_at",
+                  "updated_at"
+                ],
+                "null_ratios": {
+                  "created_at": 1.0,
+                  "updated_at": 1.0
+                },
+                "total_rows": 17
+              }
+            }
+          ]
+        },
+        {
+          "table": "smsc",
+          "column": null,
+          "entity": "smsc",
+          "rule": "high_null_ratio",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "smsc",
+            "columns_with_high_null_ratio": [
+              "created_at",
+              "modified_at",
+              "updated_at"
+            ],
+            "null_ratios": {
+              "created_at": 1.0,
+              "modified_at": 1.0,
+              "updated_at": 1.0
+            },
+            "total_rows": 12
+          },
+          "remediation_hint": "Investigate why columns 'created_at', 'modified_at', 'updated_at' in table 'smsc' have high null ratios. Consider if these nulls are expected or indicate missing data.",
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "high",
+              "description": "Investigate why columns 'created_at', 'modified_at', 'updated_at' in table 'smsc' have high null ratios. Consider if these nulls are expected or indicate missing data.",
+              "evidence": {
+                "table_name": "smsc",
+                "columns_with_high_null_ratio": [
+                  "created_at",
+                  "modified_at",
+                  "updated_at"
+                ],
+                "null_ratios": {
+                  "created_at": 1.0,
+                  "modified_at": 1.0,
+                  "updated_at": 1.0
+                },
+                "total_rows": 12
+              }
+            }
+          ]
+        },
+        {
+          "table": "smsc_organization",
+          "column": null,
+          "entity": "smsc_organization",
+          "rule": "high_null_ratio",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "smsc_organization",
+            "columns_with_high_null_ratio": [
+              "created_at",
+              "updated_at"
+            ],
+            "null_ratios": {
+              "created_at": 1.0,
+              "updated_at": 1.0
+            },
+            "total_rows": 16
+          },
+          "remediation_hint": "Investigate why columns 'created_at', 'updated_at' in table 'smsc_organization' have high null ratios. Consider if these nulls are expected or indicate missing data.",
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "high",
+              "description": "Investigate why columns 'created_at', 'updated_at' in table 'smsc_organization' have high null ratios. Consider if these nulls are expected or indicate missing data.",
+              "evidence": {
+                "table_name": "smsc_organization",
+                "columns_with_high_null_ratio": [
+                  "created_at",
+                  "updated_at"
+                ],
+                "null_ratios": {
+                  "created_at": 1.0,
+                  "updated_at": 1.0
+                },
+                "total_rows": 16
+              }
+            }
+          ]
+        },
+        {
+          "table": "prm_status",
+          "column": null,
+          "entity": "prm_status",
+          "rule": "high_null_ratio",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "prm_status",
+            "columns_with_high_null_ratio": [
+              "created_at",
+              "updated_at"
+            ],
+            "null_ratios": {
+              "created_at": 1.0,
+              "updated_at": 1.0
+            },
+            "total_rows": 25
+          },
+          "remediation_hint": "Investigate why columns 'created_at', 'updated_at' in table 'prm_status' have high null ratios. Consider if these nulls are expected or indicate missing data.",
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "high",
+              "description": "Investigate why columns 'created_at', 'updated_at' in table 'prm_status' have high null ratios. Consider if these nulls are expected or indicate missing data.",
+              "evidence": {
+                "table_name": "prm_status",
+                "columns_with_high_null_ratio": [
+                  "created_at",
+                  "updated_at"
+                ],
+                "null_ratios": {
+                  "created_at": 1.0,
+                  "updated_at": 1.0
+                },
+                "total_rows": 25
+              }
+            }
+          ]
+        },
+        {
+          "table": "smsc_routing_rule",
+          "column": null,
+          "entity": "smsc_routing_rule",
+          "rule": "high_null_ratio",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "smsc_routing_rule",
+            "columns_with_high_null_ratio": [
+              "created_at",
+              "updated_at",
+              "expediteur_id",
+              "groupe_id"
+            ],
+            "null_ratios": {
+              "created_at": 1.0,
+              "updated_at": 1.0,
+              "expediteur_id": 0.8571,
+              "groupe_id": 0.8571
+            },
+            "total_rows": 7
+          },
+          "remediation_hint": "Investigate why columns 'created_at', 'updated_at', 'expediteur_id', 'groupe_id' in table 'smsc_routing_rule' have high null ratios. Consider if these nulls are expected or indicate missing data.",
+          "issues": [
+            {
+              "type": "high_null_ratio",
+              "severity": "high",
+              "description": "Investigate why columns 'created_at', 'updated_at', 'expediteur_id', 'groupe_id' in table 'smsc_routing_rule' have high null ratios. Consider if these nulls are expected or indicate missing data.",
+              "evidence": {
+                "table_name": "smsc_routing_rule",
+                "columns_with_high_null_ratio": [
+                  "created_at",
+                  "updated_at",
+                  "expediteur_id",
+                  "groupe_id"
+                ],
+                "null_ratios": {
+                  "created_at": 1.0,
+                  "updated_at": 1.0,
+                  "expediteur_id": 0.8571,
+                  "groupe_id": 0.8571
+                },
+                "total_rows": 7
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": [],
+      "report": "## Column Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 15\n- Flagged: 15\n- Severity split: critical=3, high=12, medium=0, low=0\n- Quality score: 0.0 / 100\n- Confidence: 1.0\n- Flagged tables: budget_history, campagne_contacts, campagne_tags, campaign_schedule, campaign_spool_state, expediteur_groupe, groupe, modele, prm_organization, prm_status, smsc, smsc_organization, smsc_route, smsc_routing_rule\n\n### Metrics\n- Findings count: 15\n- Validator: column\n\n### Findings (15)\n\n#### 1. campagne_contacts [CRITICAL]\n- Problem: Define a primary key for the table 'campagne_contacts' to ensure unique record identification.\n- Confidence: 1.0\n- Column: None\n- Recommendation: Define a primary key for the table 'campagne_contacts' to ensure unique record identification.\n- Detailed issues:\n  - [CRITICAL] Define a primary key for the table 'campagne_contacts' to ensure unique record identification.\n\n#### 2. expediteur_groupe [CRITICAL]\n- Problem: Define a primary key for the table 'expediteur_groupe' to ensure unique record identification.\n- Confidence: 1.0\n- Column: None\n- Recommendation: Define a primary key for the table 'expediteur_groupe' to ensure unique record identification.\n- Detailed issues:\n  - [CRITICAL] Define a primary key for the table 'expediteur_groupe' to ensure unique record identification.\n\n#### 3. campagne_tags [CRITICAL]\n- Problem: Define a primary key for the table 'campagne_tags' to ensure unique record identification.\n- Confidence: 1.0\n- Column: None\n- Recommendation: Define a primary key for the table 'campagne_tags' to ensure unique record identification.\n- Detailed issues:\n  - [CRITICAL] Define a primary key for the table 'campagne_tags' to ensure unique record identification.\n\n#### 4. budget_history [HIGH]\n- Problem: Consider making column 'budget_history.groupe_id' NOT NULL if it should always reference a valid 'groupe.id'.\n- Confidence: 1.0\n- Column: groupe_id\n- Recommendation: Consider making column 'budget_history.groupe_id' NOT NULL if it should always reference a valid 'groupe.id'.\n- Detailed issues:\n  - [HIGH] Consider making column 'budget_history.groupe_id' NOT NULL if it should always reference a valid 'groupe.id'.\n\n#### 5. groupe [HIGH]\n- Problem: Consider making column 'groupe.admin_id' NOT NULL if it should always reference a valid 'users.id'.\n- Confidence: 1.0\n- Column: admin_id\n- Recommendation: Consider making column 'groupe.admin_id' NOT NULL if it should always reference a valid 'users.id'.\n- Detailed issues:\n  - [HIGH] Consider making column 'groupe.admin_id' NOT NULL if it should always reference a valid 'users.id'.\n\n#### 6. modele [HIGH]\n- Problem: Consider making column 'modele.membership_id' NOT NULL if it should always reference a valid 'membership.id'.\n- Confidence: 1.0\n- Column: membership_id\n- Recommendation: Consider making column 'modele.membership_id' NOT NULL if it should always reference a valid 'membership.id'.\n- Detailed issues:\n  - [HIGH] Consider making column 'modele.membership_id' NOT NULL if it should always reference a valid 'membership.id'.\n\n#### 7. campaign_schedule [HIGH]\n- Problem: Investigate why column 'campaign_schedule.weekend' has a high null ratio (100.00%). Consider if these nulls are expected or indicate missing data.\n- Confidence: 1.0\n- Column: weekend\n- Recommendation: Investigate why column 'campaign_schedule.weekend' has a high null ratio (100.00%). Consider if these nulls are expected or indicate missing data.\n- Detailed issues:\n  - [HIGH] Investigate why column 'campaign_schedule.weekend' has a high null ratio (100.00%). Consider if these nulls are expected or indicate missing data.\n\n#### 8. campaign_spool_state [HIGH]\n- Problem: Investigate why columns 'is_full', 'queued_max_size_reached' in table 'campaign_spool_state' have high null ratios. Consider if these nulls are expected or indicate missing data.\n- Confidence: 1.0\n- Column: None\n- Recommendation: Investigate why columns 'is_full', 'queued_max_size_reached' in table 'campaign_spool_state' have high null ratios. Consider if these nulls are expected or indicate missing data.\n- Detailed issues:\n  - [HIGH] Investigate why columns 'is_full', 'queued_max_size_reached' in table 'campaign_spool_state' have high null ratios. Consider if these nulls are expected or indicate missing data.\n\n#### 9. groupe [HIGH]\n- Problem: Investigate why columns 'created_at', 'updated_at', 'admin_id' in table 'groupe' have high null ratios. Consider if these nulls are expected or indicate missing data.\n- Confidence: 1.0\n- Column: None\n- Recommendation: Investigate why columns 'created_at', 'updated_at', 'admin_id' in table 'groupe' have high null ratios. Consider if these nulls are expected or indicate missing data.\n- Detailed issues:\n  - [HIGH] Investigate why columns 'created_at', 'updated_at', 'admin_id' in table 'groupe' have high null ratios. Consider if these nulls are expected or indicate missing data.\n\n#### 10. prm_organization [HIGH]\n- Problem: Investigate why columns 'created_at', 'updated_at' in table 'prm_organization' have high null ratios. Consider if these nulls are expected or indicate missing data.\n- Confidence: 1.0\n- Column: None\n- Recommendation: Investigate why columns 'created_at', 'updated_at' in table 'prm_organization' have high null ratios. Consider if these nulls are expected or indicate missing data.\n- Detailed issues:\n  - [HIGH] Investigate why columns 'created_at', 'updated_at' in table 'prm_organization' have high null ratios. Consider if these nulls are expected or indicate missing data.\n\n#### 11. smsc_route [HIGH]\n- Problem: Investigate why columns 'created_at', 'updated_at' in table 'smsc_route' have high null ratios. Consider if these nulls are expected or indicate missing data.\n- Confidence: 1.0\n- Column: None\n- Recommendation: Investigate why columns 'created_at', 'updated_at' in table 'smsc_route' have high null ratios. Consider if these nulls are expected or indicate missing data.\n- Detailed issues:\n  - [HIGH] Investigate why columns 'created_at', 'updated_at' in table 'smsc_route' have high null ratios. Consider if these nulls are expected or indicate missing data.\n\n#### 12. smsc [HIGH]\n- Problem: Investigate why columns 'created_at', 'modified_at', 'updated_at' in table 'smsc' have high null ratios. Consider if these nulls are expected or indicate missing data.\n- Confidence: 1.0\n- Column: None\n- Recommendation: Investigate why columns 'created_at', 'modified_at', 'updated_at' in table 'smsc' have high null ratios. Consider if these nulls are expected or indicate missing data.\n- Detailed issues:\n  - [HIGH] Investigate why columns 'created_at', 'modified_at', 'updated_at' in table 'smsc' have high null ratios. Consider if these nulls are expected or indicate missing data.\n\n#### 13. smsc_organization [HIGH]\n- Problem: Investigate why columns 'created_at', 'updated_at' in table 'smsc_organization' have high null ratios. Consider if these nulls are expected or indicate missing data.\n- Confidence: 1.0\n- Column: None\n- Recommendation: Investigate why columns 'created_at', 'updated_at' in table 'smsc_organization' have high null ratios. Consider if these nulls are expected or indicate missing data.\n- Detailed issues:\n  - [HIGH] Investigate why columns 'created_at', 'updated_at' in table 'smsc_organization' have high null ratios. Consider if these nulls are expected or indicate missing data.\n\n#### 14. prm_status [HIGH]\n- Problem: Investigate why columns 'created_at', 'updated_at' in table 'prm_status' have high null ratios. Consider if these nulls are expected or indicate missing data.\n- Confidence: 1.0\n- Column: None\n- Recommendation: Investigate why columns 'created_at', 'updated_at' in table 'prm_status' have high null ratios. Consider if these nulls are expected or indicate missing data.\n- Detailed issues:\n  - [HIGH] Investigate why columns 'created_at', 'updated_at' in table 'prm_status' have high null ratios. Consider if these nulls are expected or indicate missing data.\n\n#### 15. smsc_routing_rule [HIGH]\n- Problem: Investigate why columns 'created_at', 'updated_at', 'expediteur_id', 'groupe_id' in table 'smsc_routing_rule' have high null ratios. Consider if these nulls are expected or indicate missing data.\n- Confidence: 1.0\n- Column: None\n- Recommendation: Investigate why columns 'created_at', 'updated_at', 'expediteur_id', 'groupe_id' in table 'smsc_routing_rule' have high null ratios. Consider if these nulls are expected or indicate missing data.\n- Detailed issues:\n  - [HIGH] Investigate why columns 'created_at', 'updated_at', 'expediteur_id', 'groupe_id' in table 'smsc_routing_rule' have high null ratios. Consider if these nulls are expected or indicate missing data."
+    },
+    "row_level_validator": {
+      "pipeline_run_id": "8f00632f-d2ae-4e65-b76e-1d3f3e3d2efa",
+      "database_id": "localhost_5432_easybulk_clean",
+      "run_timestamp": "2026-05-05T17:54:42.426157Z",
+      "agent": "Row Level Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 30,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "row",
+        "findings_count": 0
+      },
+      "findings": [],
+      "prior_reports": [],
+      "report": "## Row Level Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 30\n- Flagged: 0\n- Severity split: critical=0, high=0, medium=0, low=0\n- Quality score: 100.0 / 100\n- Confidence: 1.0\n\n### Metrics\n- Findings count: 0\n- Validator: row\n\nNo issues were found by this agent."
+    },
+    "cross_row_validator": {
+      "pipeline_run_id": "8f00632f-d2ae-4e65-b76e-1d3f3e3d2efa",
+      "database_id": "localhost_5432_easybulk_clean",
+      "run_timestamp": "2026-05-05T17:54:42.426157Z",
+      "agent": "Cross Row Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 27,
+        "items_flagged": 3,
+        "critical_issues": 1,
+        "high_issues": 2,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 45.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": [
+          "campagne_contacts",
+          "prm_organization",
+          "smsc_route"
+        ]
+      },
+      "metrics": {
+        "validator": "crossrow",
+        "findings_count": 3
+      },
+      "findings": [
+        {
+          "table": "prm_organization",
+          "column": "code",
+          "entity": "prm_organization.code",
+          "rule": "unique_field_duplicates",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "column_name": "code",
+            "duplicate_values": "TRACEABILITY, CAMPAIGN_TYPE_CLASSIC, CAMPAIGN_TYPE_TRANSACTIONAL, URL_NOTIFICATION, MSISDN",
+            "duplicate_count": 3
+          },
+          "remediation_hint": "Ensure that the 'code' column in 'prm_organization' contains unique values, as duplicates were found.",
+          "issues": [
+            {
+              "type": "unique_field_duplicates",
+              "severity": "high",
+              "description": "Ensure that the 'code' column in 'prm_organization' contains unique values, as duplicates were found.",
+              "evidence": {
+                "column_name": "code",
+                "duplicate_values": "TRACEABILITY, CAMPAIGN_TYPE_CLASSIC, CAMPAIGN_TYPE_TRANSACTIONAL, URL_NOTIFICATION, MSISDN",
+                "duplicate_count": 3
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_contacts",
+          "column": "contact_id",
+          "entity": "campagne_contacts.contact_id",
+          "rule": "relational_inconsistency",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "source_table": "campagne_contacts",
+            "source_column": "contact_id",
+            "target_table": "contacts",
+            "target_column": "msisdn",
+            "issue": "Data type mismatch: 'campagne_contacts.contact_id' (bigint) and 'contacts.msisdn' (character varying) prevent foreign key validation."
+          },
+          "remediation_hint": "Align the data types of 'campagne_contacts.contact_id' and 'contacts.msisdn' to enable proper foreign key validation, or re-evaluate the intended relationship.",
+          "issues": [
+            {
+              "type": "relational_inconsistency",
+              "severity": "critical",
+              "description": "Align the data types of 'campagne_contacts.contact_id' and 'contacts.msisdn' to enable proper foreign key validation, or re-evaluate the intended relationship.",
+              "evidence": {
+                "source_table": "campagne_contacts",
+                "source_column": "contact_id",
+                "target_table": "contacts",
+                "target_column": "msisdn",
+                "issue": "Data type mismatch: 'campagne_contacts.contact_id' (bigint) and 'contacts.msisdn' (character varying) prevent foreign key validation."
+              }
+            }
+          ]
+        },
+        {
+          "table": "smsc_route",
+          "column": "route_smsc_id",
+          "entity": "smsc_route.route_smsc_id",
+          "rule": "orphaned_references",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "source_table": "smsc_route",
+            "source_column": "route_smsc_id",
+            "target_table": "smsc",
+            "target_column": "id",
+            "orphaned_records_count": 6
+          },
+          "remediation_hint": "Investigate and resolve 6 orphaned records in 'smsc_route' where 'route_smsc_id' does not have a matching 'id' in the 'smsc' table.",
+          "issues": [
+            {
+              "type": "orphaned_references",
+              "severity": "high",
+              "description": "Investigate and resolve 6 orphaned records in 'smsc_route' where 'route_smsc_id' does not have a matching 'id' in the 'smsc' table.",
+              "evidence": {
+                "source_table": "smsc_route",
+                "source_column": "route_smsc_id",
+                "target_table": "smsc",
+                "target_column": "id",
+                "orphaned_records_count": 6
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": [],
+      "report": "## Cross Row Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 27\n- Flagged: 3\n- Severity split: critical=1, high=2, medium=0, low=0\n- Quality score: 45.0 / 100\n- Confidence: 1.0\n- Flagged tables: campagne_contacts, prm_organization, smsc_route\n\n### Metrics\n- Findings count: 3\n- Validator: crossrow\n\n### Findings (3)\n\n#### 1. prm_organization [HIGH]\n- Problem: Ensure that the 'code' column in 'prm_organization' contains unique values, as duplicates were found.\n- Confidence: 1.0\n- Column: code\n- Recommendation: Ensure that the 'code' column in 'prm_organization' contains unique values, as duplicates were found.\n- Detailed issues:\n  - [HIGH] Ensure that the 'code' column in 'prm_organization' contains unique values, as duplicates were found.\n\n#### 2. campagne_contacts [CRITICAL]\n- Problem: Align the data types of 'campagne_contacts.contact_id' and 'contacts.msisdn' to enable proper foreign key validation, or re-evaluate the intended relationship.\n- Confidence: 1.0\n- Column: contact_id\n- Recommendation: Align the data types of 'campagne_contacts.contact_id' and 'contacts.msisdn' to enable proper foreign key validation, or re-evaluate the intended relationship.\n- Detailed issues:\n  - [CRITICAL] Align the data types of 'campagne_contacts.contact_id' and 'contacts.msisdn' to enable proper foreign key validation, or re-evaluate the intended relationship.\n\n#### 3. smsc_route [HIGH]\n- Problem: Investigate and resolve 6 orphaned records in 'smsc_route' where 'route_smsc_id' does not have a matching 'id' in the 'smsc' table.\n- Confidence: 1.0\n- Column: route_smsc_id\n- Recommendation: Investigate and resolve 6 orphaned records in 'smsc_route' where 'route_smsc_id' does not have a matching 'id' in the 'smsc' table.\n- Detailed issues:\n  - [HIGH] Investigate and resolve 6 orphaned records in 'smsc_route' where 'route_smsc_id' does not have a matching 'id' in the 'smsc' table."
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "8f00632f-d2ae-4e65-b76e-1d3f3e3d2efa",
+      "database_id": "localhost_5432_easybulk_clean",
+      "run_timestamp": "2026-05-05T17:54:42.426157Z",
+      "agent": "Data Fix Planner",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 20,
+        "items_passed": 1,
+        "items_flagged": 19,
+        "critical_issues": 4,
+        "high_issues": 15,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 5.0,
+        "overall_confidence": 0.9947,
+        "flagged_tables": [
+          "budget_history",
+          "campagne_contacts",
+          "campagne_tags",
+          "campaign_schedule",
+          "campaign_spool_state",
+          "expediteur_groupe",
+          "groupe",
+          "modele",
+          "prm_organization",
+          "prm_status",
+          "smsc",
+          "smsc_organization",
+          "smsc_route",
+          "smsc_routing_rule"
+        ]
+      },
+      "metrics": {
+        "total_issues_received": 20,
+        "fixes_generated": 19
+      },
+      "findings": [
+        {
+          "id": "fix_001_campagne_contacts",
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "Add Primary Key to campagne_contacts",
+          "fix": "Table 'campagne_contacts' lacks a primary key, which is crucial for data integrity and efficient data retrieval. A composite primary key on '(campagne_id, contact_id)' is appropriate for this join table.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE campagne_contacts ADD PRIMARY KEY (campagne_id, contact_id);"
+          ],
+          "explanation": "Table 'campagne_contacts' lacks a primary key, which is crucial for data integrity and efficient data retrieval. A composite primary key on '(campagne_id, contact_id)' is appropriate for this join table.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'campagne_contacts'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_contacts DROP CONSTRAINT campagne_contacts_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_002_expediteur_groupe",
+          "table": "expediteur_groupe",
+          "target_table": "expediteur_groupe",
+          "problem": "Add Primary Key to expediteur_groupe",
+          "fix": "Table 'expediteur_groupe' lacks a primary key, which is crucial for data integrity and efficient data retrieval. A composite primary key on '(groupe_id, expediteur_id)' is appropriate for this join table.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE expediteur_groupe ADD PRIMARY KEY (groupe_id, expediteur_id);"
+          ],
+          "explanation": "Table 'expediteur_groupe' lacks a primary key, which is crucial for data integrity and efficient data retrieval. A composite primary key on '(groupe_id, expediteur_id)' is appropriate for this join table.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'expediteur_groupe'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE expediteur_groupe DROP CONSTRAINT expediteur_groupe_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_003_campagne_tags",
+          "table": "campagne_tags",
+          "target_table": "campagne_tags",
+          "problem": "Add Primary Key to campagne_tags",
+          "fix": "Table 'campagne_tags' lacks a primary key, which is crucial for data integrity and efficient data retrieval. A composite primary key on '(campagne_id, tag_name)' is appropriate for this join table.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE campagne_tags ADD PRIMARY KEY (campagne_id, tag_name);"
+          ],
+          "explanation": "Table 'campagne_tags' lacks a primary key, which is crucial for data integrity and efficient data retrieval. A composite primary key on '(campagne_id, tag_name)' is appropriate for this join table.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'campagne_tags'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_tags DROP CONSTRAINT campagne_tags_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_004_budget_history_groupe_id",
+          "table": "budget_history",
+          "target_table": "budget_history",
+          "problem": "Review Nullability of Foreign Key: budget_history.groupe_id",
+          "fix": "The column 'budget_history.groupe_id' is nullable. If 'groupe_id' should always reference a valid 'groupe.id', it should be made NOT NULL to enforce referential integrity. This is an advisory finding requiring human judgment to ensure no valid business cases allow nulls.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS null_count, (SELECT COUNT(*) FROM budget_history) AS total_rows, (COUNT(*)::numeric / (SELECT COUNT(*) FROM budget_history)) AS null_ratio FROM budget_history WHERE groupe_id IS NULL;"
+          ],
+          "explanation": "The column 'budget_history.groupe_id' is nullable. If 'groupe_id' should always reference a valid 'groupe.id', it should be made NOT NULL to enforce referential integrity. This is an advisory finding requiring human judgment to ensure no valid business cases allow nulls.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'Manual verification required to determine if NULL values are acceptable for budget_history.groupe_id.' AS status;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No direct rollback for advisory finding.' AS status;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_005_groupe_admin_id",
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "Review Nullability of Foreign Key: groupe.admin_id",
+          "fix": "The column 'groupe.admin_id' is nullable and has a high null ratio (88.89%). If 'admin_id' should always reference a valid 'users.id', it should be made NOT NULL to enforce referential integrity. This is an advisory finding requiring human judgment to ensure no valid business cases allow nulls.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS null_count, (SELECT COUNT(*) FROM groupe) AS total_rows, (COUNT(*)::numeric / (SELECT COUNT(*) FROM groupe)) AS null_ratio FROM groupe WHERE admin_id IS NULL;"
+          ],
+          "explanation": "The column 'groupe.admin_id' is nullable and has a high null ratio (88.89%). If 'admin_id' should always reference a valid 'users.id', it should be made NOT NULL to enforce referential integrity. This is an advisory finding requiring human judgment to ensure no valid business cases allow nulls.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'Manual verification required to determine if NULL values are acceptable for groupe.admin_id.' AS status;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No direct rollback for advisory finding.' AS status;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_006_modele_membership_id",
+          "table": "modele",
+          "target_table": "modele",
+          "problem": "Review Nullability of Foreign Key: modele.membership_id",
+          "fix": "The column 'modele.membership_id' is nullable. If 'membership_id' should always reference a valid 'membership.id', it should be made NOT NULL to enforce referential integrity. This is an advisory finding requiring human judgment to ensure no valid business cases allow nulls.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS null_count, (SELECT COUNT(*) FROM modele) AS total_rows, (COUNT(*)::numeric / (SELECT COUNT(*) FROM modele)) AS null_ratio FROM modele WHERE membership_id IS NULL;"
+          ],
+          "explanation": "The column 'modele.membership_id' is nullable. If 'membership_id' should always reference a valid 'membership.id', it should be made NOT NULL to enforce referential integrity. This is an advisory finding requiring human judgment to ensure no valid business cases allow nulls.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'Manual verification required to determine if NULL values are acceptable for modele.membership_id.' AS status;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No direct rollback for advisory finding.' AS status;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_007_campaign_schedule_weekend",
+          "table": "campaign_schedule",
+          "target_table": "campaign_schedule",
+          "problem": "Investigate High Null Ratio in campaign_schedule.weekend",
+          "fix": "The column 'campaign_schedule.weekend' has a 100% null ratio (3 out of 3 rows are NULL). This suggests the column might not be used, or data is consistently missing. Human review is needed to determine if the column is necessary, should be dropped, or requires data backfilling.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS null_count, (SELECT COUNT(*) FROM campaign_schedule) AS total_rows, (COUNT(*)::numeric / (SELECT COUNT(*) FROM campaign_schedule)) AS null_ratio FROM campaign_schedule WHERE weekend IS NULL;"
+          ],
+          "explanation": "The column 'campaign_schedule.weekend' has a 100% null ratio (3 out of 3 rows are NULL). This suggests the column might not be used, or data is consistently missing. Human review is needed to determine if the column is necessary, should be dropped, or requires data backfilling.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'Manual verification required to determine the appropriate action for campaign_schedule.weekend.' AS status;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No direct rollback for advisory finding.' AS status;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_008_campaign_spool_state",
+          "table": "campaign_spool_state",
+          "target_table": "campaign_spool_state",
+          "problem": "Investigate High Null Ratios in campaign_spool_state",
+          "fix": "Columns 'is_full' and 'queued_max_size_reached' in 'campaign_spool_state' both have a 100% null ratio (7 out of 7 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) FILTER (WHERE is_full IS NULL) AS is_full_null_count, COUNT(*) FILTER (WHERE queued_max_size_reached IS NULL) AS queued_max_size_reached_null_count, (SELECT COUNT(*) FROM campaign_spool_state) AS total_rows FROM campaign_spool_state;"
+          ],
+          "explanation": "Columns 'is_full' and 'queued_max_size_reached' in 'campaign_spool_state' both have a 100% null ratio (7 out of 7 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'Manual verification required to determine the appropriate action for campaign_spool_state columns.' AS status;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No direct rollback for advisory finding.' AS status;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_009_groupe",
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "Investigate High Null Ratios in groupe",
+          "fix": "Columns 'created_at', 'updated_at', and 'admin_id' in 'groupe' have high null ratios (100%, 100%, and 88.89% respectively). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) FILTER (WHERE created_at IS NULL) AS created_at_null_count, COUNT(*) FILTER (WHERE updated_at IS NULL) AS updated_at_null_count, COUNT(*) FILTER (WHERE admin_id IS NULL) AS admin_id_null_count, (SELECT COUNT(*) FROM groupe) AS total_rows FROM groupe;"
+          ],
+          "explanation": "Columns 'created_at', 'updated_at', and 'admin_id' in 'groupe' have high null ratios (100%, 100%, and 88.89% respectively). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'Manual verification required to determine the appropriate action for groupe columns.' AS status;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No direct rollback for advisory finding.' AS status;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_010_prm_organization",
+          "table": "prm_organization",
+          "target_table": "prm_organization",
+          "problem": "Investigate High Null Ratios in prm_organization",
+          "fix": "Columns 'created_at' and 'updated_at' in 'prm_organization' both have a 100% null ratio (17 out of 17 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) FILTER (WHERE created_at IS NULL) AS created_at_null_count, COUNT(*) FILTER (WHERE updated_at IS NULL) AS updated_at_null_count, (SELECT COUNT(*) FROM prm_organization) AS total_rows FROM prm_organization;"
+          ],
+          "explanation": "Columns 'created_at' and 'updated_at' in 'prm_organization' both have a 100% null ratio (17 out of 17 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'Manual verification required to determine the appropriate action for prm_organization columns.' AS status;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No direct rollback for advisory finding.' AS status;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_011_smsc_route",
+          "table": "smsc_route",
+          "target_table": "smsc_route",
+          "problem": "Investigate High Null Ratios in smsc_route",
+          "fix": "Columns 'created_at' and 'updated_at' in 'smsc_route' both have a 100% null ratio (17 out of 17 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) FILTER (WHERE created_at IS NULL) AS created_at_null_count, COUNT(*) FILTER (WHERE updated_at IS NULL) AS updated_at_null_count, (SELECT COUNT(*) FROM smsc_route) AS total_rows FROM smsc_route;"
+          ],
+          "explanation": "Columns 'created_at' and 'updated_at' in 'smsc_route' both have a 100% null ratio (17 out of 17 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'Manual verification required to determine the appropriate action for smsc_route columns.' AS status;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No direct rollback for advisory finding.' AS status;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_012_smsc",
+          "table": "smsc",
+          "target_table": "smsc",
+          "problem": "Investigate High Null Ratios in smsc",
+          "fix": "Columns 'created_at', 'modified_at', and 'updated_at' in 'smsc' all have a 100% null ratio (12 out of 12 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) FILTER (WHERE created_at IS NULL) AS created_at_null_count, COUNT(*) FILTER (WHERE modified_at IS NULL) AS modified_at_null_count, COUNT(*) FILTER (WHERE updated_at IS NULL) AS updated_at_null_count, (SELECT COUNT(*) FROM smsc) AS total_rows FROM smsc;"
+          ],
+          "explanation": "Columns 'created_at', 'modified_at', and 'updated_at' in 'smsc' all have a 100% null ratio (12 out of 12 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'Manual verification required to determine the appropriate action for smsc columns.' AS status;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No direct rollback for advisory finding.' AS status;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_013_smsc_organization",
+          "table": "smsc_organization",
+          "target_table": "smsc_organization",
+          "problem": "Investigate High Null Ratios in smsc_organization",
+          "fix": "Columns 'created_at' and 'updated_at' in 'smsc_organization' both have a 100% null ratio (16 out of 16 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) FILTER (WHERE created_at IS NULL) AS created_at_null_count, COUNT(*) FILTER (WHERE updated_at IS NULL) AS updated_at_null_count, (SELECT COUNT(*) FROM smsc_organization) AS total_rows FROM smsc_organization;"
+          ],
+          "explanation": "Columns 'created_at' and 'updated_at' in 'smsc_organization' both have a 100% null ratio (16 out of 16 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'Manual verification required to determine the appropriate action for smsc_organization columns.' AS status;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No direct rollback for advisory finding.' AS status;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_014_prm_status",
+          "table": "prm_status",
+          "target_table": "prm_status",
+          "problem": "Investigate High Null Ratios in prm_status",
+          "fix": "Columns 'created_at' and 'updated_at' in 'prm_status' both have a 100% null ratio (25 out of 25 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) FILTER (WHERE created_at IS NULL) AS created_at_null_count, COUNT(*) FILTER (WHERE updated_at IS NULL) AS updated_at_null_count, (SELECT COUNT(*) FROM prm_status) AS total_rows FROM prm_status;"
+          ],
+          "explanation": "Columns 'created_at' and 'updated_at' in 'prm_status' both have a 100% null ratio (25 out of 25 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'Manual verification required to determine the appropriate action for prm_status columns.' AS status;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No direct rollback for advisory finding.' AS status;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_015_smsc_routing_rule",
+          "table": "smsc_routing_rule",
+          "target_table": "smsc_routing_rule",
+          "problem": "Investigate High Null Ratios in smsc_routing_rule",
+          "fix": "Columns 'created_at', 'updated_at', 'expediteur_id', and 'groupe_id' in 'smsc_routing_rule' have high null ratios (100%, 100%, 85.71%, and 85.71% respectively). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) FILTER (WHERE created_at IS NULL) AS created_at_null_count, COUNT(*) FILTER (WHERE updated_at IS NULL) AS updated_at_null_count, COUNT(*) FILTER (WHERE expediteur_id IS NULL) AS expediteur_id_null_count, COUNT(*) FILTER (WHERE groupe_id IS NULL) AS groupe_id_null_count, (SELECT COUNT(*) FROM smsc_routing_rule) AS total_rows FROM smsc_routing_rule;"
+          ],
+          "explanation": "Columns 'created_at', 'updated_at', 'expediteur_id', and 'groupe_id' in 'smsc_routing_rule' have high null ratios (100%, 100%, 85.71%, and 85.71% respectively). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'Manual verification required to determine the appropriate action for smsc_routing_rule columns.' AS status;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No direct rollback for advisory finding.' AS status;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_016_prm_organization_code",
+          "table": "prm_organization",
+          "target_table": "prm_organization",
+          "problem": "Remove Duplicates and Add Unique Constraint to prm_organization.code",
+          "fix": "The 'code' column in 'prm_organization' contains duplicate values, violating the uniqueness expectation for this field. This fix will remove duplicate rows, keeping one instance for each 'code', and then add a unique constraint. Data deleted cannot be rolled back.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "DELETE FROM prm_organization WHERE ctid NOT IN (SELECT MIN(ctid) FROM prm_organization GROUP BY code);",
+            "ALTER TABLE prm_organization ADD CONSTRAINT prm_organization_code_unique UNIQUE (code);"
+          ],
+          "explanation": "The 'code' column in 'prm_organization' contains duplicate values, violating the uniqueness expectation for this field. This fix will remove duplicate rows, keeping one instance for each 'code', and then add a unique constraint. Data deleted cannot be rolled back.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM prm_organization GROUP BY code HAVING COUNT(*) > 1;",
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'prm_organization'::regclass AND conname = 'prm_organization_code_unique';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE prm_organization DROP CONSTRAINT prm_organization_code_unique;",
+            "SELECT 'Data deleted cannot be rolled back.' AS status;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_017_smsc_route",
+          "table": "smsc_route",
+          "target_table": "smsc_route",
+          "problem": "Remove Orphaned Records in smsc_route",
+          "fix": "There are 6 orphaned records in 'smsc_route' where 'route_smsc_id' does not have a matching 'id' in the 'smsc' table. These orphaned records violate referential integrity and should be removed. Data deleted cannot be rolled back.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "DELETE FROM smsc_route WHERE route_smsc_id NOT IN (SELECT id FROM smsc);"
+          ],
+          "explanation": "There are 6 orphaned records in 'smsc_route' where 'route_smsc_id' does not have a matching 'id' in the 'smsc' table. These orphaned records violate referential integrity and should be removed. Data deleted cannot be rolled back.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM smsc_route WHERE route_smsc_id NOT IN (SELECT id FROM smsc);"
+          ],
+          "rollback_queries": [
+            "SELECT 'Data deleted cannot be rolled back.' AS status;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_018_campagne_contacts_contact_id",
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "Review Nullability of Foreign Key Style Column: campagne_contacts.contact_id",
+          "fix": "The column 'campagne_contacts.contact_id' follows a foreign key naming convention ('*_id') but is nullable. If this column is intended to always reference a valid contact, it should be made NOT NULL. This is an advisory finding requiring human review to ensure no valid business cases allow nulls.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS null_count, (SELECT COUNT(*) FROM campagne_contacts) AS total_rows, (COUNT(*)::numeric / (SELECT COUNT(*) FROM campagne_contacts)) AS null_ratio FROM campagne_contacts WHERE contact_id IS NULL;"
+          ],
+          "explanation": "The column 'campagne_contacts.contact_id' follows a foreign key naming convention ('*_id') but is nullable. If this column is intended to always reference a valid contact, it should be made NOT NULL. This is an advisory finding requiring human review to ensure no valid business cases allow nulls.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'Manual verification required to determine if NULL values are acceptable for campagne_contacts.contact_id.' AS status;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No direct rollback for advisory finding.' AS status;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_019_campagne_tags_tag_name",
+          "table": "campagne_tags",
+          "target_table": "campagne_tags",
+          "problem": "Review Nullability of Foreign Key Style Column: campagne_tags.tag_name",
+          "fix": "The column 'campagne_tags.tag_name' follows a foreign key naming convention ('*_name') but is nullable. If this column is intended to always reference a valid tag, it should be made NOT NULL. This is an advisory finding requiring human review to ensure no valid business cases allow nulls.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) AS null_count, (SELECT COUNT(*) FROM campagne_tags) AS total_rows, (COUNT(*)::numeric / (SELECT COUNT(*) FROM campagne_tags)) AS null_ratio FROM campagne_tags WHERE tag_name IS NULL;"
+          ],
+          "explanation": "The column 'campagne_tags.tag_name' follows a foreign key naming convention ('*_name') but is nullable. If this column is intended to always reference a valid tag, it should be made NOT NULL. This is an advisory finding requiring human review to ensure no valid business cases allow nulls.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'Manual verification required to determine if NULL values are acceptable for campagne_tags.tag_name.' AS status;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No direct rollback for advisory finding.' AS status;"
+          ],
+          "explain_summary": null
+        }
+      ],
+      "cards": [
+        {
+          "title": "Add Primary Key to campagne_contacts",
+          "target": "campagne_contacts",
+          "rationale": "Table 'campagne_contacts' lacks a primary key, which is crucial for data integrity and efficient data retrieval. A composite primary key on '(campagne_id, contact_id)' is appropriate for this join table.",
+          "sql": "ALTER TABLE campagne_contacts ADD PRIMARY KEY (campagne_id, contact_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'campagne_contacts'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_contacts DROP CONSTRAINT campagne_contacts_pkey;"
+          ]
+        },
+        {
+          "title": "Add Primary Key to expediteur_groupe",
+          "target": "expediteur_groupe",
+          "rationale": "Table 'expediteur_groupe' lacks a primary key, which is crucial for data integrity and efficient data retrieval. A composite primary key on '(groupe_id, expediteur_id)' is appropriate for this join table.",
+          "sql": "ALTER TABLE expediteur_groupe ADD PRIMARY KEY (groupe_id, expediteur_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'expediteur_groupe'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE expediteur_groupe DROP CONSTRAINT expediteur_groupe_pkey;"
+          ]
+        },
+        {
+          "title": "Add Primary Key to campagne_tags",
+          "target": "campagne_tags",
+          "rationale": "Table 'campagne_tags' lacks a primary key, which is crucial for data integrity and efficient data retrieval. A composite primary key on '(campagne_id, tag_name)' is appropriate for this join table.",
+          "sql": "ALTER TABLE campagne_tags ADD PRIMARY KEY (campagne_id, tag_name);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'campagne_tags'::regclass AND contype = 'p';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_tags DROP CONSTRAINT campagne_tags_pkey;"
+          ]
+        },
+        {
+          "title": "Review Nullability of Foreign Key: budget_history.groupe_id",
+          "target": "budget_history.groupe_id",
+          "rationale": "The column 'budget_history.groupe_id' is nullable. If 'groupe_id' should always reference a valid 'groupe.id', it should be made NOT NULL to enforce referential integrity. This is an advisory finding requiring human judgment to ensure no valid business cases allow nulls.",
+          "sql": "SELECT COUNT(*) AS null_count, (SELECT COUNT(*) FROM budget_history) AS total_rows, (COUNT(*)::numeric / (SELECT COUNT(*) FROM budget_history)) AS null_ratio FROM budget_history WHERE groupe_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'Manual verification required to determine if NULL values are acceptable for budget_history.groupe_id.' AS status;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No direct rollback for advisory finding.' AS status;"
+          ]
+        },
+        {
+          "title": "Review Nullability of Foreign Key: groupe.admin_id",
+          "target": "groupe.admin_id",
+          "rationale": "The column 'groupe.admin_id' is nullable and has a high null ratio (88.89%). If 'admin_id' should always reference a valid 'users.id', it should be made NOT NULL to enforce referential integrity. This is an advisory finding requiring human judgment to ensure no valid business cases allow nulls.",
+          "sql": "SELECT COUNT(*) AS null_count, (SELECT COUNT(*) FROM groupe) AS total_rows, (COUNT(*)::numeric / (SELECT COUNT(*) FROM groupe)) AS null_ratio FROM groupe WHERE admin_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'Manual verification required to determine if NULL values are acceptable for groupe.admin_id.' AS status;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No direct rollback for advisory finding.' AS status;"
+          ]
+        },
+        {
+          "title": "Review Nullability of Foreign Key: modele.membership_id",
+          "target": "modele.membership_id",
+          "rationale": "The column 'modele.membership_id' is nullable. If 'membership_id' should always reference a valid 'membership.id', it should be made NOT NULL to enforce referential integrity. This is an advisory finding requiring human judgment to ensure no valid business cases allow nulls.",
+          "sql": "SELECT COUNT(*) AS null_count, (SELECT COUNT(*) FROM modele) AS total_rows, (COUNT(*)::numeric / (SELECT COUNT(*) FROM modele)) AS null_ratio FROM modele WHERE membership_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'Manual verification required to determine if NULL values are acceptable for modele.membership_id.' AS status;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No direct rollback for advisory finding.' AS status;"
+          ]
+        },
+        {
+          "title": "Investigate High Null Ratio in campaign_schedule.weekend",
+          "target": "campaign_schedule.weekend",
+          "rationale": "The column 'campaign_schedule.weekend' has a 100% null ratio (3 out of 3 rows are NULL). This suggests the column might not be used, or data is consistently missing. Human review is needed to determine if the column is necessary, should be dropped, or requires data backfilling.",
+          "sql": "SELECT COUNT(*) AS null_count, (SELECT COUNT(*) FROM campaign_schedule) AS total_rows, (COUNT(*)::numeric / (SELECT COUNT(*) FROM campaign_schedule)) AS null_ratio FROM campaign_schedule WHERE weekend IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'Manual verification required to determine the appropriate action for campaign_schedule.weekend.' AS status;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No direct rollback for advisory finding.' AS status;"
+          ]
+        },
+        {
+          "title": "Investigate High Null Ratios in campaign_spool_state",
+          "target": "campaign_spool_state",
+          "rationale": "Columns 'is_full' and 'queued_max_size_reached' in 'campaign_spool_state' both have a 100% null ratio (7 out of 7 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.",
+          "sql": "SELECT COUNT(*) FILTER (WHERE is_full IS NULL) AS is_full_null_count, COUNT(*) FILTER (WHERE queued_max_size_reached IS NULL) AS queued_max_size_reached_null_count, (SELECT COUNT(*) FROM campaign_spool_state) AS total_rows FROM campaign_spool_state;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'Manual verification required to determine the appropriate action for campaign_spool_state columns.' AS status;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No direct rollback for advisory finding.' AS status;"
+          ]
+        },
+        {
+          "title": "Investigate High Null Ratios in groupe",
+          "target": "groupe",
+          "rationale": "Columns 'created_at', 'updated_at', and 'admin_id' in 'groupe' have high null ratios (100%, 100%, and 88.89% respectively). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.",
+          "sql": "SELECT COUNT(*) FILTER (WHERE created_at IS NULL) AS created_at_null_count, COUNT(*) FILTER (WHERE updated_at IS NULL) AS updated_at_null_count, COUNT(*) FILTER (WHERE admin_id IS NULL) AS admin_id_null_count, (SELECT COUNT(*) FROM groupe) AS total_rows FROM groupe;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'Manual verification required to determine the appropriate action for groupe columns.' AS status;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No direct rollback for advisory finding.' AS status;"
+          ]
+        },
+        {
+          "title": "Investigate High Null Ratios in prm_organization",
+          "target": "prm_organization",
+          "rationale": "Columns 'created_at' and 'updated_at' in 'prm_organization' both have a 100% null ratio (17 out of 17 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.",
+          "sql": "SELECT COUNT(*) FILTER (WHERE created_at IS NULL) AS created_at_null_count, COUNT(*) FILTER (WHERE updated_at IS NULL) AS updated_at_null_count, (SELECT COUNT(*) FROM prm_organization) AS total_rows FROM prm_organization;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'Manual verification required to determine the appropriate action for prm_organization columns.' AS status;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No direct rollback for advisory finding.' AS status;"
+          ]
+        },
+        {
+          "title": "Investigate High Null Ratios in smsc_route",
+          "target": "smsc_route",
+          "rationale": "Columns 'created_at' and 'updated_at' in 'smsc_route' both have a 100% null ratio (17 out of 17 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.",
+          "sql": "SELECT COUNT(*) FILTER (WHERE created_at IS NULL) AS created_at_null_count, COUNT(*) FILTER (WHERE updated_at IS NULL) AS updated_at_null_count, (SELECT COUNT(*) FROM smsc_route) AS total_rows FROM smsc_route;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'Manual verification required to determine the appropriate action for smsc_route columns.' AS status;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No direct rollback for advisory finding.' AS status;"
+          ]
+        },
+        {
+          "title": "Investigate High Null Ratios in smsc",
+          "target": "smsc",
+          "rationale": "Columns 'created_at', 'modified_at', and 'updated_at' in 'smsc' all have a 100% null ratio (12 out of 12 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.",
+          "sql": "SELECT COUNT(*) FILTER (WHERE created_at IS NULL) AS created_at_null_count, COUNT(*) FILTER (WHERE modified_at IS NULL) AS modified_at_null_count, COUNT(*) FILTER (WHERE updated_at IS NULL) AS updated_at_null_count, (SELECT COUNT(*) FROM smsc) AS total_rows FROM smsc;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'Manual verification required to determine the appropriate action for smsc columns.' AS status;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No direct rollback for advisory finding.' AS status;"
+          ]
+        },
+        {
+          "title": "Investigate High Null Ratios in smsc_organization",
+          "target": "smsc_organization",
+          "rationale": "Columns 'created_at' and 'updated_at' in 'smsc_organization' both have a 100% null ratio (16 out of 16 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.",
+          "sql": "SELECT COUNT(*) FILTER (WHERE created_at IS NULL) AS created_at_null_count, COUNT(*) FILTER (WHERE updated_at IS NULL) AS updated_at_null_count, (SELECT COUNT(*) FROM smsc_organization) AS total_rows FROM smsc_organization;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'Manual verification required to determine the appropriate action for smsc_organization columns.' AS status;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No direct rollback for advisory finding.' AS status;"
+          ]
+        },
+        {
+          "title": "Investigate High Null Ratios in prm_status",
+          "target": "prm_status",
+          "rationale": "Columns 'created_at' and 'updated_at' in 'prm_status' both have a 100% null ratio (25 out of 25 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.",
+          "sql": "SELECT COUNT(*) FILTER (WHERE created_at IS NULL) AS created_at_null_count, COUNT(*) FILTER (WHERE updated_at IS NULL) AS updated_at_null_count, (SELECT COUNT(*) FROM prm_status) AS total_rows FROM prm_status;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'Manual verification required to determine the appropriate action for prm_status columns.' AS status;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No direct rollback for advisory finding.' AS status;"
+          ]
+        },
+        {
+          "title": "Investigate High Null Ratios in smsc_routing_rule",
+          "target": "smsc_routing_rule",
+          "rationale": "Columns 'created_at', 'updated_at', 'expediteur_id', and 'groupe_id' in 'smsc_routing_rule' have high null ratios (100%, 100%, 85.71%, and 85.71% respectively). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.",
+          "sql": "SELECT COUNT(*) FILTER (WHERE created_at IS NULL) AS created_at_null_count, COUNT(*) FILTER (WHERE updated_at IS NULL) AS updated_at_null_count, COUNT(*) FILTER (WHERE expediteur_id IS NULL) AS expediteur_id_null_count, COUNT(*) FILTER (WHERE groupe_id IS NULL) AS groupe_id_null_count, (SELECT COUNT(*) FROM smsc_routing_rule) AS total_rows FROM smsc_routing_rule;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'Manual verification required to determine the appropriate action for smsc_routing_rule columns.' AS status;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No direct rollback for advisory finding.' AS status;"
+          ]
+        },
+        {
+          "title": "Remove Duplicates and Add Unique Constraint to prm_organization.code",
+          "target": "prm_organization.code",
+          "rationale": "The 'code' column in 'prm_organization' contains duplicate values, violating the uniqueness expectation for this field. This fix will remove duplicate rows, keeping one instance for each 'code', and then add a unique constraint. Data deleted cannot be rolled back.",
+          "sql": "DELETE FROM prm_organization WHERE ctid NOT IN (SELECT MIN(ctid) FROM prm_organization GROUP BY code); ALTER TABLE prm_organization ADD CONSTRAINT prm_organization_code_unique UNIQUE (code);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM prm_organization GROUP BY code HAVING COUNT(*) > 1;",
+            "SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'prm_organization'::regclass AND conname = 'prm_organization_code_unique';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE prm_organization DROP CONSTRAINT prm_organization_code_unique;",
+            "SELECT 'Data deleted cannot be rolled back.' AS status;"
+          ]
+        },
+        {
+          "title": "Remove Orphaned Records in smsc_route",
+          "target": "smsc_route",
+          "rationale": "There are 6 orphaned records in 'smsc_route' where 'route_smsc_id' does not have a matching 'id' in the 'smsc' table. These orphaned records violate referential integrity and should be removed. Data deleted cannot be rolled back.",
+          "sql": "DELETE FROM smsc_route WHERE route_smsc_id NOT IN (SELECT id FROM smsc);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM smsc_route WHERE route_smsc_id NOT IN (SELECT id FROM smsc);"
+          ],
+          "rollback_queries": [
+            "SELECT 'Data deleted cannot be rolled back.' AS status;"
+          ]
+        },
+        {
+          "title": "Review Nullability of Foreign Key Style Column: campagne_contacts.contact_id",
+          "target": "campagne_contacts.contact_id",
+          "rationale": "The column 'campagne_contacts.contact_id' follows a foreign key naming convention ('*_id') but is nullable. If this column is intended to always reference a valid contact, it should be made NOT NULL. This is an advisory finding requiring human review to ensure no valid business cases allow nulls.",
+          "sql": "SELECT COUNT(*) AS null_count, (SELECT COUNT(*) FROM campagne_contacts) AS total_rows, (COUNT(*)::numeric / (SELECT COUNT(*) FROM campagne_contacts)) AS null_ratio FROM campagne_contacts WHERE contact_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'Manual verification required to determine if NULL values are acceptable for campagne_contacts.contact_id.' AS status;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No direct rollback for advisory finding.' AS status;"
+          ]
+        },
+        {
+          "title": "Review Nullability of Foreign Key Style Column: campagne_tags.tag_name",
+          "target": "campagne_tags.tag_name",
+          "rationale": "The column 'campagne_tags.tag_name' follows a foreign key naming convention ('*_name') but is nullable. If this column is intended to always reference a valid tag, it should be made NOT NULL. This is an advisory finding requiring human review to ensure no valid business cases allow nulls.",
+          "sql": "SELECT COUNT(*) AS null_count, (SELECT COUNT(*) FROM campagne_tags) AS total_rows, (COUNT(*)::numeric / (SELECT COUNT(*) FROM campagne_tags)) AS null_ratio FROM campagne_tags WHERE tag_name IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'Manual verification required to determine if NULL values are acceptable for campagne_tags.tag_name.' AS status;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No direct rollback for advisory finding.' AS status;"
+          ]
+        }
+      ],
+      "report": "## Data Fix Planner\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 20\n- Passed: 1\n- Flagged: 19\n- Severity split: critical=4, high=15, medium=0, low=0\n- Quality score: 5.0 / 100\n- Confidence: 0.9947\n- Flagged tables: budget_history, campagne_contacts, campagne_tags, campaign_schedule, campaign_spool_state, expediteur_groupe, groupe, modele, prm_organization, prm_status, smsc, smsc_organization, smsc_route, smsc_routing_rule\n\n### Metrics\n- Fixes generated: 19\n- Total issues received: 20\n\n### Findings (19)\n\n#### 1. campagne_contacts [CRITICAL]\n- Problem: Add Primary Key to campagne_contacts\n- Confidence: 1.0\n- Recommendation: Table 'campagne_contacts' lacks a primary key, which is crucial for data integrity and efficient data retrieval. A composite primary key on '(campagne_id, contact_id)' is appropriate for this join table.\n- Proposed SQL:\n```sql\nALTER TABLE campagne_contacts ADD PRIMARY KEY (campagne_id, contact_id);\n```\n- Explanation: Table 'campagne_contacts' lacks a primary key, which is crucial for data integrity and efficient data retrieval. A composite primary key on '(campagne_id, contact_id)' is appropriate for this join table.\n\n#### 2. expediteur_groupe [CRITICAL]\n- Problem: Add Primary Key to expediteur_groupe\n- Confidence: 1.0\n- Recommendation: Table 'expediteur_groupe' lacks a primary key, which is crucial for data integrity and efficient data retrieval. A composite primary key on '(groupe_id, expediteur_id)' is appropriate for this join table.\n- Proposed SQL:\n```sql\nALTER TABLE expediteur_groupe ADD PRIMARY KEY (groupe_id, expediteur_id);\n```\n- Explanation: Table 'expediteur_groupe' lacks a primary key, which is crucial for data integrity and efficient data retrieval. A composite primary key on '(groupe_id, expediteur_id)' is appropriate for this join table.\n\n#### 3. campagne_tags [CRITICAL]\n- Problem: Add Primary Key to campagne_tags\n- Confidence: 1.0\n- Recommendation: Table 'campagne_tags' lacks a primary key, which is crucial for data integrity and efficient data retrieval. A composite primary key on '(campagne_id, tag_name)' is appropriate for this join table.\n- Proposed SQL:\n```sql\nALTER TABLE campagne_tags ADD PRIMARY KEY (campagne_id, tag_name);\n```\n- Explanation: Table 'campagne_tags' lacks a primary key, which is crucial for data integrity and efficient data retrieval. A composite primary key on '(campagne_id, tag_name)' is appropriate for this join table.\n\n#### 4. budget_history [HIGH]\n- Problem: Review Nullability of Foreign Key: budget_history.groupe_id\n- Confidence: 1.0\n- Recommendation: The column 'budget_history.groupe_id' is nullable. If 'groupe_id' should always reference a valid 'groupe.id', it should be made NOT NULL to enforce referential integrity. This is an advisory finding requiring human judgment to ensure no valid business cases allow nulls.\n- Proposed SQL:\n```sql\nSELECT COUNT(*) AS null_count, (SELECT COUNT(*) FROM budget_history) AS total_rows, (COUNT(*)::numeric / (SELECT COUNT(*) FROM budget_history)) AS null_ratio FROM budget_history WHERE groupe_id IS NULL;\n```\n- Explanation: The column 'budget_history.groupe_id' is nullable. If 'groupe_id' should always reference a valid 'groupe.id', it should be made NOT NULL to enforce referential integrity. This is an advisory finding requiring human judgment to ensure no valid business cases allow nulls.\n\n#### 5. groupe [HIGH]\n- Problem: Review Nullability of Foreign Key: groupe.admin_id\n- Confidence: 1.0\n- Recommendation: The column 'groupe.admin_id' is nullable and has a high null ratio (88.89%). If 'admin_id' should always reference a valid 'users.id', it should be made NOT NULL to enforce referential integrity. This is an advisory finding requiring human judgment to ensure no valid business cases allow nulls.\n- Proposed SQL:\n```sql\nSELECT COUNT(*) AS null_count, (SELECT COUNT(*) FROM groupe) AS total_rows, (COUNT(*)::numeric / (SELECT COUNT(*) FROM groupe)) AS null_ratio FROM groupe WHERE admin_id IS NULL;\n```\n- Explanation: The column 'groupe.admin_id' is nullable and has a high null ratio (88.89%). If 'admin_id' should always reference a valid 'users.id', it should be made NOT NULL to enforce referential integrity. This is an advisory finding requiring human judgment to ensure no valid business cases allow nulls.\n\n#### 6. modele [HIGH]\n- Problem: Review Nullability of Foreign Key: modele.membership_id\n- Confidence: 1.0\n- Recommendation: The column 'modele.membership_id' is nullable. If 'membership_id' should always reference a valid 'membership.id', it should be made NOT NULL to enforce referential integrity. This is an advisory finding requiring human judgment to ensure no valid business cases allow nulls.\n- Proposed SQL:\n```sql\nSELECT COUNT(*) AS null_count, (SELECT COUNT(*) FROM modele) AS total_rows, (COUNT(*)::numeric / (SELECT COUNT(*) FROM modele)) AS null_ratio FROM modele WHERE membership_id IS NULL;\n```\n- Explanation: The column 'modele.membership_id' is nullable. If 'membership_id' should always reference a valid 'membership.id', it should be made NOT NULL to enforce referential integrity. This is an advisory finding requiring human judgment to ensure no valid business cases allow nulls.\n\n#### 7. campaign_schedule [HIGH]\n- Problem: Investigate High Null Ratio in campaign_schedule.weekend\n- Confidence: 1.0\n- Recommendation: The column 'campaign_schedule.weekend' has a 100% null ratio (3 out of 3 rows are NULL). This suggests the column might not be used, or data is consistently missing. Human review is needed to determine if the column is necessary, should be dropped, or requires data backfilling.\n- Proposed SQL:\n```sql\nSELECT COUNT(*) AS null_count, (SELECT COUNT(*) FROM campaign_schedule) AS total_rows, (COUNT(*)::numeric / (SELECT COUNT(*) FROM campaign_schedule)) AS null_ratio FROM campaign_schedule WHERE weekend IS NULL;\n```\n- Explanation: The column 'campaign_schedule.weekend' has a 100% null ratio (3 out of 3 rows are NULL). This suggests the column might not be used, or data is consistently missing. Human review is needed to determine if the column is necessary, should be dropped, or requires data backfilling.\n\n#### 8. campaign_spool_state [HIGH]\n- Problem: Investigate High Null Ratios in campaign_spool_state\n- Confidence: 1.0\n- Recommendation: Columns 'is_full' and 'queued_max_size_reached' in 'campaign_spool_state' both have a 100% null ratio (7 out of 7 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.\n- Proposed SQL:\n```sql\nSELECT COUNT(*) FILTER (WHERE is_full IS NULL) AS is_full_null_count, COUNT(*) FILTER (WHERE queued_max_size_reached IS NULL) AS queued_max_size_reached_null_count, (SELECT COUNT(*) FROM campaign_spool_state) AS total_rows FROM campaign_spool_state;\n```\n- Explanation: Columns 'is_full' and 'queued_max_size_reached' in 'campaign_spool_state' both have a 100% null ratio (7 out of 7 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.\n\n#### 9. groupe [HIGH]\n- Problem: Investigate High Null Ratios in groupe\n- Confidence: 1.0\n- Recommendation: Columns 'created_at', 'updated_at', and 'admin_id' in 'groupe' have high null ratios (100%, 100%, and 88.89% respectively). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.\n- Proposed SQL:\n```sql\nSELECT COUNT(*) FILTER (WHERE created_at IS NULL) AS created_at_null_count, COUNT(*) FILTER (WHERE updated_at IS NULL) AS updated_at_null_count, COUNT(*) FILTER (WHERE admin_id IS NULL) AS admin_id_null_count, (SELECT COUNT(*) FROM groupe) AS total_rows FROM groupe;\n```\n- Explanation: Columns 'created_at', 'updated_at', and 'admin_id' in 'groupe' have high null ratios (100%, 100%, and 88.89% respectively). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.\n\n#### 10. prm_organization [HIGH]\n- Problem: Investigate High Null Ratios in prm_organization\n- Confidence: 1.0\n- Recommendation: Columns 'created_at' and 'updated_at' in 'prm_organization' both have a 100% null ratio (17 out of 17 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.\n- Proposed SQL:\n```sql\nSELECT COUNT(*) FILTER (WHERE created_at IS NULL) AS created_at_null_count, COUNT(*) FILTER (WHERE updated_at IS NULL) AS updated_at_null_count, (SELECT COUNT(*) FROM prm_organization) AS total_rows FROM prm_organization;\n```\n- Explanation: Columns 'created_at' and 'updated_at' in 'prm_organization' both have a 100% null ratio (17 out of 17 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.\n\n#### 11. smsc_route [HIGH]\n- Problem: Investigate High Null Ratios in smsc_route\n- Confidence: 1.0\n- Recommendation: Columns 'created_at' and 'updated_at' in 'smsc_route' both have a 100% null ratio (17 out of 17 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.\n- Proposed SQL:\n```sql\nSELECT COUNT(*) FILTER (WHERE created_at IS NULL) AS created_at_null_count, COUNT(*) FILTER (WHERE updated_at IS NULL) AS updated_at_null_count, (SELECT COUNT(*) FROM smsc_route) AS total_rows FROM smsc_route;\n```\n- Explanation: Columns 'created_at' and 'updated_at' in 'smsc_route' both have a 100% null ratio (17 out of 17 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.\n\n#### 12. smsc [HIGH]\n- Problem: Investigate High Null Ratios in smsc\n- Confidence: 1.0\n- Recommendation: Columns 'created_at', 'modified_at', and 'updated_at' in 'smsc' all have a 100% null ratio (12 out of 12 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.\n- Proposed SQL:\n```sql\nSELECT COUNT(*) FILTER (WHERE created_at IS NULL) AS created_at_null_count, COUNT(*) FILTER (WHERE modified_at IS NULL) AS modified_at_null_count, COUNT(*) FILTER (WHERE updated_at IS NULL) AS updated_at_null_count, (SELECT COUNT(*) FROM smsc) AS total_rows FROM smsc;\n```\n- Explanation: Columns 'created_at', 'modified_at', and 'updated_at' in 'smsc' all have a 100% null ratio (12 out of 12 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.\n\n#### 13. smsc_organization [HIGH]\n- Problem: Investigate High Null Ratios in smsc_organization\n- Confidence: 1.0\n- Recommendation: Columns 'created_at' and 'updated_at' in 'smsc_organization' both have a 100% null ratio (16 out of 16 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.\n- Proposed SQL:\n```sql\nSELECT COUNT(*) FILTER (WHERE created_at IS NULL) AS created_at_null_count, COUNT(*) FILTER (WHERE updated_at IS NULL) AS updated_at_null_count, (SELECT COUNT(*) FROM smsc_organization) AS total_rows FROM smsc_organization;\n```\n- Explanation: Columns 'created_at' and 'updated_at' in 'smsc_organization' both have a 100% null ratio (16 out of 16 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.\n\n#### 14. prm_status [HIGH]\n- Problem: Investigate High Null Ratios in prm_status\n- Confidence: 1.0\n- Recommendation: Columns 'created_at' and 'updated_at' in 'prm_status' both have a 100% null ratio (25 out of 25 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.\n- Proposed SQL:\n```sql\nSELECT COUNT(*) FILTER (WHERE created_at IS NULL) AS created_at_null_count, COUNT(*) FILTER (WHERE updated_at IS NULL) AS updated_at_null_count, (SELECT COUNT(*) FROM prm_status) AS total_rows FROM prm_status;\n```\n- Explanation: Columns 'created_at' and 'updated_at' in 'prm_status' both have a 100% null ratio (25 out of 25 rows are NULL). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.\n\n#### 15. smsc_routing_rule [HIGH]\n- Problem: Investigate High Null Ratios in smsc_routing_rule\n- Confidence: 1.0\n- Recommendation: Columns 'created_at', 'updated_at', 'expediteur_id', and 'groupe_id' in 'smsc_routing_rule' have high null ratios (100%, 100%, 85.71%, and 85.71% respectively). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.\n- Proposed SQL:\n```sql\nSELECT COUNT(*) FILTER (WHERE created_at IS NULL) AS created_at_null_count, COUNT(*) FILTER (WHERE updated_at IS NULL) AS updated_at_null_count, COUNT(*) FILTER (WHERE expediteur_id IS NULL) AS expediteur_id_null_count, COUNT(*) FILTER (WHERE groupe_id IS NULL) AS groupe_id_null_count, (SELECT COUNT(*) FROM smsc_routing_rule) AS total_rows FROM smsc_routing_rule;\n```\n- Explanation: Columns 'created_at', 'updated_at', 'expediteur_id', and 'groupe_id' in 'smsc_routing_rule' have high null ratios (100%, 100%, 85.71%, and 85.71% respectively). This suggests these columns might not be used, or data is consistently missing. Human review is needed to determine if these columns are necessary, should be dropped, or require data backfilling.\n\n#### 16. prm_organization [HIGH]\n- Problem: Remove Duplicates and Add Unique Constraint to prm_organization.code\n- Confidence: 1.0\n- Recommendation: The 'code' column in 'prm_organization' contains duplicate values, violating the uniqueness expectation for this field. This fix will remove duplicate rows, keeping one instance for each 'code', and then add a unique constraint. Data deleted cannot be rolled back.\n- Proposed SQL:\n```sql\nDELETE FROM prm_organization WHERE ctid NOT IN (SELECT MIN(ctid) FROM prm_organization GROUP BY code);\n```\n```sql\nALTER TABLE prm_organization ADD CONSTRAINT prm_organization_code_unique UNIQUE (code);\n```\n- Explanation: The 'code' column in 'prm_organization' contains duplicate values, violating the uniqueness expectation for this field. This fix will remove duplicate rows, keeping one instance for each 'code', and then add a unique constraint. Data deleted cannot be rolled back.\n\n#### 17. smsc_route [HIGH]\n- Problem: Remove Orphaned Records in smsc_route\n- Confidence: 1.0\n- Recommendation: There are 6 orphaned records in 'smsc_route' where 'route_smsc_id' does not have a matching 'id' in the 'smsc' table. These orphaned records violate referential integrity and should be removed. Data deleted cannot be rolled back.\n- Proposed SQL:\n```sql\nDELETE FROM smsc_route WHERE route_smsc_id NOT IN (SELECT id FROM smsc);\n```\n- Explanation: There are 6 orphaned records in 'smsc_route' where 'route_smsc_id' does not have a matching 'id' in the 'smsc' table. These orphaned records violate referential integrity and should be removed. Data deleted cannot be rolled back.\n\n#### 18. campagne_contacts [CRITICAL]\n- Problem: Review Nullability of Foreign Key Style Column: campagne_contacts.contact_id\n- Confidence: 1.0\n- Recommendation: The column 'campagne_contacts.contact_id' follows a foreign key naming convention ('*_id') but is nullable. If this column is intended to always reference a valid contact, it should be made NOT NULL. This is an advisory finding requiring human review to ensure no valid business cases allow nulls.\n- Proposed SQL:\n```sql\nSELECT COUNT(*) AS null_count, (SELECT COUNT(*) FROM campagne_contacts) AS total_rows, (COUNT(*)::numeric / (SELECT COUNT(*) FROM campagne_contacts)) AS null_ratio FROM campagne_contacts WHERE contact_id IS NULL;\n```\n- Explanation: The column 'campagne_contacts.contact_id' follows a foreign key naming convention ('*_id') but is nullable. If this column is intended to always reference a valid contact, it should be made NOT NULL. This is an advisory finding requiring human review to ensure no valid business cases allow nulls.\n\n#### 19. campagne_tags [HIGH]\n- Problem: Review Nullability of Foreign Key Style Column: campagne_tags.tag_name\n- Confidence: 0.9\n- Recommendation: The column 'campagne_tags.tag_name' follows a foreign key naming convention ('*_name') but is nullable. If this column is intended to always reference a valid tag, it should be made NOT NULL. This is an advisory finding requiring human review to ensure no valid business cases allow nulls.\n- Proposed SQL:\n```sql\nSELECT COUNT(*) AS null_count, (SELECT COUNT(*) FROM campagne_tags) AS total_rows, (COUNT(*)::numeric / (SELECT COUNT(*) FROM campagne_tags)) AS null_ratio FROM campagne_tags WHERE tag_name IS NULL;\n```\n- Explanation: The column 'campagne_tags.tag_name' follows a foreign key naming convention ('*_name') but is nullable. If this column is intended to always reference a valid tag, it should be made NOT NULL. This is an advisory finding requiring human review to ensure no valid business cases allow nulls."
+    }
+  }
+}
