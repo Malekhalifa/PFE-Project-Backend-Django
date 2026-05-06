@@ -13,10 +13,12 @@ from types import SimpleNamespace
 from typing import Any
 
 from agno.agent import Agent
+from agno.db.base import BaseDb
 from agno.db.sqlite import SqliteDb
 from agno.guardrails.pii import PIIDetectionGuardrail
 from agno.guardrails.prompt_injection import PromptInjectionGuardrail
 from agno.models.google import Gemini
+from google.genai.types import AutomaticFunctionCallingConfig
 from agno.team import Team
 from agno.team.mode import TeamMode
 
@@ -55,6 +57,9 @@ def resolve_model_id(requested_model: str | None = None) -> str:
     return model_id or _DEFAULT_MODEL_ID
 
 
+_GEMINI_TIMEOUT = float(os.environ.get("GEMINI_TIMEOUT", "300"))
+
+
 def build_model(model_id: str | None = None, max_tokens: int | None = None) -> Gemini:
     return Gemini(
         id=resolve_model_id(model_id),
@@ -62,7 +67,14 @@ def build_model(model_id: str | None = None, max_tokens: int | None = None) -> G
         temperature=0,
         top_p=1,
         seed=7,
+        timeout=_GEMINI_TIMEOUT,
         generation_config={"max_output_tokens": max_tokens or _MAX_OUTPUT_TOKENS},
+        # Raise the AFC cap from the SDK default of 10 to 64.
+        # Must be a typed AutomaticFunctionCallingConfig — passing a plain dict is
+        # silently ignored when Agno unpacks it into GenerateContentConfig(**config).
+        generative_model_kwargs={
+            "automatic_function_calling": AutomaticFunctionCallingConfig(maximum_remote_calls=64)
+        },
     )
 
 
@@ -80,6 +92,9 @@ def default_session_state(*, ql_mode: str) -> dict[str, Any]:
         "require_database": ql_mode == "pipeline",
         "connection_string": None,
         "schema": None,
+        # Pre-initialized so {profiler_summary} in agent instructions always resolves
+        # to an empty dict rather than a missing-key literal.
+        "profiler_summary": {},
         "last_reduced_findings": [],
         "_tool_calls_seen": {},
     }
@@ -94,7 +109,7 @@ def _merge_overrides(base: dict[str, Any], overrides: dict[str, Any] | None) -> 
 
 def _shared_agent_kwargs(
     *,
-    db: SqliteDb | None,
+    db: BaseDb | None,
     session_state: dict[str, Any],
     dependencies: dict[str, Any],
     playground_mode: bool,
@@ -124,7 +139,7 @@ def build_members(
     *,
     model_id: str | None = None,
     ql_mode: str = "pipeline",
-    db: SqliteDb | None = None,
+    db: BaseDb | None = None,
     session_state: dict[str, Any] | None = None,
     dependencies: dict[str, Any] | None = None,
 ):
@@ -208,7 +223,7 @@ def create_qualitylab_team(
     *,
     model_id: str | None = None,
     ql_mode: str = "playground",
-    db: SqliteDb | None = None,
+    db: BaseDb | None = None,
     session_state: dict[str, Any] | None = None,
     dependencies: dict[str, Any] | None = None,
 ):

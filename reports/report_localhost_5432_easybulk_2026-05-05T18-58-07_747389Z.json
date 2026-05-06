@@ -1,0 +1,1315 @@
+{
+  "pipeline_run_id": "10375eaf-44a0-4ea8-ad0e-e9332dcba327",
+  "database_id": "localhost_5432_easybulk",
+  "llm_model": "gemini-2.5-flash",
+  "run_timestamp": "2026-05-05T18:58:07.747389Z",
+  "summary": {
+    "confidence_score": 91,
+    "data_quality_score": 58,
+    "final_fix_count": 13
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "10375eaf-44a0-4ea8-ad0e-e9332dcba327",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-05T18:58:07.747389Z",
+      "agent": "Schema Integrity Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 14,
+        "items_flagged": 16,
+        "critical_issues": 0,
+        "high_issues": 3,
+        "medium_issues": 3,
+        "low_issues": 10,
+        "overall_quality_score": 1.0,
+        "overall_confidence": 0.8469,
+        "flagged_tables": [
+          "budget_history",
+          "campagne_contacts",
+          "campagne_tags",
+          "expediteur",
+          "expediteur_groupe",
+          "groupe",
+          "membership",
+          "mention"
+        ]
+      },
+      "metrics": {
+        "validator": "schema",
+        "findings_count": 16
+      },
+      "findings": [
+        {
+          "table": "budget_history",
+          "column": "groupe_id",
+          "entity": "budget_history.groupe_id",
+          "rule": "nullable_foreign_key_style_column",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "column_name": "groupe_id",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "constraint_type": "FOREIGN KEY"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "nullable_foreign_key_style_column",
+              "severity": "medium",
+              "description": "nullable foreign key style column",
+              "evidence": {
+                "column_name": "groupe_id",
+                "data_type": "integer",
+                "is_nullable": "YES",
+                "constraint_type": "FOREIGN KEY"
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "entity": "groupe.admin_id",
+          "rule": "nullable_foreign_key_style_column",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "column_name": "admin_id",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "constraint_type": "FOREIGN KEY"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "nullable_foreign_key_style_column",
+              "severity": "medium",
+              "description": "nullable foreign key style column",
+              "evidence": {
+                "column_name": "admin_id",
+                "data_type": "integer",
+                "is_nullable": "YES",
+                "constraint_type": "FOREIGN KEY"
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": null,
+          "entity": "groupe",
+          "rule": "missing_index",
+          "severity": "low",
+          "confidence": 0.8,
+          "evidence": {
+            "column_name": "admin_id",
+            "constraint_type": "FOREIGN KEY",
+            "columns_with_high_nulls": [
+              "admin_id",
+              "status_id"
+            ]
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_index",
+              "severity": "low",
+              "description": "missing index",
+              "evidence": {
+                "column_name": "admin_id",
+                "constraint_type": "FOREIGN KEY",
+                "columns_with_high_nulls": [
+                  "admin_id",
+                  "status_id"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": "status_id",
+          "entity": "groupe.status_id",
+          "rule": "missing_index",
+          "severity": "low",
+          "confidence": 0.8,
+          "evidence": {
+            "column_name": "status_id",
+            "constraint_type": "FOREIGN KEY"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_index",
+              "severity": "low",
+              "description": "missing index",
+              "evidence": {
+                "column_name": "status_id",
+                "constraint_type": "FOREIGN KEY"
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur",
+          "column": "organization_id",
+          "entity": "expediteur.organization_id",
+          "rule": "missing_index",
+          "severity": "low",
+          "confidence": 0.8,
+          "evidence": {
+            "column_name": "organization_id",
+            "constraint_type": "FOREIGN KEY"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_index",
+              "severity": "low",
+              "description": "missing index",
+              "evidence": {
+                "column_name": "organization_id",
+                "constraint_type": "FOREIGN KEY"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_contacts",
+          "column": null,
+          "entity": "campagne_contacts",
+          "rule": "missing_primary_key",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "table_name": "campagne_contacts",
+            "primary_key_required": true,
+            "columns_with_high_nulls": [
+              "",
+              "campagne_id",
+              "contact_id"
+            ]
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_primary_key",
+              "severity": "high",
+              "description": "missing primary key",
+              "evidence": {
+                "table_name": "campagne_contacts",
+                "primary_key_required": true,
+                "columns_with_high_nulls": [
+                  "",
+                  "campagne_id",
+                  "contact_id"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_contacts",
+          "column": "contact_id",
+          "entity": "campagne_contacts.contact_id",
+          "rule": "nullable_foreign_key_style_column",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "column_name": "contact_id",
+            "data_type": "bigint",
+            "is_nullable": "YES"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "nullable_foreign_key_style_column",
+              "severity": "medium",
+              "description": "nullable foreign key style column",
+              "evidence": {
+                "column_name": "contact_id",
+                "data_type": "bigint",
+                "is_nullable": "YES"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_contacts",
+          "column": "campagne_id",
+          "entity": "campagne_contacts.campagne_id",
+          "rule": "missing_index",
+          "severity": "low",
+          "confidence": 0.8,
+          "evidence": {
+            "column_name": "campagne_id",
+            "constraint_type": "FOREIGN KEY"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_index",
+              "severity": "low",
+              "description": "missing index",
+              "evidence": {
+                "column_name": "campagne_id",
+                "constraint_type": "FOREIGN KEY"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_contacts",
+          "column": "contact_id",
+          "entity": "campagne_contacts.contact_id",
+          "rule": "missing_index",
+          "severity": "low",
+          "confidence": 0.8,
+          "evidence": {
+            "column_name": "contact_id",
+            "constraint_type": "FOREIGN KEY"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_index",
+              "severity": "low",
+              "description": "missing index",
+              "evidence": {
+                "column_name": "contact_id",
+                "constraint_type": "FOREIGN KEY"
+              }
+            }
+          ]
+        },
+        {
+          "table": "membership",
+          "column": "status_id",
+          "entity": "membership.status_id",
+          "rule": "missing_index",
+          "severity": "low",
+          "confidence": 0.8,
+          "evidence": {
+            "column_name": "status_id",
+            "constraint_type": "FOREIGN KEY"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_index",
+              "severity": "low",
+              "description": "missing index",
+              "evidence": {
+                "column_name": "status_id",
+                "constraint_type": "FOREIGN KEY"
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur_groupe",
+          "column": null,
+          "entity": "expediteur_groupe",
+          "rule": "missing_primary_key",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "table_name": "expediteur_groupe",
+            "primary_key_required": true,
+            "columns_with_high_nulls": [
+              "",
+              "groupe_id",
+              "expediteur_id"
+            ]
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_primary_key",
+              "severity": "high",
+              "description": "missing primary key",
+              "evidence": {
+                "table_name": "expediteur_groupe",
+                "primary_key_required": true,
+                "columns_with_high_nulls": [
+                  "",
+                  "groupe_id",
+                  "expediteur_id"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur_groupe",
+          "column": "groupe_id",
+          "entity": "expediteur_groupe.groupe_id",
+          "rule": "missing_index",
+          "severity": "low",
+          "confidence": 0.8,
+          "evidence": {
+            "column_name": "groupe_id",
+            "constraint_type": "FOREIGN KEY"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_index",
+              "severity": "low",
+              "description": "missing index",
+              "evidence": {
+                "column_name": "groupe_id",
+                "constraint_type": "FOREIGN KEY"
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur_groupe",
+          "column": "expediteur_id",
+          "entity": "expediteur_groupe.expediteur_id",
+          "rule": "missing_index",
+          "severity": "low",
+          "confidence": 0.8,
+          "evidence": {
+            "column_name": "expediteur_id",
+            "constraint_type": "FOREIGN KEY"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_index",
+              "severity": "low",
+              "description": "missing index",
+              "evidence": {
+                "column_name": "expediteur_id",
+                "constraint_type": "FOREIGN KEY"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_tags",
+          "column": null,
+          "entity": "campagne_tags",
+          "rule": "missing_primary_key",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "table_name": "campagne_tags",
+            "primary_key_required": true,
+            "columns_with_high_nulls": [
+              "",
+              "campagne_id"
+            ]
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_primary_key",
+              "severity": "high",
+              "description": "missing primary key",
+              "evidence": {
+                "table_name": "campagne_tags",
+                "primary_key_required": true,
+                "columns_with_high_nulls": [
+                  "",
+                  "campagne_id"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_tags",
+          "column": "campagne_id",
+          "entity": "campagne_tags.campagne_id",
+          "rule": "missing_index",
+          "severity": "low",
+          "confidence": 0.8,
+          "evidence": {
+            "column_name": "campagne_id",
+            "constraint_type": "FOREIGN KEY"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_index",
+              "severity": "low",
+              "description": "missing index",
+              "evidence": {
+                "column_name": "campagne_id",
+                "constraint_type": "FOREIGN KEY"
+              }
+            }
+          ]
+        },
+        {
+          "table": "mention",
+          "column": "modele_id",
+          "entity": "mention.modele_id",
+          "rule": "missing_index",
+          "severity": "low",
+          "confidence": 0.8,
+          "evidence": {
+            "column_name": "modele_id",
+            "constraint_type": "FOREIGN KEY"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_index",
+              "severity": "low",
+              "description": "missing index",
+              "evidence": {
+                "column_name": "modele_id",
+                "constraint_type": "FOREIGN KEY"
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": [],
+      "report": "## Schema Integrity Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 14\n- Flagged: 16\n- Severity split: critical=0, high=3, medium=3, low=10\n- Quality score: 1.0 / 100\n- Confidence: 0.8469\n- Flagged tables: budget_history, campagne_contacts, campagne_tags, expediteur, expediteur_groupe, groupe, membership, mention\n\n### Metrics\n- Findings count: 16\n- Validator: schema\n\n### Findings (16)\n\n#### 1. budget_history [MEDIUM]\n- Problem: nullable foreign key style column\n- Confidence: 0.9\n- Column: groupe_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [MEDIUM] nullable foreign key style column\n\n#### 2. groupe [MEDIUM]\n- Problem: nullable foreign key style column\n- Confidence: 0.9\n- Column: admin_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [MEDIUM] nullable foreign key style column\n\n#### 3. groupe [LOW]\n- Problem: missing index\n- Confidence: 0.8\n- Column: None\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] missing index\n\n#### 4. groupe [LOW]\n- Problem: missing index\n- Confidence: 0.8\n- Column: status_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] missing index\n\n#### 5. expediteur [LOW]\n- Problem: missing index\n- Confidence: 0.8\n- Column: organization_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] missing index\n\n#### 6. campagne_contacts [HIGH]\n- Problem: missing primary key\n- Confidence: 0.95\n- Column: None\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [HIGH] missing primary key\n\n#### 7. campagne_contacts [MEDIUM]\n- Problem: nullable foreign key style column\n- Confidence: 0.9\n- Column: contact_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [MEDIUM] nullable foreign key style column\n\n#### 8. campagne_contacts [LOW]\n- Problem: missing index\n- Confidence: 0.8\n- Column: campagne_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] missing index\n\n#### 9. campagne_contacts [LOW]\n- Problem: missing index\n- Confidence: 0.8\n- Column: contact_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] missing index\n\n#### 10. membership [LOW]\n- Problem: missing index\n- Confidence: 0.8\n- Column: status_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] missing index\n\n#### 11. expediteur_groupe [HIGH]\n- Problem: missing primary key\n- Confidence: 0.95\n- Column: None\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [HIGH] missing primary key\n\n#### 12. expediteur_groupe [LOW]\n- Problem: missing index\n- Confidence: 0.8\n- Column: groupe_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] missing index\n\n#### 13. expediteur_groupe [LOW]\n- Problem: missing index\n- Confidence: 0.8\n- Column: expediteur_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] missing index\n\n#### 14. campagne_tags [HIGH]\n- Problem: missing primary key\n- Confidence: 0.95\n- Column: None\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [HIGH] missing primary key\n\n#### 15. campagne_tags [LOW]\n- Problem: missing index\n- Confidence: 0.8\n- Column: campagne_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] missing index\n\n#### 16. mention [LOW]\n- Problem: missing index\n- Confidence: 0.8\n- Column: modele_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] missing index"
+    },
+    "statistical_validator": {
+      "pipeline_run_id": "10375eaf-44a0-4ea8-ad0e-e9332dcba327",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-05T18:58:07.747389Z",
+      "agent": "Statistical Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 29,
+        "items_flagged": 1,
+        "critical_issues": 0,
+        "high_issues": 1,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 85.0,
+        "overall_confidence": 0.9,
+        "flagged_tables": [
+          "groupe"
+        ]
+      },
+      "metrics": {
+        "validator": "statistical",
+        "findings_count": 1
+      },
+      "findings": [
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "entity": "groupe.admin_id",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "null_rate": 0.8888888888888888,
+            "threshold": 0.3,
+            "total_rows": 9,
+            "non_null_rows": 1
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "null_rate_high",
+              "severity": "high",
+              "description": "null rate high",
+              "evidence": {
+                "null_rate": 0.8888888888888888,
+                "threshold": 0.3,
+                "total_rows": 9,
+                "non_null_rows": 1
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": [],
+      "report": "## Statistical Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 29\n- Flagged: 1\n- Severity split: critical=0, high=1, medium=0, low=0\n- Quality score: 85.0 / 100\n- Confidence: 0.9\n- Flagged tables: groupe\n\n### Metrics\n- Findings count: 1\n- Validator: statistical\n\n### Findings (1)\n\n#### 1. groupe [HIGH]\n- Problem: null rate high\n- Confidence: 0.9\n- Column: admin_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [HIGH] null rate high"
+    },
+    "structural_validator": {
+      "pipeline_run_id": "10375eaf-44a0-4ea8-ad0e-e9332dcba327",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-05T18:58:07.747389Z",
+      "agent": "Structural Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 28,
+        "items_flagged": 2,
+        "critical_issues": 0,
+        "high_issues": 2,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 70.0,
+        "overall_confidence": 0.9,
+        "flagged_tables": [
+          "campagne",
+          "groupe"
+        ]
+      },
+      "metrics": {
+        "validator": "structural",
+        "findings_count": 2
+      },
+      "findings": [
+        {
+          "table": "groupe",
+          "column": "quota_loked",
+          "entity": "groupe.quota_loked",
+          "rule": "negative_or_zero_values",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "violation_count": 7,
+            "violation_pct": 0.777
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "negative_or_zero_values",
+              "severity": "high",
+              "description": "negative or zero values",
+              "evidence": {
+                "violation_count": 7,
+                "violation_pct": 0.777
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne",
+          "column": "budget_used",
+          "entity": "campagne.budget_used",
+          "rule": "negative_or_zero_values",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "violation_count": 2,
+            "violation_pct": 0.222
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "negative_or_zero_values",
+              "severity": "high",
+              "description": "negative or zero values",
+              "evidence": {
+                "violation_count": 2,
+                "violation_pct": 0.222
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": [],
+      "report": "## Structural Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 28\n- Flagged: 2\n- Severity split: critical=0, high=2, medium=0, low=0\n- Quality score: 70.0 / 100\n- Confidence: 0.9\n- Flagged tables: campagne, groupe\n\n### Metrics\n- Findings count: 2\n- Validator: structural\n\n### Findings (2)\n\n#### 1. groupe [HIGH]\n- Problem: negative or zero values\n- Confidence: 0.9\n- Column: quota_loked\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [HIGH] negative or zero values\n\n#### 2. campagne [HIGH]\n- Problem: negative or zero values\n- Confidence: 0.9\n- Column: budget_used\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [HIGH] negative or zero values"
+    },
+    "relational_validator": {
+      "pipeline_run_id": "10375eaf-44a0-4ea8-ad0e-e9332dcba327",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-05T18:58:07.747389Z",
+      "agent": "Relational Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 30,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "relational",
+        "findings_count": 0
+      },
+      "findings": [],
+      "prior_reports": [],
+      "report": "## Relational Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 30\n- Flagged: 0\n- Severity split: critical=0, high=0, medium=0, low=0\n- Quality score: 100.0 / 100\n- Confidence: 1.0\n\n### Metrics\n- Findings count: 0\n- Validator: relational\n\nNo issues were found by this agent."
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "10375eaf-44a0-4ea8-ad0e-e9332dcba327",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-05T18:58:07.747389Z",
+      "agent": "Data Fix Planner",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 13,
+        "items_passed": 0,
+        "items_flagged": 13,
+        "critical_issues": 0,
+        "high_issues": 8,
+        "medium_issues": 2,
+        "low_issues": 3,
+        "overall_quality_score": 35.0,
+        "overall_confidence": 0.8885,
+        "flagged_tables": [
+          "budget_history",
+          "campagne",
+          "campagne_contacts",
+          "campagne_tags",
+          "expediteur",
+          "expediteur_groupe",
+          "groupe",
+          "membership",
+          "mention"
+        ]
+      },
+      "metrics": {
+        "total_issues_received": 13,
+        "fixes_generated": 13
+      },
+      "findings": [
+        {
+          "id": "fix_001_campagne_contacts",
+          "fix_id": "add-pk-campagne-contacts",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": [],
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "Add Primary Key to campagne_contacts",
+          "fix": "The table campagne_contacts is missing a primary key, which is required by domain rules. A composite primary key on campagne_id and contact_id will ensure uniqueness and improve data integrity.",
+          "severity": "high",
+          "confidence": 0.95,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE campagne_contacts ADD CONSTRAINT campagne_contacts_pkey PRIMARY KEY (campagne_id, contact_id);"
+          ],
+          "explanation": "The table campagne_contacts is missing a primary key, which is required by domain rules. A composite primary key on campagne_id and contact_id will ensure uniqueness and improve data integrity.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'campagne_contacts_pkey';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_contacts DROP CONSTRAINT IF EXISTS campagne_contacts_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_002_expediteur_groupe",
+          "fix_id": "add-pk-expediteur-groupe",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "expediteur_groupe"
+          ],
+          "depends_on": [],
+          "table": "expediteur_groupe",
+          "target_table": "expediteur_groupe",
+          "problem": "Add Primary Key to expediteur_groupe",
+          "fix": "The table expediteur_groupe is missing a primary key, which is required by domain rules. A composite primary key on groupe_id and expediteur_id will ensure uniqueness and improve data integrity.",
+          "severity": "high",
+          "confidence": 0.95,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE expediteur_groupe ADD CONSTRAINT expediteur_groupe_pkey PRIMARY KEY (groupe_id, expediteur_id);"
+          ],
+          "explanation": "The table expediteur_groupe is missing a primary key, which is required by domain rules. A composite primary key on groupe_id and expediteur_id will ensure uniqueness and improve data integrity.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'expediteur_groupe_pkey';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE expediteur_groupe DROP CONSTRAINT IF EXISTS expediteur_groupe_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_003_campagne_tags",
+          "fix_id": "add-pk-campagne-tags",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_tags"
+          ],
+          "depends_on": [],
+          "table": "campagne_tags",
+          "target_table": "campagne_tags",
+          "problem": "Add Primary Key to campagne_tags",
+          "fix": "The table campagne_tags is missing a primary key, which is required by domain rules. A composite primary key on campagne_id and tag_name will ensure uniqueness and improve data integrity.",
+          "severity": "high",
+          "confidence": 0.95,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE campagne_tags ADD CONSTRAINT campagne_tags_pkey PRIMARY KEY (campagne_id, tag_name);"
+          ],
+          "explanation": "The table campagne_tags is missing a primary key, which is required by domain rules. A composite primary key on campagne_id and tag_name will ensure uniqueness and improve data integrity.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'campagne_tags_pkey';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_tags DROP CONSTRAINT IF EXISTS campagne_tags_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_004_groupe_quota_loked",
+          "fix_id": "update-groupe-quota-loked",
+          "rows_affected_estimate": 7,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": [],
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "Set negative/zero quota_loked values to 0 in groupe",
+          "fix": "The column quota_loked in table groupe contains negative or zero values, violating data integrity. This fix will update these values to 0.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 7,
+          "queries": [
+            "UPDATE groupe SET quota_loked = 0 WHERE quota_loked <= 0;"
+          ],
+          "explanation": "The column quota_loked in table groupe contains negative or zero values, violating data integrity. This fix will update these values to 0.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM groupe WHERE quota_loked <= 0;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No automatic rollback for this operation. Manual review and data restoration from backup is required if needed.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_005_campagne_budget_used",
+          "fix_id": "update-campagne-budget-used",
+          "rows_affected_estimate": 2,
+          "tables_touched": [
+            "campagne"
+          ],
+          "depends_on": [],
+          "table": "campagne",
+          "target_table": "campagne",
+          "problem": "Set negative/zero budget_used values to 0 in campagne",
+          "fix": "The column budget_used in table campagne contains negative or zero values, violating data integrity. This fix will update these values to 0.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 2,
+          "queries": [
+            "UPDATE campagne SET budget_used = 0 WHERE budget_used <= 0;"
+          ],
+          "explanation": "The column budget_used in table campagne contains negative or zero values, violating data integrity. This fix will update these values to 0.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM campagne WHERE budget_used <= 0;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No automatic rollback for this operation. Manual review and data restoration from backup is required if needed.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_006_groupe_admin_id",
+          "fix_id": "add-index-groupe-admin-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": [],
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "Add index to groupe.admin_id",
+          "fix": "The column admin_id in table groupe is a foreign key and lacks an index. Adding an index will improve the performance of queries involving joins or lookups on this column.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS idx_groupe_admin_id ON groupe (admin_id);"
+          ],
+          "explanation": "The column admin_id in table groupe is a foreign key and lacks an index. Adding an index will improve the performance of queries involving joins or lookups on this column.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'groupe' AND indexname = 'idx_groupe_admin_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_groupe_admin_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_007_expediteur_organization_id",
+          "fix_id": "add-index-expediteur-organization-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "expediteur"
+          ],
+          "depends_on": [],
+          "table": "expediteur",
+          "target_table": "expediteur",
+          "problem": "Add index to expediteur.organization_id",
+          "fix": "The column organization_id in table expediteur is a foreign key and lacks an index. Adding an index will improve the performance of queries involving joins or lookups on this column.",
+          "severity": "low",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS idx_expediteur_organization_id ON expediteur (organization_id);"
+          ],
+          "explanation": "The column organization_id in table expediteur is a foreign key and lacks an index. Adding an index will improve the performance of queries involving joins or lookups on this column.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'expediteur' AND indexname = 'idx_expediteur_organization_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_expediteur_organization_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_008_membership_status_id",
+          "fix_id": "add-index-membership-status-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "membership"
+          ],
+          "depends_on": [],
+          "table": "membership",
+          "target_table": "membership",
+          "problem": "Add index to membership.status_id",
+          "fix": "The column status_id in table membership is a foreign key and lacks an index. Adding an index will improve the performance of queries involving joins or lookups on this column.",
+          "severity": "low",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS idx_membership_status_id ON membership (status_id);"
+          ],
+          "explanation": "The column status_id in table membership is a foreign key and lacks an index. Adding an index will improve the performance of queries involving joins or lookups on this column.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'membership' AND indexname = 'idx_membership_status_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_membership_status_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_009_mention_modele_id",
+          "fix_id": "add-index-mention-modele-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "mention"
+          ],
+          "depends_on": [],
+          "table": "mention",
+          "target_table": "mention",
+          "problem": "Add index to mention.modele_id",
+          "fix": "The column modele_id in table mention is a foreign key and lacks an index. Adding an index will improve the performance of queries involving joins or lookups on this column.",
+          "severity": "low",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS idx_mention_modele_id ON mention (modele_id);"
+          ],
+          "explanation": "The column modele_id in table mention is a foreign key and lacks an index. Adding an index will improve the performance of queries involving joins or lookups on this column.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'mention' AND indexname = 'idx_mention_modele_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_mention_modele_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_010_groupe_admin_id",
+          "fix_id": "advise-groupe-admin-id-nulls",
+          "rows_affected_estimate": 8,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": [],
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "High null rate for groupe.admin_id",
+          "fix": "The column admin_id in table groupe has a high null rate (88.89%), exceeding the allowed threshold of 5%. This suggests potential data quality issues or an opportunity to reconsider the column's nullability or default value. No automatic fix is provided as this requires business context.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 8,
+          "queries": [
+            "SELECT id, admin_id FROM groupe WHERE admin_id IS NULL;"
+          ],
+          "explanation": "The column admin_id in table groupe has a high null rate (88.89%), exceeding the allowed threshold of 5%. This suggests potential data quality issues or an opportunity to reconsider the column's nullability or default value. No automatic fix is provided as this requires business context.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM groupe WHERE admin_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory query.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_011_budget_history_groupe_id",
+          "fix_id": "advise-budget-history-groupe-id-nullable-fk",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "budget_history"
+          ],
+          "depends_on": [],
+          "table": "budget_history",
+          "target_table": "budget_history",
+          "problem": "budget_history.groupe_id is a nullable foreign key style column",
+          "fix": "The column groupe_id in budget_history appears to be a foreign key but is nullable. While sometimes intentional, nullable foreign keys can lead to data integrity issues if not properly managed. Consider if this column should be NOT NULL, or if a default value or specific handling for NULLs is required.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT id, groupe_id FROM budget_history WHERE groupe_id IS NULL;"
+          ],
+          "explanation": "The column groupe_id in budget_history appears to be a foreign key but is nullable. While sometimes intentional, nullable foreign keys can lead to data integrity issues if not properly managed. Consider if this column should be NOT NULL, or if a default value or specific handling for NULLs is required.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM budget_history WHERE groupe_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory query.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_012_groupe_admin_id",
+          "fix_id": "advise-groupe-admin-id-nullable-fk",
+          "rows_affected_estimate": 8,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": [],
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "groupe.admin_id is a nullable foreign key style column",
+          "fix": "The column admin_id in groupe appears to be a foreign key but is nullable. While sometimes intentional, nullable foreign keys can lead to data integrity issues if not properly managed. Consider if this column should be NOT NULL, or if a default value or specific handling for NULLs is required.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 8,
+          "queries": [
+            "SELECT id, admin_id FROM groupe WHERE admin_id IS NULL;"
+          ],
+          "explanation": "The column admin_id in groupe appears to be a foreign key but is nullable. While sometimes intentional, nullable foreign keys can lead to data integrity issues if not properly managed. Consider if this column should be NOT NULL, or if a default value or specific handling for NULLs is required.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM groupe WHERE admin_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory query.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_013_campagne_contacts_contact_id",
+          "fix_id": "advise-campagne-contacts-contact-id-nullable-fk",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": [],
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "campagne_contacts.contact_id is a nullable foreign key style column",
+          "fix": "The column contact_id in campagne_contacts appears to be a foreign key but is nullable. While sometimes intentional, nullable foreign keys can lead to data integrity issues if not properly managed. Consider if this column should be NOT NULL, or if a default value or specific handling for NULLs is required.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT campagne_id, contact_id FROM campagne_contacts WHERE contact_id IS NULL;"
+          ],
+          "explanation": "The column contact_id in campagne_contacts appears to be a foreign key but is nullable. While sometimes intentional, nullable foreign keys can lead to data integrity issues if not properly managed. Consider if this column should be NOT NULL, or if a default value or specific handling for NULLs is required.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM campagne_contacts WHERE contact_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory query.';"
+          ],
+          "explain_summary": null
+        }
+      ],
+      "cards": [
+        {
+          "fix_id": "add-pk-campagne-contacts",
+          "title": "Add Primary Key to campagne_contacts",
+          "target": "campagne_contacts",
+          "rationale": "The table campagne_contacts is missing a primary key, which is required by domain rules. A composite primary key on campagne_id and contact_id will ensure uniqueness and improve data integrity.",
+          "risk_level": "high",
+          "sql": "ALTER TABLE campagne_contacts ADD CONSTRAINT campagne_contacts_pkey PRIMARY KEY (campagne_id, contact_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'campagne_contacts_pkey';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_contacts DROP CONSTRAINT IF EXISTS campagne_contacts_pkey;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "add-pk-expediteur-groupe",
+          "title": "Add Primary Key to expediteur_groupe",
+          "target": "expediteur_groupe",
+          "rationale": "The table expediteur_groupe is missing a primary key, which is required by domain rules. A composite primary key on groupe_id and expediteur_id will ensure uniqueness and improve data integrity.",
+          "risk_level": "high",
+          "sql": "ALTER TABLE expediteur_groupe ADD CONSTRAINT expediteur_groupe_pkey PRIMARY KEY (groupe_id, expediteur_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'expediteur_groupe_pkey';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE expediteur_groupe DROP CONSTRAINT IF EXISTS expediteur_groupe_pkey;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "expediteur_groupe"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "add-pk-campagne-tags",
+          "title": "Add Primary Key to campagne_tags",
+          "target": "campagne_tags",
+          "rationale": "The table campagne_tags is missing a primary key, which is required by domain rules. A composite primary key on campagne_id and tag_name will ensure uniqueness and improve data integrity.",
+          "risk_level": "high",
+          "sql": "ALTER TABLE campagne_tags ADD CONSTRAINT campagne_tags_pkey PRIMARY KEY (campagne_id, tag_name);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'campagne_tags_pkey';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_tags DROP CONSTRAINT IF EXISTS campagne_tags_pkey;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_tags"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "update-groupe-quota-loked",
+          "title": "Set negative/zero quota_loked values to 0 in groupe",
+          "target": "groupe.quota_loked",
+          "rationale": "The column quota_loked in table groupe contains negative or zero values, violating data integrity. This fix will update these values to 0.",
+          "risk_level": "high",
+          "sql": "UPDATE groupe SET quota_loked = 0 WHERE quota_loked <= 0;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM groupe WHERE quota_loked <= 0;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No automatic rollback for this operation. Manual review and data restoration from backup is required if needed.';"
+          ],
+          "rows_affected_estimate": 7,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "update-campagne-budget-used",
+          "title": "Set negative/zero budget_used values to 0 in campagne",
+          "target": "campagne.budget_used",
+          "rationale": "The column budget_used in table campagne contains negative or zero values, violating data integrity. This fix will update these values to 0.",
+          "risk_level": "high",
+          "sql": "UPDATE campagne SET budget_used = 0 WHERE budget_used <= 0;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM campagne WHERE budget_used <= 0;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No automatic rollback for this operation. Manual review and data restoration from backup is required if needed.';"
+          ],
+          "rows_affected_estimate": 2,
+          "tables_touched": [
+            "campagne"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "add-index-groupe-admin-id",
+          "title": "Add index to groupe.admin_id",
+          "target": "groupe.admin_id",
+          "rationale": "The column admin_id in table groupe is a foreign key and lacks an index. Adding an index will improve the performance of queries involving joins or lookups on this column.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS idx_groupe_admin_id ON groupe (admin_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'groupe' AND indexname = 'idx_groupe_admin_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_groupe_admin_id;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "add-index-expediteur-organization-id",
+          "title": "Add index to expediteur.organization_id",
+          "target": "expediteur.organization_id",
+          "rationale": "The column organization_id in table expediteur is a foreign key and lacks an index. Adding an index will improve the performance of queries involving joins or lookups on this column.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS idx_expediteur_organization_id ON expediteur (organization_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'expediteur' AND indexname = 'idx_expediteur_organization_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_expediteur_organization_id;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "expediteur"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "add-index-membership-status-id",
+          "title": "Add index to membership.status_id",
+          "target": "membership.status_id",
+          "rationale": "The column status_id in table membership is a foreign key and lacks an index. Adding an index will improve the performance of queries involving joins or lookups on this column.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS idx_membership_status_id ON membership (status_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'membership' AND indexname = 'idx_membership_status_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_membership_status_id;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "membership"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "add-index-mention-modele-id",
+          "title": "Add index to mention.modele_id",
+          "target": "mention.modele_id",
+          "rationale": "The column modele_id in table mention is a foreign key and lacks an index. Adding an index will improve the performance of queries involving joins or lookups on this column.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS idx_mention_modele_id ON mention (modele_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'mention' AND indexname = 'idx_mention_modele_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_mention_modele_id;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "mention"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-groupe-admin-id-nulls",
+          "title": "High null rate for groupe.admin_id",
+          "target": "groupe.admin_id",
+          "rationale": "The column admin_id in table groupe has a high null rate (88.89%), exceeding the allowed threshold of 5%. This suggests potential data quality issues or an opportunity to reconsider the column's nullability or default value. No automatic fix is provided as this requires business context.",
+          "risk_level": "low",
+          "sql": "SELECT id, admin_id FROM groupe WHERE admin_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM groupe WHERE admin_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory query.';"
+          ],
+          "rows_affected_estimate": 8,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-budget-history-groupe-id-nullable-fk",
+          "title": "budget_history.groupe_id is a nullable foreign key style column",
+          "target": "budget_history.groupe_id",
+          "rationale": "The column groupe_id in budget_history appears to be a foreign key but is nullable. While sometimes intentional, nullable foreign keys can lead to data integrity issues if not properly managed. Consider if this column should be NOT NULL, or if a default value or specific handling for NULLs is required.",
+          "risk_level": "low",
+          "sql": "SELECT id, groupe_id FROM budget_history WHERE groupe_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM budget_history WHERE groupe_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory query.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "budget_history"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-groupe-admin-id-nullable-fk",
+          "title": "groupe.admin_id is a nullable foreign key style column",
+          "target": "groupe.admin_id",
+          "rationale": "The column admin_id in groupe appears to be a foreign key but is nullable. While sometimes intentional, nullable foreign keys can lead to data integrity issues if not properly managed. Consider if this column should be NOT NULL, or if a default value or specific handling for NULLs is required.",
+          "risk_level": "low",
+          "sql": "SELECT id, admin_id FROM groupe WHERE admin_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM groupe WHERE admin_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory query.';"
+          ],
+          "rows_affected_estimate": 8,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-campagne-contacts-contact-id-nullable-fk",
+          "title": "campagne_contacts.contact_id is a nullable foreign key style column",
+          "target": "campagne_contacts.contact_id",
+          "rationale": "The column contact_id in campagne_contacts appears to be a foreign key but is nullable. While sometimes intentional, nullable foreign keys can lead to data integrity issues if not properly managed. Consider if this column should be NOT NULL, or if a default value or specific handling for NULLs is required.",
+          "risk_level": "low",
+          "sql": "SELECT campagne_id, contact_id FROM campagne_contacts WHERE contact_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM campagne_contacts WHERE contact_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory query.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": []
+        }
+      ],
+      "report": "## Data Fix Planner\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 13\n- Passed: 0\n- Flagged: 13\n- Severity split: critical=0, high=8, medium=2, low=3\n- Quality score: 35.0 / 100\n- Confidence: 0.8885\n- Flagged tables: budget_history, campagne, campagne_contacts, campagne_tags, expediteur, expediteur_groupe, groupe, membership, mention\n\n### Metrics\n- Fixes generated: 13\n- Total issues received: 13\n\n### Findings (13)\n\n#### 1. campagne_contacts [HIGH]\n- Problem: Add Primary Key to campagne_contacts\n- Confidence: 0.95\n- Recommendation: The table campagne_contacts is missing a primary key, which is required by domain rules. A composite primary key on campagne_id and contact_id will ensure uniqueness and improve data integrity.\n- Proposed SQL:\n```sql\nALTER TABLE campagne_contacts ADD CONSTRAINT campagne_contacts_pkey PRIMARY KEY (campagne_id, contact_id);\n```\n- Explanation: The table campagne_contacts is missing a primary key, which is required by domain rules. A composite primary key on campagne_id and contact_id will ensure uniqueness and improve data integrity.\n\n#### 2. expediteur_groupe [HIGH]\n- Problem: Add Primary Key to expediteur_groupe\n- Confidence: 0.95\n- Recommendation: The table expediteur_groupe is missing a primary key, which is required by domain rules. A composite primary key on groupe_id and expediteur_id will ensure uniqueness and improve data integrity.\n- Proposed SQL:\n```sql\nALTER TABLE expediteur_groupe ADD CONSTRAINT expediteur_groupe_pkey PRIMARY KEY (groupe_id, expediteur_id);\n```\n- Explanation: The table expediteur_groupe is missing a primary key, which is required by domain rules. A composite primary key on groupe_id and expediteur_id will ensure uniqueness and improve data integrity.\n\n#### 3. campagne_tags [HIGH]\n- Problem: Add Primary Key to campagne_tags\n- Confidence: 0.95\n- Recommendation: The table campagne_tags is missing a primary key, which is required by domain rules. A composite primary key on campagne_id and tag_name will ensure uniqueness and improve data integrity.\n- Proposed SQL:\n```sql\nALTER TABLE campagne_tags ADD CONSTRAINT campagne_tags_pkey PRIMARY KEY (campagne_id, tag_name);\n```\n- Explanation: The table campagne_tags is missing a primary key, which is required by domain rules. A composite primary key on campagne_id and tag_name will ensure uniqueness and improve data integrity.\n\n#### 4. groupe [HIGH]\n- Problem: Set negative/zero quota_loked values to 0 in groupe\n- Confidence: 0.9\n- Recommendation: The column quota_loked in table groupe contains negative or zero values, violating data integrity. This fix will update these values to 0.\n- Proposed SQL:\n```sql\nUPDATE groupe SET quota_loked = 0 WHERE quota_loked <= 0;\n```\n- Explanation: The column quota_loked in table groupe contains negative or zero values, violating data integrity. This fix will update these values to 0.\n\n#### 5. campagne [HIGH]\n- Problem: Set negative/zero budget_used values to 0 in campagne\n- Confidence: 0.9\n- Recommendation: The column budget_used in table campagne contains negative or zero values, violating data integrity. This fix will update these values to 0.\n- Proposed SQL:\n```sql\nUPDATE campagne SET budget_used = 0 WHERE budget_used <= 0;\n```\n- Explanation: The column budget_used in table campagne contains negative or zero values, violating data integrity. This fix will update these values to 0.\n\n#### 6. groupe [HIGH]\n- Problem: Add index to groupe.admin_id\n- Confidence: 0.9\n- Recommendation: The column admin_id in table groupe is a foreign key and lacks an index. Adding an index will improve the performance of queries involving joins or lookups on this column.\n- Proposed SQL:\n```sql\nCREATE INDEX IF NOT EXISTS idx_groupe_admin_id ON groupe (admin_id);\n```\n- Explanation: The column admin_id in table groupe is a foreign key and lacks an index. Adding an index will improve the performance of queries involving joins or lookups on this column.\n\n#### 7. expediteur [LOW]\n- Problem: Add index to expediteur.organization_id\n- Confidence: 0.8\n- Recommendation: The column organization_id in table expediteur is a foreign key and lacks an index. Adding an index will improve the performance of queries involving joins or lookups on this column.\n- Proposed SQL:\n```sql\nCREATE INDEX IF NOT EXISTS idx_expediteur_organization_id ON expediteur (organization_id);\n```\n- Explanation: The column organization_id in table expediteur is a foreign key and lacks an index. Adding an index will improve the performance of queries involving joins or lookups on this column.\n\n#### 8. membership [LOW]\n- Problem: Add index to membership.status_id\n- Confidence: 0.8\n- Recommendation: The column status_id in table membership is a foreign key and lacks an index. Adding an index will improve the performance of queries involving joins or lookups on this column.\n- Proposed SQL:\n```sql\nCREATE INDEX IF NOT EXISTS idx_membership_status_id ON membership (status_id);\n```\n- Explanation: The column status_id in table membership is a foreign key and lacks an index. Adding an index will improve the performance of queries involving joins or lookups on this column.\n\n#### 9. mention [LOW]\n- Problem: Add index to mention.modele_id\n- Confidence: 0.8\n- Recommendation: The column modele_id in table mention is a foreign key and lacks an index. Adding an index will improve the performance of queries involving joins or lookups on this column.\n- Proposed SQL:\n```sql\nCREATE INDEX IF NOT EXISTS idx_mention_modele_id ON mention (modele_id);\n```\n- Explanation: The column modele_id in table mention is a foreign key and lacks an index. Adding an index will improve the performance of queries involving joins or lookups on this column.\n\n#### 10. groupe [HIGH]\n- Problem: High null rate for groupe.admin_id\n- Confidence: 0.9\n- Recommendation: The column admin_id in table groupe has a high null rate (88.89%), exceeding the allowed threshold of 5%. This suggests potential data quality issues or an opportunity to reconsider the column's nullability or default value. No automatic fix is provided as this requires business context.\n- Proposed SQL:\n```sql\nSELECT id, admin_id FROM groupe WHERE admin_id IS NULL;\n```\n- Explanation: The column admin_id in table groupe has a high null rate (88.89%), exceeding the allowed threshold of 5%. This suggests potential data quality issues or an opportunity to reconsider the column's nullability or default value. No automatic fix is provided as this requires business context.\n\n#### 11. budget_history [MEDIUM]\n- Problem: budget_history.groupe_id is a nullable foreign key style column\n- Confidence: 0.9\n- Recommendation: The column groupe_id in budget_history appears to be a foreign key but is nullable. While sometimes intentional, nullable foreign keys can lead to data integrity issues if not properly managed. Consider if this column should be NOT NULL, or if a default value or specific handling for NULLs is required.\n- Proposed SQL:\n```sql\nSELECT id, groupe_id FROM budget_history WHERE groupe_id IS NULL;\n```\n- Explanation: The column groupe_id in budget_history appears to be a foreign key but is nullable. While sometimes intentional, nullable foreign keys can lead to data integrity issues if not properly managed. Consider if this column should be NOT NULL, or if a default value or specific handling for NULLs is required.\n\n#### 12. groupe [HIGH]\n- Problem: groupe.admin_id is a nullable foreign key style column\n- Confidence: 0.9\n- Recommendation: The column admin_id in groupe appears to be a foreign key but is nullable. While sometimes intentional, nullable foreign keys can lead to data integrity issues if not properly managed. Consider if this column should be NOT NULL, or if a default value or specific handling for NULLs is required.\n- Proposed SQL:\n```sql\nSELECT id, admin_id FROM groupe WHERE admin_id IS NULL;\n```\n- Explanation: The column admin_id in groupe appears to be a foreign key but is nullable. While sometimes intentional, nullable foreign keys can lead to data integrity issues if not properly managed. Consider if this column should be NOT NULL, or if a default value or specific handling for NULLs is required.\n\n#### 13. campagne_contacts [MEDIUM]\n- Problem: campagne_contacts.contact_id is a nullable foreign key style column\n- Confidence: 0.9\n- Recommendation: The column contact_id in campagne_contacts appears to be a foreign key but is nullable. While sometimes intentional, nullable foreign keys can lead to data integrity issues if not properly managed. Consider if this column should be NOT NULL, or if a default value or specific handling for NULLs is required.\n- Proposed SQL:\n```sql\nSELECT campagne_id, contact_id FROM campagne_contacts WHERE contact_id IS NULL;\n```\n- Explanation: The column contact_id in campagne_contacts appears to be a foreign key but is nullable. While sometimes intentional, nullable foreign keys can lead to data integrity issues if not properly managed. Consider if this column should be NOT NULL, or if a default value or specific handling for NULLs is required."
+    }
+  }
+}

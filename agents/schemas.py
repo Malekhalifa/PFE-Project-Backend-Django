@@ -18,6 +18,16 @@ class AgentMetadata(BaseModel):
     tool_calls_used: int = 0
     skipped_tables: list[str] = Field(default_factory=list)
 
+    @field_validator("tables_scanned", "tool_calls_used", mode="before")
+    @classmethod
+    def coerce_to_int(cls, v: Any) -> int:
+        if isinstance(v, list):
+            return len(v)
+        try:
+            return int(v)
+        except (TypeError, ValueError):
+            return 0
+
 
 # ---------------------------------------------------------------------------
 # Controlled vocabularies

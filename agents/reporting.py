@@ -126,6 +126,72 @@ def _format_evidence_lines(evidence: dict[str, Any]) -> list[str]:
 
 
 # ---------------------------------------------------------------------------
+# Finding consolidation
+# ---------------------------------------------------------------------------
+
+def _merge_findings_by_table_and_problem(findings: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """
+    Consolidate findings that share the same table name AND the same primary-issue
+    description (i.e. same problem type) but differ only in the affected column.
+
+    The merged entry keeps the highest severity, the average confidence, and
+    collects all distinct column names into a ``columns`` list.  A ``column``
+    key is still present for backward compatibility (set to ``None`` when there
+    are multiple columns).
+    """
+    from collections import defaultdict
+
+    # Ordered dict so we preserve the original encounter order for grouping keys.
+    groups: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+
+    _SEVERITY_RANK_LOCAL = {"low": 1, "medium": 2, "high": 3, "critical": 4}
+
+    for finding in findings:
+        table = _pick_table_name(finding)
+        primary = _resolve_primary_issue(finding)
+        problem = (primary.get("description") or primary.get("type") or "Issue detected").strip()
+        groups[(table, problem)].append(finding)
+
+    merged: list[dict[str, Any]] = []
+    for (table, problem), group in groups.items():
+        if len(group) == 1:
+            # Nothing to merge — pass through as-is.
+            merged.append(group[0])
+            continue
+
+        # Collect distinct columns (preserve order, skip None/empty).
+        seen_cols: list[str] = []
+        seen_set: set[str] = set()
+        for f in group:
+            col = str(f.get("column") or "").strip()
+            if col and col not in seen_set:
+                seen_set.add(col)
+                seen_cols.append(col)
+
+        # Pick the highest severity in the group.
+        best = max(
+            group,
+            key=lambda f: _SEVERITY_RANK_LOCAL.get(
+                normalize_severity((_resolve_primary_issue(f)).get("severity")), 0
+            ),
+        )
+
+        # Average confidence.
+        confidences = [f["confidence"] for f in group if isinstance(f.get("confidence"), (int, float))]
+        avg_confidence = round(sum(confidences) / len(confidences), 4) if confidences else None
+
+        merged_finding = dict(best)
+        merged_finding["columns"] = seen_cols  # New: list of all affected columns
+        merged_finding["column"] = None         # Single column no longer meaningful
+        if avg_confidence is not None:
+            merged_finding["confidence"] = avg_confidence
+
+        merged.append(merged_finding)
+
+    return merged
+
+
+# ---------------------------------------------------------------------------
 # Public Reporting Presentation API
 # ---------------------------------------------------------------------------
 
@@ -194,6 +260,9 @@ def report_to_markdown(report: dict[str, Any], title: str) -> str:
             lines.append(f"- {_humanize_metric_key(key)}: {metrics.get(key)}")
 
     if findings:
+        # Merge findings that share the same table + problem but differ only in column.
+        findings = _merge_findings_by_table_and_problem(findings)
+
         lines.append(f"\n### Findings ({len(findings)})")
         for idx, finding in enumerate(findings, start=1):
             table_name = _pick_table_name(finding)
@@ -213,8 +282,14 @@ def report_to_markdown(report: dict[str, Any], title: str) -> str:
 
             if "confidence" in finding:
                 lines.append(f"- Confidence: {finding['confidence']}")
-            if "column" in finding:
+
+            # Merged finding: show all affected columns; single finding: show one column.
+            merged_cols: list[str] = finding.get("columns") or []
+            if merged_cols:
+                lines.append(f"- Columns: {', '.join(merged_cols)}")
+            elif "column" in finding and finding["column"] is not None:
                 lines.append(f"- Column: {finding['column']}")
+
             if "row_id" in finding or "row_identifier" in finding:
                 lines.append(f"- Row identifier: {finding.get('row_id') or finding.get('row_identifier')}")
 

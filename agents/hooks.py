@@ -26,6 +26,23 @@ from .tool_factories import build_postgres_tools
 logger = logging.getLogger("qualitylab")
 
 _DSN_PATTERN = re.compile(r"(postgres(?:ql)?://[^\s'\"`<>]+)", re.IGNORECASE)
+_WS_RE = re.compile(r"\s+")
+
+
+def normalize_query(query: str) -> str:
+    """Lowercase and collapse all whitespace to a single space."""
+    return _WS_RE.sub(" ", query.lower()).strip()
+
+
+def _agent_id(run_context: RunContext) -> str:
+    """Return the current agent's id string, or 'global' when not inside an agent.
+
+    Used to scope per-agent session_state keys so that parallel agents running
+    concurrently (statistical / structural / relational) each maintain independent
+    dedup caches.  Without scoping, schema+profiler queries poison the parallel
+    agents' _query_patterns list and they receive fake 'no rows returned' results.
+    """
+    return getattr(getattr(run_context, "agent", None), "id", "") or "global"
 
 
 def _redis_client():
@@ -42,20 +59,43 @@ def qualitylab_tool_hook(
     function_call,
     arguments: dict,
 ):
-    """Shared tool hook for in-run deduplication and timing telemetry.
+    """Shared tool hook: query normalization, dedup, loop detection, timing telemetry.
 
-    Two-layer cache: L1 = in-process dict (zero latency for same-worker repeat
-    calls); L2 = Redis (shared across parallel Celery workers for the same job).
+    All dedup state (_tool_calls_seen, _query_patterns, _empty_results_streak) is
+    scoped per-agent using the agent's id.  This prevents parallel validators
+    (statistical / structural / relational) from sharing cache state with the schema
+    and profiler agents that ran before them.
     """
+    aid = _agent_id(run_context)
     job_id = (run_context.session_state or {}).get("job_id") or "nojob"
-    seen: dict[str, Any] = run_context.session_state.setdefault("_tool_calls_seen", {})
+    seen: dict[str, Any] = run_context.session_state.setdefault(f"_tool_calls_seen_{aid}", {})
+
+    # ── Query-pattern deduplication (run_query only) ─────────────────────
+    if function_name in ("run_query", "_run_query"):
+        raw_sql = arguments.get("query", "")
+        norm = normalize_query(raw_sql)
+        # Use a list (not a set) — sets are not JSON-serializable and break
+        # Agno's SQLite session upsert with "Object of type set is not JSON serializable".
+        # Scoped per-agent so parallel agents don't share query-pattern history.
+        patterns: list[str] = run_context.session_state.setdefault(f"_query_patterns_{aid}", [])
+        if norm in patterns:
+            logger.info(
+                "tool_hook: duplicate query pattern skipped | agent=%s | tool=%s | norm=%.120s",
+                aid,
+                function_name,
+                norm,
+            )
+            return "Query executed successfully - no rows returned."
+        patterns.append(norm)
+
+    # ── Argument-level L1 dedup ──────────────────────────────────────────
     try:
         arg_str = json.dumps(arguments, sort_keys=True, default=str)
     except Exception:
         arg_str = str(arguments)
 
     local_key = f"{function_name}:{arg_str}"
-    redis_key = f"ql:tool:{job_id}:{local_key}"
+    redis_key = f"ql:tool:{job_id}:{aid}:{local_key}"
 
     if local_key in seen:
         logger.debug("tool_hook: L1 hit for %s", function_name)
@@ -74,16 +114,50 @@ def qualitylab_tool_hook(
         except Exception:
             pass
 
-
     t0 = time.perf_counter()
     result = function_call(**arguments)
     elapsed_ms = (time.perf_counter() - t0) * 1000
 
+    # ── Loop detection (per-agent streak to avoid parallel-agent cross-talk) ───
+    streak_key = f"_empty_results_streak_{aid}"
+    is_empty = (
+        result is None
+        or result == "Query executed successfully - no rows returned."
+        or (isinstance(result, str) and '"count": 0' in result)
+        or (isinstance(result, str) and result.strip() == "[]")
+    )
+    streak: int = run_context.session_state.get(streak_key, 0)
+    if is_empty:
+        streak += 1
+        run_context.session_state[streak_key] = streak
+        if streak >= 6:
+            logger.warning(
+                "tool_hook: LOOP DETECTED — %d consecutive empty results, halting tool execution | agent=%s | tool=%s",
+                streak,
+                aid,
+                function_name,
+            )
+            raise RuntimeError(
+                f"Execution halted: {streak} consecutive empty query results detected. "
+                "The agent is looping. Check your analysis strategy."
+            )
+    else:
+        run_context.session_state[streak_key] = 0
+
+    # ── Enhanced logging ─────────────────────────────────────────────────
+    raw_query = arguments.get("query", "")
+    norm_q = normalize_query(raw_query) if raw_query else ""
+    result_size = len(result) if isinstance(result, str) else len(json.dumps(result, default=str))
+    truncated_flag = result_size >= 20_000
+
     logger.info(
-        "tool=%s ms=%.1f args=%s",
+        "tool=%s ms=%.1f result_bytes=%d truncated=%s | norm_query=%.120s | raw_query=%.80s",
         function_name,
         elapsed_ms,
-        {k: v for k, v in arguments.items() if k != "password"},
+        result_size,
+        truncated_flag,
+        norm_q,
+        raw_query[:80],
     )
 
     seen[local_key] = result
@@ -196,6 +270,12 @@ def prime_connection_from_prompt(run_input: RunInput, run_context: RunContext) -
 
 def mark_run_start(run_context: RunContext) -> None:
     run_context.session_state["_run_start"] = time.time()
+    # Reset the per-agent empty-results streak so each agent starts with a clean slate.
+    # Without this, empty results from a previous agent's clean-data checks
+    # would carry over and prematurely trigger loop detection for the next agent.
+    # The key is scoped per-agent to avoid parallel agents clobbering each other.
+    aid = _agent_id(run_context)
+    run_context.session_state[f"_empty_results_streak_{aid}"] = 0
 
 
 def _load_excluded_table_patterns() -> list[str]:
@@ -225,6 +305,8 @@ def _query_table_constraints(table_name: str) -> dict:
         "has_primary_key": False,
         "unique_constraints": [],
         "indexes": [],
+        "indexed_columns": [],
+        "foreign_keys": [],
     }
 
     # PK + UNIQUE in one round-trip
@@ -275,6 +357,70 @@ def _query_table_constraints(table_name: str) -> dict:
             result["indexes"] = [
                 r.get("indexname", "") for r in json.loads(indexes_raw)
                 if r.get("indexname")
+            ]
+        except Exception:
+            pass
+
+    # Columns covered by at least one index — used by the reducer backstop to
+    # reliably catch missing_index false positives regardless of index naming convention.
+    indexed_raw = _q(
+        f"""
+        SELECT DISTINCT a.attname AS column_name
+        FROM pg_class t
+        JOIN pg_index ix ON t.oid = ix.indrelid
+        JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = ANY(ix.indkey)
+        JOIN pg_namespace n ON n.oid = t.relnamespace
+        WHERE n.nspname = 'public' AND t.relname = '{table_name}'
+        """
+    )
+    if indexed_raw and not indexed_raw.startswith("Error") and not indexed_raw.startswith("Query executed"):
+        try:
+            result["indexed_columns"] = [
+                r.get("column_name", "") for r in json.loads(indexed_raw)
+                if r.get("column_name")
+            ]
+        except Exception:
+            pass
+
+    # FK definitions — queried once at schema-prime time so relational validator
+    # can iterate directly without spending tool calls on describe_constraints().
+    fk_raw = _q(
+        f"""
+        SELECT
+            tc.constraint_name,
+            kcu.column_name,
+            fk_target.table_name  AS foreign_table,
+            fk_target.column_name AS foreign_column
+        FROM information_schema.table_constraints tc
+        JOIN information_schema.key_column_usage kcu
+            ON  tc.constraint_name = kcu.constraint_name
+            AND tc.table_schema    = kcu.table_schema
+            AND tc.table_name      = kcu.table_name
+        LEFT JOIN information_schema.referential_constraints rc
+            ON  tc.constraint_name  = rc.constraint_name
+            AND tc.table_schema     = rc.constraint_schema
+        LEFT JOIN information_schema.key_column_usage fk_target
+            ON  rc.unique_constraint_name   = fk_target.constraint_name
+            AND rc.unique_constraint_schema = fk_target.constraint_schema
+            AND kcu.ordinal_position        = fk_target.ordinal_position
+        WHERE tc.table_name    = '{table_name}'
+          AND tc.table_schema  = 'public'
+          AND tc.constraint_type = 'FOREIGN KEY'
+        ORDER BY kcu.ordinal_position
+        LIMIT 30
+        """
+    )
+    if fk_raw and not fk_raw.startswith("Error") and not fk_raw.startswith("Query executed"):
+        try:
+            result["foreign_keys"] = [
+                {
+                    "constraint_name": r.get("constraint_name", ""),
+                    "column":          r.get("column_name", ""),
+                    "foreign_table":   r.get("foreign_table", ""),
+                    "foreign_column":  r.get("foreign_column", ""),
+                }
+                for r in json.loads(fk_raw)
+                if r.get("column_name") and r.get("foreign_table")
             ]
         except Exception:
             pass
@@ -420,15 +566,31 @@ def validate_findings_entities(run_output: RunOutput, run_context: RunContext) -
 def store_profiler_output(run_output: RunOutput, run_context: RunContext) -> None:
     """Serialize ProfilerReport into session_state so parallel validators can reference it.
 
-    Stored as a plain dict under session_state["profiler_report"] so it survives
-    JSON serialization across workflow steps and is resolvable via {profiler_report}
-    in agent instruction templates.
+    Full dump stored under "profiler_report" for backward compat.
+    Compact summary stored under "profiler_summary" — agents should use this.
+    The compact form strips verbose numeric stats (mean, stddev, percentiles, top_values)
+    that add ~18,000 tokens to every agent context without adding decision value.
     """
     content = run_output.content
     if not isinstance(content, ProfilerReport):
         return
     try:
         run_context.session_state["profiler_report"] = content.model_dump()
+        run_context.session_state["profiler_summary"] = {
+            t.table_name: {
+                "row_count": t.row_count,
+                "columns": {
+                    c.column_name: {
+                        "null_rate":    c.null_rate,
+                        "outlier_flag": c.outlier_flag,
+                        "cardinality":  c.cardinality,
+                        "total_rows":   c.total_rows,
+                    }
+                    for c in t.column_stats
+                },
+            }
+            for t in content.tables
+        }
         logger.info("store_profiler_output: profiled %d table(s)", len(content.tables))
     except Exception as exc:
         logger.warning("store_profiler_output: failed to serialize profiler report: %s", exc)
@@ -481,7 +643,8 @@ def emit_pipeline_status(run_input: RunInput, run_context: RunContext) -> None:
 def log_run_metrics(run_output: RunOutput, run_context: RunContext) -> None:
     state = run_context.session_state
     elapsed_ms = (time.time() - state.get("_run_start", time.time())) * 1000
-    tool_calls = len(state.get("_tool_calls_seen", {}))
+    aid = _agent_id(run_context)
+    tool_calls = len(state.get(f"_tool_calls_seen_{aid}", {}))
 
     findings_count = 0
     if isinstance(run_output.content, ValidationReport):
@@ -553,12 +716,22 @@ def validate_fix_sql_safety(run_output: RunOutput) -> None:
             if statement_type in _BLOCKED_STATEMENT_TYPES:
                 violations.append(f"{card.target}: forbidden statement type '{statement_type}'")
             elif statement_type not in _ALLOWED_STATEMENT_TYPES:
-                # sqlglot falls back to 'Command' for valid DDL it cannot fully parse
-                # (e.g. multi-column ALTER TABLE). Check the raw text before rejecting.
+                # sqlglot falls back to 'Command' for valid DDL it cannot fully parse.
+                # Whitelist known-safe patterns before rejecting:
+                #   • Standard DDL prefixes (ALTER TABLE, CREATE INDEX, etc.)
+                #   • DO $$ ... $$ PL/pgSQL blocks — used for idempotent constraint adds
+                #     (e.g. IF NOT EXISTS guards). sqlglot cannot parse anonymous blocks.
                 if statement_type == "Command":
                     raw_upper = sql_text.strip().upper()
+                    # Normalize internal whitespace for prefix matching so
+                    # "DO $$", "DO  $$", "DO\t$$" all match as well as "DO$$".
+                    raw_upper_ws = " ".join(raw_upper.split())
                     _safe_ddl = ("ALTER TABLE", "CREATE INDEX", "CREATE TABLE", "COMMENT ON")
-                    if any(raw_upper.startswith(p) for p in _safe_ddl):
+                    if (
+                        any(raw_upper.startswith(p) for p in _safe_ddl)
+                        or raw_upper_ws.startswith("DO $$")
+                        or raw_upper_ws.startswith("DO$$")
+                    ):
                         continue
                 violations.append(f"{card.target}: unexpected statement type '{statement_type}'")
 

@@ -1,0 +1,2633 @@
+{
+  "pipeline_run_id": "f03c1eff-60d2-4567-8035-628e2e01c182",
+  "database_id": "localhost_5432_easybulk",
+  "llm_model": "gemini-2.5-flash",
+  "run_timestamp": "2026-05-06T15:54:14.966817Z",
+  "summary": {
+    "confidence_score": 91,
+    "data_quality_score": 20,
+    "final_fix_count": 24
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "f03c1eff-60d2-4567-8035-628e2e01c182",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-06T15:54:14.966817Z",
+      "agent": "Schema Integrity Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 11,
+        "items_flagged": 19,
+        "critical_issues": 0,
+        "high_issues": 4,
+        "medium_issues": 5,
+        "low_issues": 10,
+        "overall_quality_score": 0.0,
+        "overall_confidence": 0.8395,
+        "flagged_tables": [
+          "budget_history",
+          "campagne_contacts",
+          "campagne_tags",
+          "expediteur",
+          "expediteur_groupe",
+          "groupe",
+          "membership",
+          "mention",
+          "prm_campaign_type"
+        ]
+      },
+      "metrics": {
+        "validator": "schema",
+        "findings_count": 19
+      },
+      "findings": [
+        {
+          "table": "budget_history",
+          "column": "groupe_id",
+          "entity": "budget_history.groupe_id",
+          "rule": "nullable_foreign_key_style_column",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "column_name": "groupe_id",
+            "is_nullable": true,
+            "data_type": "integer"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "nullable_foreign_key_style_column",
+              "severity": "medium",
+              "description": "nullable foreign key style column",
+              "evidence": {
+                "column_name": "groupe_id",
+                "is_nullable": true,
+                "data_type": "integer"
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "entity": "groupe.admin_id",
+          "rule": "nullable_foreign_key_style_column",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "column_name": "admin_id",
+            "is_nullable": true,
+            "data_type": "integer"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "nullable_foreign_key_style_column",
+              "severity": "medium",
+              "description": "nullable foreign key style column",
+              "evidence": {
+                "column_name": "admin_id",
+                "is_nullable": true,
+                "data_type": "integer"
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": null,
+          "entity": "groupe",
+          "rule": "missing_index",
+          "severity": "low",
+          "confidence": 0.8,
+          "evidence": {
+            "column_name": "admin_id",
+            "reason": "Foreign key without explicit index",
+            "columns_with_high_nulls": [
+              "admin_id",
+              "status_id"
+            ]
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_index",
+              "severity": "low",
+              "description": "missing index",
+              "evidence": {
+                "column_name": "admin_id",
+                "reason": "Foreign key without explicit index",
+                "columns_with_high_nulls": [
+                  "admin_id",
+                  "status_id"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": "status_id",
+          "entity": "groupe.status_id",
+          "rule": "missing_index",
+          "severity": "low",
+          "confidence": 0.8,
+          "evidence": {
+            "column_name": "status_id",
+            "reason": "Foreign key without explicit index"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_index",
+              "severity": "low",
+              "description": "missing index",
+              "evidence": {
+                "column_name": "status_id",
+                "reason": "Foreign key without explicit index"
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur",
+          "column": "organization_id",
+          "entity": "expediteur.organization_id",
+          "rule": "missing_index",
+          "severity": "low",
+          "confidence": 0.8,
+          "evidence": {
+            "column_name": "organization_id",
+            "reason": "Foreign key without explicit index"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_index",
+              "severity": "low",
+              "description": "missing index",
+              "evidence": {
+                "column_name": "organization_id",
+                "reason": "Foreign key without explicit index"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_contacts",
+          "column": null,
+          "entity": "campagne_contacts",
+          "rule": "missing_primary_key",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campagne_contacts",
+            "reason": "No primary key found in describe_constraints",
+            "columns_with_high_nulls": [
+              "",
+              "campagne_id",
+              "contact_id"
+            ]
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_primary_key",
+              "severity": "high",
+              "description": "missing primary key",
+              "evidence": {
+                "table_name": "campagne_contacts",
+                "reason": "No primary key found in describe_constraints",
+                "columns_with_high_nulls": [
+                  "",
+                  "campagne_id",
+                  "contact_id"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_contacts",
+          "column": "contact_id",
+          "entity": "campagne_contacts.contact_id",
+          "rule": "nullable_foreign_key_style_column",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "column_name": "contact_id",
+            "is_nullable": true,
+            "data_type": "bigint"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "nullable_foreign_key_style_column",
+              "severity": "medium",
+              "description": "nullable foreign key style column",
+              "evidence": {
+                "column_name": "contact_id",
+                "is_nullable": true,
+                "data_type": "bigint"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_contacts",
+          "column": "campagne_id",
+          "entity": "campagne_contacts.campagne_id",
+          "rule": "missing_index",
+          "severity": "low",
+          "confidence": 0.8,
+          "evidence": {
+            "column_name": "campagne_id",
+            "reason": "Foreign key without explicit index"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_index",
+              "severity": "low",
+              "description": "missing index",
+              "evidence": {
+                "column_name": "campagne_id",
+                "reason": "Foreign key without explicit index"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_contacts",
+          "column": "contact_id",
+          "entity": "campagne_contacts.contact_id",
+          "rule": "missing_index",
+          "severity": "low",
+          "confidence": 0.8,
+          "evidence": {
+            "column_name": "contact_id",
+            "reason": "Foreign key style column without explicit index"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_index",
+              "severity": "low",
+              "description": "missing index",
+              "evidence": {
+                "column_name": "contact_id",
+                "reason": "Foreign key style column without explicit index"
+              }
+            }
+          ]
+        },
+        {
+          "table": "membership",
+          "column": "status_id",
+          "entity": "membership.status_id",
+          "rule": "missing_index",
+          "severity": "low",
+          "confidence": 0.8,
+          "evidence": {
+            "column_name": "status_id",
+            "reason": "Foreign key without explicit index"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_index",
+              "severity": "low",
+              "description": "missing index",
+              "evidence": {
+                "column_name": "status_id",
+                "reason": "Foreign key without explicit index"
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur_groupe",
+          "column": null,
+          "entity": "expediteur_groupe",
+          "rule": "missing_primary_key",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "expediteur_groupe",
+            "reason": "No primary key found in describe_constraints",
+            "columns_with_high_nulls": [
+              "",
+              "groupe_id",
+              "expediteur_id"
+            ]
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_primary_key",
+              "severity": "high",
+              "description": "missing primary key",
+              "evidence": {
+                "table_name": "expediteur_groupe",
+                "reason": "No primary key found in describe_constraints",
+                "columns_with_high_nulls": [
+                  "",
+                  "groupe_id",
+                  "expediteur_id"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur_groupe",
+          "column": "groupe_id",
+          "entity": "expediteur_groupe.groupe_id",
+          "rule": "missing_index",
+          "severity": "low",
+          "confidence": 0.8,
+          "evidence": {
+            "column_name": "groupe_id",
+            "reason": "Foreign key without explicit index"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_index",
+              "severity": "low",
+              "description": "missing index",
+              "evidence": {
+                "column_name": "groupe_id",
+                "reason": "Foreign key without explicit index"
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur_groupe",
+          "column": "expediteur_id",
+          "entity": "expediteur_groupe.expediteur_id",
+          "rule": "missing_index",
+          "severity": "low",
+          "confidence": 0.8,
+          "evidence": {
+            "column_name": "expediteur_id",
+            "reason": "Foreign key without explicit index"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_index",
+              "severity": "low",
+              "description": "missing index",
+              "evidence": {
+                "column_name": "expediteur_id",
+                "reason": "Foreign key without explicit index"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_tags",
+          "column": null,
+          "entity": "campagne_tags",
+          "rule": "missing_primary_key",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campagne_tags",
+            "reason": "No primary key found in describe_constraints",
+            "columns_with_high_nulls": [
+              "",
+              "campagne_id"
+            ]
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_primary_key",
+              "severity": "high",
+              "description": "missing primary key",
+              "evidence": {
+                "table_name": "campagne_tags",
+                "reason": "No primary key found in describe_constraints",
+                "columns_with_high_nulls": [
+                  "",
+                  "campagne_id"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_tags",
+          "column": "campagne_id",
+          "entity": "campagne_tags.campagne_id",
+          "rule": "missing_index",
+          "severity": "low",
+          "confidence": 0.8,
+          "evidence": {
+            "column_name": "campagne_id",
+            "reason": "Foreign key without explicit index"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_index",
+              "severity": "low",
+              "description": "missing index",
+              "evidence": {
+                "column_name": "campagne_id",
+                "reason": "Foreign key without explicit index"
+              }
+            }
+          ]
+        },
+        {
+          "table": "mention",
+          "column": "modele_id",
+          "entity": "mention.modele_id",
+          "rule": "missing_index",
+          "severity": "low",
+          "confidence": 0.8,
+          "evidence": {
+            "column_name": "modele_id",
+            "reason": "Foreign key without explicit index"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_index",
+              "severity": "low",
+              "description": "missing index",
+              "evidence": {
+                "column_name": "modele_id",
+                "reason": "Foreign key without explicit index"
+              }
+            }
+          ]
+        },
+        {
+          "table": "prm_campaign_type",
+          "column": null,
+          "entity": "prm_campaign_type",
+          "rule": "missing_primary_key",
+          "severity": "high",
+          "confidence": 0.75,
+          "evidence": {
+            "table_name": "prm_campaign_type",
+            "reason": "No primary key found and describe_constraints call failed.",
+            "columns_with_high_nulls": [
+              "",
+              "code"
+            ]
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_primary_key",
+              "severity": "high",
+              "description": "missing primary key",
+              "evidence": {
+                "table_name": "prm_campaign_type",
+                "reason": "No primary key found and describe_constraints call failed.",
+                "columns_with_high_nulls": [
+                  "",
+                  "code"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "prm_campaign_type",
+          "column": "code",
+          "entity": "prm_campaign_type.code",
+          "rule": "missing_index",
+          "severity": "medium",
+          "confidence": 0.75,
+          "evidence": {
+            "column_name": "code",
+            "reason": "Column matches unique pattern, no index found, and describe_constraints call failed."
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_index",
+              "severity": "medium",
+              "description": "missing index",
+              "evidence": {
+                "column_name": "code",
+                "reason": "Column matches unique pattern, no index found, and describe_constraints call failed."
+              }
+            }
+          ]
+        },
+        {
+          "table": "prm_campaign_type",
+          "column": "code",
+          "entity": "prm_campaign_type.code",
+          "rule": "missing_unique_constraint",
+          "severity": "medium",
+          "confidence": 0.75,
+          "evidence": {
+            "column_name": "code",
+            "reason": "Column matches unique pattern, no unique constraint found, and describe_constraints call failed."
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "missing_unique_constraint",
+              "severity": "medium",
+              "description": "missing unique constraint",
+              "evidence": {
+                "column_name": "code",
+                "reason": "Column matches unique pattern, no unique constraint found, and describe_constraints call failed."
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": [],
+      "report": "## Schema Integrity Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 11\n- Flagged: 19\n- Severity split: critical=0, high=4, medium=5, low=10\n- Quality score: 0.0 / 100\n- Confidence: 0.8395\n- Flagged tables: budget_history, campagne_contacts, campagne_tags, expediteur, expediteur_groupe, groupe, membership, mention, prm_campaign_type\n\n### Metrics\n- Findings count: 19\n- Validator: schema\n\n### Findings (16)\n\n#### 1. budget_history [MEDIUM]\n- Problem: nullable foreign key style column\n- Confidence: 0.9\n- Column: groupe_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [MEDIUM] nullable foreign key style column\n\n#### 2. groupe [MEDIUM]\n- Problem: nullable foreign key style column\n- Confidence: 0.9\n- Column: admin_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [MEDIUM] nullable foreign key style column\n\n#### 3. groupe [LOW]\n- Problem: missing index\n- Confidence: 0.8\n- Columns: status_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] missing index\n\n#### 4. expediteur [LOW]\n- Problem: missing index\n- Confidence: 0.8\n- Column: organization_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] missing index\n\n#### 5. campagne_contacts [HIGH]\n- Problem: missing primary key\n- Confidence: 1.0\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [HIGH] missing primary key\n\n#### 6. campagne_contacts [MEDIUM]\n- Problem: nullable foreign key style column\n- Confidence: 0.9\n- Column: contact_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [MEDIUM] nullable foreign key style column\n\n#### 7. campagne_contacts [LOW]\n- Problem: missing index\n- Confidence: 0.8\n- Columns: campagne_id, contact_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] missing index\n\n#### 8. membership [LOW]\n- Problem: missing index\n- Confidence: 0.8\n- Column: status_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] missing index\n\n#### 9. expediteur_groupe [HIGH]\n- Problem: missing primary key\n- Confidence: 1.0\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [HIGH] missing primary key\n\n#### 10. expediteur_groupe [LOW]\n- Problem: missing index\n- Confidence: 0.8\n- Columns: groupe_id, expediteur_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] missing index\n\n#### 11. campagne_tags [HIGH]\n- Problem: missing primary key\n- Confidence: 1.0\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [HIGH] missing primary key\n\n#### 12. campagne_tags [LOW]\n- Problem: missing index\n- Confidence: 0.8\n- Column: campagne_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] missing index\n\n#### 13. mention [LOW]\n- Problem: missing index\n- Confidence: 0.8\n- Column: modele_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] missing index\n\n#### 14. prm_campaign_type [HIGH]\n- Problem: missing primary key\n- Confidence: 0.75\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [HIGH] missing primary key\n\n#### 15. prm_campaign_type [MEDIUM]\n- Problem: missing index\n- Confidence: 0.75\n- Column: code\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [MEDIUM] missing index\n\n#### 16. prm_campaign_type [MEDIUM]\n- Problem: missing unique constraint\n- Confidence: 0.75\n- Column: code\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [MEDIUM] missing unique constraint"
+    },
+    "statistical_validator": {
+      "pipeline_run_id": "f03c1eff-60d2-4567-8035-628e2e01c182",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-06T15:54:14.966817Z",
+      "agent": "Statistical Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 7,
+        "items_flagged": 23,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 6,
+        "low_issues": 17,
+        "overall_quality_score": 1.0,
+        "overall_confidence": 0.9,
+        "flagged_tables": [
+          "budget_history",
+          "campagne",
+          "campaign_spool_state",
+          "campaign_type_permission",
+          "expediteur",
+          "groupe",
+          "membership",
+          "modele",
+          "request_api",
+          "smsc_routing_rule",
+          "user_contact",
+          "user_keys",
+          "user_mission",
+          "users"
+        ]
+      },
+      "metrics": {
+        "validator": "statistical",
+        "findings_count": 23
+      },
+      "findings": [
+        {
+          "table": "budget_history",
+          "column": "amount",
+          "entity": "budget_history.amount",
+          "rule": "outlier_distribution",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "outlier_flag": true
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "outlier_distribution",
+              "severity": "medium",
+              "description": "outlier distribution",
+              "evidence": {
+                "outlier_flag": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "budget_history",
+          "column": "status_id",
+          "entity": "budget_history.status_id",
+          "rule": "low_cardinality",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "cardinality": "low"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "low",
+              "description": "low cardinality",
+              "evidence": {
+                "cardinality": "low"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": null,
+          "entity": "campaign_spool_state",
+          "rule": "outlier_distribution",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "outlier_flag": true,
+            "columns_with_high_nulls": [
+              "send_sms_table_size",
+              "spool_size"
+            ]
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "outlier_distribution",
+              "severity": "medium",
+              "description": "outlier distribution",
+              "evidence": {
+                "outlier_flag": true,
+                "columns_with_high_nulls": [
+                  "send_sms_table_size",
+                  "spool_size"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "spool_size",
+          "entity": "campaign_spool_state.spool_size",
+          "rule": "outlier_distribution",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "outlier_flag": true
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "outlier_distribution",
+              "severity": "medium",
+              "description": "outlier distribution",
+              "evidence": {
+                "outlier_flag": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": null,
+          "entity": "campaign_spool_state",
+          "rule": "low_cardinality",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "cardinality": "low",
+            "columns_with_high_nulls": [
+              "is_full",
+              "queued_max_size_reached"
+            ]
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "low",
+              "description": "low cardinality",
+              "evidence": {
+                "cardinality": "low",
+                "columns_with_high_nulls": [
+                  "is_full",
+                  "queued_max_size_reached"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "queued_max_size_reached",
+          "entity": "campaign_spool_state.queued_max_size_reached",
+          "rule": "low_cardinality",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "cardinality": "low"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "low",
+              "description": "low cardinality",
+              "evidence": {
+                "cardinality": "low"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_type_permission",
+          "column": "enabled",
+          "entity": "campaign_type_permission.enabled",
+          "rule": "low_cardinality",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "cardinality": "low"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "low",
+              "description": "low cardinality",
+              "evidence": {
+                "cardinality": "low"
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": "status_id",
+          "entity": "groupe.status_id",
+          "rule": "low_cardinality",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "cardinality": "low"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "low",
+              "description": "low cardinality",
+              "evidence": {
+                "cardinality": "low"
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur",
+          "column": "status",
+          "entity": "expediteur.status",
+          "rule": "low_cardinality",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "cardinality": "low"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "low",
+              "description": "low cardinality",
+              "evidence": {
+                "cardinality": "low"
+              }
+            }
+          ]
+        },
+        {
+          "table": "membership",
+          "column": "status_id",
+          "entity": "membership.status_id",
+          "rule": "low_cardinality",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "cardinality": "low"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "low",
+              "description": "low cardinality",
+              "evidence": {
+                "cardinality": "low"
+              }
+            }
+          ]
+        },
+        {
+          "table": "request_api",
+          "column": "status",
+          "entity": "request_api.status",
+          "rule": "low_cardinality",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "cardinality": "low"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "low",
+              "description": "low cardinality",
+              "evidence": {
+                "cardinality": "low"
+              }
+            }
+          ]
+        },
+        {
+          "table": "smsc_routing_rule",
+          "column": "status",
+          "entity": "smsc_routing_rule.status",
+          "rule": "low_cardinality",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "cardinality": "low"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "low",
+              "description": "low cardinality",
+              "evidence": {
+                "cardinality": "low"
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact",
+          "column": null,
+          "entity": "user_contact",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "null_rate": 0.5,
+            "columns_with_high_nulls": [
+              "attribute1",
+              "attribute2",
+              "attribute3"
+            ]
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "null_rate_high",
+              "severity": "medium",
+              "description": "null rate high",
+              "evidence": {
+                "null_rate": 0.5,
+                "columns_with_high_nulls": [
+                  "attribute1",
+                  "attribute2",
+                  "attribute3"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact",
+          "column": "attribute2",
+          "entity": "user_contact.attribute2",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "null_rate": 0.6
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "null_rate_high",
+              "severity": "medium",
+              "description": "null rate high",
+              "evidence": {
+                "null_rate": 0.6
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact",
+          "column": "attribute3",
+          "entity": "user_contact.attribute3",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "null_rate": 0.7
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "null_rate_high",
+              "severity": "medium",
+              "description": "null rate high",
+              "evidence": {
+                "null_rate": 0.7
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_keys",
+          "column": "active",
+          "entity": "user_keys.active",
+          "rule": "low_cardinality",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "cardinality": "low"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "low",
+              "description": "low cardinality",
+              "evidence": {
+                "cardinality": "low"
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_mission",
+          "column": "role_id",
+          "entity": "user_mission.role_id",
+          "rule": "low_cardinality",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "cardinality": "low"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "low",
+              "description": "low cardinality",
+              "evidence": {
+                "cardinality": "low"
+              }
+            }
+          ]
+        },
+        {
+          "table": "users",
+          "column": "is_local",
+          "entity": "users.is_local",
+          "rule": "low_cardinality",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "cardinality": "low"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "low",
+              "description": "low cardinality",
+              "evidence": {
+                "cardinality": "low"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne",
+          "column": null,
+          "entity": "campagne",
+          "rule": "low_cardinality",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "cardinality": "low",
+            "columns_with_high_nulls": [
+              "deactivated_by_group",
+              "me_only"
+            ]
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "low",
+              "description": "low cardinality",
+              "evidence": {
+                "cardinality": "low",
+                "columns_with_high_nulls": [
+                  "deactivated_by_group",
+                  "me_only"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne",
+          "column": "me_only",
+          "entity": "campagne.me_only",
+          "rule": "low_cardinality",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "cardinality": "low"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "low",
+              "description": "low cardinality",
+              "evidence": {
+                "cardinality": "low"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne",
+          "column": "status_id",
+          "entity": "campagne.status_id",
+          "rule": "low_cardinality",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "cardinality": "low"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "low",
+              "description": "low cardinality",
+              "evidence": {
+                "cardinality": "low"
+              }
+            }
+          ]
+        },
+        {
+          "table": "modele",
+          "column": null,
+          "entity": "modele",
+          "rule": "low_cardinality",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "cardinality": "low",
+            "columns_with_high_nulls": [
+              "status",
+              "temporary"
+            ]
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "low",
+              "description": "low cardinality",
+              "evidence": {
+                "cardinality": "low",
+                "columns_with_high_nulls": [
+                  "status",
+                  "temporary"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "modele",
+          "column": "temporary",
+          "entity": "modele.temporary",
+          "rule": "low_cardinality",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "cardinality": "low"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "low",
+              "description": "low cardinality",
+              "evidence": {
+                "cardinality": "low"
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": [],
+      "report": "## Statistical Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 7\n- Flagged: 23\n- Severity split: critical=0, high=0, medium=6, low=17\n- Quality score: 1.0 / 100\n- Confidence: 0.9\n- Flagged tables: budget_history, campagne, campaign_spool_state, campaign_type_permission, expediteur, groupe, membership, modele, request_api, smsc_routing_rule, user_contact, user_keys, user_mission, users\n\n### Metrics\n- Findings count: 23\n- Validator: statistical\n\n### Findings (16)\n\n#### 1. budget_history [MEDIUM]\n- Problem: outlier distribution\n- Confidence: 0.9\n- Column: amount\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [MEDIUM] outlier distribution\n\n#### 2. budget_history [LOW]\n- Problem: low cardinality\n- Confidence: 0.9\n- Column: status_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] low cardinality\n\n#### 3. campaign_spool_state [MEDIUM]\n- Problem: outlier distribution\n- Confidence: 0.9\n- Columns: spool_size\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [MEDIUM] outlier distribution\n\n#### 4. campaign_spool_state [LOW]\n- Problem: low cardinality\n- Confidence: 0.9\n- Columns: queued_max_size_reached\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] low cardinality\n\n#### 5. campaign_type_permission [LOW]\n- Problem: low cardinality\n- Confidence: 0.9\n- Column: enabled\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] low cardinality\n\n#### 6. groupe [LOW]\n- Problem: low cardinality\n- Confidence: 0.9\n- Column: status_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] low cardinality\n\n#### 7. expediteur [LOW]\n- Problem: low cardinality\n- Confidence: 0.9\n- Column: status\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] low cardinality\n\n#### 8. membership [LOW]\n- Problem: low cardinality\n- Confidence: 0.9\n- Column: status_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] low cardinality\n\n#### 9. request_api [LOW]\n- Problem: low cardinality\n- Confidence: 0.9\n- Column: status\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] low cardinality\n\n#### 10. smsc_routing_rule [LOW]\n- Problem: low cardinality\n- Confidence: 0.9\n- Column: status\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] low cardinality\n\n#### 11. user_contact [MEDIUM]\n- Problem: null rate high\n- Confidence: 0.9\n- Columns: attribute2, attribute3\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [MEDIUM] null rate high\n\n#### 12. user_keys [LOW]\n- Problem: low cardinality\n- Confidence: 0.9\n- Column: active\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] low cardinality\n\n#### 13. user_mission [LOW]\n- Problem: low cardinality\n- Confidence: 0.9\n- Column: role_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] low cardinality\n\n#### 14. users [LOW]\n- Problem: low cardinality\n- Confidence: 0.9\n- Column: is_local\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] low cardinality\n\n#### 15. campagne [LOW]\n- Problem: low cardinality\n- Confidence: 0.9\n- Columns: me_only, status_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] low cardinality\n\n#### 16. modele [LOW]\n- Problem: low cardinality\n- Confidence: 0.9\n- Columns: temporary\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] low cardinality"
+    },
+    "structural_validator": {
+      "pipeline_run_id": "f03c1eff-60d2-4567-8035-628e2e01c182",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-06T15:54:14.966817Z",
+      "agent": "Structural Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 19,
+        "items_flagged": 11,
+        "critical_issues": 0,
+        "high_issues": 11,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 0.0,
+        "overall_confidence": 0.9,
+        "flagged_tables": [
+          "campaign_spool_state",
+          "groupe"
+        ]
+      },
+      "metrics": {
+        "validator": "structural",
+        "findings_count": 11
+      },
+      "findings": [
+        {
+          "table": "campaign_spool_state",
+          "column": null,
+          "entity": "campaign_spool_state",
+          "rule": "negative_or_zero_amount",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "violation_count": 7,
+            "violation_pct": 1.0,
+            "columns_with_high_nulls": [
+              "send_sms_table_size",
+              "spool_size",
+              "sms_received",
+              "sms_received_queued",
+              "sms_sent",
+              "sms_sent_queued",
+              "store_size",
+              "dlr_received",
+              "dlr_sent",
+              "dlr_queued"
+            ]
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "negative_or_zero_amount",
+              "severity": "high",
+              "description": "negative or zero amount",
+              "evidence": {
+                "violation_count": 7,
+                "violation_pct": 1.0,
+                "columns_with_high_nulls": [
+                  "send_sms_table_size",
+                  "spool_size",
+                  "sms_received",
+                  "sms_received_queued",
+                  "sms_sent",
+                  "sms_sent_queued",
+                  "store_size",
+                  "dlr_received",
+                  "dlr_sent",
+                  "dlr_queued"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "spool_size",
+          "entity": "campaign_spool_state.spool_size",
+          "rule": "negative_or_zero_amount",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "violation_count": 7,
+            "violation_pct": 1.0
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "negative_or_zero_amount",
+              "severity": "high",
+              "description": "negative or zero amount",
+              "evidence": {
+                "violation_count": 7,
+                "violation_pct": 1.0
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "sms_received",
+          "entity": "campaign_spool_state.sms_received",
+          "rule": "negative_or_zero_amount",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "violation_count": 7,
+            "violation_pct": 1.0
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "negative_or_zero_amount",
+              "severity": "high",
+              "description": "negative or zero amount",
+              "evidence": {
+                "violation_count": 7,
+                "violation_pct": 1.0
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "sms_received_queued",
+          "entity": "campaign_spool_state.sms_received_queued",
+          "rule": "negative_or_zero_amount",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "violation_count": 7,
+            "violation_pct": 1.0
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "negative_or_zero_amount",
+              "severity": "high",
+              "description": "negative or zero amount",
+              "evidence": {
+                "violation_count": 7,
+                "violation_pct": 1.0
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "sms_sent",
+          "entity": "campaign_spool_state.sms_sent",
+          "rule": "negative_or_zero_amount",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "violation_count": 6,
+            "violation_pct": 0.857
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "negative_or_zero_amount",
+              "severity": "high",
+              "description": "negative or zero amount",
+              "evidence": {
+                "violation_count": 6,
+                "violation_pct": 0.857
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "sms_sent_queued",
+          "entity": "campaign_spool_state.sms_sent_queued",
+          "rule": "negative_or_zero_amount",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "violation_count": 7,
+            "violation_pct": 1.0
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "negative_or_zero_amount",
+              "severity": "high",
+              "description": "negative or zero amount",
+              "evidence": {
+                "violation_count": 7,
+                "violation_pct": 1.0
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "store_size",
+          "entity": "campaign_spool_state.store_size",
+          "rule": "negative_or_zero_amount",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "violation_count": 7,
+            "violation_pct": 1.0
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "negative_or_zero_amount",
+              "severity": "high",
+              "description": "negative or zero amount",
+              "evidence": {
+                "violation_count": 7,
+                "violation_pct": 1.0
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "dlr_received",
+          "entity": "campaign_spool_state.dlr_received",
+          "rule": "negative_or_zero_amount",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "violation_count": 6,
+            "violation_pct": 0.857
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "negative_or_zero_amount",
+              "severity": "high",
+              "description": "negative or zero amount",
+              "evidence": {
+                "violation_count": 6,
+                "violation_pct": 0.857
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "dlr_sent",
+          "entity": "campaign_spool_state.dlr_sent",
+          "rule": "negative_or_zero_amount",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "violation_count": 7,
+            "violation_pct": 1.0
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "negative_or_zero_amount",
+              "severity": "high",
+              "description": "negative or zero amount",
+              "evidence": {
+                "violation_count": 7,
+                "violation_pct": 1.0
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_spool_state",
+          "column": "dlr_queued",
+          "entity": "campaign_spool_state.dlr_queued",
+          "rule": "negative_or_zero_amount",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "violation_count": 6,
+            "violation_pct": 0.857
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "negative_or_zero_amount",
+              "severity": "high",
+              "description": "negative or zero amount",
+              "evidence": {
+                "violation_count": 6,
+                "violation_pct": 0.857
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": "quota_loked",
+          "entity": "groupe.quota_loked",
+          "rule": "negative_or_zero_amount",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "violation_count": 7,
+            "violation_pct": 0.777
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "negative_or_zero_amount",
+              "severity": "high",
+              "description": "negative or zero amount",
+              "evidence": {
+                "violation_count": 7,
+                "violation_pct": 0.777
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": [],
+      "report": "## Structural Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 19\n- Flagged: 11\n- Severity split: critical=0, high=11, medium=0, low=0\n- Quality score: 0.0 / 100\n- Confidence: 0.9\n- Flagged tables: campaign_spool_state, groupe\n\n### Metrics\n- Findings count: 11\n- Validator: structural\n\n### Findings (2)\n\n#### 1. campaign_spool_state [HIGH]\n- Problem: negative or zero amount\n- Confidence: 0.9\n- Columns: spool_size, sms_received, sms_received_queued, sms_sent, sms_sent_queued, store_size, dlr_received, dlr_sent, dlr_queued\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [HIGH] negative or zero amount\n\n#### 2. groupe [HIGH]\n- Problem: negative or zero amount\n- Confidence: 0.9\n- Column: quota_loked\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [HIGH] negative or zero amount"
+    },
+    "relational_validator": {
+      "pipeline_run_id": "f03c1eff-60d2-4567-8035-628e2e01c182",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-06T15:54:14.966817Z",
+      "agent": "Relational Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 30,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "relational",
+        "findings_count": 0
+      },
+      "findings": [],
+      "prior_reports": [],
+      "report": "## Relational Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 30\n- Flagged: 0\n- Severity split: critical=0, high=0, medium=0, low=0\n- Quality score: 100.0 / 100\n- Confidence: 1.0\n\n### Metrics\n- Findings count: 0\n- Validator: relational\n\nNo issues were found by this agent."
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "f03c1eff-60d2-4567-8035-628e2e01c182",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-06T15:54:14.966817Z",
+      "agent": "Data Fix Planner",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 25,
+        "items_passed": 1,
+        "items_flagged": 24,
+        "critical_issues": 0,
+        "high_issues": 10,
+        "medium_issues": 3,
+        "low_issues": 11,
+        "overall_quality_score": 0.0,
+        "overall_confidence": 0.9083,
+        "flagged_tables": [
+          "budget_history",
+          "campagne",
+          "campagne_contacts",
+          "campagne_tags",
+          "campaign_spool_state",
+          "campaign_type_permission",
+          "expediteur",
+          "expediteur_groupe",
+          "groupe",
+          "membership",
+          "mention",
+          "modele",
+          "request_api",
+          "smsc_routing_rule",
+          "user_contact",
+          "user_keys",
+          "users"
+        ]
+      },
+      "metrics": {
+        "total_issues_received": 25,
+        "fixes_generated": 24
+      },
+      "findings": [
+        {
+          "id": "fix_001_campagne_contacts",
+          "fix_id": "add-pk-campagne-contacts",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": [],
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "Add Primary Key to campagne_contacts",
+          "fix": "The table campagne_contacts is missing a primary key. Adding a primary key on campagne_id and contact_id will ensure data integrity and improve query performance.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE campagne_contacts ADD PRIMARY KEY (campagne_id, contact_id);"
+          ],
+          "explanation": "The table campagne_contacts is missing a primary key. Adding a primary key on campagne_id and contact_id will ensure data integrity and improve query performance.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE campagne_contacts DROP CONSTRAINT IF EXISTS campagne_contacts_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_002_expediteur_groupe",
+          "fix_id": "add-pk-expediteur-groupe",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "expediteur_groupe"
+          ],
+          "depends_on": [],
+          "table": "expediteur_groupe",
+          "target_table": "expediteur_groupe",
+          "problem": "Add Primary Key to expediteur_groupe",
+          "fix": "The table expediteur_groupe is missing a primary key. Adding a primary key on groupe_id and expediteur_id will ensure data integrity and improve query performance.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE expediteur_groupe ADD PRIMARY KEY (groupe_id, expediteur_id);"
+          ],
+          "explanation": "The table expediteur_groupe is missing a primary key. Adding a primary key on groupe_id and expediteur_id will ensure data integrity and improve query performance.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE expediteur_groupe DROP CONSTRAINT IF EXISTS expediteur_groupe_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_003_campagne_tags",
+          "fix_id": "add-pk-campagne-tags",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "campagne_tags"
+          ],
+          "depends_on": [],
+          "table": "campagne_tags",
+          "target_table": "campagne_tags",
+          "problem": "Add Primary Key to campagne_tags",
+          "fix": "The table campagne_tags is missing a primary key. Adding a primary key on campagne_id and tag_name will ensure data integrity and improve query performance.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE campagne_tags ADD PRIMARY KEY (campagne_id, tag_name);"
+          ],
+          "explanation": "The table campagne_tags is missing a primary key. Adding a primary key on campagne_id and tag_name will ensure data integrity and improve query performance.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE campagne_tags DROP CONSTRAINT IF EXISTS campagne_tags_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_004_campaign_spool_state",
+          "fix_id": "update-campaign-spool-state-amounts",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "campaign_spool_state"
+          ],
+          "depends_on": [],
+          "table": "campaign_spool_state",
+          "target_table": "campaign_spool_state",
+          "problem": "Correct Negative/Zero Amounts in campaign_spool_state",
+          "fix": "Several columns in campaign_spool_state contain negative or zero values, which is inconsistent with their intended meaning as amounts or sizes. This fix will update these values to NULL where they are less than or equal to zero.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "UPDATE campaign_spool_state SET send_sms_table_size = NULL WHERE send_sms_table_size <= 0;",
+            "UPDATE campaign_spool_state SET spool_size = NULL WHERE spool_size <= 0;",
+            "UPDATE campaign_spool_state SET sms_received = NULL WHERE sms_received <= 0;",
+            "UPDATE campaign_spool_state SET sms_received_queued = NULL WHERE sms_received_queued <= 0;",
+            "UPDATE campaign_spool_state SET sms_sent = NULL WHERE sms_sent <= 0;",
+            "UPDATE campaign_spool_state SET sms_sent_queued = NULL WHERE sms_sent_queued <= 0;",
+            "UPDATE campaign_spool_state SET store_size = NULL WHERE store_size <= 0;",
+            "UPDATE campaign_spool_state SET dlr_received = NULL WHERE dlr_received <= 0;",
+            "UPDATE campaign_spool_state SET dlr_sent = NULL WHERE dlr_sent <= 0;",
+            "UPDATE campaign_spool_state SET dlr_queued = NULL WHERE dlr_queued <= 0;"
+          ],
+          "explanation": "Several columns in campaign_spool_state contain negative or zero values, which is inconsistent with their intended meaning as amounts or sizes. This fix will update these values to NULL where they are less than or equal to zero.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'Rollback for this UPDATE is not possible without a prior backup. Data modified by this operation cannot be restored.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_005_groupe",
+          "fix_id": "update-groupe-quota-loked",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": [],
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "Correct Negative/Zero quota_loked in groupe",
+          "fix": "The quota_loked column in the groupe table contains negative or zero values, which is inconsistent with its intended meaning as a quota. This fix will update these values to NULL where they are less than or equal to zero.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "UPDATE groupe SET quota_loked = NULL WHERE quota_loked <= 0;"
+          ],
+          "explanation": "The quota_loked column in the groupe table contains negative or zero values, which is inconsistent with its intended meaning as a quota. This fix will update these values to NULL where they are less than or equal to zero.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'Rollback for this UPDATE is not possible without a prior backup. Data modified by this operation cannot be restored.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_006_budget_history",
+          "fix_id": "advise-budget-history-groupe-id-nullable",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "budget_history"
+          ],
+          "depends_on": [],
+          "table": "budget_history",
+          "target_table": "budget_history",
+          "problem": "Review Nullable Foreign Key: budget_history.groupe_id",
+          "fix": "The groupe_id column in budget_history is a foreign key but is nullable. While sometimes intentional, foreign keys are typically non-nullable to enforce referential integrity. Consider making this column non-nullable if groupe_id should always reference an existing group.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'Consider ALTER TABLE budget_history ALTER COLUMN groupe_id SET NOT NULL;",
+            "' AS advisory_sql;"
+          ],
+          "explanation": "The groupe_id column in budget_history is a foreign key but is nullable. While sometimes intentional, foreign keys are typically non-nullable to enforce referential integrity. Consider making this column non-nullable if groupe_id should always reference an existing group.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_007_groupe",
+          "fix_id": "advise-groupe-admin-id-nullable",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": [],
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "Review Nullable Foreign Key: groupe.admin_id",
+          "fix": "The admin_id column in groupe is a foreign key but is nullable. While sometimes intentional, foreign keys are typically non-nullable to enforce referential integrity. Consider making this column non-nullable if admin_id should always reference an existing user.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'Consider ALTER TABLE groupe ALTER COLUMN admin_id SET NOT NULL;",
+            "' AS advisory_sql;"
+          ],
+          "explanation": "The admin_id column in groupe is a foreign key but is nullable. While sometimes intentional, foreign keys are typically non-nullable to enforce referential integrity. Consider making this column non-nullable if admin_id should always reference an existing user.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_008_campagne_contacts",
+          "fix_id": "advise-campagne-contacts-contact-id-nullable",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": [],
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "Review Nullable Foreign Key: campagne_contacts.contact_id",
+          "fix": "The contact_id column in campagne_contacts is a foreign key but is nullable. While sometimes intentional, foreign keys are typically non-nullable to enforce referential integrity. Consider making this column non-nullable if contact_id should always reference an existing contact.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'Consider ALTER TABLE campagne_contacts ALTER COLUMN contact_id SET NOT NULL;",
+            "' AS advisory_sql;"
+          ],
+          "explanation": "The contact_id column in campagne_contacts is a foreign key but is nullable. While sometimes intentional, foreign keys are typically non-nullable to enforce referential integrity. Consider making this column non-nullable if contact_id should always reference an existing contact.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_009_budget_history",
+          "fix_id": "advise-budget-history-amount-outlier",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "budget_history"
+          ],
+          "depends_on": [],
+          "table": "budget_history",
+          "target_table": "budget_history",
+          "problem": "Investigate Outlier Distribution: budget_history.amount",
+          "fix": "The amount column in budget_history shows an outlier distribution. This could indicate data entry errors or unusual but valid transactions. Further investigation is recommended to understand the cause and determine if data correction is needed.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT amount, COUNT(*) FROM budget_history GROUP BY amount ORDER BY COUNT(*) DESC LIMIT 10;"
+          ],
+          "explanation": "The amount column in budget_history shows an outlier distribution. This could indicate data entry errors or unusual but valid transactions. Further investigation is recommended to understand the cause and determine if data correction is needed.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_010_campaign_spool_state",
+          "fix_id": "advise-campaign-spool-state-outlier",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "campaign_spool_state"
+          ],
+          "depends_on": [],
+          "table": "campaign_spool_state",
+          "target_table": "campaign_spool_state",
+          "problem": "Investigate Outlier Distribution: campaign_spool_state",
+          "fix": "Several columns in campaign_spool_state show an outlier distribution. This could indicate unusual system behavior or data collection issues. Further investigation is recommended to understand the cause and determine if data correction is needed.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT send_sms_table_size, COUNT(*) FROM campaign_spool_state GROUP BY send_sms_table_size ORDER BY COUNT(*) DESC LIMIT 10;",
+            "SELECT spool_size, COUNT(*) FROM campaign_spool_state GROUP BY spool_size ORDER BY COUNT(*) DESC LIMIT 10;"
+          ],
+          "explanation": "Several columns in campaign_spool_state show an outlier distribution. This could indicate unusual system behavior or data collection issues. Further investigation is recommended to understand the cause and determine if data correction is needed.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_011_user_contact",
+          "fix_id": "advise-user-contact-high-nulls",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "user_contact"
+          ],
+          "depends_on": [],
+          "table": "user_contact",
+          "target_table": "user_contact",
+          "problem": "Review High Null Rate: user_contact.attribute1, attribute2, attribute3",
+          "fix": "Columns attribute1, attribute2, attribute3 in user_contact have a high null rate (50%). This suggests these fields might be optional or not consistently populated. Consider if these columns should be made non-nullable if they are essential, or if default values should be provided.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'Consider ALTER TABLE user_contact ALTER COLUMN attribute1 SET NOT NULL, ALTER COLUMN attribute2 SET NOT NULL, ALTER COLUMN attribute3 SET NOT NULL;",
+            "' AS advisory_sql;"
+          ],
+          "explanation": "Columns attribute1, attribute2, attribute3 in user_contact have a high null rate (50%). This suggests these fields might be optional or not consistently populated. Consider if these columns should be made non-nullable if they are essential, or if default values should be provided.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_012_campaign_spool_state",
+          "fix_id": "advise-campaign-spool-state-low-cardinality",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "campaign_spool_state"
+          ],
+          "depends_on": [],
+          "table": "campaign_spool_state",
+          "target_table": "campaign_spool_state",
+          "problem": "Review Low Cardinality Columns: campaign_spool_state.is_full, queued_max_size_reached",
+          "fix": "Columns is_full and queued_max_size_reached in campaign_spool_state have low cardinality. This is expected for boolean columns. No action is typically required, but it's noted for completeness.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT is_full, COUNT(*) FROM campaign_spool_state GROUP BY is_full;",
+            "SELECT queued_max_size_reached, COUNT(*) FROM campaign_spool_state GROUP BY queued_max_size_reached;"
+          ],
+          "explanation": "Columns is_full and queued_max_size_reached in campaign_spool_state have low cardinality. This is expected for boolean columns. No action is typically required, but it's noted for completeness.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_013_campaign_type_permission",
+          "fix_id": "advise-campaign-type-permission-enabled-low-cardinality",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "campaign_type_permission"
+          ],
+          "depends_on": [],
+          "table": "campaign_type_permission",
+          "target_table": "campaign_type_permission",
+          "problem": "Review Low Cardinality Column: campaign_type_permission.enabled",
+          "fix": "The enabled column in campaign_type_permission has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.",
+          "severity": "low",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT enabled, COUNT(*) FROM campaign_type_permission GROUP BY enabled;"
+          ],
+          "explanation": "The enabled column in campaign_type_permission has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_014_expediteur",
+          "fix_id": "advise-expediteur-status-low-cardinality",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "expediteur"
+          ],
+          "depends_on": [],
+          "table": "expediteur",
+          "target_table": "expediteur",
+          "problem": "Review Low Cardinality Column: expediteur.status",
+          "fix": "The status column in expediteur has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.",
+          "severity": "low",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT status, COUNT(*) FROM expediteur GROUP BY status;"
+          ],
+          "explanation": "The status column in expediteur has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_015_request_api",
+          "fix_id": "advise-request-api-status-low-cardinality",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "request_api"
+          ],
+          "depends_on": [],
+          "table": "request_api",
+          "target_table": "request_api",
+          "problem": "Review Low Cardinality Column: request_api.status",
+          "fix": "The status column in request_api has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.",
+          "severity": "low",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT status, COUNT(*) FROM request_api GROUP BY status;"
+          ],
+          "explanation": "The status column in request_api has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_016_smsc_routing_rule",
+          "fix_id": "advise-smsc-routing-rule-status-low-cardinality",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "smsc_routing_rule"
+          ],
+          "depends_on": [],
+          "table": "smsc_routing_rule",
+          "target_table": "smsc_routing_rule",
+          "problem": "Review Low Cardinality Column: smsc_routing_rule.status",
+          "fix": "The status column in smsc_routing_rule has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.",
+          "severity": "low",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT status, COUNT(*) FROM smsc_routing_rule GROUP BY status;"
+          ],
+          "explanation": "The status column in smsc_routing_rule has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_017_user_keys",
+          "fix_id": "advise-user-keys-active-low-cardinality",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "user_keys"
+          ],
+          "depends_on": [],
+          "table": "user_keys",
+          "target_table": "user_keys",
+          "problem": "Review Low Cardinality Column: user_keys.active",
+          "fix": "The active column in user_keys has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.",
+          "severity": "low",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT active, COUNT(*) FROM user_keys GROUP BY active;"
+          ],
+          "explanation": "The active column in user_keys has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_018_users",
+          "fix_id": "advise-users-is-local-low-cardinality",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "users"
+          ],
+          "depends_on": [],
+          "table": "users",
+          "target_table": "users",
+          "problem": "Review Low Cardinality Column: users.is_local",
+          "fix": "The is_local column in users has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.",
+          "severity": "low",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT is_local, COUNT(*) FROM users GROUP BY is_local;"
+          ],
+          "explanation": "The is_local column in users has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_019_campagne",
+          "fix_id": "advise-campagne-low-cardinality",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "campagne"
+          ],
+          "depends_on": [],
+          "table": "campagne",
+          "target_table": "campagne",
+          "problem": "Review Low Cardinality Columns: campagne.deactivated_by_group, me_only",
+          "fix": "Columns deactivated_by_group and me_only in campagne have low cardinality. This is expected for boolean columns. No action is typically required, but it's noted for completeness.",
+          "severity": "low",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT deactivated_by_group, COUNT(*) FROM campagne GROUP BY deactivated_by_group;",
+            "SELECT me_only, COUNT(*) FROM campagne GROUP BY me_only;"
+          ],
+          "explanation": "Columns deactivated_by_group and me_only in campagne have low cardinality. This is expected for boolean columns. No action is typically required, but it's noted for completeness.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_020_modele",
+          "fix_id": "advise-modele-low-cardinality",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "modele"
+          ],
+          "depends_on": [],
+          "table": "modele",
+          "target_table": "modele",
+          "problem": "Review Low Cardinality Columns: modele.status, temporary",
+          "fix": "Columns status and temporary in modele have low cardinality. This is expected for boolean columns. No action is typically required, but it's noted for completeness.",
+          "severity": "low",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT status, COUNT(*) FROM modele GROUP BY status;",
+            "SELECT temporary, COUNT(*) FROM modele GROUP BY temporary;"
+          ],
+          "explanation": "Columns status and temporary in modele have low cardinality. This is expected for boolean columns. No action is typically required, but it's noted for completeness.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_021_groupe",
+          "fix_id": "add-index-groupe-admin-id",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": [],
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "Add Index to groupe.admin_id",
+          "fix": "The foreign key column admin_id in the groupe table is missing an explicit index. Adding an index will improve the performance of queries involving joins or lookups on this column.",
+          "severity": "high",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS idx_groupe_admin_id ON groupe (admin_id);"
+          ],
+          "explanation": "The foreign key column admin_id in the groupe table is missing an explicit index. Adding an index will improve the performance of queries involving joins or lookups on this column.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_groupe_admin_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_022_expediteur",
+          "fix_id": "add-index-expediteur-organization-id",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "expediteur"
+          ],
+          "depends_on": [],
+          "table": "expediteur",
+          "target_table": "expediteur",
+          "problem": "Add Index to expediteur.organization_id",
+          "fix": "The foreign key column organization_id in the expediteur table is missing an explicit index. Adding an index will improve the performance of queries involving joins or lookups on this column.",
+          "severity": "low",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS idx_expediteur_organization_id ON expediteur (organization_id);"
+          ],
+          "explanation": "The foreign key column organization_id in the expediteur table is missing an explicit index. Adding an index will improve the performance of queries involving joins or lookups on this column.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_expediteur_organization_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_023_membership",
+          "fix_id": "add-index-membership-status-id",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "membership"
+          ],
+          "depends_on": [],
+          "table": "membership",
+          "target_table": "membership",
+          "problem": "Add Index to membership.status_id",
+          "fix": "The foreign key column status_id in the membership table is missing an explicit index. Adding an index will improve the performance of queries involving joins or lookups on this column.",
+          "severity": "low",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS idx_membership_status_id ON membership (status_id);"
+          ],
+          "explanation": "The foreign key column status_id in the membership table is missing an explicit index. Adding an index will improve the performance of queries involving joins or lookups on this column.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_membership_status_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_024_mention",
+          "fix_id": "add-index-mention-modele-id",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "mention"
+          ],
+          "depends_on": [],
+          "table": "mention",
+          "target_table": "mention",
+          "problem": "Add Index to mention.modele_id",
+          "fix": "The foreign key column modele_id in the mention table is missing an explicit index. Adding an index will improve the performance of queries involving joins or lookups on this column.",
+          "severity": "low",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS idx_mention_modele_id ON mention (modele_id);"
+          ],
+          "explanation": "The foreign key column modele_id in the mention table is missing an explicit index. Adding an index will improve the performance of queries involving joins or lookups on this column.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_mention_modele_id;"
+          ],
+          "explain_summary": null
+        }
+      ],
+      "cards": [
+        {
+          "fix_id": "add-pk-campagne-contacts",
+          "title": "Add Primary Key to campagne_contacts",
+          "target": "campagne_contacts",
+          "rationale": "The table campagne_contacts is missing a primary key. Adding a primary key on campagne_id and contact_id will ensure data integrity and improve query performance.",
+          "risk_level": null,
+          "sql": "ALTER TABLE campagne_contacts ADD PRIMARY KEY (campagne_id, contact_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE campagne_contacts DROP CONSTRAINT IF EXISTS campagne_contacts_pkey;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "add-pk-expediteur-groupe",
+          "title": "Add Primary Key to expediteur_groupe",
+          "target": "expediteur_groupe",
+          "rationale": "The table expediteur_groupe is missing a primary key. Adding a primary key on groupe_id and expediteur_id will ensure data integrity and improve query performance.",
+          "risk_level": null,
+          "sql": "ALTER TABLE expediteur_groupe ADD PRIMARY KEY (groupe_id, expediteur_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE expediteur_groupe DROP CONSTRAINT IF EXISTS expediteur_groupe_pkey;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "expediteur_groupe"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "add-pk-campagne-tags",
+          "title": "Add Primary Key to campagne_tags",
+          "target": "campagne_tags",
+          "rationale": "The table campagne_tags is missing a primary key. Adding a primary key on campagne_id and tag_name will ensure data integrity and improve query performance.",
+          "risk_level": null,
+          "sql": "ALTER TABLE campagne_tags ADD PRIMARY KEY (campagne_id, tag_name);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE campagne_tags DROP CONSTRAINT IF EXISTS campagne_tags_pkey;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "campagne_tags"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "update-campaign-spool-state-amounts",
+          "title": "Correct Negative/Zero Amounts in campaign_spool_state",
+          "target": "campaign_spool_state",
+          "rationale": "Several columns in campaign_spool_state contain negative or zero values, which is inconsistent with their intended meaning as amounts or sizes. This fix will update these values to NULL where they are less than or equal to zero.",
+          "risk_level": null,
+          "sql": "UPDATE campaign_spool_state SET send_sms_table_size = NULL WHERE send_sms_table_size <= 0; UPDATE campaign_spool_state SET spool_size = NULL WHERE spool_size <= 0; UPDATE campaign_spool_state SET sms_received = NULL WHERE sms_received <= 0; UPDATE campaign_spool_state SET sms_received_queued = NULL WHERE sms_received_queued <= 0; UPDATE campaign_spool_state SET sms_sent = NULL WHERE sms_sent <= 0; UPDATE campaign_spool_state SET sms_sent_queued = NULL WHERE sms_sent_queued <= 0; UPDATE campaign_spool_state SET store_size = NULL WHERE store_size <= 0; UPDATE campaign_spool_state SET dlr_received = NULL WHERE dlr_received <= 0; UPDATE campaign_spool_state SET dlr_sent = NULL WHERE dlr_sent <= 0; UPDATE campaign_spool_state SET dlr_queued = NULL WHERE dlr_queued <= 0;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'Rollback for this UPDATE is not possible without a prior backup. Data modified by this operation cannot be restored.';"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "campaign_spool_state"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "update-groupe-quota-loked",
+          "title": "Correct Negative/Zero quota_loked in groupe",
+          "target": "groupe",
+          "rationale": "The quota_loked column in the groupe table contains negative or zero values, which is inconsistent with its intended meaning as a quota. This fix will update these values to NULL where they are less than or equal to zero.",
+          "risk_level": null,
+          "sql": "UPDATE groupe SET quota_loked = NULL WHERE quota_loked <= 0;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'Rollback for this UPDATE is not possible without a prior backup. Data modified by this operation cannot be restored.';"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-budget-history-groupe-id-nullable",
+          "title": "Review Nullable Foreign Key: budget_history.groupe_id",
+          "target": "budget_history",
+          "rationale": "The groupe_id column in budget_history is a foreign key but is nullable. While sometimes intentional, foreign keys are typically non-nullable to enforce referential integrity. Consider making this column non-nullable if groupe_id should always reference an existing group.",
+          "risk_level": null,
+          "sql": "SELECT 'Consider ALTER TABLE budget_history ALTER COLUMN groupe_id SET NOT NULL;' AS advisory_sql;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "budget_history"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-groupe-admin-id-nullable",
+          "title": "Review Nullable Foreign Key: groupe.admin_id",
+          "target": "groupe",
+          "rationale": "The admin_id column in groupe is a foreign key but is nullable. While sometimes intentional, foreign keys are typically non-nullable to enforce referential integrity. Consider making this column non-nullable if admin_id should always reference an existing user.",
+          "risk_level": null,
+          "sql": "SELECT 'Consider ALTER TABLE groupe ALTER COLUMN admin_id SET NOT NULL;' AS advisory_sql;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-campagne-contacts-contact-id-nullable",
+          "title": "Review Nullable Foreign Key: campagne_contacts.contact_id",
+          "target": "campagne_contacts",
+          "rationale": "The contact_id column in campagne_contacts is a foreign key but is nullable. While sometimes intentional, foreign keys are typically non-nullable to enforce referential integrity. Consider making this column non-nullable if contact_id should always reference an existing contact.",
+          "risk_level": null,
+          "sql": "SELECT 'Consider ALTER TABLE campagne_contacts ALTER COLUMN contact_id SET NOT NULL;' AS advisory_sql;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-budget-history-amount-outlier",
+          "title": "Investigate Outlier Distribution: budget_history.amount",
+          "target": "budget_history",
+          "rationale": "The amount column in budget_history shows an outlier distribution. This could indicate data entry errors or unusual but valid transactions. Further investigation is recommended to understand the cause and determine if data correction is needed.",
+          "risk_level": null,
+          "sql": "SELECT amount, COUNT(*) FROM budget_history GROUP BY amount ORDER BY COUNT(*) DESC LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "budget_history"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-campaign-spool-state-outlier",
+          "title": "Investigate Outlier Distribution: campaign_spool_state",
+          "target": "campaign_spool_state",
+          "rationale": "Several columns in campaign_spool_state show an outlier distribution. This could indicate unusual system behavior or data collection issues. Further investigation is recommended to understand the cause and determine if data correction is needed.",
+          "risk_level": null,
+          "sql": "SELECT send_sms_table_size, COUNT(*) FROM campaign_spool_state GROUP BY send_sms_table_size ORDER BY COUNT(*) DESC LIMIT 10; SELECT spool_size, COUNT(*) FROM campaign_spool_state GROUP BY spool_size ORDER BY COUNT(*) DESC LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "campaign_spool_state"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-user-contact-high-nulls",
+          "title": "Review High Null Rate: user_contact.attribute1, attribute2, attribute3",
+          "target": "user_contact",
+          "rationale": "Columns attribute1, attribute2, attribute3 in user_contact have a high null rate (50%). This suggests these fields might be optional or not consistently populated. Consider if these columns should be made non-nullable if they are essential, or if default values should be provided.",
+          "risk_level": null,
+          "sql": "SELECT 'Consider ALTER TABLE user_contact ALTER COLUMN attribute1 SET NOT NULL, ALTER COLUMN attribute2 SET NOT NULL, ALTER COLUMN attribute3 SET NOT NULL;' AS advisory_sql;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "user_contact"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-campaign-spool-state-low-cardinality",
+          "title": "Review Low Cardinality Columns: campaign_spool_state.is_full, queued_max_size_reached",
+          "target": "campaign_spool_state",
+          "rationale": "Columns is_full and queued_max_size_reached in campaign_spool_state have low cardinality. This is expected for boolean columns. No action is typically required, but it's noted for completeness.",
+          "risk_level": null,
+          "sql": "SELECT is_full, COUNT(*) FROM campaign_spool_state GROUP BY is_full; SELECT queued_max_size_reached, COUNT(*) FROM campaign_spool_state GROUP BY queued_max_size_reached;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "campaign_spool_state"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-campaign-type-permission-enabled-low-cardinality",
+          "title": "Review Low Cardinality Column: campaign_type_permission.enabled",
+          "target": "campaign_type_permission",
+          "rationale": "The enabled column in campaign_type_permission has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.",
+          "risk_level": null,
+          "sql": "SELECT enabled, COUNT(*) FROM campaign_type_permission GROUP BY enabled;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "campaign_type_permission"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-expediteur-status-low-cardinality",
+          "title": "Review Low Cardinality Column: expediteur.status",
+          "target": "expediteur",
+          "rationale": "The status column in expediteur has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.",
+          "risk_level": null,
+          "sql": "SELECT status, COUNT(*) FROM expediteur GROUP BY status;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "expediteur"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-request-api-status-low-cardinality",
+          "title": "Review Low Cardinality Column: request_api.status",
+          "target": "request_api",
+          "rationale": "The status column in request_api has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.",
+          "risk_level": null,
+          "sql": "SELECT status, COUNT(*) FROM request_api GROUP BY status;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "request_api"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-smsc-routing-rule-status-low-cardinality",
+          "title": "Review Low Cardinality Column: smsc_routing_rule.status",
+          "target": "smsc_routing_rule",
+          "rationale": "The status column in smsc_routing_rule has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.",
+          "risk_level": null,
+          "sql": "SELECT status, COUNT(*) FROM smsc_routing_rule GROUP BY status;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "smsc_routing_rule"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-user-keys-active-low-cardinality",
+          "title": "Review Low Cardinality Column: user_keys.active",
+          "target": "user_keys",
+          "rationale": "The active column in user_keys has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.",
+          "risk_level": null,
+          "sql": "SELECT active, COUNT(*) FROM user_keys GROUP BY active;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "user_keys"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-users-is-local-low-cardinality",
+          "title": "Review Low Cardinality Column: users.is_local",
+          "target": "users",
+          "rationale": "The is_local column in users has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.",
+          "risk_level": null,
+          "sql": "SELECT is_local, COUNT(*) FROM users GROUP BY is_local;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "users"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-campagne-low-cardinality",
+          "title": "Review Low Cardinality Columns: campagne.deactivated_by_group, me_only",
+          "target": "campagne",
+          "rationale": "Columns deactivated_by_group and me_only in campagne have low cardinality. This is expected for boolean columns. No action is typically required, but it's noted for completeness.",
+          "risk_level": null,
+          "sql": "SELECT deactivated_by_group, COUNT(*) FROM campagne GROUP BY deactivated_by_group; SELECT me_only, COUNT(*) FROM campagne GROUP BY me_only;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "campagne"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-modele-low-cardinality",
+          "title": "Review Low Cardinality Columns: modele.status, temporary",
+          "target": "modele",
+          "rationale": "Columns status and temporary in modele have low cardinality. This is expected for boolean columns. No action is typically required, but it's noted for completeness.",
+          "risk_level": null,
+          "sql": "SELECT status, COUNT(*) FROM modele GROUP BY status; SELECT temporary, COUNT(*) FROM modele GROUP BY temporary;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "modele"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "add-index-groupe-admin-id",
+          "title": "Add Index to groupe.admin_id",
+          "target": "groupe",
+          "rationale": "The foreign key column admin_id in the groupe table is missing an explicit index. Adding an index will improve the performance of queries involving joins or lookups on this column.",
+          "risk_level": null,
+          "sql": "CREATE INDEX IF NOT EXISTS idx_groupe_admin_id ON groupe (admin_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_groupe_admin_id;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "add-index-expediteur-organization-id",
+          "title": "Add Index to expediteur.organization_id",
+          "target": "expediteur",
+          "rationale": "The foreign key column organization_id in the expediteur table is missing an explicit index. Adding an index will improve the performance of queries involving joins or lookups on this column.",
+          "risk_level": null,
+          "sql": "CREATE INDEX IF NOT EXISTS idx_expediteur_organization_id ON expediteur (organization_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_expediteur_organization_id;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "expediteur"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "add-index-membership-status-id",
+          "title": "Add Index to membership.status_id",
+          "target": "membership",
+          "rationale": "The foreign key column status_id in the membership table is missing an explicit index. Adding an index will improve the performance of queries involving joins or lookups on this column.",
+          "risk_level": null,
+          "sql": "CREATE INDEX IF NOT EXISTS idx_membership_status_id ON membership (status_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_membership_status_id;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "membership"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "add-index-mention-modele-id",
+          "title": "Add Index to mention.modele_id",
+          "target": "mention",
+          "rationale": "The foreign key column modele_id in the mention table is missing an explicit index. Adding an index will improve the performance of queries involving joins or lookups on this column.",
+          "risk_level": null,
+          "sql": "CREATE INDEX IF NOT EXISTS idx_mention_modele_id ON mention (modele_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_mention_modele_id;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "mention"
+          ],
+          "depends_on": []
+        }
+      ],
+      "report": "## Data Fix Planner\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 25\n- Passed: 1\n- Flagged: 24\n- Severity split: critical=0, high=10, medium=3, low=11\n- Quality score: 0.0 / 100\n- Confidence: 0.9083\n- Flagged tables: budget_history, campagne, campagne_contacts, campagne_tags, campaign_spool_state, campaign_type_permission, expediteur, expediteur_groupe, groupe, membership, mention, modele, request_api, smsc_routing_rule, user_contact, user_keys, users\n\n### Metrics\n- Fixes generated: 24\n- Total issues received: 25\n\n### Findings (24)\n\n#### 1. campagne_contacts [HIGH]\n- Problem: Add Primary Key to campagne_contacts\n- Confidence: 1.0\n- Recommendation: The table campagne_contacts is missing a primary key. Adding a primary key on campagne_id and contact_id will ensure data integrity and improve query performance.\n- Proposed SQL:\n```sql\nALTER TABLE campagne_contacts ADD PRIMARY KEY (campagne_id, contact_id);\n```\n- Explanation: The table campagne_contacts is missing a primary key. Adding a primary key on campagne_id and contact_id will ensure data integrity and improve query performance.\n\n#### 2. expediteur_groupe [HIGH]\n- Problem: Add Primary Key to expediteur_groupe\n- Confidence: 1.0\n- Recommendation: The table expediteur_groupe is missing a primary key. Adding a primary key on groupe_id and expediteur_id will ensure data integrity and improve query performance.\n- Proposed SQL:\n```sql\nALTER TABLE expediteur_groupe ADD PRIMARY KEY (groupe_id, expediteur_id);\n```\n- Explanation: The table expediteur_groupe is missing a primary key. Adding a primary key on groupe_id and expediteur_id will ensure data integrity and improve query performance.\n\n#### 3. campagne_tags [HIGH]\n- Problem: Add Primary Key to campagne_tags\n- Confidence: 1.0\n- Recommendation: The table campagne_tags is missing a primary key. Adding a primary key on campagne_id and tag_name will ensure data integrity and improve query performance.\n- Proposed SQL:\n```sql\nALTER TABLE campagne_tags ADD PRIMARY KEY (campagne_id, tag_name);\n```\n- Explanation: The table campagne_tags is missing a primary key. Adding a primary key on campagne_id and tag_name will ensure data integrity and improve query performance.\n\n#### 4. campaign_spool_state [HIGH]\n- Problem: Correct Negative/Zero Amounts in campaign_spool_state\n- Confidence: 0.9\n- Recommendation: Several columns in campaign_spool_state contain negative or zero values, which is inconsistent with their intended meaning as amounts or sizes. This fix will update these values to NULL where they are less than or equal to zero.\n- Proposed SQL:\n```sql\nUPDATE campaign_spool_state SET send_sms_table_size = NULL WHERE send_sms_table_size <= 0;\n```\n```sql\nUPDATE campaign_spool_state SET spool_size = NULL WHERE spool_size <= 0;\n```\n```sql\nUPDATE campaign_spool_state SET sms_received = NULL WHERE sms_received <= 0;\n```\n```sql\nUPDATE campaign_spool_state SET sms_received_queued = NULL WHERE sms_received_queued <= 0;\n```\n```sql\nUPDATE campaign_spool_state SET sms_sent = NULL WHERE sms_sent <= 0;\n```\n```sql\nUPDATE campaign_spool_state SET sms_sent_queued = NULL WHERE sms_sent_queued <= 0;\n```\n```sql\nUPDATE campaign_spool_state SET store_size = NULL WHERE store_size <= 0;\n```\n```sql\nUPDATE campaign_spool_state SET dlr_received = NULL WHERE dlr_received <= 0;\n```\n```sql\nUPDATE campaign_spool_state SET dlr_sent = NULL WHERE dlr_sent <= 0;\n```\n```sql\nUPDATE campaign_spool_state SET dlr_queued = NULL WHERE dlr_queued <= 0;\n```\n- Explanation: Several columns in campaign_spool_state contain negative or zero values, which is inconsistent with their intended meaning as amounts or sizes. This fix will update these values to NULL where they are less than or equal to zero.\n\n#### 5. groupe [HIGH]\n- Problem: Correct Negative/Zero quota_loked in groupe\n- Confidence: 0.9\n- Recommendation: The quota_loked column in the groupe table contains negative or zero values, which is inconsistent with its intended meaning as a quota. This fix will update these values to NULL where they are less than or equal to zero.\n- Proposed SQL:\n```sql\nUPDATE groupe SET quota_loked = NULL WHERE quota_loked <= 0;\n```\n- Explanation: The quota_loked column in the groupe table contains negative or zero values, which is inconsistent with its intended meaning as a quota. This fix will update these values to NULL where they are less than or equal to zero.\n\n#### 6. budget_history [MEDIUM]\n- Problem: Review Nullable Foreign Key: budget_history.groupe_id\n- Confidence: 0.9\n- Recommendation: The groupe_id column in budget_history is a foreign key but is nullable. While sometimes intentional, foreign keys are typically non-nullable to enforce referential integrity. Consider making this column non-nullable if groupe_id should always reference an existing group.\n- Proposed SQL:\n```sql\nSELECT 'Consider ALTER TABLE budget_history ALTER COLUMN groupe_id SET NOT NULL;\n```\n```sql\n' AS advisory_sql;\n```\n- Explanation: The groupe_id column in budget_history is a foreign key but is nullable. While sometimes intentional, foreign keys are typically non-nullable to enforce referential integrity. Consider making this column non-nullable if groupe_id should always reference an existing group.\n\n#### 7. groupe [HIGH]\n- Problem: Review Nullable Foreign Key: groupe.admin_id\n- Confidence: 0.9\n- Recommendation: The admin_id column in groupe is a foreign key but is nullable. While sometimes intentional, foreign keys are typically non-nullable to enforce referential integrity. Consider making this column non-nullable if admin_id should always reference an existing user.\n- Proposed SQL:\n```sql\nSELECT 'Consider ALTER TABLE groupe ALTER COLUMN admin_id SET NOT NULL;\n```\n```sql\n' AS advisory_sql;\n```\n- Explanation: The admin_id column in groupe is a foreign key but is nullable. While sometimes intentional, foreign keys are typically non-nullable to enforce referential integrity. Consider making this column non-nullable if admin_id should always reference an existing user.\n\n#### 8. campagne_contacts [HIGH]\n- Problem: Review Nullable Foreign Key: campagne_contacts.contact_id\n- Confidence: 1.0\n- Recommendation: The contact_id column in campagne_contacts is a foreign key but is nullable. While sometimes intentional, foreign keys are typically non-nullable to enforce referential integrity. Consider making this column non-nullable if contact_id should always reference an existing contact.\n- Proposed SQL:\n```sql\nSELECT 'Consider ALTER TABLE campagne_contacts ALTER COLUMN contact_id SET NOT NULL;\n```\n```sql\n' AS advisory_sql;\n```\n- Explanation: The contact_id column in campagne_contacts is a foreign key but is nullable. While sometimes intentional, foreign keys are typically non-nullable to enforce referential integrity. Consider making this column non-nullable if contact_id should always reference an existing contact.\n\n#### 9. budget_history [MEDIUM]\n- Problem: Investigate Outlier Distribution: budget_history.amount\n- Confidence: 0.9\n- Recommendation: The amount column in budget_history shows an outlier distribution. This could indicate data entry errors or unusual but valid transactions. Further investigation is recommended to understand the cause and determine if data correction is needed.\n- Proposed SQL:\n```sql\nSELECT amount, COUNT(*) FROM budget_history GROUP BY amount ORDER BY COUNT(*) DESC LIMIT 10;\n```\n- Explanation: The amount column in budget_history shows an outlier distribution. This could indicate data entry errors or unusual but valid transactions. Further investigation is recommended to understand the cause and determine if data correction is needed.\n\n#### 10. campaign_spool_state [HIGH]\n- Problem: Investigate Outlier Distribution: campaign_spool_state\n- Confidence: 0.9\n- Recommendation: Several columns in campaign_spool_state show an outlier distribution. This could indicate unusual system behavior or data collection issues. Further investigation is recommended to understand the cause and determine if data correction is needed.\n- Proposed SQL:\n```sql\nSELECT send_sms_table_size, COUNT(*) FROM campaign_spool_state GROUP BY send_sms_table_size ORDER BY COUNT(*) DESC LIMIT 10;\n```\n```sql\nSELECT spool_size, COUNT(*) FROM campaign_spool_state GROUP BY spool_size ORDER BY COUNT(*) DESC LIMIT 10;\n```\n- Explanation: Several columns in campaign_spool_state show an outlier distribution. This could indicate unusual system behavior or data collection issues. Further investigation is recommended to understand the cause and determine if data correction is needed.\n\n#### 11. user_contact [MEDIUM]\n- Problem: Review High Null Rate: user_contact.attribute1, attribute2, attribute3\n- Confidence: 0.9\n- Recommendation: Columns attribute1, attribute2, attribute3 in user_contact have a high null rate (50%). This suggests these fields might be optional or not consistently populated. Consider if these columns should be made non-nullable if they are essential, or if default values should be provided.\n- Proposed SQL:\n```sql\nSELECT 'Consider ALTER TABLE user_contact ALTER COLUMN attribute1 SET NOT NULL, ALTER COLUMN attribute2 SET NOT NULL, ALTER COLUMN attribute3 SET NOT NULL;\n```\n```sql\n' AS advisory_sql;\n```\n- Explanation: Columns attribute1, attribute2, attribute3 in user_contact have a high null rate (50%). This suggests these fields might be optional or not consistently populated. Consider if these columns should be made non-nullable if they are essential, or if default values should be provided.\n\n#### 12. campaign_spool_state [HIGH]\n- Problem: Review Low Cardinality Columns: campaign_spool_state.is_full, queued_max_size_reached\n- Confidence: 0.9\n- Recommendation: Columns is_full and queued_max_size_reached in campaign_spool_state have low cardinality. This is expected for boolean columns. No action is typically required, but it's noted for completeness.\n- Proposed SQL:\n```sql\nSELECT is_full, COUNT(*) FROM campaign_spool_state GROUP BY is_full;\n```\n```sql\nSELECT queued_max_size_reached, COUNT(*) FROM campaign_spool_state GROUP BY queued_max_size_reached;\n```\n- Explanation: Columns is_full and queued_max_size_reached in campaign_spool_state have low cardinality. This is expected for boolean columns. No action is typically required, but it's noted for completeness.\n\n#### 13. campaign_type_permission [LOW]\n- Problem: Review Low Cardinality Column: campaign_type_permission.enabled\n- Confidence: 0.9\n- Recommendation: The enabled column in campaign_type_permission has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.\n- Proposed SQL:\n```sql\nSELECT enabled, COUNT(*) FROM campaign_type_permission GROUP BY enabled;\n```\n- Explanation: The enabled column in campaign_type_permission has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.\n\n#### 14. expediteur [LOW]\n- Problem: Review Low Cardinality Column: expediteur.status\n- Confidence: 0.9\n- Recommendation: The status column in expediteur has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.\n- Proposed SQL:\n```sql\nSELECT status, COUNT(*) FROM expediteur GROUP BY status;\n```\n- Explanation: The status column in expediteur has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.\n\n#### 15. request_api [LOW]\n- Problem: Review Low Cardinality Column: request_api.status\n- Confidence: 0.9\n- Recommendation: The status column in request_api has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.\n- Proposed SQL:\n```sql\nSELECT status, COUNT(*) FROM request_api GROUP BY status;\n```\n- Explanation: The status column in request_api has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.\n\n#### 16. smsc_routing_rule [LOW]\n- Problem: Review Low Cardinality Column: smsc_routing_rule.status\n- Confidence: 0.9\n- Recommendation: The status column in smsc_routing_rule has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.\n- Proposed SQL:\n```sql\nSELECT status, COUNT(*) FROM smsc_routing_rule GROUP BY status;\n```\n- Explanation: The status column in smsc_routing_rule has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.\n\n#### 17. user_keys [LOW]\n- Problem: Review Low Cardinality Column: user_keys.active\n- Confidence: 0.9\n- Recommendation: The active column in user_keys has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.\n- Proposed SQL:\n```sql\nSELECT active, COUNT(*) FROM user_keys GROUP BY active;\n```\n- Explanation: The active column in user_keys has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.\n\n#### 18. users [LOW]\n- Problem: Review Low Cardinality Column: users.is_local\n- Confidence: 0.9\n- Recommendation: The is_local column in users has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.\n- Proposed SQL:\n```sql\nSELECT is_local, COUNT(*) FROM users GROUP BY is_local;\n```\n- Explanation: The is_local column in users has low cardinality. This is expected for a boolean column. No action is typically required, but it's noted for completeness.\n\n#### 19. campagne [LOW]\n- Problem: Review Low Cardinality Columns: campagne.deactivated_by_group, me_only\n- Confidence: 0.9\n- Recommendation: Columns deactivated_by_group and me_only in campagne have low cardinality. This is expected for boolean columns. No action is typically required, but it's noted for completeness.\n- Proposed SQL:\n```sql\nSELECT deactivated_by_group, COUNT(*) FROM campagne GROUP BY deactivated_by_group;\n```\n```sql\nSELECT me_only, COUNT(*) FROM campagne GROUP BY me_only;\n```\n- Explanation: Columns deactivated_by_group and me_only in campagne have low cardinality. This is expected for boolean columns. No action is typically required, but it's noted for completeness.\n\n#### 20. modele [LOW]\n- Problem: Review Low Cardinality Columns: modele.status, temporary\n- Confidence: 0.9\n- Recommendation: Columns status and temporary in modele have low cardinality. This is expected for boolean columns. No action is typically required, but it's noted for completeness.\n- Proposed SQL:\n```sql\nSELECT status, COUNT(*) FROM modele GROUP BY status;\n```\n```sql\nSELECT temporary, COUNT(*) FROM modele GROUP BY temporary;\n```\n- Explanation: Columns status and temporary in modele have low cardinality. This is expected for boolean columns. No action is typically required, but it's noted for completeness.\n\n#### 21. groupe [HIGH]\n- Problem: Add Index to groupe.admin_id\n- Confidence: 0.9\n- Recommendation: The foreign key column admin_id in the groupe table is missing an explicit index. Adding an index will improve the performance of queries involving joins or lookups on this column.\n- Proposed SQL:\n```sql\nCREATE INDEX IF NOT EXISTS idx_groupe_admin_id ON groupe (admin_id);\n```\n- Explanation: The foreign key column admin_id in the groupe table is missing an explicit index. Adding an index will improve the performance of queries involving joins or lookups on this column.\n\n#### 22. expediteur [LOW]\n- Problem: Add Index to expediteur.organization_id\n- Confidence: 0.9\n- Recommendation: The foreign key column organization_id in the expediteur table is missing an explicit index. Adding an index will improve the performance of queries involving joins or lookups on this column.\n- Proposed SQL:\n```sql\nCREATE INDEX IF NOT EXISTS idx_expediteur_organization_id ON expediteur (organization_id);\n```\n- Explanation: The foreign key column organization_id in the expediteur table is missing an explicit index. Adding an index will improve the performance of queries involving joins or lookups on this column.\n\n#### 23. membership [LOW]\n- Problem: Add Index to membership.status_id\n- Confidence: 0.8\n- Recommendation: The foreign key column status_id in the membership table is missing an explicit index. Adding an index will improve the performance of queries involving joins or lookups on this column.\n- Proposed SQL:\n```sql\nCREATE INDEX IF NOT EXISTS idx_membership_status_id ON membership (status_id);\n```\n- Explanation: The foreign key column status_id in the membership table is missing an explicit index. Adding an index will improve the performance of queries involving joins or lookups on this column.\n\n#### 24. mention [LOW]\n- Problem: Add Index to mention.modele_id\n- Confidence: 0.8\n- Recommendation: The foreign key column modele_id in the mention table is missing an explicit index. Adding an index will improve the performance of queries involving joins or lookups on this column.\n- Proposed SQL:\n```sql\nCREATE INDEX IF NOT EXISTS idx_mention_modele_id ON mention (modele_id);\n```\n- Explanation: The foreign key column modele_id in the mention table is missing an explicit index. Adding an index will improve the performance of queries involving joins or lookups on this column."
+    }
+  }
+}

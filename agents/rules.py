@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 def common_rules() -> str:
     """Tool-usage rules shared by every pipeline agent."""
     return (
-        "Use PostgresTools (show_tables, describe_table, summarize_table, run_query, inspect_query) "
+        "Use PostgresTools (show_tables, describe_table, run_query, inspect_query) "
         "for all database interaction — never call pg_catalog directly.\n"
         "run_query is read-only by design; never attempt writes through it.\n"
         "Respect user-provided domain_rules as strict business logic constraints."

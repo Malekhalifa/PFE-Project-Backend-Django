@@ -1,0 +1,440 @@
+{
+  "pipeline_run_id": "9af26676-fdab-4459-9132-eb32e7696f9e",
+  "database_id": "localhost_5432_easybulk",
+  "llm_model": "gemini-3.1-flash-lite-preview",
+  "run_timestamp": "2026-05-06T16:40:09.836527Z",
+  "summary": {
+    "confidence_score": 97,
+    "data_quality_score": 91,
+    "final_fix_count": 4
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "9af26676-fdab-4459-9132-eb32e7696f9e",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-06T16:40:09.836527Z",
+      "agent": "Schema Integrity Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 26,
+        "items_flagged": 4,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 3,
+        "low_issues": 1,
+        "overall_quality_score": 73.0,
+        "overall_confidence": 0.925,
+        "flagged_tables": [
+          "budget_history",
+          "campagne_contacts",
+          "modele",
+          "prm_organization"
+        ]
+      },
+      "metrics": {
+        "validator": "schema",
+        "findings_count": 4
+      },
+      "findings": [
+        {
+          "table": "budget_history",
+          "column": "groupe_id",
+          "entity": "budget_history.groupe_id",
+          "rule": "nullable_foreign_key",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "is_nullable": true,
+            "column_type": "foreign_key"
+          },
+          "remediation_hint": "Evaluate if the foreign key should be set to NOT NULL to ensure referential integrity.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key",
+              "severity": "medium",
+              "description": "Evaluate if the foreign key should be set to NOT NULL to ensure referential integrity.",
+              "evidence": {
+                "is_nullable": true,
+                "column_type": "foreign_key"
+              }
+            }
+          ]
+        },
+        {
+          "table": "modele",
+          "column": "membership_id",
+          "entity": "modele.membership_id",
+          "rule": "nullable_foreign_key",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "is_nullable": true,
+            "column_type": "foreign_key"
+          },
+          "remediation_hint": "Evaluate if the foreign key should be set to NOT NULL to ensure referential integrity.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key",
+              "severity": "medium",
+              "description": "Evaluate if the foreign key should be set to NOT NULL to ensure referential integrity.",
+              "evidence": {
+                "is_nullable": true,
+                "column_type": "foreign_key"
+              }
+            }
+          ]
+        },
+        {
+          "table": "prm_organization",
+          "column": "organization_id",
+          "entity": "prm_organization.organization_id",
+          "rule": "redundant_column_naming",
+          "severity": "low",
+          "confidence": 0.8,
+          "evidence": {
+            "column_name": "organization_id",
+            "table_name": "prm_organization"
+          },
+          "remediation_hint": "Consider renaming the column to 'id' to follow standard naming conventions and reduce redundancy.",
+          "issues": [
+            {
+              "type": "redundant_column_naming",
+              "severity": "low",
+              "description": "Consider renaming the column to 'id' to follow standard naming conventions and reduce redundancy.",
+              "evidence": {
+                "column_name": "organization_id",
+                "table_name": "prm_organization"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_contacts",
+          "column": "contact_id",
+          "entity": "campagne_contacts.contact_id",
+          "rule": "missing_index",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "column_name": "contact_id",
+            "table_name": "campagne_contacts"
+          },
+          "remediation_hint": "Add an index to the column to improve join performance and query execution speed.",
+          "issues": [
+            {
+              "type": "missing_index",
+              "severity": "medium",
+              "description": "Add an index to the column to improve join performance and query execution speed.",
+              "evidence": {
+                "column_name": "contact_id",
+                "table_name": "campagne_contacts"
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": [],
+      "report": "## Schema Integrity Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 26\n- Flagged: 4\n- Severity split: critical=0, high=0, medium=3, low=1\n- Quality score: 73.0 / 100\n- Confidence: 0.925\n- Flagged tables: budget_history, campagne_contacts, modele, prm_organization\n\n### Metrics\n- Findings count: 4\n- Validator: schema\n\n### Findings (4)\n\n#### 1. budget_history [MEDIUM]\n- Problem: Evaluate if the foreign key should be set to NOT NULL to ensure referential integrity.\n- Confidence: 1.0\n- Column: groupe_id\n- Recommendation: Evaluate if the foreign key should be set to NOT NULL to ensure referential integrity.\n- Detailed issues:\n  - [MEDIUM] Evaluate if the foreign key should be set to NOT NULL to ensure referential integrity.\n\n#### 2. modele [MEDIUM]\n- Problem: Evaluate if the foreign key should be set to NOT NULL to ensure referential integrity.\n- Confidence: 1.0\n- Column: membership_id\n- Recommendation: Evaluate if the foreign key should be set to NOT NULL to ensure referential integrity.\n- Detailed issues:\n  - [MEDIUM] Evaluate if the foreign key should be set to NOT NULL to ensure referential integrity.\n\n#### 3. prm_organization [LOW]\n- Problem: Consider renaming the column to 'id' to follow standard naming conventions and reduce redundancy.\n- Confidence: 0.8\n- Column: organization_id\n- Recommendation: Consider renaming the column to 'id' to follow standard naming conventions and reduce redundancy.\n- Detailed issues:\n  - [LOW] Consider renaming the column to 'id' to follow standard naming conventions and reduce redundancy.\n\n#### 4. campagne_contacts [MEDIUM]\n- Problem: Add an index to the column to improve join performance and query execution speed.\n- Confidence: 0.9\n- Column: contact_id\n- Recommendation: Add an index to the column to improve join performance and query execution speed.\n- Detailed issues:\n  - [MEDIUM] Add an index to the column to improve join performance and query execution speed."
+    },
+    "statistical_validator": {
+      "pipeline_run_id": "9af26676-fdab-4459-9132-eb32e7696f9e",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-06T16:40:09.836527Z",
+      "agent": "Statistical Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 30,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "statistical",
+        "findings_count": 0
+      },
+      "findings": [],
+      "prior_reports": [],
+      "report": "## Statistical Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 30\n- Flagged: 0\n- Severity split: critical=0, high=0, medium=0, low=0\n- Quality score: 100.0 / 100\n- Confidence: 1.0\n\n### Metrics\n- Findings count: 0\n- Validator: statistical\n\nNo issues were found by this agent."
+    },
+    "structural_validator": {
+      "pipeline_run_id": "9af26676-fdab-4459-9132-eb32e7696f9e",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-06T16:40:09.836527Z",
+      "agent": "Structural Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 30,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "structural",
+        "findings_count": 0
+      },
+      "findings": [],
+      "prior_reports": [],
+      "report": "## Structural Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 30\n- Flagged: 0\n- Severity split: critical=0, high=0, medium=0, low=0\n- Quality score: 100.0 / 100\n- Confidence: 1.0\n\n### Metrics\n- Findings count: 0\n- Validator: structural\n\nNo issues were found by this agent."
+    },
+    "relational_validator": {
+      "pipeline_run_id": "9af26676-fdab-4459-9132-eb32e7696f9e",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-06T16:40:09.836527Z",
+      "agent": "Relational Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 30,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "relational",
+        "findings_count": 0
+      },
+      "findings": [],
+      "prior_reports": [],
+      "report": "## Relational Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 30\n- Flagged: 0\n- Severity split: critical=0, high=0, medium=0, low=0\n- Quality score: 100.0 / 100\n- Confidence: 1.0\n\n### Metrics\n- Findings count: 0\n- Validator: relational\n\nNo issues were found by this agent."
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "9af26676-fdab-4459-9132-eb32e7696f9e",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-06T16:40:09.836527Z",
+      "agent": "Data Fix Planner",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 4,
+        "items_passed": 0,
+        "items_flagged": 4,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 3,
+        "low_issues": 1,
+        "overall_quality_score": 80.0,
+        "overall_confidence": 0.925,
+        "flagged_tables": [
+          "budget_history",
+          "campagne_contacts",
+          "modele",
+          "prm_organization"
+        ]
+      },
+      "metrics": {
+        "total_issues_received": 4,
+        "fixes_generated": 4
+      },
+      "findings": [
+        {
+          "id": "fix_001_campagne_contacts_contact_id",
+          "fix_id": "add-index-campagne-contacts-contact-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": [],
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "Add index to campagne_contacts.contact_id",
+          "fix": "Adding an index to the foreign key column contact_id improves join performance and query execution speed.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS idx_campagne_contacts_contact_id ON campagne_contacts (contact_id);"
+          ],
+          "explanation": "Adding an index to the foreign key column contact_id improves join performance and query execution speed.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE indexname = 'idx_campagne_contacts_contact_id';"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_002_budget_history_groupe_id",
+          "fix_id": "set-not-null-budget-history-groupe-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "budget_history"
+          ],
+          "depends_on": [],
+          "table": "budget_history",
+          "target_table": "budget_history",
+          "problem": "Set budget_history.groupe_id to NOT NULL",
+          "fix": "Enforcing NOT NULL on this foreign key ensures referential integrity for budget history records.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE budget_history ALTER COLUMN groupe_id SET NOT NULL;"
+          ],
+          "explanation": "Enforcing NOT NULL on this foreign key ensures referential integrity for budget history records.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'budget_history' AND column_name = 'groupe_id';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE budget_history ALTER COLUMN groupe_id DROP NOT NULL;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_003_modele_membership_id",
+          "fix_id": "set-not-null-modele-membership-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "modele"
+          ],
+          "depends_on": [],
+          "table": "modele",
+          "target_table": "modele",
+          "problem": "Set modele.membership_id to NOT NULL",
+          "fix": "Enforcing NOT NULL on this foreign key ensures referential integrity for model definitions.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE modele ALTER COLUMN membership_id SET NOT NULL;"
+          ],
+          "explanation": "Enforcing NOT NULL on this foreign key ensures referential integrity for model definitions.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'modele' AND column_name = 'membership_id';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE modele ALTER COLUMN membership_id DROP NOT NULL;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_004_prm_organization_organization_id",
+          "fix_id": "advisory-rename-prm-organization-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "prm_organization"
+          ],
+          "depends_on": [],
+          "table": "prm_organization",
+          "target_table": "prm_organization",
+          "problem": "Advisory: Rename prm_organization.organization_id",
+          "fix": "The column name is redundant. Renaming to id or similar would follow standard naming conventions, but this is an advisory change.",
+          "severity": "low",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "-- Advisory: Consider renaming prm_organization.organization_id to 'id' to reduce redundancy.;"
+          ],
+          "explanation": "The column name is redundant. Renaming to id or similar would follow standard naming conventions, but this is an advisory change.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 0;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        }
+      ],
+      "cards": [
+        {
+          "fix_id": "add-index-campagne-contacts-contact-id",
+          "title": "Add index to campagne_contacts.contact_id",
+          "target": "campagne_contacts.contact_id",
+          "rationale": "Adding an index to the foreign key column contact_id improves join performance and query execution speed.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS idx_campagne_contacts_contact_id ON campagne_contacts (contact_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE indexname = 'idx_campagne_contacts_contact_id';"
+          ],
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "set-not-null-budget-history-groupe-id",
+          "title": "Set budget_history.groupe_id to NOT NULL",
+          "target": "budget_history.groupe_id",
+          "rationale": "Enforcing NOT NULL on this foreign key ensures referential integrity for budget history records.",
+          "risk_level": "high",
+          "sql": "ALTER TABLE budget_history ALTER COLUMN groupe_id SET NOT NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'budget_history' AND column_name = 'groupe_id';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE budget_history ALTER COLUMN groupe_id DROP NOT NULL;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "budget_history"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "set-not-null-modele-membership-id",
+          "title": "Set modele.membership_id to NOT NULL",
+          "target": "modele.membership_id",
+          "rationale": "Enforcing NOT NULL on this foreign key ensures referential integrity for model definitions.",
+          "risk_level": "high",
+          "sql": "ALTER TABLE modele ALTER COLUMN membership_id SET NOT NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'modele' AND column_name = 'membership_id';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE modele ALTER COLUMN membership_id DROP NOT NULL;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "modele"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advisory-rename-prm-organization-id",
+          "title": "Advisory: Rename prm_organization.organization_id",
+          "target": "prm_organization.organization_id",
+          "rationale": "The column name is redundant. Renaming to id or similar would follow standard naming conventions, but this is an advisory change.",
+          "risk_level": "low",
+          "sql": "-- Advisory: Consider renaming prm_organization.organization_id to 'id' to reduce redundancy.",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 0;"
+          ],
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "prm_organization"
+          ],
+          "depends_on": []
+        }
+      ],
+      "report": "## Data Fix Planner\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 4\n- Passed: 0\n- Flagged: 4\n- Severity split: critical=0, high=0, medium=3, low=1\n- Quality score: 80.0 / 100\n- Confidence: 0.925\n- Flagged tables: budget_history, campagne_contacts, modele, prm_organization\n\n### Metrics\n- Fixes generated: 4\n- Total issues received: 4\n\n### Findings (4)\n\n#### 1. campagne_contacts [MEDIUM]\n- Problem: Add index to campagne_contacts.contact_id\n- Confidence: 0.9\n- Recommendation: Adding an index to the foreign key column contact_id improves join performance and query execution speed.\n- Proposed SQL:\n```sql\nCREATE INDEX IF NOT EXISTS idx_campagne_contacts_contact_id ON campagne_contacts (contact_id);\n```\n- Explanation: Adding an index to the foreign key column contact_id improves join performance and query execution speed.\n\n#### 2. budget_history [MEDIUM]\n- Problem: Set budget_history.groupe_id to NOT NULL\n- Confidence: 1.0\n- Recommendation: Enforcing NOT NULL on this foreign key ensures referential integrity for budget history records.\n- Proposed SQL:\n```sql\nALTER TABLE budget_history ALTER COLUMN groupe_id SET NOT NULL;\n```\n- Explanation: Enforcing NOT NULL on this foreign key ensures referential integrity for budget history records.\n\n#### 3. modele [MEDIUM]\n- Problem: Set modele.membership_id to NOT NULL\n- Confidence: 1.0\n- Recommendation: Enforcing NOT NULL on this foreign key ensures referential integrity for model definitions.\n- Proposed SQL:\n```sql\nALTER TABLE modele ALTER COLUMN membership_id SET NOT NULL;\n```\n- Explanation: Enforcing NOT NULL on this foreign key ensures referential integrity for model definitions.\n\n#### 4. prm_organization [LOW]\n- Problem: Advisory: Rename prm_organization.organization_id\n- Confidence: 0.8\n- Recommendation: The column name is redundant. Renaming to id or similar would follow standard naming conventions, but this is an advisory change.\n- Proposed SQL:\n```sql\n-- Advisory: Consider renaming prm_organization.organization_id to 'id' to reduce redundancy.;\n```\n- Explanation: The column name is redundant. Renaming to id or similar would follow standard naming conventions, but this is an advisory change."
+    }
+  }
+}

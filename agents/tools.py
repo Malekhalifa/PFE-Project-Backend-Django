@@ -28,6 +28,10 @@ _BANNED_STMT_RE = _re.compile(
     _re.IGNORECASE,
 )
 
+_MAX_RESULT_CHARS = 20_000
+_FETCH_BATCH_SIZE = 200
+
+
 class _PgExecutor:
     """Thread-safe read-only executor used by custom statistical helpers."""
 
@@ -50,20 +54,24 @@ class _PgExecutor:
         if _BANNED_STMT_RE.search(query):
             return "Error: Query blocked. Only SELECT queries are allowed."
 
-        if "LIMIT " not in query.upper():
-            cleaned = query.strip().rstrip(";")
-            query = f"SELECT * FROM ({cleaned}) AS _agno_subquery LIMIT {limit};"
+        # Always wrap in a subquery to enforce LIMIT, even when the original
+        # query already contains a LIMIT clause (guards against LIMIT 999999).
+        cleaned = query.strip().rstrip(";")
+        query = f"SELECT * FROM ({cleaned}) AS _agno_subquery LIMIT {limit};"
 
         conn = None
         try:
             conn = psycopg2.connect(self.connection_string)
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute("SET statement_timeout = 5000;")
+                cur.execute("SET idle_in_transaction_session_timeout = 5000;")
                 cur.execute(query)
-                rows = cur.fetchall()
+                rows = cur.fetchmany(_FETCH_BATCH_SIZE)
             if not rows:
                 return "Query executed successfully - no rows returned."
             output = json.dumps(rows, default=str)
-            return output[:20_000] + "\n... [truncated]" if len(output) > 20_000 else output
+            truncated = len(output) > _MAX_RESULT_CHARS
+            return output[:_MAX_RESULT_CHARS] + "\n... [truncated]" if truncated else output
         except Exception as exc:
             logger.error("DB tool error '%s': %s", query[:80], exc)
             return f"Database Error: {exc}"
@@ -146,9 +154,46 @@ def inspect_query(query: str) -> str:
                 pass
 
 
+_NUMERIC_PG_TYPES = frozenset({
+    "smallint", "integer", "bigint", "decimal", "numeric",
+    "real", "double precision", "smallserial", "serial", "bigserial",
+    "money",
+    # "interval" deliberately excluded — interval::numeric is invalid in PostgreSQL
+})
+
+
 @tool(cache_results=False)
 def detect_outliers(table_name: str, column_name: str) -> str:
-    """Detect IQR-based numerical anomalies for one column."""
+    """Detect IQR-based numerical anomalies for one column.
+
+    Skips non-numeric columns (time, timestamp, boolean, text, etc.) to avoid
+    PostgreSQL cast errors that cause MALFORMED_FUNCTION_CALL crashes.
+    """
+    # Preflight: check the column's data_type before attempting PERCENTILE_CONT.
+    type_check = _q(
+        f"""
+        SELECT data_type
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name   = '{table_name}'
+          AND column_name  = '{column_name}'
+        LIMIT 1
+        """
+    )
+    try:
+        import json as _json
+        type_rows = _json.loads(type_check)
+        if isinstance(type_rows, list) and type_rows:
+            col_type = str(type_rows[0].get("data_type", "")).lower().strip()
+            if col_type not in _NUMERIC_PG_TYPES:
+                return (
+                    f"Skipped: column {table_name}.{column_name} has type '{col_type}' "
+                    f"which does not support numeric IQR analysis. "
+                    f"Use check_categorical_drift() for text columns or run_query() for temporal analysis."
+                )
+    except Exception:
+        pass  # if the type check itself fails, proceed and let the original error surface
+
     # Require at least 30 non-null values and a non-zero IQR for meaningful outlier detection.
     check = _q(
         f"""
@@ -199,15 +244,6 @@ def detect_outliers(table_name: str, column_name: str) -> str:
         WHERE {column_name}::numeric < q1 - 1.5 * (q3 - q1)
            OR {column_name}::numeric > q3 + 1.5 * (q3 - q1)
         """
-    )
-
-
-@tool(cache_results=False)
-def detect_patterns(table_name: str, column_name: str) -> str:
-    """Sample representative text values to detect obvious formatting patterns."""
-    return _q(
-        f"SELECT {column_name}, length({column_name}::text) as len "
-        f"FROM {table_name} WHERE {column_name} IS NOT NULL LIMIT 3"
     )
 
 

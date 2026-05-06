@@ -219,11 +219,22 @@ class ReduceSignals:
         top_n: Maximum number of findings passed to the Fix Planner.
     """
 
-    def __init__(self, min_confidence: float = 0.4, top_n: int = 50):
+    def __init__(self, min_confidence: float = 0.75, top_n: int = 50):
         self.min_confidence = min_confidence
         self.top_n = top_n
 
     def __call__(self, step_input: StepInput) -> StepOutput:
+        # Push running_reducer status immediately so the UI advances past the
+        # parallel validators as soon as they all complete.
+        try:
+            ws = step_input.workflow_session
+            job_id = (ws.session_data or {}).get("job_id") if ws is not None else None
+            if job_id:
+                from api.db import update_job_status
+                update_job_status(job_id, "running_reducer")
+        except Exception:
+            pass
+
         # Resolve schema, profiler baseline, and learned patterns from session state.
         schema: dict = {}
         profiler_tables: set[str] = set()
@@ -436,8 +447,18 @@ class ReduceSignals:
                         if col in uc.get("columns", []):
                             return True
 
-                # missing_index — an index whose name contains the column already exists
+                # nullable_fk_style_column / missing_not_null_constraint — column is already NOT NULL
+                if col and ("nullable" in rule or "not_null" in rule):
+                    for detail in info.get("column_details", []):
+                        if detail.get("column_name") == col and detail.get("is_nullable") == "NO":
+                            return True
+
+                # missing_index — column already covered by an index.
+                # Primary check: indexed_columns list built from pg_index (column-accurate).
+                # Fallback: substring match on index names for older schema snapshots.
                 if ("index" in rule or "idx" in rule) and col:
+                    if col in info.get("indexed_columns", []):
+                        return True
                     for idx_name in info.get("indexes", []):
                         if col in idx_name:
                             return True
@@ -545,8 +566,23 @@ class ReduceSignals:
         except Exception:
             pass  # session_state may not exist in all execution contexts
 
+        # ── 9. Bridge UI gap: parallel phase → fix planner ───────────────
+        # emit_pipeline_status only fires on agent pre-hooks; the reducer has
+        # no agent, so the status stays frozen at running_relational until the
+        # fix planner starts.  Push running_fix_planner here so the loading
+        # screen advances immediately when the parallel phase finishes.
+        try:
+            ws = step_input.workflow_session
+            job_id = (ws.session_data or {}).get("job_id") if ws is not None else None
+            if job_id:
+                from api.db import update_job_status
+                update_job_status(job_id, "running_fix_planner")
+                logger.debug("reducer: pushed running_fix_planner status for job %s", job_id)
+        except Exception:
+            pass  # non-critical — fix planner pre-hook will push the status itself
+
         return StepOutput(content=result)
 
 
 # Default singleton — used by the Workflow step wiring.
-reduce_signals = ReduceSignals(min_confidence=0.4, top_n=50)
+reduce_signals = ReduceSignals(min_confidence=0.75, top_n=50)

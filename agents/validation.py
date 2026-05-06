@@ -12,10 +12,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from agno.db.sqlite import SqliteDb
+from agno.db.in_memory import InMemoryDb
 from agno.workflow.parallel import Parallel
 from agno.workflow.step import Step
-from agno.workflow.types import StepOutput
+from agno.workflow.types import OnError, StepOutput
 from agno.workflow.workflow import Workflow
 
 from services.report_service import save_final_pipeline_report
@@ -28,17 +28,11 @@ from .team import build_members, resolve_model_id
 
 logger = logging.getLogger(__name__)
 
-_WORKFLOW_DB_PATH = Path(__file__).resolve().parent.parent / "tmp" / "qualitylab.db"
 _FIX_ID_PATTERN = re.compile(r"[^a-z0-9]+")
 
 
-def _workflow_db(job_id: str | None = None) -> SqliteDb:
-    _WORKFLOW_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    if job_id:
-        path = _WORKFLOW_DB_PATH.parent / f"qualitylab_{job_id}.db"
-    else:
-        path = _WORKFLOW_DB_PATH
-    return SqliteDb(db_file=str(path))
+def _workflow_db(job_id: str | None = None) -> InMemoryDb:  # noqa: ARG001
+    return InMemoryDb()
 
 
 def _slug(value: str) -> str:
@@ -129,8 +123,16 @@ def _initial_session_state(
         "database_id": database_id,
         "job_id": job_id,
         "schema": None,
+        # profiler_summary is written by store_profiler_output after the profiler step.
+        # Pre-initializing to {} ensures {profiler_summary} in agent instructions resolves
+        # to an empty dict (not a literal string) if the profiler step fails or is skipped.
+        "profiler_summary": {},
         "last_reduced_findings": [],
+        # Legacy shared keys kept for backward compat; per-agent keys (_tool_calls_seen_<id>)
+        # are the primary dedup store since Fix 1. These are no longer written by qualitylab_tool_hook.
         "_tool_calls_seen": {},
+        "_query_patterns": [],  # must be a list — set is not JSON-serializable (Agno SQLite session)
+        "_empty_results_streak": 0,
         "learned_patterns": learned_patterns or [],
     }
 
@@ -151,7 +153,7 @@ def build_validation_workflow(
     session_state: dict[str, Any],
     dependencies: dict[str, Any],
     job_id: str | None = None,
-) -> Workflow:
+) -> tuple[Workflow, Any]:
     db = _workflow_db(job_id)
     members = build_members(
         model_id=resolved_model_id,
@@ -160,7 +162,7 @@ def build_validation_workflow(
         session_state=session_state,
         dependencies=dependencies,
     )
-    return Workflow(
+    workflow = Workflow(
         name="QualityLab Validation",
         db=db,
         session_state=session_state,
@@ -169,15 +171,56 @@ def build_validation_workflow(
             Step(name="schema",   agent=members.schema_validator),
             Step(name="profiler", agent=members.profiler),
             Parallel(
-                Step(name="statistical", agent=members.statistical_validator),
-                Step(name="structural",  agent=members.structural_validator),
-                Step(name="relational",  agent=members.relational_validator),
+                Step(name="statistical", agent=members.statistical_validator, on_error=OnError.fail),
+                Step(name="structural",  agent=members.structural_validator,  on_error=OnError.fail),
+                Step(name="relational",  agent=members.relational_validator,  on_error=OnError.fail),
                 name="Validation Phase",
             ),
             Step(name="reduce",   executor=reduce_signals),
             Step(name="fix_plan", agent=members.fix_planner),
         ],
     )
+    return workflow, members
+
+
+_MAX_RELATIONAL_RETRIES = 2
+_RELATIONAL_RETRY_DELAY_S = 5
+
+_TRANSIENT_MARKERS = ("504", "DEADLINE_EXCEEDED", "timed out", "timeout", "UNAVAILABLE", "RESOURCE_EXHAUSTED")
+
+
+def _is_transient_error(content: Any) -> bool:
+    if not isinstance(content, str):
+        return False
+    lower = content.lower()
+    return any(m.lower() in lower for m in _TRANSIENT_MARKERS)
+
+
+def _run_relational_standalone(
+    *,
+    relational_validator: Any,
+    session_state: dict[str, Any],
+    database_id: str,
+) -> ValidationReport:
+    import time as _time
+    for attempt in range(1, _MAX_RELATIONAL_RETRIES + 1):
+        logger.warning("Relational agent transient failure — retry %d/%d in %ds",
+                       attempt, _MAX_RELATIONAL_RETRIES, _RELATIONAL_RETRY_DELAY_S)
+        _time.sleep(_RELATIONAL_RETRY_DELAY_S)
+        try:
+            response = relational_validator.run(
+                input=(
+                    f"Re-run relational analysis for database '{database_id}'. "
+                    "The previous attempt timed out. Execute Phase 1 and Phase 2 fully."
+                ),
+                session_state=session_state,
+            )
+            report = _as_validation_report(getattr(response, "content", ""), "relational")
+            if report.findings:
+                return report
+        except Exception as exc:
+            logger.error("Relational retry %d/%d failed: %s", attempt, _MAX_RELATIONAL_RETRIES, exc)
+    return ValidationReport(validator="relational", findings=[])
 
 
 def _collect_step_outputs(step_results: list[Any]) -> dict[str, StepOutput]:
@@ -476,7 +519,7 @@ def orchestrator_workflow(
         learned_patterns=learned_patterns,
     )
 
-    workflow = build_validation_workflow(
+    workflow, members = build_validation_workflow(
         resolved_model_id=resolved_model_id,
         session_state=session_state,
         dependencies=dependencies,
@@ -494,6 +537,18 @@ def orchestrator_workflow(
     statistical_report = _as_validation_report(getattr(step_outputs.get("statistical"), "content", ""), "statistical")
     structural_report  = _as_validation_report(getattr(step_outputs.get("structural"),  "content", ""), "structural")
     relational_report  = _as_validation_report(getattr(step_outputs.get("relational"),  "content", ""), "relational")
+
+    # Retry relational on transient 504 / timeout — the step returns an error string, not an exception,
+    # so Step.max_retries cannot catch it. We detect it here and re-run the agent directly.
+    if not relational_report.findings:
+        raw_relational = getattr(step_outputs.get("relational"), "content", "")
+        if _is_transient_error(raw_relational):
+            relational_report = _run_relational_standalone(
+                relational_validator=members.relational_validator,
+                session_state=session_state,
+                database_id=database_id,
+            )
+
     reduced_findings   = _as_reduced_findings( getattr(step_outputs.get("reduce"),      "content", ""))
     fix_plan           = _as_fix_plan(         getattr(step_outputs.get("fix_plan"),    "content", ""))
 

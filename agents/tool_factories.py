@@ -137,7 +137,7 @@ def profiler_tools(
     include = None if mode == "playground" else ["summarize_table", "run_query"]
     pg = build_postgres_tools(include=include, session_state=session_state, run_context=run_context)
     tools: list[Any] = [pg] if pg is not None else []
-    tools.extend(_custom_tools("detect_outliers", "detect_patterns"))
+    tools.extend(_custom_tools("detect_outliers"))
     return tools
 
 
@@ -162,10 +162,13 @@ def statistical_tools(
     run_context: Any | None = None,
 ) -> list[Any]:
     mode = _resolve_mode(session_state=session_state, run_context=run_context)
-    include = None if mode == "playground" else ["describe_table", "summarize_table", "run_query"]
+    # summarize_table is excluded in pipeline mode: the statistical agent's prompt
+    # explicitly states it is unavailable, so including it here confused the model
+    # and contributed to MALFORMED_FUNCTION_CALL errors.
+    include = None if mode == "playground" else ["describe_table", "run_query"]
     pg = build_postgres_tools(include=include, session_state=session_state, run_context=run_context)
     tools: list[Any] = [pg] if pg is not None else []
-    tools.extend(_custom_tools("detect_outliers", "detect_patterns", "check_categorical_drift"))
+    tools.extend(_custom_tools("detect_outliers", "check_categorical_drift"))
     return tools
 
 
@@ -195,7 +198,9 @@ def relational_tools(
     # UNIQUE/composite constraints and will falsely flag columns that already have
     # composite uniqueness enforced (e.g. UNIQUE (groupe_id, campaign_type)).
     # It also exposes the actual FK target table for orphan-reference checks.
-    tools.extend(_custom_tools("describe_constraints", "analyze_relationship", "detect_fd", "diff_tables"))
+    # find_duplicate_rows is added here because duplicate-key detection is
+    # cross-row by nature and belongs in the relational validator's toolkit.
+    tools.extend(_custom_tools("describe_constraints", "analyze_relationship", "detect_fd", "diff_tables", "find_duplicate_rows"))
     return tools
 
 
