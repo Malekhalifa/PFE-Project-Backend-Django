@@ -6,7 +6,7 @@ Every agent declares output_schema= one of these models. No DSL strings.
 """
 
 from typing import Any, Literal, Optional
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 # ---------------------------------------------------------------------------
@@ -74,7 +74,32 @@ class Finding(BaseModel):
         description="Short rule identifier, e.g. 'null_ratio_high', 'orphaned_fk', 'missing_pk'.",
     )
     severity: Severity
-    confidence: float = Field(..., ge=0.0, le=1.0, description="Evidence strength [0, 1]")
+    confidence: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="Evidence strength [0, 1]. Required float — never null or omitted.",
+    )
+
+    @field_validator("confidence", mode="before")
+    @classmethod
+    def coerce_confidence(cls, v: Any, info: Any) -> float:
+        if v is not None:
+            try:
+                return max(0.0, min(1.0, float(v)))
+            except (TypeError, ValueError):
+                pass
+        # null/unparseable: use severity as proxy so high-signal findings survive
+        # while low-severity uncertain ones drop below min_confidence and get filtered.
+        severity = (info.data or {}).get("severity", "medium") if info else "medium"
+        _fallback: dict[str, float] = {
+            "critical": 0.90,
+            "high":     0.85,
+            "medium":   0.75,
+            "low":      0.70,  # below MIN_CONFIDENCE=0.75 → filtered by reducer
+        }
+        return _fallback.get(str(severity), 0.75)
+
     evidence: dict = Field(
         default_factory=dict,
         description="Concrete, quantifiable metrics — e.g. {'null_ratio': 0.34, 'sample_size': 1000}",
@@ -238,8 +263,24 @@ class FixCard(BaseModel):
         if not isinstance(v, str):
             return ""
         import re
-        # Fix common LLM mistake: COUNT() → COUNT(*)
         return re.sub(r'\bCOUNT\(\s*\)', 'COUNT(*)', v)
+
+    @model_validator(mode="after")
+    def infer_risk_level(self) -> "FixCard":
+        if self.risk_level is not None:
+            return self
+        sql = (self.sql or "").upper()
+        if not sql:
+            return self
+        if any(kw in sql for kw in ("DELETE ", "DROP ", "TRUNCATE ")):
+            self.risk_level = "high"
+        elif any(kw in sql for kw in ("UPDATE ", "ADD CONSTRAINT", "CREATE INDEX", "CREATE UNIQUE")):
+            self.risk_level = "medium"
+        elif any(kw in sql for kw in ("ADD COLUMN", "ALTER COLUMN", "ALTER TABLE")):
+            self.risk_level = "medium"
+        else:
+            self.risk_level = "low"
+        return self
 
 
 class FixPlan(BaseModel):

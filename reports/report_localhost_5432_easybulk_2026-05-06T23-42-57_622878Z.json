@@ -1,0 +1,1619 @@
+{
+  "pipeline_run_id": "65cf5a3d-6c56-47d3-a140-349ba7bbaf52",
+  "database_id": "localhost_5432_easybulk",
+  "llm_model": "gemini-2.5-flash",
+  "run_timestamp": "2026-05-06T23:42:57.622878Z",
+  "summary": {
+    "confidence_score": 94,
+    "data_quality_score": 64,
+    "final_fix_count": 16
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "65cf5a3d-6c56-47d3-a140-349ba7bbaf52",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-06T23:42:57.622878Z",
+      "agent": "Schema Integrity Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 8,
+        "items_flagged": 22,
+        "critical_issues": 0,
+        "high_issues": 4,
+        "medium_issues": 16,
+        "low_issues": 2,
+        "overall_quality_score": 0.0,
+        "overall_confidence": 0.8318,
+        "flagged_tables": [
+          "budget_history",
+          "campagne",
+          "campagne_contacts",
+          "campagne_tags",
+          "expediteur_groupe",
+          "groupe",
+          "membership",
+          "modele",
+          "request_api",
+          "smsc_routing_rule",
+          "tags",
+          "user_contact",
+          "user_contact_tags",
+          "user_keys",
+          "user_mission"
+        ]
+      },
+      "metrics": {
+        "validator": "schema",
+        "findings_count": 22
+      },
+      "findings": [
+        {
+          "table": "campagne_contacts",
+          "column": null,
+          "entity": "campagne_contacts",
+          "rule": "primary_key_required",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campagne_contacts"
+          },
+          "remediation_hint": "Add a primary key to the table 'campagne_contacts'.",
+          "issues": [
+            {
+              "type": "primary_key_required",
+              "severity": "high",
+              "description": "Add a primary key to the table 'campagne_contacts'.",
+              "evidence": {
+                "table_name": "campagne_contacts"
+              }
+            }
+          ]
+        },
+        {
+          "table": "budget_history",
+          "column": "groupe_id",
+          "entity": "budget_history.groupe_id",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "budget_history",
+            "column_name": "groupe_id",
+            "foreign_table": "groupe",
+            "foreign_column": "id",
+            "issue": "nullable_foreign_key"
+          },
+          "remediation_hint": "Consider making the foreign key column 'budget_history.groupe_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'budget_history.groupe_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+              "evidence": {
+                "table_name": "budget_history",
+                "column_name": "groupe_id",
+                "foreign_table": "groupe",
+                "foreign_column": "id",
+                "issue": "nullable_foreign_key"
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "entity": "groupe.admin_id",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "groupe",
+            "column_name": "admin_id",
+            "foreign_table": "users",
+            "foreign_column": "id",
+            "issue": "nullable_foreign_key"
+          },
+          "remediation_hint": "Consider making the foreign key column 'groupe.admin_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'groupe.admin_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+              "evidence": {
+                "table_name": "groupe",
+                "column_name": "admin_id",
+                "foreign_table": "users",
+                "foreign_column": "id",
+                "issue": "nullable_foreign_key"
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "entity": "groupe.admin_id",
+          "rule": "index_gap",
+          "severity": "low",
+          "confidence": 0.75,
+          "evidence": {
+            "table_name": "groupe",
+            "column_name": "admin_id",
+            "foreign_table": "users",
+            "foreign_column": "id",
+            "issue": "missing_index"
+          },
+          "remediation_hint": "Add an index to the foreign key column 'groupe.admin_id' to improve performance on join operations.",
+          "issues": [
+            {
+              "type": "index_gap",
+              "severity": "low",
+              "description": "Add an index to the foreign key column 'groupe.admin_id' to improve performance on join operations.",
+              "evidence": {
+                "table_name": "groupe",
+                "column_name": "admin_id",
+                "foreign_table": "users",
+                "foreign_column": "id",
+                "issue": "missing_index"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_contacts",
+          "column": "contact_id",
+          "entity": "campagne_contacts.contact_id",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "campagne_contacts",
+            "column_name": "contact_id",
+            "foreign_table": "contacts",
+            "foreign_column": "msisdn",
+            "issue": "nullable_foreign_key"
+          },
+          "remediation_hint": "Consider making the foreign key column 'campagne_contacts.contact_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'campagne_contacts.contact_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+              "evidence": {
+                "table_name": "campagne_contacts",
+                "column_name": "contact_id",
+                "foreign_table": "contacts",
+                "foreign_column": "msisdn",
+                "issue": "nullable_foreign_key"
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur_groupe",
+          "column": null,
+          "entity": "expediteur_groupe",
+          "rule": "primary_key_required",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "expediteur_groupe"
+          },
+          "remediation_hint": "Add a primary key to the table 'expediteur_groupe'.",
+          "issues": [
+            {
+              "type": "primary_key_required",
+              "severity": "high",
+              "description": "Add a primary key to the table 'expediteur_groupe'.",
+              "evidence": {
+                "table_name": "expediteur_groupe"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_tags",
+          "column": null,
+          "entity": "campagne_tags",
+          "rule": "primary_key_required",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campagne_tags"
+          },
+          "remediation_hint": "Add a primary key to the table 'campagne_tags'.",
+          "issues": [
+            {
+              "type": "primary_key_required",
+              "severity": "high",
+              "description": "Add a primary key to the table 'campagne_tags'.",
+              "evidence": {
+                "table_name": "campagne_tags"
+              }
+            }
+          ]
+        },
+        {
+          "table": "membership",
+          "column": "status_id",
+          "entity": "membership.status_id",
+          "rule": "index_gap",
+          "severity": "low",
+          "confidence": 0.75,
+          "evidence": {
+            "table_name": "membership",
+            "column_name": "status_id",
+            "foreign_table": "prm_status",
+            "foreign_column": "id",
+            "issue": "missing_index"
+          },
+          "remediation_hint": "Add an index to the foreign key column 'membership.status_id' to improve performance on join operations.",
+          "issues": [
+            {
+              "type": "index_gap",
+              "severity": "low",
+              "description": "Add an index to the foreign key column 'membership.status_id' to improve performance on join operations.",
+              "evidence": {
+                "table_name": "membership",
+                "column_name": "status_id",
+                "foreign_table": "prm_status",
+                "foreign_column": "id",
+                "issue": "missing_index"
+              }
+            }
+          ]
+        },
+        {
+          "table": "request_api",
+          "column": "membership_id",
+          "entity": "request_api.membership_id",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "request_api",
+            "column_name": "membership_id",
+            "foreign_table": "membership",
+            "foreign_column": "id",
+            "issue": "nullable_foreign_key"
+          },
+          "remediation_hint": "Consider making the foreign key column 'request_api.membership_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'request_api.membership_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+              "evidence": {
+                "table_name": "request_api",
+                "column_name": "membership_id",
+                "foreign_table": "membership",
+                "foreign_column": "id",
+                "issue": "nullable_foreign_key"
+              }
+            }
+          ]
+        },
+        {
+          "table": "smsc_routing_rule",
+          "column": null,
+          "entity": "smsc_routing_rule",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "smsc_routing_rule",
+            "column_name": "expediteur_id",
+            "foreign_table": "expediteur",
+            "foreign_column": "id",
+            "issue": "nullable_foreign_key",
+            "columns_with_high_nulls": [
+              "",
+              "groupe_id"
+            ]
+          },
+          "remediation_hint": "Consider making the foreign key column 'smsc_routing_rule.expediteur_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'smsc_routing_rule.expediteur_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+              "evidence": {
+                "table_name": "smsc_routing_rule",
+                "column_name": "expediteur_id",
+                "foreign_table": "expediteur",
+                "foreign_column": "id",
+                "issue": "nullable_foreign_key",
+                "columns_with_high_nulls": [
+                  "",
+                  "groupe_id"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "smsc_routing_rule",
+          "column": "groupe_id",
+          "entity": "smsc_routing_rule.groupe_id",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "smsc_routing_rule",
+            "column_name": "groupe_id",
+            "foreign_table": "groupe",
+            "foreign_column": "id",
+            "issue": "nullable_foreign_key"
+          },
+          "remediation_hint": "Consider making the foreign key column 'smsc_routing_rule.groupe_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'smsc_routing_rule.groupe_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+              "evidence": {
+                "table_name": "smsc_routing_rule",
+                "column_name": "groupe_id",
+                "foreign_table": "groupe",
+                "foreign_column": "id",
+                "issue": "nullable_foreign_key"
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact",
+          "column": "membership_id",
+          "entity": "user_contact.membership_id",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "user_contact",
+            "column_name": "membership_id",
+            "foreign_table": "membership",
+            "foreign_column": "id",
+            "issue": "nullable_foreign_key"
+          },
+          "remediation_hint": "Consider making the foreign key column 'user_contact.membership_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'user_contact.membership_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+              "evidence": {
+                "table_name": "user_contact",
+                "column_name": "membership_id",
+                "foreign_table": "membership",
+                "foreign_column": "id",
+                "issue": "nullable_foreign_key"
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact_tags",
+          "column": null,
+          "entity": "user_contact_tags",
+          "rule": "primary_key_required",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "user_contact_tags"
+          },
+          "remediation_hint": "Add a primary key to the table 'user_contact_tags'.",
+          "issues": [
+            {
+              "type": "primary_key_required",
+              "severity": "high",
+              "description": "Add a primary key to the table 'user_contact_tags'.",
+              "evidence": {
+                "table_name": "user_contact_tags"
+              }
+            }
+          ]
+        },
+        {
+          "table": "tags",
+          "column": "membership_id",
+          "entity": "tags.membership_id",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "tags",
+            "column_name": "membership_id",
+            "foreign_table": "membership",
+            "foreign_column": "id",
+            "issue": "nullable_foreign_key"
+          },
+          "remediation_hint": "Consider making the foreign key column 'tags.membership_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'tags.membership_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+              "evidence": {
+                "table_name": "tags",
+                "column_name": "membership_id",
+                "foreign_table": "membership",
+                "foreign_column": "id",
+                "issue": "nullable_foreign_key"
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_keys",
+          "column": "membership_id",
+          "entity": "user_keys.membership_id",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "user_keys",
+            "column_name": "membership_id",
+            "foreign_table": "membership",
+            "foreign_column": "id",
+            "issue": "nullable_foreign_key"
+          },
+          "remediation_hint": "Consider making the foreign key column 'user_keys.membership_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'user_keys.membership_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+              "evidence": {
+                "table_name": "user_keys",
+                "column_name": "membership_id",
+                "foreign_table": "membership",
+                "foreign_column": "id",
+                "issue": "nullable_foreign_key"
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_mission",
+          "column": "groupe_id",
+          "entity": "user_mission.groupe_id",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "user_mission",
+            "column_name": "groupe_id",
+            "foreign_table": "groupe",
+            "foreign_column": "id",
+            "issue": "nullable_foreign_key"
+          },
+          "remediation_hint": "Consider making the foreign key column 'user_mission.groupe_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'user_mission.groupe_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+              "evidence": {
+                "table_name": "user_mission",
+                "column_name": "groupe_id",
+                "foreign_table": "groupe",
+                "foreign_column": "id",
+                "issue": "nullable_foreign_key"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne",
+          "column": null,
+          "entity": "campagne",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "campagne",
+            "column_name": "schedule_id",
+            "foreign_table": "campaign_schedule",
+            "foreign_column": "id",
+            "issue": "nullable_foreign_key",
+            "columns_with_high_nulls": [
+              "",
+              "campaign_type_permission_id",
+              "expediteur_id",
+              "modele_id",
+              "user_id"
+            ]
+          },
+          "remediation_hint": "Consider making the foreign key column 'campagne.schedule_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'campagne.schedule_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+              "evidence": {
+                "table_name": "campagne",
+                "column_name": "schedule_id",
+                "foreign_table": "campaign_schedule",
+                "foreign_column": "id",
+                "issue": "nullable_foreign_key",
+                "columns_with_high_nulls": [
+                  "",
+                  "campaign_type_permission_id",
+                  "expediteur_id",
+                  "modele_id",
+                  "user_id"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne",
+          "column": "campaign_type_permission_id",
+          "entity": "campagne.campaign_type_permission_id",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "campagne",
+            "column_name": "campaign_type_permission_id",
+            "foreign_table": "campaign_type_permission",
+            "foreign_column": "id",
+            "issue": "nullable_foreign_key"
+          },
+          "remediation_hint": "Consider making the foreign key column 'campagne.campaign_type_permission_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'campagne.campaign_type_permission_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+              "evidence": {
+                "table_name": "campagne",
+                "column_name": "campaign_type_permission_id",
+                "foreign_table": "campaign_type_permission",
+                "foreign_column": "id",
+                "issue": "nullable_foreign_key"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne",
+          "column": "expediteur_id",
+          "entity": "campagne.expediteur_id",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "campagne",
+            "column_name": "expediteur_id",
+            "foreign_table": "expediteur",
+            "foreign_column": "id",
+            "issue": "nullable_foreign_key"
+          },
+          "remediation_hint": "Consider making the foreign key column 'campagne.expediteur_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'campagne.expediteur_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+              "evidence": {
+                "table_name": "campagne",
+                "column_name": "expediteur_id",
+                "foreign_table": "expediteur",
+                "foreign_column": "id",
+                "issue": "nullable_foreign_key"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne",
+          "column": "modele_id",
+          "entity": "campagne.modele_id",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "campagne",
+            "column_name": "modele_id",
+            "foreign_table": "modele",
+            "foreign_column": "id",
+            "issue": "nullable_foreign_key"
+          },
+          "remediation_hint": "Consider making the foreign key column 'campagne.modele_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'campagne.modele_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+              "evidence": {
+                "table_name": "campagne",
+                "column_name": "modele_id",
+                "foreign_table": "modele",
+                "foreign_column": "id",
+                "issue": "nullable_foreign_key"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne",
+          "column": "user_id",
+          "entity": "campagne.user_id",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "campagne",
+            "column_name": "user_id",
+            "foreign_table": "users",
+            "foreign_column": "id",
+            "issue": "nullable_foreign_key"
+          },
+          "remediation_hint": "Consider making the foreign key column 'campagne.user_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'campagne.user_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+              "evidence": {
+                "table_name": "campagne",
+                "column_name": "user_id",
+                "foreign_table": "users",
+                "foreign_column": "id",
+                "issue": "nullable_foreign_key"
+              }
+            }
+          ]
+        },
+        {
+          "table": "modele",
+          "column": "membership_id",
+          "entity": "modele.membership_id",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "modele",
+            "column_name": "membership_id",
+            "foreign_table": "membership",
+            "foreign_column": "id",
+            "issue": "nullable_foreign_key"
+          },
+          "remediation_hint": "Consider making the foreign key column 'modele.membership_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'modele.membership_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.",
+              "evidence": {
+                "table_name": "modele",
+                "column_name": "membership_id",
+                "foreign_table": "membership",
+                "foreign_column": "id",
+                "issue": "nullable_foreign_key"
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": [],
+      "report": "## Schema Integrity Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 8\n- Flagged: 22\n- Severity split: critical=0, high=4, medium=16, low=2\n- Quality score: 0.0 / 100\n- Confidence: 0.8318\n- Flagged tables: budget_history, campagne, campagne_contacts, campagne_tags, expediteur_groupe, groupe, membership, modele, request_api, smsc_routing_rule, tags, user_contact, user_contact_tags, user_keys, user_mission\n\n### Metrics\n- Findings count: 22\n- Validator: schema\n\n### Findings (22)\n\n#### 1. campagne_contacts [HIGH]\n- Problem: Add a primary key to the table 'campagne_contacts'.\n- Confidence: 1.0\n- Recommendation: Add a primary key to the table 'campagne_contacts'.\n- Detailed issues:\n  - [HIGH] Add a primary key to the table 'campagne_contacts'.\n\n#### 2. budget_history [MEDIUM]\n- Problem: Consider making the foreign key column 'budget_history.groupe_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Confidence: 0.8\n- Column: groupe_id\n- Recommendation: Consider making the foreign key column 'budget_history.groupe_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'budget_history.groupe_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n\n#### 3. groupe [MEDIUM]\n- Problem: Consider making the foreign key column 'groupe.admin_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Confidence: 0.8\n- Column: admin_id\n- Recommendation: Consider making the foreign key column 'groupe.admin_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'groupe.admin_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n\n#### 4. groupe [LOW]\n- Problem: Add an index to the foreign key column 'groupe.admin_id' to improve performance on join operations.\n- Confidence: 0.75\n- Column: admin_id\n- Recommendation: Add an index to the foreign key column 'groupe.admin_id' to improve performance on join operations.\n- Detailed issues:\n  - [LOW] Add an index to the foreign key column 'groupe.admin_id' to improve performance on join operations.\n\n#### 5. campagne_contacts [MEDIUM]\n- Problem: Consider making the foreign key column 'campagne_contacts.contact_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Confidence: 0.8\n- Column: contact_id\n- Recommendation: Consider making the foreign key column 'campagne_contacts.contact_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'campagne_contacts.contact_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n\n#### 6. expediteur_groupe [HIGH]\n- Problem: Add a primary key to the table 'expediteur_groupe'.\n- Confidence: 1.0\n- Recommendation: Add a primary key to the table 'expediteur_groupe'.\n- Detailed issues:\n  - [HIGH] Add a primary key to the table 'expediteur_groupe'.\n\n#### 7. campagne_tags [HIGH]\n- Problem: Add a primary key to the table 'campagne_tags'.\n- Confidence: 1.0\n- Recommendation: Add a primary key to the table 'campagne_tags'.\n- Detailed issues:\n  - [HIGH] Add a primary key to the table 'campagne_tags'.\n\n#### 8. membership [LOW]\n- Problem: Add an index to the foreign key column 'membership.status_id' to improve performance on join operations.\n- Confidence: 0.75\n- Column: status_id\n- Recommendation: Add an index to the foreign key column 'membership.status_id' to improve performance on join operations.\n- Detailed issues:\n  - [LOW] Add an index to the foreign key column 'membership.status_id' to improve performance on join operations.\n\n#### 9. request_api [MEDIUM]\n- Problem: Consider making the foreign key column 'request_api.membership_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Confidence: 0.8\n- Column: membership_id\n- Recommendation: Consider making the foreign key column 'request_api.membership_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'request_api.membership_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n\n#### 10. smsc_routing_rule [MEDIUM]\n- Problem: Consider making the foreign key column 'smsc_routing_rule.expediteur_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Confidence: 0.8\n- Recommendation: Consider making the foreign key column 'smsc_routing_rule.expediteur_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'smsc_routing_rule.expediteur_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n\n#### 11. smsc_routing_rule [MEDIUM]\n- Problem: Consider making the foreign key column 'smsc_routing_rule.groupe_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Confidence: 0.8\n- Column: groupe_id\n- Recommendation: Consider making the foreign key column 'smsc_routing_rule.groupe_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'smsc_routing_rule.groupe_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n\n#### 12. user_contact [MEDIUM]\n- Problem: Consider making the foreign key column 'user_contact.membership_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Confidence: 0.8\n- Column: membership_id\n- Recommendation: Consider making the foreign key column 'user_contact.membership_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'user_contact.membership_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n\n#### 13. user_contact_tags [HIGH]\n- Problem: Add a primary key to the table 'user_contact_tags'.\n- Confidence: 1.0\n- Recommendation: Add a primary key to the table 'user_contact_tags'.\n- Detailed issues:\n  - [HIGH] Add a primary key to the table 'user_contact_tags'.\n\n#### 14. tags [MEDIUM]\n- Problem: Consider making the foreign key column 'tags.membership_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Confidence: 0.8\n- Column: membership_id\n- Recommendation: Consider making the foreign key column 'tags.membership_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'tags.membership_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n\n#### 15. user_keys [MEDIUM]\n- Problem: Consider making the foreign key column 'user_keys.membership_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Confidence: 0.8\n- Column: membership_id\n- Recommendation: Consider making the foreign key column 'user_keys.membership_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'user_keys.membership_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n\n#### 16. user_mission [MEDIUM]\n- Problem: Consider making the foreign key column 'user_mission.groupe_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Confidence: 0.8\n- Column: groupe_id\n- Recommendation: Consider making the foreign key column 'user_mission.groupe_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'user_mission.groupe_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n\n#### 17. campagne [MEDIUM]\n- Problem: Consider making the foreign key column 'campagne.schedule_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Confidence: 0.8\n- Recommendation: Consider making the foreign key column 'campagne.schedule_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'campagne.schedule_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n\n#### 18. campagne [MEDIUM]\n- Problem: Consider making the foreign key column 'campagne.campaign_type_permission_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Confidence: 0.8\n- Column: campaign_type_permission_id\n- Recommendation: Consider making the foreign key column 'campagne.campaign_type_permission_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'campagne.campaign_type_permission_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n\n#### 19. campagne [MEDIUM]\n- Problem: Consider making the foreign key column 'campagne.expediteur_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Confidence: 0.8\n- Column: expediteur_id\n- Recommendation: Consider making the foreign key column 'campagne.expediteur_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'campagne.expediteur_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n\n#### 20. campagne [MEDIUM]\n- Problem: Consider making the foreign key column 'campagne.modele_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Confidence: 0.8\n- Column: modele_id\n- Recommendation: Consider making the foreign key column 'campagne.modele_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'campagne.modele_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n\n#### 21. campagne [MEDIUM]\n- Problem: Consider making the foreign key column 'campagne.user_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Confidence: 0.8\n- Column: user_id\n- Recommendation: Consider making the foreign key column 'campagne.user_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'campagne.user_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n\n#### 22. modele [MEDIUM]\n- Problem: Consider making the foreign key column 'modele.membership_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Confidence: 0.8\n- Column: membership_id\n- Recommendation: Consider making the foreign key column 'modele.membership_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'modele.membership_id' non-nullable to enforce data integrity, or ensure proper handling of null values to prevent orphaned records."
+    },
+    "statistical_validator": {
+      "pipeline_run_id": "65cf5a3d-6c56-47d3-a140-349ba7bbaf52",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-06T23:42:57.622878Z",
+      "agent": "Statistical Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 30,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "statistical",
+        "findings_count": 0
+      },
+      "findings": [],
+      "prior_reports": [],
+      "report": "## Statistical Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 30\n- Flagged: 0\n- Severity split: critical=0, high=0, medium=0, low=0\n- Quality score: 100.0 / 100\n- Confidence: 1.0\n\n### Metrics\n- Findings count: 0\n- Validator: statistical\n\nNo issues were found by this agent."
+    },
+    "structural_validator": {
+      "pipeline_run_id": "65cf5a3d-6c56-47d3-a140-349ba7bbaf52",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-06T23:42:57.622878Z",
+      "agent": "Structural Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 30,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "structural",
+        "findings_count": 0
+      },
+      "findings": [],
+      "prior_reports": [],
+      "report": "## Structural Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 30\n- Flagged: 0\n- Severity split: critical=0, high=0, medium=0, low=0\n- Quality score: 100.0 / 100\n- Confidence: 1.0\n\n### Metrics\n- Findings count: 0\n- Validator: structural\n\nNo issues were found by this agent."
+    },
+    "relational_validator": {
+      "pipeline_run_id": "65cf5a3d-6c56-47d3-a140-349ba7bbaf52",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-06T23:42:57.622878Z",
+      "agent": "Relational Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 30,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "schema",
+        "findings_count": 0
+      },
+      "findings": [],
+      "prior_reports": [],
+      "report": "## Relational Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 30\n- Flagged: 0\n- Severity split: critical=0, high=0, medium=0, low=0\n- Quality score: 100.0 / 100\n- Confidence: 1.0\n\n### Metrics\n- Findings count: 0\n- Validator: schema\n\nNo issues were found by this agent."
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "65cf5a3d-6c56-47d3-a140-349ba7bbaf52",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-06T23:42:57.622878Z",
+      "agent": "Data Fix Planner",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 16,
+        "items_passed": 0,
+        "items_flagged": 16,
+        "critical_issues": 0,
+        "high_issues": 5,
+        "medium_issues": 11,
+        "low_issues": 0,
+        "overall_quality_score": 20.0,
+        "overall_confidence": 0.8625,
+        "flagged_tables": [
+          "budget_history",
+          "campagne",
+          "campagne_contacts",
+          "campagne_tags",
+          "expediteur_groupe",
+          "groupe",
+          "modele",
+          "request_api",
+          "smsc_routing_rule",
+          "tags",
+          "user_contact",
+          "user_contact_tags",
+          "user_keys",
+          "user_mission"
+        ]
+      },
+      "metrics": {
+        "total_issues_received": 16,
+        "fixes_generated": 16
+      },
+      "findings": [
+        {
+          "id": "fix_001_campagne_contacts",
+          "fix_id": "add-pk-campagne-contacts",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": [
+            "add-pk-campagne-contacts"
+          ],
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "Add Primary Key to 'campagne_contacts'",
+          "fix": "The table 'campagne_contacts' is missing a primary key, which is required for data integrity and efficient data retrieval. Adding a primary key on '(campagne_id, contact_id)' will enforce uniqueness and provide a clustered index.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'campagne_contacts_pkey' AND conrelid = 'campagne_contacts'::regclass) THEN ALTER TABLE campagne_contacts ADD CONSTRAINT campagne_contacts_pkey PRIMARY KEY (campagne_id, contact_id);",
+            "END IF;",
+            "END $$;"
+          ],
+          "explanation": "The table 'campagne_contacts' is missing a primary key, which is required for data integrity and efficient data retrieval. Adding a primary key on '(campagne_id, contact_id)' will enforce uniqueness and provide a clustered index.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE campagne_contacts DROP CONSTRAINT IF EXISTS campagne_contacts_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_002_campagne_tags",
+          "fix_id": "add-pk-campagne-tags",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "campagne_tags"
+          ],
+          "depends_on": [
+            "add-pk-campagne-tags"
+          ],
+          "table": "campagne_tags",
+          "target_table": "campagne_tags",
+          "problem": "Add Primary Key to 'campagne_tags'",
+          "fix": "The table 'campagne_tags' is missing a primary key, which is required for data integrity and efficient data retrieval. Adding a primary key on '(campagne_id, tag_name)' will enforce uniqueness and provide a clustered index.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'campagne_tags_pkey' AND conrelid = 'campagne_tags'::regclass) THEN ALTER TABLE campagne_tags ADD CONSTRAINT campagne_tags_pkey PRIMARY KEY (campagne_id, tag_name);",
+            "END IF;",
+            "END $$;"
+          ],
+          "explanation": "The table 'campagne_tags' is missing a primary key, which is required for data integrity and efficient data retrieval. Adding a primary key on '(campagne_id, tag_name)' will enforce uniqueness and provide a clustered index.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE campagne_tags DROP CONSTRAINT IF EXISTS campagne_tags_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_003_expediteur_groupe",
+          "fix_id": "add-pk-expediteur-groupe",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "expediteur_groupe"
+          ],
+          "depends_on": [
+            "add-pk-expediteur-groupe"
+          ],
+          "table": "expediteur_groupe",
+          "target_table": "expediteur_groupe",
+          "problem": "Add Primary Key to 'expediteur_groupe'",
+          "fix": "The table 'expediteur_groupe' is missing a primary key, which is required for data integrity and efficient data retrieval. Adding a primary key on '(groupe_id, expediteur_id)' will enforce uniqueness and provide a clustered index.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'expediteur_groupe_pkey' AND conrelid = 'expediteur_groupe'::regclass) THEN ALTER TABLE expediteur_groupe ADD CONSTRAINT expediteur_groupe_pkey PRIMARY KEY (groupe_id, expediteur_id);",
+            "END IF;",
+            "END $$;"
+          ],
+          "explanation": "The table 'expediteur_groupe' is missing a primary key, which is required for data integrity and efficient data retrieval. Adding a primary key on '(groupe_id, expediteur_id)' will enforce uniqueness and provide a clustered index.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE expediteur_groupe DROP CONSTRAINT IF EXISTS expediteur_groupe_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_004_user_contact_tags",
+          "fix_id": "add-pk-user-contact-tags",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "user_contact_tags"
+          ],
+          "depends_on": [
+            "add-pk-user-contact-tags"
+          ],
+          "table": "user_contact_tags",
+          "target_table": "user_contact_tags",
+          "problem": "Add Primary Key to 'user_contact_tags'",
+          "fix": "The table 'user_contact_tags' is missing a primary key, which is required for data integrity and efficient data retrieval. Adding a primary key on '(user_contact_id, tag_id)' will enforce uniqueness and provide a clustered index.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'user_contact_tags_pkey' AND conrelid = 'user_contact_tags'::regclass) THEN ALTER TABLE user_contact_tags ADD CONSTRAINT user_contact_tags_pkey PRIMARY KEY (user_contact_id, tag_id);",
+            "END IF;",
+            "END $$;"
+          ],
+          "explanation": "The table 'user_contact_tags' is missing a primary key, which is required for data integrity and efficient data retrieval. Adding a primary key on '(user_contact_id, tag_id)' will enforce uniqueness and provide a clustered index.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE user_contact_tags DROP CONSTRAINT IF EXISTS user_contact_tags_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_005_budget_history",
+          "fix_id": "set-not-null-budget-history-fk-columns",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "budget_history"
+          ],
+          "depends_on": [
+            "set-not-null-budget-history-fk-columns"
+          ],
+          "table": "budget_history",
+          "target_table": "budget_history",
+          "problem": "Make foreign key columns in 'budget_history' non-nullable",
+          "fix": "Several foreign key columns in 'budget_history' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE budget_history ALTER COLUMN groupe_id SET NOT NULL;"
+          ],
+          "explanation": "Several foreign key columns in 'budget_history' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE budget_history ALTER COLUMN groupe_id DROP NOT NULL;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_006_campagne_contacts",
+          "fix_id": "set-not-null-campagne-contacts-fk-columns",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": [
+            "set-not-null-campagne-contacts-fk-columns"
+          ],
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "Make foreign key columns in 'campagne_contacts' non-nullable",
+          "fix": "Several foreign key columns in 'campagne_contacts' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE campagne_contacts ALTER COLUMN contact_id SET NOT NULL;"
+          ],
+          "explanation": "Several foreign key columns in 'campagne_contacts' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE campagne_contacts ALTER COLUMN contact_id DROP NOT NULL;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_007_campagne",
+          "fix_id": "set-not-null-campagne-fk-columns",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "campagne"
+          ],
+          "depends_on": [
+            "set-not-null-campagne-fk-columns"
+          ],
+          "table": "campagne",
+          "target_table": "campagne",
+          "problem": "Make foreign key columns in 'campagne' non-nullable",
+          "fix": "Several foreign key columns in 'campagne' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE campagne ALTER COLUMN schedule_id SET NOT NULL, ALTER COLUMN campaign_type_permission_id SET NOT NULL, ALTER COLUMN expediteur_id SET NOT NULL, ALTER COLUMN modele_id SET NOT NULL, ALTER COLUMN user_id SET NOT NULL;"
+          ],
+          "explanation": "Several foreign key columns in 'campagne' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE campagne ALTER COLUMN schedule_id DROP NOT NULL; ALTER TABLE campagne ALTER COLUMN campaign_type_permission_id DROP NOT NULL; ALTER TABLE campagne ALTER COLUMN expediteur_id DROP NOT NULL; ALTER TABLE campagne ALTER COLUMN modele_id DROP NOT NULL; ALTER TABLE campagne ALTER COLUMN user_id DROP NOT NULL;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_008_groupe",
+          "fix_id": "set-not-null-groupe-fk-columns",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": [
+            "set-not-null-groupe-fk-columns"
+          ],
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "Make foreign key columns in 'groupe' non-nullable",
+          "fix": "Several foreign key columns in 'groupe' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE groupe ALTER COLUMN admin_id SET NOT NULL;"
+          ],
+          "explanation": "Several foreign key columns in 'groupe' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE groupe ALTER COLUMN admin_id DROP NOT NULL;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_009_modele",
+          "fix_id": "set-not-null-modele-fk-columns",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "modele"
+          ],
+          "depends_on": [
+            "set-not-null-modele-fk-columns"
+          ],
+          "table": "modele",
+          "target_table": "modele",
+          "problem": "Make foreign key columns in 'modele' non-nullable",
+          "fix": "Several foreign key columns in 'modele' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE modele ALTER COLUMN membership_id SET NOT NULL;"
+          ],
+          "explanation": "Several foreign key columns in 'modele' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE modele ALTER COLUMN membership_id DROP NOT NULL;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_010_request_api",
+          "fix_id": "set-not-null-request-api-fk-columns",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "request_api"
+          ],
+          "depends_on": [
+            "set-not-null-request-api-fk-columns"
+          ],
+          "table": "request_api",
+          "target_table": "request_api",
+          "problem": "Make foreign key columns in 'request_api' non-nullable",
+          "fix": "Several foreign key columns in 'request_api' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE request_api ALTER COLUMN membership_id SET NOT NULL;"
+          ],
+          "explanation": "Several foreign key columns in 'request_api' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE request_api ALTER COLUMN membership_id DROP NOT NULL;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_011_smsc_routing_rule",
+          "fix_id": "set-not-null-smsc-routing-rule-fk-columns",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "smsc_routing_rule"
+          ],
+          "depends_on": [
+            "set-not-null-smsc-routing-rule-fk-columns"
+          ],
+          "table": "smsc_routing_rule",
+          "target_table": "smsc_routing_rule",
+          "problem": "Make foreign key columns in 'smsc_routing_rule' non-nullable",
+          "fix": "Several foreign key columns in 'smsc_routing_rule' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE smsc_routing_rule ALTER COLUMN expediteur_id SET NOT NULL, ALTER COLUMN groupe_id SET NOT NULL;"
+          ],
+          "explanation": "Several foreign key columns in 'smsc_routing_rule' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE smsc_routing_rule ALTER COLUMN expediteur_id DROP NOT NULL; ALTER TABLE smsc_routing_rule ALTER COLUMN groupe_id DROP NOT NULL;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_012_tags",
+          "fix_id": "set-not-null-tags-fk-columns",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "tags"
+          ],
+          "depends_on": [
+            "set-not-null-tags-fk-columns"
+          ],
+          "table": "tags",
+          "target_table": "tags",
+          "problem": "Make foreign key columns in 'tags' non-nullable",
+          "fix": "Several foreign key columns in 'tags' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE tags ALTER COLUMN membership_id SET NOT NULL;"
+          ],
+          "explanation": "Several foreign key columns in 'tags' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE tags ALTER COLUMN membership_id DROP NOT NULL;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_013_user_contact",
+          "fix_id": "set-not-null-user-contact-fk-columns",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "user_contact"
+          ],
+          "depends_on": [
+            "set-not-null-user-contact-fk-columns"
+          ],
+          "table": "user_contact",
+          "target_table": "user_contact",
+          "problem": "Make foreign key columns in 'user_contact' non-nullable",
+          "fix": "Several foreign key columns in 'user_contact' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE user_contact ALTER COLUMN membership_id SET NOT NULL;"
+          ],
+          "explanation": "Several foreign key columns in 'user_contact' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE user_contact ALTER COLUMN membership_id DROP NOT NULL;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_014_user_keys",
+          "fix_id": "set-not-null-user-keys-fk-columns",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "user_keys"
+          ],
+          "depends_on": [
+            "set-not-null-user-keys-fk-columns"
+          ],
+          "table": "user_keys",
+          "target_table": "user_keys",
+          "problem": "Make foreign key columns in 'user_keys' non-nullable",
+          "fix": "Several foreign key columns in 'user_keys' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE user_keys ALTER COLUMN membership_id SET NOT NULL;"
+          ],
+          "explanation": "Several foreign key columns in 'user_keys' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE user_keys ALTER COLUMN membership_id DROP NOT NULL;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_015_user_mission",
+          "fix_id": "set-not-null-user-mission-fk-columns",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "user_mission"
+          ],
+          "depends_on": [
+            "set-not-null-user-mission-fk-columns"
+          ],
+          "table": "user_mission",
+          "target_table": "user_mission",
+          "problem": "Make foreign key columns in 'user_mission' non-nullable",
+          "fix": "Several foreign key columns in 'user_mission' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE user_mission ALTER COLUMN groupe_id SET NOT NULL;"
+          ],
+          "explanation": "Several foreign key columns in 'user_mission' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE user_mission ALTER COLUMN groupe_id DROP NOT NULL;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_016_groupe_admin_id",
+          "fix_id": "add-idx-groupe-admin-id",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": [
+            "add-idx-groupe-admin-id"
+          ],
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "Add index to 'groupe.admin_id'",
+          "fix": "Adding an index to the foreign key column 'groupe.admin_id' will improve the performance of join operations and queries involving this column.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS idx_groupe_admin_id ON groupe (admin_id);"
+          ],
+          "explanation": "Adding an index to the foreign key column 'groupe.admin_id' will improve the performance of join operations and queries involving this column.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_groupe_admin_id;"
+          ],
+          "explain_summary": null
+        }
+      ],
+      "cards": [
+        {
+          "fix_id": "add-pk-campagne-contacts",
+          "title": "Add Primary Key to 'campagne_contacts'",
+          "target": "campagne_contacts",
+          "rationale": "The table 'campagne_contacts' is missing a primary key, which is required for data integrity and efficient data retrieval. Adding a primary key on '(campagne_id, contact_id)' will enforce uniqueness and provide a clustered index.",
+          "risk_level": null,
+          "sql": "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'campagne_contacts_pkey' AND conrelid = 'campagne_contacts'::regclass) THEN ALTER TABLE campagne_contacts ADD CONSTRAINT campagne_contacts_pkey PRIMARY KEY (campagne_id, contact_id); END IF; END $$;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE campagne_contacts DROP CONSTRAINT IF EXISTS campagne_contacts_pkey;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": [
+            "add-pk-campagne-contacts"
+          ]
+        },
+        {
+          "fix_id": "add-pk-campagne-tags",
+          "title": "Add Primary Key to 'campagne_tags'",
+          "target": "campagne_tags",
+          "rationale": "The table 'campagne_tags' is missing a primary key, which is required for data integrity and efficient data retrieval. Adding a primary key on '(campagne_id, tag_name)' will enforce uniqueness and provide a clustered index.",
+          "risk_level": null,
+          "sql": "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'campagne_tags_pkey' AND conrelid = 'campagne_tags'::regclass) THEN ALTER TABLE campagne_tags ADD CONSTRAINT campagne_tags_pkey PRIMARY KEY (campagne_id, tag_name); END IF; END $$;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE campagne_tags DROP CONSTRAINT IF EXISTS campagne_tags_pkey;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "campagne_tags"
+          ],
+          "depends_on": [
+            "add-pk-campagne-tags"
+          ]
+        },
+        {
+          "fix_id": "add-pk-expediteur-groupe",
+          "title": "Add Primary Key to 'expediteur_groupe'",
+          "target": "expediteur_groupe",
+          "rationale": "The table 'expediteur_groupe' is missing a primary key, which is required for data integrity and efficient data retrieval. Adding a primary key on '(groupe_id, expediteur_id)' will enforce uniqueness and provide a clustered index.",
+          "risk_level": null,
+          "sql": "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'expediteur_groupe_pkey' AND conrelid = 'expediteur_groupe'::regclass) THEN ALTER TABLE expediteur_groupe ADD CONSTRAINT expediteur_groupe_pkey PRIMARY KEY (groupe_id, expediteur_id); END IF; END $$;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE expediteur_groupe DROP CONSTRAINT IF EXISTS expediteur_groupe_pkey;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "expediteur_groupe"
+          ],
+          "depends_on": [
+            "add-pk-expediteur-groupe"
+          ]
+        },
+        {
+          "fix_id": "add-pk-user-contact-tags",
+          "title": "Add Primary Key to 'user_contact_tags'",
+          "target": "user_contact_tags",
+          "rationale": "The table 'user_contact_tags' is missing a primary key, which is required for data integrity and efficient data retrieval. Adding a primary key on '(user_contact_id, tag_id)' will enforce uniqueness and provide a clustered index.",
+          "risk_level": null,
+          "sql": "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'user_contact_tags_pkey' AND conrelid = 'user_contact_tags'::regclass) THEN ALTER TABLE user_contact_tags ADD CONSTRAINT user_contact_tags_pkey PRIMARY KEY (user_contact_id, tag_id); END IF; END $$;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE user_contact_tags DROP CONSTRAINT IF EXISTS user_contact_tags_pkey;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "user_contact_tags"
+          ],
+          "depends_on": [
+            "add-pk-user-contact-tags"
+          ]
+        },
+        {
+          "fix_id": "set-not-null-budget-history-fk-columns",
+          "title": "Make foreign key columns in 'budget_history' non-nullable",
+          "target": "budget_history",
+          "rationale": "Several foreign key columns in 'budget_history' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "risk_level": null,
+          "sql": "ALTER TABLE budget_history ALTER COLUMN groupe_id SET NOT NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE budget_history ALTER COLUMN groupe_id DROP NOT NULL;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "budget_history"
+          ],
+          "depends_on": [
+            "set-not-null-budget-history-fk-columns"
+          ]
+        },
+        {
+          "fix_id": "set-not-null-campagne-contacts-fk-columns",
+          "title": "Make foreign key columns in 'campagne_contacts' non-nullable",
+          "target": "campagne_contacts",
+          "rationale": "Several foreign key columns in 'campagne_contacts' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "risk_level": null,
+          "sql": "ALTER TABLE campagne_contacts ALTER COLUMN contact_id SET NOT NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE campagne_contacts ALTER COLUMN contact_id DROP NOT NULL;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": [
+            "set-not-null-campagne-contacts-fk-columns"
+          ]
+        },
+        {
+          "fix_id": "set-not-null-campagne-fk-columns",
+          "title": "Make foreign key columns in 'campagne' non-nullable",
+          "target": "campagne",
+          "rationale": "Several foreign key columns in 'campagne' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "risk_level": null,
+          "sql": "ALTER TABLE campagne ALTER COLUMN schedule_id SET NOT NULL, ALTER COLUMN campaign_type_permission_id SET NOT NULL, ALTER COLUMN expediteur_id SET NOT NULL, ALTER COLUMN modele_id SET NOT NULL, ALTER COLUMN user_id SET NOT NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE campagne ALTER COLUMN schedule_id DROP NOT NULL; ALTER TABLE campagne ALTER COLUMN campaign_type_permission_id DROP NOT NULL; ALTER TABLE campagne ALTER COLUMN expediteur_id DROP NOT NULL; ALTER TABLE campagne ALTER COLUMN modele_id DROP NOT NULL; ALTER TABLE campagne ALTER COLUMN user_id DROP NOT NULL;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "campagne"
+          ],
+          "depends_on": [
+            "set-not-null-campagne-fk-columns"
+          ]
+        },
+        {
+          "fix_id": "set-not-null-groupe-fk-columns",
+          "title": "Make foreign key columns in 'groupe' non-nullable",
+          "target": "groupe",
+          "rationale": "Several foreign key columns in 'groupe' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "risk_level": null,
+          "sql": "ALTER TABLE groupe ALTER COLUMN admin_id SET NOT NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE groupe ALTER COLUMN admin_id DROP NOT NULL;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": [
+            "set-not-null-groupe-fk-columns"
+          ]
+        },
+        {
+          "fix_id": "set-not-null-modele-fk-columns",
+          "title": "Make foreign key columns in 'modele' non-nullable",
+          "target": "modele",
+          "rationale": "Several foreign key columns in 'modele' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "risk_level": null,
+          "sql": "ALTER TABLE modele ALTER COLUMN membership_id SET NOT NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE modele ALTER COLUMN membership_id DROP NOT NULL;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "modele"
+          ],
+          "depends_on": [
+            "set-not-null-modele-fk-columns"
+          ]
+        },
+        {
+          "fix_id": "set-not-null-request-api-fk-columns",
+          "title": "Make foreign key columns in 'request_api' non-nullable",
+          "target": "request_api",
+          "rationale": "Several foreign key columns in 'request_api' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "risk_level": null,
+          "sql": "ALTER TABLE request_api ALTER COLUMN membership_id SET NOT NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE request_api ALTER COLUMN membership_id DROP NOT NULL;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "request_api"
+          ],
+          "depends_on": [
+            "set-not-null-request-api-fk-columns"
+          ]
+        },
+        {
+          "fix_id": "set-not-null-smsc-routing-rule-fk-columns",
+          "title": "Make foreign key columns in 'smsc_routing_rule' non-nullable",
+          "target": "smsc_routing_rule",
+          "rationale": "Several foreign key columns in 'smsc_routing_rule' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "risk_level": null,
+          "sql": "ALTER TABLE smsc_routing_rule ALTER COLUMN expediteur_id SET NOT NULL, ALTER COLUMN groupe_id SET NOT NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE smsc_routing_rule ALTER COLUMN expediteur_id DROP NOT NULL; ALTER TABLE smsc_routing_rule ALTER COLUMN groupe_id DROP NOT NULL;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "smsc_routing_rule"
+          ],
+          "depends_on": [
+            "set-not-null-smsc-routing-rule-fk-columns"
+          ]
+        },
+        {
+          "fix_id": "set-not-null-tags-fk-columns",
+          "title": "Make foreign key columns in 'tags' non-nullable",
+          "target": "tags",
+          "rationale": "Several foreign key columns in 'tags' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "risk_level": null,
+          "sql": "ALTER TABLE tags ALTER COLUMN membership_id SET NOT NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE tags ALTER COLUMN membership_id DROP NOT NULL;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "tags"
+          ],
+          "depends_on": [
+            "set-not-null-tags-fk-columns"
+          ]
+        },
+        {
+          "fix_id": "set-not-null-user-contact-fk-columns",
+          "title": "Make foreign key columns in 'user_contact' non-nullable",
+          "target": "user_contact",
+          "rationale": "Several foreign key columns in 'user_contact' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "risk_level": null,
+          "sql": "ALTER TABLE user_contact ALTER COLUMN membership_id SET NOT NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE user_contact ALTER COLUMN membership_id DROP NOT NULL;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "user_contact"
+          ],
+          "depends_on": [
+            "set-not-null-user-contact-fk-columns"
+          ]
+        },
+        {
+          "fix_id": "set-not-null-user-keys-fk-columns",
+          "title": "Make foreign key columns in 'user_keys' non-nullable",
+          "target": "user_keys",
+          "rationale": "Several foreign key columns in 'user_keys' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "risk_level": null,
+          "sql": "ALTER TABLE user_keys ALTER COLUMN membership_id SET NOT NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE user_keys ALTER COLUMN membership_id DROP NOT NULL;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "user_keys"
+          ],
+          "depends_on": [
+            "set-not-null-user-keys-fk-columns"
+          ]
+        },
+        {
+          "fix_id": "set-not-null-user-mission-fk-columns",
+          "title": "Make foreign key columns in 'user_mission' non-nullable",
+          "target": "user_mission",
+          "rationale": "Several foreign key columns in 'user_mission' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.",
+          "risk_level": null,
+          "sql": "ALTER TABLE user_mission ALTER COLUMN groupe_id SET NOT NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "ALTER TABLE user_mission ALTER COLUMN groupe_id DROP NOT NULL;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "user_mission"
+          ],
+          "depends_on": [
+            "set-not-null-user-mission-fk-columns"
+          ]
+        },
+        {
+          "fix_id": "add-idx-groupe-admin-id",
+          "title": "Add index to 'groupe.admin_id'",
+          "target": "groupe.admin_id",
+          "rationale": "Adding an index to the foreign key column 'groupe.admin_id' will improve the performance of join operations and queries involving this column.",
+          "risk_level": null,
+          "sql": "CREATE INDEX IF NOT EXISTS idx_groupe_admin_id ON groupe (admin_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_groupe_admin_id;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": [
+            "add-idx-groupe-admin-id"
+          ]
+        }
+      ],
+      "report": "## Data Fix Planner\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 16\n- Passed: 0\n- Flagged: 16\n- Severity split: critical=0, high=5, medium=11, low=0\n- Quality score: 20.0 / 100\n- Confidence: 0.8625\n- Flagged tables: budget_history, campagne, campagne_contacts, campagne_tags, expediteur_groupe, groupe, modele, request_api, smsc_routing_rule, tags, user_contact, user_contact_tags, user_keys, user_mission\n\n### Metrics\n- Fixes generated: 16\n- Total issues received: 16\n\n### Findings (16)\n\n#### 1. campagne_contacts [HIGH]\n- Problem: Add Primary Key to 'campagne_contacts'\n- Confidence: 1.0\n- Recommendation: The table 'campagne_contacts' is missing a primary key, which is required for data integrity and efficient data retrieval. Adding a primary key on '(campagne_id, contact_id)' will enforce uniqueness and provide a clustered index.\n- Proposed SQL:\n```sql\nDO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'campagne_contacts_pkey' AND conrelid = 'campagne_contacts'::regclass) THEN ALTER TABLE campagne_contacts ADD CONSTRAINT campagne_contacts_pkey PRIMARY KEY (campagne_id, contact_id);\n```\n```sql\nEND IF;\n```\n```sql\nEND $$;\n```\n- Explanation: The table 'campagne_contacts' is missing a primary key, which is required for data integrity and efficient data retrieval. Adding a primary key on '(campagne_id, contact_id)' will enforce uniqueness and provide a clustered index.\n\n#### 2. campagne_tags [HIGH]\n- Problem: Add Primary Key to 'campagne_tags'\n- Confidence: 1.0\n- Recommendation: The table 'campagne_tags' is missing a primary key, which is required for data integrity and efficient data retrieval. Adding a primary key on '(campagne_id, tag_name)' will enforce uniqueness and provide a clustered index.\n- Proposed SQL:\n```sql\nDO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'campagne_tags_pkey' AND conrelid = 'campagne_tags'::regclass) THEN ALTER TABLE campagne_tags ADD CONSTRAINT campagne_tags_pkey PRIMARY KEY (campagne_id, tag_name);\n```\n```sql\nEND IF;\n```\n```sql\nEND $$;\n```\n- Explanation: The table 'campagne_tags' is missing a primary key, which is required for data integrity and efficient data retrieval. Adding a primary key on '(campagne_id, tag_name)' will enforce uniqueness and provide a clustered index.\n\n#### 3. expediteur_groupe [HIGH]\n- Problem: Add Primary Key to 'expediteur_groupe'\n- Confidence: 1.0\n- Recommendation: The table 'expediteur_groupe' is missing a primary key, which is required for data integrity and efficient data retrieval. Adding a primary key on '(groupe_id, expediteur_id)' will enforce uniqueness and provide a clustered index.\n- Proposed SQL:\n```sql\nDO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'expediteur_groupe_pkey' AND conrelid = 'expediteur_groupe'::regclass) THEN ALTER TABLE expediteur_groupe ADD CONSTRAINT expediteur_groupe_pkey PRIMARY KEY (groupe_id, expediteur_id);\n```\n```sql\nEND IF;\n```\n```sql\nEND $$;\n```\n- Explanation: The table 'expediteur_groupe' is missing a primary key, which is required for data integrity and efficient data retrieval. Adding a primary key on '(groupe_id, expediteur_id)' will enforce uniqueness and provide a clustered index.\n\n#### 4. user_contact_tags [HIGH]\n- Problem: Add Primary Key to 'user_contact_tags'\n- Confidence: 1.0\n- Recommendation: The table 'user_contact_tags' is missing a primary key, which is required for data integrity and efficient data retrieval. Adding a primary key on '(user_contact_id, tag_id)' will enforce uniqueness and provide a clustered index.\n- Proposed SQL:\n```sql\nDO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'user_contact_tags_pkey' AND conrelid = 'user_contact_tags'::regclass) THEN ALTER TABLE user_contact_tags ADD CONSTRAINT user_contact_tags_pkey PRIMARY KEY (user_contact_id, tag_id);\n```\n```sql\nEND IF;\n```\n```sql\nEND $$;\n```\n- Explanation: The table 'user_contact_tags' is missing a primary key, which is required for data integrity and efficient data retrieval. Adding a primary key on '(user_contact_id, tag_id)' will enforce uniqueness and provide a clustered index.\n\n#### 5. budget_history [MEDIUM]\n- Problem: Make foreign key columns in 'budget_history' non-nullable\n- Confidence: 0.8\n- Recommendation: Several foreign key columns in 'budget_history' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.\n- Proposed SQL:\n```sql\nALTER TABLE budget_history ALTER COLUMN groupe_id SET NOT NULL;\n```\n- Explanation: Several foreign key columns in 'budget_history' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.\n\n#### 6. campagne_contacts [HIGH]\n- Problem: Make foreign key columns in 'campagne_contacts' non-nullable\n- Confidence: 1.0\n- Recommendation: Several foreign key columns in 'campagne_contacts' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.\n- Proposed SQL:\n```sql\nALTER TABLE campagne_contacts ALTER COLUMN contact_id SET NOT NULL;\n```\n- Explanation: Several foreign key columns in 'campagne_contacts' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.\n\n#### 7. campagne [MEDIUM]\n- Problem: Make foreign key columns in 'campagne' non-nullable\n- Confidence: 0.8\n- Recommendation: Several foreign key columns in 'campagne' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.\n- Proposed SQL:\n```sql\nALTER TABLE campagne ALTER COLUMN schedule_id SET NOT NULL, ALTER COLUMN campaign_type_permission_id SET NOT NULL, ALTER COLUMN expediteur_id SET NOT NULL, ALTER COLUMN modele_id SET NOT NULL, ALTER COLUMN user_id SET NOT NULL;\n```\n- Explanation: Several foreign key columns in 'campagne' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.\n\n#### 8. groupe [MEDIUM]\n- Problem: Make foreign key columns in 'groupe' non-nullable\n- Confidence: 0.8\n- Recommendation: Several foreign key columns in 'groupe' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.\n- Proposed SQL:\n```sql\nALTER TABLE groupe ALTER COLUMN admin_id SET NOT NULL;\n```\n- Explanation: Several foreign key columns in 'groupe' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.\n\n#### 9. modele [MEDIUM]\n- Problem: Make foreign key columns in 'modele' non-nullable\n- Confidence: 0.8\n- Recommendation: Several foreign key columns in 'modele' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.\n- Proposed SQL:\n```sql\nALTER TABLE modele ALTER COLUMN membership_id SET NOT NULL;\n```\n- Explanation: Several foreign key columns in 'modele' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.\n\n#### 10. request_api [MEDIUM]\n- Problem: Make foreign key columns in 'request_api' non-nullable\n- Confidence: 0.8\n- Recommendation: Several foreign key columns in 'request_api' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.\n- Proposed SQL:\n```sql\nALTER TABLE request_api ALTER COLUMN membership_id SET NOT NULL;\n```\n- Explanation: Several foreign key columns in 'request_api' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.\n\n#### 11. smsc_routing_rule [MEDIUM]\n- Problem: Make foreign key columns in 'smsc_routing_rule' non-nullable\n- Confidence: 0.8\n- Recommendation: Several foreign key columns in 'smsc_routing_rule' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.\n- Proposed SQL:\n```sql\nALTER TABLE smsc_routing_rule ALTER COLUMN expediteur_id SET NOT NULL, ALTER COLUMN groupe_id SET NOT NULL;\n```\n- Explanation: Several foreign key columns in 'smsc_routing_rule' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.\n\n#### 12. tags [MEDIUM]\n- Problem: Make foreign key columns in 'tags' non-nullable\n- Confidence: 0.8\n- Recommendation: Several foreign key columns in 'tags' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.\n- Proposed SQL:\n```sql\nALTER TABLE tags ALTER COLUMN membership_id SET NOT NULL;\n```\n- Explanation: Several foreign key columns in 'tags' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.\n\n#### 13. user_contact [MEDIUM]\n- Problem: Make foreign key columns in 'user_contact' non-nullable\n- Confidence: 0.8\n- Recommendation: Several foreign key columns in 'user_contact' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.\n- Proposed SQL:\n```sql\nALTER TABLE user_contact ALTER COLUMN membership_id SET NOT NULL;\n```\n- Explanation: Several foreign key columns in 'user_contact' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.\n\n#### 14. user_keys [MEDIUM]\n- Problem: Make foreign key columns in 'user_keys' non-nullable\n- Confidence: 0.8\n- Recommendation: Several foreign key columns in 'user_keys' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.\n- Proposed SQL:\n```sql\nALTER TABLE user_keys ALTER COLUMN membership_id SET NOT NULL;\n```\n- Explanation: Several foreign key columns in 'user_keys' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.\n\n#### 15. user_mission [MEDIUM]\n- Problem: Make foreign key columns in 'user_mission' non-nullable\n- Confidence: 0.8\n- Recommendation: Several foreign key columns in 'user_mission' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.\n- Proposed SQL:\n```sql\nALTER TABLE user_mission ALTER COLUMN groupe_id SET NOT NULL;\n```\n- Explanation: Several foreign key columns in 'user_mission' are nullable. Making them non-nullable enforces data integrity by ensuring every record has a valid reference. **Note:** This operation will fail if there are existing NULL values in any of these columns. Please ensure all NULLs are handled (e.g., updated to a valid foreign key or deleted) before executing this fix.\n\n#### 16. groupe [MEDIUM]\n- Problem: Add index to 'groupe.admin_id'\n- Confidence: 0.8\n- Recommendation: Adding an index to the foreign key column 'groupe.admin_id' will improve the performance of join operations and queries involving this column.\n- Proposed SQL:\n```sql\nCREATE INDEX IF NOT EXISTS idx_groupe_admin_id ON groupe (admin_id);\n```\n- Explanation: Adding an index to the foreign key column 'groupe.admin_id' will improve the performance of join operations and queries involving this column."
+    }
+  }
+}

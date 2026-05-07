@@ -280,42 +280,8 @@ def update_job_connection_string(job_id: str, connection_string: str) -> None:
     )
 
 
-def update_job_cleaning_report(job_id: str, report: dict) -> None:
-    """Persist a legacy cleaning execution log under CleaningResult.execution_log."""
-    normalized_job_id = _normalize_uuid(job_id)
-    if not normalized_job_id:
-        return
-
-    defaults = {
-        'mode': 'postgres_plan_legacy',
-        'rules_applied': [],
-        'summary': _legacy_cleaning_summary(report),
-        'execution_log': report or {},
-    }
-    obj, created = CleaningResult.objects.get_or_create(
-        job_id=normalized_job_id,
-        defaults=defaults,
-    )
-
-    if created:
-        return
-
-    update_fields: list[str] = ['execution_log', 'updated_at']
-    obj.execution_log = report or {}
-
-    if not obj.summary:
-        obj.summary = _legacy_cleaning_summary(report)
-        update_fields.append('summary')
-
-    if not obj.mode:
-        obj.mode = 'postgres_plan_legacy'
-        update_fields.append('mode')
-
-    if obj.rules_applied is None:
-        obj.rules_applied = []
-        update_fields.append('rules_applied')
-
-    obj.save(update_fields=update_fields)
+# update_job_cleaning_report was removed — CleaningResult model no longer exists.
+# If a cleaning persistence layer is needed, store the report under AnalysisResult.
 
 
 def delete_jobs(job_ids: list[str], user_id: str = None, is_admin: bool = False) -> list[dict]:

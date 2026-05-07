@@ -306,7 +306,7 @@ def analyze_relationship(source_table: str, source_col: str, target_table: str, 
     return _q(
         f"SELECT count(*) as orphaned_records "
         f"FROM {source_table} s "
-        f"LEFT JOIN {target_table} t ON s.{source_col} = t.{target_col} "
+        f"LEFT JOIN {target_table} t ON s.{source_col}::text = t.{target_col}::text "
         f"WHERE t.{target_col} IS NULL AND s.{source_col} IS NOT NULL"
     )
 
@@ -400,7 +400,8 @@ def enforce_quality_gate(
     for finding in findings or []:
         reason: list[str] = []
         confidence = _confidence_for_finding(finding)
-        evidence = finding.get("evidence") if isinstance(finding.get("evidence"), dict) else {}
+        raw_evidence = finding.get("evidence")
+        evidence: dict[str, Any] = raw_evidence if isinstance(raw_evidence, dict) else {}
         row_count = evidence.get("row_count") or 0
         query = str(evidence.get("query") or "").strip()
 

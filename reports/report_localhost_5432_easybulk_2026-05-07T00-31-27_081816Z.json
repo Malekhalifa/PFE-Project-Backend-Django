@@ -1,0 +1,1633 @@
+{
+  "pipeline_run_id": "703afb23-84d0-4fb2-968f-1b47bb523e2c",
+  "database_id": "localhost_5432_easybulk",
+  "llm_model": "gemini-2.5-flash",
+  "run_timestamp": "2026-05-07T00:31:27.081816Z",
+  "summary": {
+    "confidence_score": 92,
+    "data_quality_score": 63,
+    "final_fix_count": 18
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "703afb23-84d0-4fb2-968f-1b47bb523e2c",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-07T00:31:27.081816Z",
+      "agent": "Schema Integrity Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 9,
+        "items_flagged": 21,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 5,
+        "low_issues": 16,
+        "overall_quality_score": 12.0,
+        "overall_confidence": 0.9143,
+        "flagged_tables": [
+          "budget_history",
+          "campagne",
+          "campagne_contacts",
+          "campagne_tags",
+          "expediteur_groupe",
+          "groupe",
+          "modele",
+          "request_api",
+          "smsc_routing_rule",
+          "tags",
+          "user_contact",
+          "user_contact_tags",
+          "user_keys",
+          "user_mission"
+        ]
+      },
+      "metrics": {
+        "validator": "schema",
+        "findings_count": 21
+      },
+      "findings": [
+        {
+          "table": "campagne_contacts",
+          "column": null,
+          "entity": "campagne_contacts",
+          "rule": "primary_key_required",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campagne_contacts",
+            "primary_key_required": true
+          },
+          "remediation_hint": "Add a primary key to the 'campagne_contacts' table, ideally a composite primary key on 'campagne_id' and 'contact_id'.",
+          "issues": [
+            {
+              "type": "primary_key_required",
+              "severity": "medium",
+              "description": "Add a primary key to the 'campagne_contacts' table, ideally a composite primary key on 'campagne_id' and 'contact_id'.",
+              "evidence": {
+                "table_name": "campagne_contacts",
+                "primary_key_required": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur_groupe",
+          "column": null,
+          "entity": "expediteur_groupe",
+          "rule": "primary_key_required",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "expediteur_groupe",
+            "primary_key_required": true
+          },
+          "remediation_hint": "Add a primary key to the 'expediteur_groupe' table, ideally a composite primary key on 'groupe_id' and 'expediteur_id'.",
+          "issues": [
+            {
+              "type": "primary_key_required",
+              "severity": "medium",
+              "description": "Add a primary key to the 'expediteur_groupe' table, ideally a composite primary key on 'groupe_id' and 'expediteur_id'.",
+              "evidence": {
+                "table_name": "expediteur_groupe",
+                "primary_key_required": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_tags",
+          "column": null,
+          "entity": "campagne_tags",
+          "rule": "primary_key_required",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campagne_tags",
+            "primary_key_required": true
+          },
+          "remediation_hint": "Add a primary key to the 'campagne_tags' table, ideally a composite primary key on 'campagne_id' and 'tag_name'.",
+          "issues": [
+            {
+              "type": "primary_key_required",
+              "severity": "medium",
+              "description": "Add a primary key to the 'campagne_tags' table, ideally a composite primary key on 'campagne_id' and 'tag_name'.",
+              "evidence": {
+                "table_name": "campagne_tags",
+                "primary_key_required": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact_tags",
+          "column": null,
+          "entity": "user_contact_tags",
+          "rule": "primary_key_required",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "user_contact_tags",
+            "primary_key_required": true
+          },
+          "remediation_hint": "Define a composite primary key on 'user_contact_id' and 'tag_id' for the 'user_contact_tags' table.",
+          "issues": [
+            {
+              "type": "primary_key_required",
+              "severity": "medium",
+              "description": "Define a composite primary key on 'user_contact_id' and 'tag_id' for the 'user_contact_tags' table.",
+              "evidence": {
+                "table_name": "user_contact_tags",
+                "primary_key_required": true
+              }
+            }
+          ]
+        },
+        {
+          "table": "budget_history",
+          "column": "groupe_id",
+          "entity": "budget_history.groupe_id",
+          "rule": "nullable_foreign_key",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "budget_history",
+            "column_name": "groupe_id",
+            "is_nullable": "YES",
+            "foreign_table": "groupe",
+            "foreign_column": "id"
+          },
+          "remediation_hint": "Consider making 'budget_history.groupe_id' NOT NULL if every budget history record must be associated with a group. Ensure application logic handles nulls appropriately if they are allowed.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key",
+              "severity": "low",
+              "description": "Consider making 'budget_history.groupe_id' NOT NULL if every budget history record must be associated with a group. Ensure application logic handles nulls appropriately if they are allowed.",
+              "evidence": {
+                "table_name": "budget_history",
+                "column_name": "groupe_id",
+                "is_nullable": "YES",
+                "foreign_table": "groupe",
+                "foreign_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "entity": "groupe.admin_id",
+          "rule": "nullable_foreign_key",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "groupe",
+            "column_name": "admin_id",
+            "is_nullable": "YES",
+            "foreign_table": "users",
+            "foreign_column": "id"
+          },
+          "remediation_hint": "Consider making 'groupe.admin_id' NOT NULL if every group must be associated with an administrator. Ensure application logic handles nulls appropriately if they are allowed.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key",
+              "severity": "low",
+              "description": "Consider making 'groupe.admin_id' NOT NULL if every group must be associated with an administrator. Ensure application logic handles nulls appropriately if they are allowed.",
+              "evidence": {
+                "table_name": "groupe",
+                "column_name": "admin_id",
+                "is_nullable": "YES",
+                "foreign_table": "users",
+                "foreign_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_contacts",
+          "column": "contact_id",
+          "entity": "campagne_contacts.contact_id",
+          "rule": "nullable_foreign_key",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "campagne_contacts",
+            "column_name": "contact_id",
+            "is_nullable": "YES",
+            "foreign_table": "contacts",
+            "foreign_column": "msisdn"
+          },
+          "remediation_hint": "Consider making 'campagne_contacts.contact_id' NOT NULL if every campaign contact record must be associated with a contact. Ensure application logic handles nulls appropriately if they are allowed.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key",
+              "severity": "low",
+              "description": "Consider making 'campagne_contacts.contact_id' NOT NULL if every campaign contact record must be associated with a contact. Ensure application logic handles nulls appropriately if they are allowed.",
+              "evidence": {
+                "table_name": "campagne_contacts",
+                "column_name": "contact_id",
+                "is_nullable": "YES",
+                "foreign_table": "contacts",
+                "foreign_column": "msisdn"
+              }
+            }
+          ]
+        },
+        {
+          "table": "request_api",
+          "column": "membership_id",
+          "entity": "request_api.membership_id",
+          "rule": "nullable_foreign_key",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "request_api",
+            "column_name": "membership_id",
+            "is_nullable": "YES",
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "remediation_hint": "Consider making 'request_api.membership_id' NOT NULL if every API request must be associated with a membership. Ensure application logic handles nulls appropriately if they are allowed.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key",
+              "severity": "low",
+              "description": "Consider making 'request_api.membership_id' NOT NULL if every API request must be associated with a membership. Ensure application logic handles nulls appropriately if they are allowed.",
+              "evidence": {
+                "table_name": "request_api",
+                "column_name": "membership_id",
+                "is_nullable": "YES",
+                "foreign_table": "membership",
+                "foreign_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "smsc_routing_rule",
+          "column": null,
+          "entity": "smsc_routing_rule",
+          "rule": "nullable_foreign_key",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "smsc_routing_rule",
+            "column_name": "expediteur_id",
+            "is_nullable": "YES",
+            "foreign_table": "expediteur",
+            "foreign_column": "id",
+            "columns_with_high_nulls": [
+              "",
+              "groupe_id"
+            ]
+          },
+          "remediation_hint": "Consider making 'smsc_routing_rule.expediteur_id' NOT NULL if every routing rule must be associated with an expediteur. Ensure application logic handles nulls appropriately if they are allowed.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key",
+              "severity": "low",
+              "description": "Consider making 'smsc_routing_rule.expediteur_id' NOT NULL if every routing rule must be associated with an expediteur. Ensure application logic handles nulls appropriately if they are allowed.",
+              "evidence": {
+                "table_name": "smsc_routing_rule",
+                "column_name": "expediteur_id",
+                "is_nullable": "YES",
+                "foreign_table": "expediteur",
+                "foreign_column": "id",
+                "columns_with_high_nulls": [
+                  "",
+                  "groupe_id"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "smsc_routing_rule",
+          "column": "groupe_id",
+          "entity": "smsc_routing_rule.groupe_id",
+          "rule": "nullable_foreign_key",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "smsc_routing_rule",
+            "column_name": "groupe_id",
+            "is_nullable": "YES",
+            "foreign_table": "groupe",
+            "foreign_column": "id"
+          },
+          "remediation_hint": "Consider making 'smsc_routing_rule.groupe_id' NOT NULL if every routing rule must be associated with a group. Ensure application logic handles nulls appropriately if they are allowed.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key",
+              "severity": "low",
+              "description": "Consider making 'smsc_routing_rule.groupe_id' NOT NULL if every routing rule must be associated with a group. Ensure application logic handles nulls appropriately if they are allowed.",
+              "evidence": {
+                "table_name": "smsc_routing_rule",
+                "column_name": "groupe_id",
+                "is_nullable": "YES",
+                "foreign_table": "groupe",
+                "foreign_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact",
+          "column": "membership_id",
+          "entity": "user_contact.membership_id",
+          "rule": "nullable_foreign_key",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "user_contact",
+            "column_name": "membership_id",
+            "is_nullable": "YES",
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "remediation_hint": "Consider making 'user_contact.membership_id' NOT NULL if every user contact must be associated with a membership. Ensure application logic handles nulls appropriately if they are allowed.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key",
+              "severity": "low",
+              "description": "Consider making 'user_contact.membership_id' NOT NULL if every user contact must be associated with a membership. Ensure application logic handles nulls appropriately if they are allowed.",
+              "evidence": {
+                "table_name": "user_contact",
+                "column_name": "membership_id",
+                "is_nullable": "YES",
+                "foreign_table": "membership",
+                "foreign_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "tags",
+          "column": "membership_id",
+          "entity": "tags.membership_id",
+          "rule": "nullable_foreign_key",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "tags",
+            "column_name": "membership_id",
+            "is_nullable": "YES",
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "remediation_hint": "Consider making 'tags.membership_id' NOT NULL if every tag must be associated with a membership. Ensure application logic handles nulls appropriately if they are allowed.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key",
+              "severity": "low",
+              "description": "Consider making 'tags.membership_id' NOT NULL if every tag must be associated with a membership. Ensure application logic handles nulls appropriately if they are allowed.",
+              "evidence": {
+                "table_name": "tags",
+                "column_name": "membership_id",
+                "is_nullable": "YES",
+                "foreign_table": "membership",
+                "foreign_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_keys",
+          "column": "membership_id",
+          "entity": "user_keys.membership_id",
+          "rule": "nullable_foreign_key",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "user_keys",
+            "column_name": "membership_id",
+            "is_nullable": "YES",
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "remediation_hint": "Consider making 'user_keys.membership_id' NOT NULL if every user key must be associated with a membership. Ensure application logic handles nulls appropriately if they are allowed.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key",
+              "severity": "low",
+              "description": "Consider making 'user_keys.membership_id' NOT NULL if every user key must be associated with a membership. Ensure application logic handles nulls appropriately if they are allowed.",
+              "evidence": {
+                "table_name": "user_keys",
+                "column_name": "membership_id",
+                "is_nullable": "YES",
+                "foreign_table": "membership",
+                "foreign_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_mission",
+          "column": "groupe_id",
+          "entity": "user_mission.groupe_id",
+          "rule": "nullable_foreign_key",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "user_mission",
+            "column_name": "groupe_id",
+            "is_nullable": "YES",
+            "foreign_table": "groupe",
+            "foreign_column": "id"
+          },
+          "remediation_hint": "Consider making 'user_mission.groupe_id' NOT NULL if every user mission must be associated with a group. Ensure application logic handles nulls appropriately if they are allowed.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key",
+              "severity": "low",
+              "description": "Consider making 'user_mission.groupe_id' NOT NULL if every user mission must be associated with a group. Ensure application logic handles nulls appropriately if they are allowed.",
+              "evidence": {
+                "table_name": "user_mission",
+                "column_name": "groupe_id",
+                "is_nullable": "YES",
+                "foreign_table": "groupe",
+                "foreign_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne",
+          "column": null,
+          "entity": "campagne",
+          "rule": "nullable_foreign_key",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "campagne",
+            "column_name": "schedule_id",
+            "is_nullable": "YES",
+            "foreign_table": "campaign_schedule",
+            "foreign_column": "id",
+            "columns_with_high_nulls": [
+              "",
+              "campaign_type_permission_id",
+              "expediteur_id",
+              "modele_id",
+              "user_id"
+            ]
+          },
+          "remediation_hint": "Consider making 'campagne.schedule_id' NOT NULL if every campaign must be associated with a schedule. Ensure application logic handles nulls appropriately if they are allowed.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key",
+              "severity": "low",
+              "description": "Consider making 'campagne.schedule_id' NOT NULL if every campaign must be associated with a schedule. Ensure application logic handles nulls appropriately if they are allowed.",
+              "evidence": {
+                "table_name": "campagne",
+                "column_name": "schedule_id",
+                "is_nullable": "YES",
+                "foreign_table": "campaign_schedule",
+                "foreign_column": "id",
+                "columns_with_high_nulls": [
+                  "",
+                  "campaign_type_permission_id",
+                  "expediteur_id",
+                  "modele_id",
+                  "user_id"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne",
+          "column": "campaign_type_permission_id",
+          "entity": "campagne.campaign_type_permission_id",
+          "rule": "nullable_foreign_key",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "campagne",
+            "column_name": "campaign_type_permission_id",
+            "is_nullable": "YES",
+            "foreign_table": "campaign_type_permission",
+            "foreign_column": "id"
+          },
+          "remediation_hint": "Consider making 'campagne.campaign_type_permission_id' NOT NULL if every campaign must be associated with campaign type permissions. Ensure application logic handles nulls appropriately if they are allowed.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key",
+              "severity": "low",
+              "description": "Consider making 'campagne.campaign_type_permission_id' NOT NULL if every campaign must be associated with campaign type permissions. Ensure application logic handles nulls appropriately if they are allowed.",
+              "evidence": {
+                "table_name": "campagne",
+                "column_name": "campaign_type_permission_id",
+                "is_nullable": "YES",
+                "foreign_table": "campaign_type_permission",
+                "foreign_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne",
+          "column": "expediteur_id",
+          "entity": "campagne.expediteur_id",
+          "rule": "nullable_foreign_key",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "campagne",
+            "column_name": "expediteur_id",
+            "is_nullable": "YES",
+            "foreign_table": "expediteur",
+            "foreign_column": "id"
+          },
+          "remediation_hint": "Consider making 'campagne.expediteur_id' NOT NULL if every campaign must be associated with an expediteur. Ensure application logic handles nulls appropriately if they are allowed.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key",
+              "severity": "low",
+              "description": "Consider making 'campagne.expediteur_id' NOT NULL if every campaign must be associated with an expediteur. Ensure application logic handles nulls appropriately if they are allowed.",
+              "evidence": {
+                "table_name": "campagne",
+                "column_name": "expediteur_id",
+                "is_nullable": "YES",
+                "foreign_table": "expediteur",
+                "foreign_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne",
+          "column": "modele_id",
+          "entity": "campagne.modele_id",
+          "rule": "nullable_foreign_key",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "campagne",
+            "column_name": "modele_id",
+            "is_nullable": "YES",
+            "foreign_table": "modele",
+            "foreign_column": "id"
+          },
+          "remediation_hint": "Consider making 'campagne.modele_id' NOT NULL if every campaign must be associated with a modele. Ensure application logic handles nulls appropriately if they are allowed.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key",
+              "severity": "low",
+              "description": "Consider making 'campagne.modele_id' NOT NULL if every campaign must be associated with a modele. Ensure application logic handles nulls appropriately if they are allowed.",
+              "evidence": {
+                "table_name": "campagne",
+                "column_name": "modele_id",
+                "is_nullable": "YES",
+                "foreign_table": "modele",
+                "foreign_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne",
+          "column": "user_id",
+          "entity": "campagne.user_id",
+          "rule": "nullable_foreign_key",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "campagne",
+            "column_name": "user_id",
+            "is_nullable": "YES",
+            "foreign_table": "users",
+            "foreign_column": "id"
+          },
+          "remediation_hint": "Consider making 'campagne.user_id' NOT NULL if every campaign must be associated with a user. Ensure application logic handles nulls appropriately if they are allowed.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key",
+              "severity": "low",
+              "description": "Consider making 'campagne.user_id' NOT NULL if every campaign must be associated with a user. Ensure application logic handles nulls appropriately if they are allowed.",
+              "evidence": {
+                "table_name": "campagne",
+                "column_name": "user_id",
+                "is_nullable": "YES",
+                "foreign_table": "users",
+                "foreign_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "modele",
+          "column": "membership_id",
+          "entity": "modele.membership_id",
+          "rule": "nullable_foreign_key",
+          "severity": "low",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "modele",
+            "column_name": "membership_id",
+            "is_nullable": "YES",
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "remediation_hint": "Consider making 'modele.membership_id' NOT NULL if every modele must be associated with a membership. Ensure application logic handles nulls appropriately if they are allowed.",
+          "issues": [
+            {
+              "type": "nullable_foreign_key",
+              "severity": "low",
+              "description": "Consider making 'modele.membership_id' NOT NULL if every modele must be associated with a membership. Ensure application logic handles nulls appropriately if they are allowed.",
+              "evidence": {
+                "table_name": "modele",
+                "column_name": "membership_id",
+                "is_nullable": "YES",
+                "foreign_table": "membership",
+                "foreign_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_tags",
+          "column": "tag_name",
+          "entity": "campagne_tags.tag_name",
+          "rule": "missing_foreign_key_constraint",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "campagne_tags",
+            "column_name": "tag_name",
+            "data_type": "character varying",
+            "is_nullable": "YES"
+          },
+          "remediation_hint": "Add a foreign key constraint on 'campagne_tags.tag_name' referencing 'tags.label' (or the appropriate primary/unique key in the 'tags' table).",
+          "issues": [
+            {
+              "type": "missing_foreign_key_constraint",
+              "severity": "medium",
+              "description": "Add a foreign key constraint on 'campagne_tags.tag_name' referencing 'tags.label' (or the appropriate primary/unique key in the 'tags' table).",
+              "evidence": {
+                "table_name": "campagne_tags",
+                "column_name": "tag_name",
+                "data_type": "character varying",
+                "is_nullable": "YES"
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": [],
+      "report": "## Schema Integrity Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 9\n- Flagged: 21\n- Severity split: critical=0, high=0, medium=5, low=16\n- Quality score: 12.0 / 100\n- Confidence: 0.9143\n- Flagged tables: budget_history, campagne, campagne_contacts, campagne_tags, expediteur_groupe, groupe, modele, request_api, smsc_routing_rule, tags, user_contact, user_contact_tags, user_keys, user_mission\n\n### Metrics\n- Findings count: 21\n- Validator: schema\n\n### Findings (21)\n\n#### 1. campagne_contacts [MEDIUM]\n- Problem: Add a primary key to the 'campagne_contacts' table, ideally a composite primary key on 'campagne_id' and 'contact_id'.\n- Confidence: 1.0\n- Recommendation: Add a primary key to the 'campagne_contacts' table, ideally a composite primary key on 'campagne_id' and 'contact_id'.\n- Detailed issues:\n  - [MEDIUM] Add a primary key to the 'campagne_contacts' table, ideally a composite primary key on 'campagne_id' and 'contact_id'.\n\n#### 2. expediteur_groupe [MEDIUM]\n- Problem: Add a primary key to the 'expediteur_groupe' table, ideally a composite primary key on 'groupe_id' and 'expediteur_id'.\n- Confidence: 1.0\n- Recommendation: Add a primary key to the 'expediteur_groupe' table, ideally a composite primary key on 'groupe_id' and 'expediteur_id'.\n- Detailed issues:\n  - [MEDIUM] Add a primary key to the 'expediteur_groupe' table, ideally a composite primary key on 'groupe_id' and 'expediteur_id'.\n\n#### 3. campagne_tags [MEDIUM]\n- Problem: Add a primary key to the 'campagne_tags' table, ideally a composite primary key on 'campagne_id' and 'tag_name'.\n- Confidence: 1.0\n- Recommendation: Add a primary key to the 'campagne_tags' table, ideally a composite primary key on 'campagne_id' and 'tag_name'.\n- Detailed issues:\n  - [MEDIUM] Add a primary key to the 'campagne_tags' table, ideally a composite primary key on 'campagne_id' and 'tag_name'.\n\n#### 4. user_contact_tags [MEDIUM]\n- Problem: Define a composite primary key on 'user_contact_id' and 'tag_id' for the 'user_contact_tags' table.\n- Confidence: 1.0\n- Recommendation: Define a composite primary key on 'user_contact_id' and 'tag_id' for the 'user_contact_tags' table.\n- Detailed issues:\n  - [MEDIUM] Define a composite primary key on 'user_contact_id' and 'tag_id' for the 'user_contact_tags' table.\n\n#### 5. budget_history [LOW]\n- Problem: Consider making 'budget_history.groupe_id' NOT NULL if every budget history record must be associated with a group. Ensure application logic handles nulls appropriately if they are allowed.\n- Confidence: 0.9\n- Column: groupe_id\n- Recommendation: Consider making 'budget_history.groupe_id' NOT NULL if every budget history record must be associated with a group. Ensure application logic handles nulls appropriately if they are allowed.\n- Detailed issues:\n  - [LOW] Consider making 'budget_history.groupe_id' NOT NULL if every budget history record must be associated with a group. Ensure application logic handles nulls appropriately if they are allowed.\n\n#### 6. groupe [LOW]\n- Problem: Consider making 'groupe.admin_id' NOT NULL if every group must be associated with an administrator. Ensure application logic handles nulls appropriately if they are allowed.\n- Confidence: 0.9\n- Column: admin_id\n- Recommendation: Consider making 'groupe.admin_id' NOT NULL if every group must be associated with an administrator. Ensure application logic handles nulls appropriately if they are allowed.\n- Detailed issues:\n  - [LOW] Consider making 'groupe.admin_id' NOT NULL if every group must be associated with an administrator. Ensure application logic handles nulls appropriately if they are allowed.\n\n#### 7. campagne_contacts [LOW]\n- Problem: Consider making 'campagne_contacts.contact_id' NOT NULL if every campaign contact record must be associated with a contact. Ensure application logic handles nulls appropriately if they are allowed.\n- Confidence: 0.9\n- Column: contact_id\n- Recommendation: Consider making 'campagne_contacts.contact_id' NOT NULL if every campaign contact record must be associated with a contact. Ensure application logic handles nulls appropriately if they are allowed.\n- Detailed issues:\n  - [LOW] Consider making 'campagne_contacts.contact_id' NOT NULL if every campaign contact record must be associated with a contact. Ensure application logic handles nulls appropriately if they are allowed.\n\n#### 8. request_api [LOW]\n- Problem: Consider making 'request_api.membership_id' NOT NULL if every API request must be associated with a membership. Ensure application logic handles nulls appropriately if they are allowed.\n- Confidence: 0.9\n- Column: membership_id\n- Recommendation: Consider making 'request_api.membership_id' NOT NULL if every API request must be associated with a membership. Ensure application logic handles nulls appropriately if they are allowed.\n- Detailed issues:\n  - [LOW] Consider making 'request_api.membership_id' NOT NULL if every API request must be associated with a membership. Ensure application logic handles nulls appropriately if they are allowed.\n\n#### 9. smsc_routing_rule [LOW]\n- Problem: Consider making 'smsc_routing_rule.expediteur_id' NOT NULL if every routing rule must be associated with an expediteur. Ensure application logic handles nulls appropriately if they are allowed.\n- Confidence: 0.9\n- Recommendation: Consider making 'smsc_routing_rule.expediteur_id' NOT NULL if every routing rule must be associated with an expediteur. Ensure application logic handles nulls appropriately if they are allowed.\n- Detailed issues:\n  - [LOW] Consider making 'smsc_routing_rule.expediteur_id' NOT NULL if every routing rule must be associated with an expediteur. Ensure application logic handles nulls appropriately if they are allowed.\n\n#### 10. smsc_routing_rule [LOW]\n- Problem: Consider making 'smsc_routing_rule.groupe_id' NOT NULL if every routing rule must be associated with a group. Ensure application logic handles nulls appropriately if they are allowed.\n- Confidence: 0.9\n- Column: groupe_id\n- Recommendation: Consider making 'smsc_routing_rule.groupe_id' NOT NULL if every routing rule must be associated with a group. Ensure application logic handles nulls appropriately if they are allowed.\n- Detailed issues:\n  - [LOW] Consider making 'smsc_routing_rule.groupe_id' NOT NULL if every routing rule must be associated with a group. Ensure application logic handles nulls appropriately if they are allowed.\n\n#### 11. user_contact [LOW]\n- Problem: Consider making 'user_contact.membership_id' NOT NULL if every user contact must be associated with a membership. Ensure application logic handles nulls appropriately if they are allowed.\n- Confidence: 0.9\n- Column: membership_id\n- Recommendation: Consider making 'user_contact.membership_id' NOT NULL if every user contact must be associated with a membership. Ensure application logic handles nulls appropriately if they are allowed.\n- Detailed issues:\n  - [LOW] Consider making 'user_contact.membership_id' NOT NULL if every user contact must be associated with a membership. Ensure application logic handles nulls appropriately if they are allowed.\n\n#### 12. tags [LOW]\n- Problem: Consider making 'tags.membership_id' NOT NULL if every tag must be associated with a membership. Ensure application logic handles nulls appropriately if they are allowed.\n- Confidence: 0.9\n- Column: membership_id\n- Recommendation: Consider making 'tags.membership_id' NOT NULL if every tag must be associated with a membership. Ensure application logic handles nulls appropriately if they are allowed.\n- Detailed issues:\n  - [LOW] Consider making 'tags.membership_id' NOT NULL if every tag must be associated with a membership. Ensure application logic handles nulls appropriately if they are allowed.\n\n#### 13. user_keys [LOW]\n- Problem: Consider making 'user_keys.membership_id' NOT NULL if every user key must be associated with a membership. Ensure application logic handles nulls appropriately if they are allowed.\n- Confidence: 0.9\n- Column: membership_id\n- Recommendation: Consider making 'user_keys.membership_id' NOT NULL if every user key must be associated with a membership. Ensure application logic handles nulls appropriately if they are allowed.\n- Detailed issues:\n  - [LOW] Consider making 'user_keys.membership_id' NOT NULL if every user key must be associated with a membership. Ensure application logic handles nulls appropriately if they are allowed.\n\n#### 14. user_mission [LOW]\n- Problem: Consider making 'user_mission.groupe_id' NOT NULL if every user mission must be associated with a group. Ensure application logic handles nulls appropriately if they are allowed.\n- Confidence: 0.9\n- Column: groupe_id\n- Recommendation: Consider making 'user_mission.groupe_id' NOT NULL if every user mission must be associated with a group. Ensure application logic handles nulls appropriately if they are allowed.\n- Detailed issues:\n  - [LOW] Consider making 'user_mission.groupe_id' NOT NULL if every user mission must be associated with a group. Ensure application logic handles nulls appropriately if they are allowed.\n\n#### 15. campagne [LOW]\n- Problem: Consider making 'campagne.schedule_id' NOT NULL if every campaign must be associated with a schedule. Ensure application logic handles nulls appropriately if they are allowed.\n- Confidence: 0.9\n- Recommendation: Consider making 'campagne.schedule_id' NOT NULL if every campaign must be associated with a schedule. Ensure application logic handles nulls appropriately if they are allowed.\n- Detailed issues:\n  - [LOW] Consider making 'campagne.schedule_id' NOT NULL if every campaign must be associated with a schedule. Ensure application logic handles nulls appropriately if they are allowed.\n\n#### 16. campagne [LOW]\n- Problem: Consider making 'campagne.campaign_type_permission_id' NOT NULL if every campaign must be associated with campaign type permissions. Ensure application logic handles nulls appropriately if they are allowed.\n- Confidence: 0.9\n- Column: campaign_type_permission_id\n- Recommendation: Consider making 'campagne.campaign_type_permission_id' NOT NULL if every campaign must be associated with campaign type permissions. Ensure application logic handles nulls appropriately if they are allowed.\n- Detailed issues:\n  - [LOW] Consider making 'campagne.campaign_type_permission_id' NOT NULL if every campaign must be associated with campaign type permissions. Ensure application logic handles nulls appropriately if they are allowed.\n\n#### 17. campagne [LOW]\n- Problem: Consider making 'campagne.expediteur_id' NOT NULL if every campaign must be associated with an expediteur. Ensure application logic handles nulls appropriately if they are allowed.\n- Confidence: 0.9\n- Column: expediteur_id\n- Recommendation: Consider making 'campagne.expediteur_id' NOT NULL if every campaign must be associated with an expediteur. Ensure application logic handles nulls appropriately if they are allowed.\n- Detailed issues:\n  - [LOW] Consider making 'campagne.expediteur_id' NOT NULL if every campaign must be associated with an expediteur. Ensure application logic handles nulls appropriately if they are allowed.\n\n#### 18. campagne [LOW]\n- Problem: Consider making 'campagne.modele_id' NOT NULL if every campaign must be associated with a modele. Ensure application logic handles nulls appropriately if they are allowed.\n- Confidence: 0.9\n- Column: modele_id\n- Recommendation: Consider making 'campagne.modele_id' NOT NULL if every campaign must be associated with a modele. Ensure application logic handles nulls appropriately if they are allowed.\n- Detailed issues:\n  - [LOW] Consider making 'campagne.modele_id' NOT NULL if every campaign must be associated with a modele. Ensure application logic handles nulls appropriately if they are allowed.\n\n#### 19. campagne [LOW]\n- Problem: Consider making 'campagne.user_id' NOT NULL if every campaign must be associated with a user. Ensure application logic handles nulls appropriately if they are allowed.\n- Confidence: 0.9\n- Column: user_id\n- Recommendation: Consider making 'campagne.user_id' NOT NULL if every campaign must be associated with a user. Ensure application logic handles nulls appropriately if they are allowed.\n- Detailed issues:\n  - [LOW] Consider making 'campagne.user_id' NOT NULL if every campaign must be associated with a user. Ensure application logic handles nulls appropriately if they are allowed.\n\n#### 20. modele [LOW]\n- Problem: Consider making 'modele.membership_id' NOT NULL if every modele must be associated with a membership. Ensure application logic handles nulls appropriately if they are allowed.\n- Confidence: 0.9\n- Column: membership_id\n- Recommendation: Consider making 'modele.membership_id' NOT NULL if every modele must be associated with a membership. Ensure application logic handles nulls appropriately if they are allowed.\n- Detailed issues:\n  - [LOW] Consider making 'modele.membership_id' NOT NULL if every modele must be associated with a membership. Ensure application logic handles nulls appropriately if they are allowed.\n\n#### 21. campagne_tags [MEDIUM]\n- Problem: Add a foreign key constraint on 'campagne_tags.tag_name' referencing 'tags.label' (or the appropriate primary/unique key in the 'tags' table).\n- Confidence: 0.8\n- Column: tag_name\n- Recommendation: Add a foreign key constraint on 'campagne_tags.tag_name' referencing 'tags.label' (or the appropriate primary/unique key in the 'tags' table).\n- Detailed issues:\n  - [MEDIUM] Add a foreign key constraint on 'campagne_tags.tag_name' referencing 'tags.label' (or the appropriate primary/unique key in the 'tags' table)."
+    },
+    "statistical_validator": {
+      "pipeline_run_id": "703afb23-84d0-4fb2-968f-1b47bb523e2c",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-07T00:31:27.081816Z",
+      "agent": "Statistical Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 30,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "statistical",
+        "findings_count": 0
+      },
+      "findings": [],
+      "prior_reports": [],
+      "report": "## Statistical Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 30\n- Flagged: 0\n- Severity split: critical=0, high=0, medium=0, low=0\n- Quality score: 100.0 / 100\n- Confidence: 1.0\n\n### Metrics\n- Findings count: 0\n- Validator: statistical\n\nNo issues were found by this agent."
+    },
+    "structural_validator": {
+      "pipeline_run_id": "703afb23-84d0-4fb2-968f-1b47bb523e2c",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-07T00:31:27.081816Z",
+      "agent": "Structural Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 30,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "structural",
+        "findings_count": 0
+      },
+      "findings": [],
+      "prior_reports": [],
+      "report": "## Structural Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 30\n- Flagged: 0\n- Severity split: critical=0, high=0, medium=0, low=0\n- Quality score: 100.0 / 100\n- Confidence: 1.0\n\n### Metrics\n- Findings count: 0\n- Validator: structural\n\nNo issues were found by this agent."
+    },
+    "relational_validator": {
+      "pipeline_run_id": "703afb23-84d0-4fb2-968f-1b47bb523e2c",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-07T00:31:27.081816Z",
+      "agent": "Relational Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 27,
+        "items_flagged": 3,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 3,
+        "overall_quality_score": 91.0,
+        "overall_confidence": 0.8,
+        "flagged_tables": [
+          "campagne_contacts",
+          "campaign_type_permission"
+        ]
+      },
+      "metrics": {
+        "validator": "relational",
+        "findings_count": 3
+      },
+      "findings": [
+        {
+          "table": "campaign_type_permission",
+          "column": null,
+          "entity": "campaign_type_permission",
+          "rule": "functional_dependency_violation",
+          "severity": "low",
+          "confidence": 0.8,
+          "evidence": {
+            "pk_column": "groupe_id",
+            "dependent_column": "campaign_type",
+            "violating_records_sample": "Multiple campaign_type values found for a single groupe_id.",
+            "columns_with_high_nulls": [
+              "",
+              "campaign_type"
+            ]
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "functional_dependency_violation",
+              "severity": "low",
+              "description": "functional dependency violation",
+              "evidence": {
+                "pk_column": "groupe_id",
+                "dependent_column": "campaign_type",
+                "violating_records_sample": "Multiple campaign_type values found for a single groupe_id.",
+                "columns_with_high_nulls": [
+                  "",
+                  "campaign_type"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "campaign_type_permission",
+          "column": "campaign_type",
+          "entity": "campaign_type_permission.campaign_type",
+          "rule": "functional_dependency_violation",
+          "severity": "low",
+          "confidence": 0.8,
+          "evidence": {
+            "pk_column": "campaign_type",
+            "dependent_column": "groupe_id",
+            "violating_records_sample": "Multiple groupe_id values found for a single campaign_type."
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "functional_dependency_violation",
+              "severity": "low",
+              "description": "functional dependency violation",
+              "evidence": {
+                "pk_column": "campaign_type",
+                "dependent_column": "groupe_id",
+                "violating_records_sample": "Multiple groupe_id values found for a single campaign_type."
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_contacts",
+          "column": "campagne_id",
+          "entity": "campagne_contacts.campagne_id",
+          "rule": "functional_dependency_violation",
+          "severity": "low",
+          "confidence": 0.8,
+          "evidence": {
+            "pk_column": "campagne_id",
+            "dependent_column": "contact_id",
+            "violating_records_sample": "Multiple contact_id values found for a single campagne_id."
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "functional_dependency_violation",
+              "severity": "low",
+              "description": "functional dependency violation",
+              "evidence": {
+                "pk_column": "campagne_id",
+                "dependent_column": "contact_id",
+                "violating_records_sample": "Multiple contact_id values found for a single campagne_id."
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": [],
+      "report": "## Relational Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 27\n- Flagged: 3\n- Severity split: critical=0, high=0, medium=0, low=3\n- Quality score: 91.0 / 100\n- Confidence: 0.8\n- Flagged tables: campagne_contacts, campaign_type_permission\n\n### Metrics\n- Findings count: 3\n- Validator: relational\n\n### Findings (2)\n\n#### 1. campaign_type_permission [LOW]\n- Problem: functional dependency violation\n- Confidence: 0.8\n- Columns: campaign_type\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] functional dependency violation\n\n#### 2. campagne_contacts [LOW]\n- Problem: functional dependency violation\n- Confidence: 0.8\n- Column: campagne_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] functional dependency violation"
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "703afb23-84d0-4fb2-968f-1b47bb523e2c",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-07T00:31:27.081816Z",
+      "agent": "Data Fix Planner",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 18,
+        "items_passed": 0,
+        "items_flagged": 18,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 8,
+        "low_issues": 10,
+        "overall_quality_score": 10.0,
+        "overall_confidence": 0.9,
+        "flagged_tables": [
+          "budget_history",
+          "campagne",
+          "campagne_contacts",
+          "campagne_tags",
+          "campaign_type_permission",
+          "expediteur_groupe",
+          "groupe",
+          "modele",
+          "request_api",
+          "smsc_routing_rule",
+          "tags",
+          "user_contact",
+          "user_contact_tags",
+          "user_keys",
+          "user_mission"
+        ]
+      },
+      "metrics": {
+        "total_issues_received": 18,
+        "fixes_generated": 18
+      },
+      "findings": [
+        {
+          "id": "fix_001_campagne_contacts",
+          "fix_id": "add-pk-campagne-contacts",
+          "rows_affected_estimate": 31,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": [],
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "Add Primary Key to 'campagne_contacts' table",
+          "fix": "The 'campagne_contacts' table is missing a primary key, which is essential for data integrity, efficient data retrieval, and to uniquely identify each record. A composite primary key on 'campagne_id' and 'contact_id' is appropriate given the table's purpose.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "estimated_rows_affected": 31,
+          "queries": [
+            "ALTER TABLE campagne_contacts ADD CONSTRAINT pk_campagne_contacts PRIMARY KEY (campagne_id, contact_id);"
+          ],
+          "explanation": "The 'campagne_contacts' table is missing a primary key, which is essential for data integrity, efficient data retrieval, and to uniquely identify each record. A composite primary key on 'campagne_id' and 'contact_id' is appropriate given the table's purpose.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_002_expediteur_groupe",
+          "fix_id": "add-pk-expediteur-groupe",
+          "rows_affected_estimate": 18,
+          "tables_touched": [
+            "expediteur_groupe"
+          ],
+          "depends_on": [],
+          "table": "expediteur_groupe",
+          "target_table": "expediteur_groupe",
+          "problem": "Add Primary Key to 'expediteur_groupe' table",
+          "fix": "The 'expediteur_groupe' table is missing a primary key, which is essential for data integrity, efficient data retrieval, and to uniquely identify each record. A composite primary key on 'groupe_id' and 'expediteur_id' is appropriate given the table's purpose.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "estimated_rows_affected": 18,
+          "queries": [
+            "ALTER TABLE expediteur_groupe ADD CONSTRAINT pk_expediteur_groupe PRIMARY KEY (groupe_id, expediteur_id);"
+          ],
+          "explanation": "The 'expediteur_groupe' table is missing a primary key, which is essential for data integrity, efficient data retrieval, and to uniquely identify each record. A composite primary key on 'groupe_id' and 'expediteur_id' is appropriate given the table's purpose.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_003_campagne_tags",
+          "fix_id": "add-pk-campagne-tags",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_tags"
+          ],
+          "depends_on": [],
+          "table": "campagne_tags",
+          "target_table": "campagne_tags",
+          "problem": "Add Primary Key to 'campagne_tags' table",
+          "fix": "The 'campagne_tags' table is missing a primary key, which is essential for data integrity, efficient data retrieval, and to uniquely identify each record. A composite primary key on 'campagne_id' and 'tag_name' is appropriate given the table's purpose.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE campagne_tags ADD CONSTRAINT pk_campagne_tags PRIMARY KEY (campagne_id, tag_name);"
+          ],
+          "explanation": "The 'campagne_tags' table is missing a primary key, which is essential for data integrity, efficient data retrieval, and to uniquely identify each record. A composite primary key on 'campagne_id' and 'tag_name' is appropriate given the table's purpose.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_004_user_contact_tags",
+          "fix_id": "add-pk-user-contact-tags",
+          "rows_affected_estimate": 20051,
+          "tables_touched": [
+            "user_contact_tags"
+          ],
+          "depends_on": [],
+          "table": "user_contact_tags",
+          "target_table": "user_contact_tags",
+          "problem": "Add Primary Key to 'user_contact_tags' table",
+          "fix": "The 'user_contact_tags' table is missing a primary key, which is essential for data integrity, efficient data retrieval, and to uniquely identify each record. A composite primary key on 'user_contact_id' and 'tag_id' is appropriate given the table's purpose.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "estimated_rows_affected": 20051,
+          "queries": [
+            "ALTER TABLE user_contact_tags ADD CONSTRAINT pk_user_contact_tags PRIMARY KEY (user_contact_id, tag_id);"
+          ],
+          "explanation": "The 'user_contact_tags' table is missing a primary key, which is essential for data integrity, efficient data retrieval, and to uniquely identify each record. A composite primary key on 'user_contact_id' and 'tag_id' is appropriate given the table's purpose.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_005_campagne_tags_tag_name",
+          "fix_id": "add-fk-campagne-tags-tag-name",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_tags",
+            "tags"
+          ],
+          "depends_on": [],
+          "table": "campagne_tags",
+          "target_table": "campagne_tags",
+          "problem": "Add Foreign Key to 'campagne_tags.tag_name'",
+          "fix": "The 'campagne_tags.tag_name' column is missing a foreign key constraint, which can lead to data inconsistencies if 'tag_name' values do not correspond to valid 'tags.label' entries. Adding this constraint ensures referential integrity.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE campagne_tags ADD CONSTRAINT fk_campagne_tags_tag_name FOREIGN KEY (tag_name) REFERENCES tags (label);"
+          ],
+          "explanation": "The 'campagne_tags.tag_name' column is missing a foreign key constraint, which can lead to data inconsistencies if 'tag_name' values do not correspond to valid 'tags.label' entries. Adding this constraint ensures referential integrity.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_006_budget_history_groupe_id",
+          "fix_id": "advise-nullable-fk-budget-history-groupe-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "budget_history"
+          ],
+          "depends_on": [],
+          "table": "budget_history",
+          "target_table": "budget_history",
+          "problem": "Advisory: Nullable Foreign Key 'budget_history.groupe_id'",
+          "fix": "The 'budget_history.groupe_id' column is nullable, but the business rule might require every budget history record to be associated with a group. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "severity": "low",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT id, groupe_id FROM budget_history WHERE groupe_id IS NULL;"
+          ],
+          "explanation": "The 'budget_history.groupe_id' column is nullable, but the business rule might require every budget history record to be associated with a group. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_007_groupe_admin_id",
+          "fix_id": "advise-nullable-fk-groupe-admin-id",
+          "rows_affected_estimate": 8,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": [],
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "Advisory: Nullable Foreign Key 'groupe.admin_id'",
+          "fix": "The 'groupe.admin_id' column is nullable, but the business rule might require every group to be associated with an administrator. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "severity": "low",
+          "confidence": 0.9,
+          "estimated_rows_affected": 8,
+          "queries": [
+            "SELECT id, admin_id FROM groupe WHERE admin_id IS NULL;"
+          ],
+          "explanation": "The 'groupe.admin_id' column is nullable, but the business rule might require every group to be associated with an administrator. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_008_campagne_contacts_contact_id",
+          "fix_id": "advise-nullable-fk-campagne-contacts-contact-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": [],
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "Advisory: Nullable Foreign Key 'campagne_contacts.contact_id'",
+          "fix": "The 'campagne_contacts.contact_id' column is nullable, but the business rule might require every campaign contact record to be associated with a contact. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "severity": "low",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT campagne_id, contact_id FROM campagne_contacts WHERE contact_id IS NULL;"
+          ],
+          "explanation": "The 'campagne_contacts.contact_id' column is nullable, but the business rule might require every campaign contact record to be associated with a contact. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_009_request_api_membership_id",
+          "fix_id": "advise-nullable-fk-request-api-membership-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "request_api"
+          ],
+          "depends_on": [],
+          "table": "request_api",
+          "target_table": "request_api",
+          "problem": "Advisory: Nullable Foreign Key 'request_api.membership_id'",
+          "fix": "The 'request_api.membership_id' column is nullable, but the business rule might require every API request to be associated with a membership. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "severity": "low",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT id, membership_id FROM request_api WHERE membership_id IS NULL;"
+          ],
+          "explanation": "The 'request_api.membership_id' column is nullable, but the business rule might require every API request to be associated with a membership. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_010_smsc_routing_rule_expediteur_id",
+          "fix_id": "advise-nullable-fk-smsc-routing-rule-expediteur-id",
+          "rows_affected_estimate": 6,
+          "tables_touched": [
+            "smsc_routing_rule"
+          ],
+          "depends_on": [],
+          "table": "smsc_routing_rule",
+          "target_table": "smsc_routing_rule",
+          "problem": "Advisory: Nullable Foreign Key 'smsc_routing_rule.expediteur_id'",
+          "fix": "The 'smsc_routing_rule.expediteur_id' column is nullable, but the business rule might require every routing rule to be associated with an expediteur. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "severity": "medium",
+          "confidence": 0.75,
+          "estimated_rows_affected": 6,
+          "queries": [
+            "SELECT id, expediteur_id FROM smsc_routing_rule WHERE expediteur_id IS NULL;"
+          ],
+          "explanation": "The 'smsc_routing_rule.expediteur_id' column is nullable, but the business rule might require every routing rule to be associated with an expediteur. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_011_user_contact_membership_id",
+          "fix_id": "advise-nullable-fk-user-contact-membership-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_contact"
+          ],
+          "depends_on": [],
+          "table": "user_contact",
+          "target_table": "user_contact",
+          "problem": "Advisory: Nullable Foreign Key 'user_contact.membership_id'",
+          "fix": "The 'user_contact.membership_id' column is nullable, but the business rule might require every user contact to be associated with a membership. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "severity": "low",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT id, membership_id FROM user_contact WHERE membership_id IS NULL;"
+          ],
+          "explanation": "The 'user_contact.membership_id' column is nullable, but the business rule might require every user contact to be associated with a membership. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_012_tags_membership_id",
+          "fix_id": "advise-nullable-fk-tags-membership-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "tags"
+          ],
+          "depends_on": [],
+          "table": "tags",
+          "target_table": "tags",
+          "problem": "Advisory: Nullable Foreign Key 'tags.membership_id'",
+          "fix": "The 'tags.membership_id' column is nullable, but the business rule might require every tag to be associated with a membership. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "severity": "low",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT id, membership_id FROM tags WHERE membership_id IS NULL;"
+          ],
+          "explanation": "The 'tags.membership_id' column is nullable, but the business rule might require every tag to be associated with a membership. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_013_user_keys_membership_id",
+          "fix_id": "advise-nullable-fk-user-keys-membership-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_keys"
+          ],
+          "depends_on": [],
+          "table": "user_keys",
+          "target_table": "user_keys",
+          "problem": "Advisory: Nullable Foreign Key 'user_keys.membership_id'",
+          "fix": "The 'user_keys.membership_id' column is nullable, but the business rule might require every user key to be associated with a membership. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "severity": "low",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT id, membership_id FROM user_keys WHERE membership_id IS NULL;"
+          ],
+          "explanation": "The 'user_keys.membership_id' column is nullable, but the business rule might require every user key to be associated with a membership. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_014_user_mission_groupe_id",
+          "fix_id": "advise-nullable-fk-user-mission-groupe-id",
+          "rows_affected_estimate": 4,
+          "tables_touched": [
+            "user_mission"
+          ],
+          "depends_on": [],
+          "table": "user_mission",
+          "target_table": "user_mission",
+          "problem": "Advisory: Nullable Foreign Key 'user_mission.groupe_id'",
+          "fix": "The 'user_mission.groupe_id' column is nullable, but the business rule might require every user mission to be associated with a group. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "severity": "low",
+          "confidence": 0.9,
+          "estimated_rows_affected": 4,
+          "queries": [
+            "SELECT id, groupe_id FROM user_mission WHERE groupe_id IS NULL;"
+          ],
+          "explanation": "The 'user_mission.groupe_id' column is nullable, but the business rule might require every user mission to be associated with a group. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_015_campagne_schedule_id",
+          "fix_id": "advise-nullable-fk-campagne-schedule-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne"
+          ],
+          "depends_on": [],
+          "table": "campagne",
+          "target_table": "campagne",
+          "problem": "Advisory: Nullable Foreign Key 'campagne.schedule_id'",
+          "fix": "The 'campagne.schedule_id' column is nullable, but the business rule might require every campaign to be associated with a schedule. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "severity": "medium",
+          "confidence": 0.75,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT id, schedule_id FROM campagne WHERE schedule_id IS NULL;"
+          ],
+          "explanation": "The 'campagne.schedule_id' column is nullable, but the business rule might require every campaign to be associated with a schedule. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_016_modele_membership_id",
+          "fix_id": "advise-nullable-fk-modele-membership-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "modele"
+          ],
+          "depends_on": [],
+          "table": "modele",
+          "target_table": "modele",
+          "problem": "Advisory: Nullable Foreign Key 'modele.membership_id'",
+          "fix": "The 'modele.membership_id' column is nullable, but the business rule might require every modele to be associated with a membership. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "severity": "low",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT id, membership_id FROM modele WHERE membership_id IS NULL;"
+          ],
+          "explanation": "The 'modele.membership_id' column is nullable, but the business rule might require every modele to be associated with a membership. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_017_campaign_type_permission",
+          "fix_id": "advise-fdv-campaign-type-permission",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campaign_type_permission"
+          ],
+          "depends_on": [],
+          "table": "campaign_type_permission",
+          "target_table": "campaign_type_permission",
+          "problem": "Advisory: Functional Dependency Violation in 'campaign_type_permission'",
+          "fix": "The functional dependency 'groupe_id' -> 'campaign_type' is violated, meaning a single 'groupe_id' is associated with multiple 'campaign_type' values. This indicates a potential data modeling issue or an unexpected business rule. Further investigation is needed to determine the correct resolution.",
+          "severity": "low",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT groupe_id, campaign_type, COUNT(*) FROM campaign_type_permission GROUP BY groupe_id, campaign_type HAVING COUNT(*) > 1;"
+          ],
+          "explanation": "The functional dependency 'groupe_id' -> 'campaign_type' is violated, meaning a single 'groupe_id' is associated with multiple 'campaign_type' values. This indicates a potential data modeling issue or an unexpected business rule. Further investigation is needed to determine the correct resolution.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_018_campagne_contacts",
+          "fix_id": "advise-fdv-campagne-contacts-campagne-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": [],
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "Advisory: Functional Dependency Violation in 'campagne_contacts'",
+          "fix": "The functional dependency 'campagne_id' -> 'contact_id' is violated, meaning a single 'campagne_id' is associated with multiple 'contact_id' values. This indicates a potential data modeling issue or an unexpected business rule. Further investigation is needed to determine the correct resolution.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT campagne_id, contact_id, COUNT(*) FROM campagne_contacts GROUP BY campagne_id, contact_id HAVING COUNT(*) > 1;"
+          ],
+          "explanation": "The functional dependency 'campagne_id' -> 'contact_id' is violated, meaning a single 'campagne_id' is associated with multiple 'contact_id' values. This indicates a potential data modeling issue or an unexpected business rule. Further investigation is needed to determine the correct resolution.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        }
+      ],
+      "cards": [
+        {
+          "fix_id": "add-pk-campagne-contacts",
+          "title": "Add Primary Key to 'campagne_contacts' table",
+          "target": "campagne_contacts",
+          "rationale": "The 'campagne_contacts' table is missing a primary key, which is essential for data integrity, efficient data retrieval, and to uniquely identify each record. A composite primary key on 'campagne_id' and 'contact_id' is appropriate given the table's purpose.",
+          "risk_level": null,
+          "sql": "ALTER TABLE campagne_contacts ADD CONSTRAINT pk_campagne_contacts PRIMARY KEY (campagne_id, contact_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "rows_affected_estimate": 31,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "add-pk-expediteur-groupe",
+          "title": "Add Primary Key to 'expediteur_groupe' table",
+          "target": "expediteur_groupe",
+          "rationale": "The 'expediteur_groupe' table is missing a primary key, which is essential for data integrity, efficient data retrieval, and to uniquely identify each record. A composite primary key on 'groupe_id' and 'expediteur_id' is appropriate given the table's purpose.",
+          "risk_level": null,
+          "sql": "ALTER TABLE expediteur_groupe ADD CONSTRAINT pk_expediteur_groupe PRIMARY KEY (groupe_id, expediteur_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "rows_affected_estimate": 18,
+          "tables_touched": [
+            "expediteur_groupe"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "add-pk-campagne-tags",
+          "title": "Add Primary Key to 'campagne_tags' table",
+          "target": "campagne_tags",
+          "rationale": "The 'campagne_tags' table is missing a primary key, which is essential for data integrity, efficient data retrieval, and to uniquely identify each record. A composite primary key on 'campagne_id' and 'tag_name' is appropriate given the table's purpose.",
+          "risk_level": null,
+          "sql": "ALTER TABLE campagne_tags ADD CONSTRAINT pk_campagne_tags PRIMARY KEY (campagne_id, tag_name);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_tags"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "add-pk-user-contact-tags",
+          "title": "Add Primary Key to 'user_contact_tags' table",
+          "target": "user_contact_tags",
+          "rationale": "The 'user_contact_tags' table is missing a primary key, which is essential for data integrity, efficient data retrieval, and to uniquely identify each record. A composite primary key on 'user_contact_id' and 'tag_id' is appropriate given the table's purpose.",
+          "risk_level": null,
+          "sql": "ALTER TABLE user_contact_tags ADD CONSTRAINT pk_user_contact_tags PRIMARY KEY (user_contact_id, tag_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "rows_affected_estimate": 20051,
+          "tables_touched": [
+            "user_contact_tags"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "add-fk-campagne-tags-tag-name",
+          "title": "Add Foreign Key to 'campagne_tags.tag_name'",
+          "target": "campagne_tags.tag_name",
+          "rationale": "The 'campagne_tags.tag_name' column is missing a foreign key constraint, which can lead to data inconsistencies if 'tag_name' values do not correspond to valid 'tags.label' entries. Adding this constraint ensures referential integrity.",
+          "risk_level": null,
+          "sql": "ALTER TABLE campagne_tags ADD CONSTRAINT fk_campagne_tags_tag_name FOREIGN KEY (tag_name) REFERENCES tags (label);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_tags",
+            "tags"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-nullable-fk-budget-history-groupe-id",
+          "title": "Advisory: Nullable Foreign Key 'budget_history.groupe_id'",
+          "target": "budget_history.groupe_id",
+          "rationale": "The 'budget_history.groupe_id' column is nullable, but the business rule might require every budget history record to be associated with a group. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "risk_level": null,
+          "sql": "SELECT id, groupe_id FROM budget_history WHERE groupe_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "budget_history"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-nullable-fk-groupe-admin-id",
+          "title": "Advisory: Nullable Foreign Key 'groupe.admin_id'",
+          "target": "groupe.admin_id",
+          "rationale": "The 'groupe.admin_id' column is nullable, but the business rule might require every group to be associated with an administrator. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "risk_level": null,
+          "sql": "SELECT id, admin_id FROM groupe WHERE admin_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "rows_affected_estimate": 8,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-nullable-fk-campagne-contacts-contact-id",
+          "title": "Advisory: Nullable Foreign Key 'campagne_contacts.contact_id'",
+          "target": "campagne_contacts.contact_id",
+          "rationale": "The 'campagne_contacts.contact_id' column is nullable, but the business rule might require every campaign contact record to be associated with a contact. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "risk_level": null,
+          "sql": "SELECT campagne_id, contact_id FROM campagne_contacts WHERE contact_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-nullable-fk-request-api-membership-id",
+          "title": "Advisory: Nullable Foreign Key 'request_api.membership_id'",
+          "target": "request_api.membership_id",
+          "rationale": "The 'request_api.membership_id' column is nullable, but the business rule might require every API request to be associated with a membership. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "risk_level": null,
+          "sql": "SELECT id, membership_id FROM request_api WHERE membership_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "request_api"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-nullable-fk-smsc-routing-rule-expediteur-id",
+          "title": "Advisory: Nullable Foreign Key 'smsc_routing_rule.expediteur_id'",
+          "target": "smsc_routing_rule.expediteur_id",
+          "rationale": "The 'smsc_routing_rule.expediteur_id' column is nullable, but the business rule might require every routing rule to be associated with an expediteur. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "risk_level": null,
+          "sql": "SELECT id, expediteur_id FROM smsc_routing_rule WHERE expediteur_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "rows_affected_estimate": 6,
+          "tables_touched": [
+            "smsc_routing_rule"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-nullable-fk-user-contact-membership-id",
+          "title": "Advisory: Nullable Foreign Key 'user_contact.membership_id'",
+          "target": "user_contact.membership_id",
+          "rationale": "The 'user_contact.membership_id' column is nullable, but the business rule might require every user contact to be associated with a membership. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "risk_level": null,
+          "sql": "SELECT id, membership_id FROM user_contact WHERE membership_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_contact"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-nullable-fk-tags-membership-id",
+          "title": "Advisory: Nullable Foreign Key 'tags.membership_id'",
+          "target": "tags.membership_id",
+          "rationale": "The 'tags.membership_id' column is nullable, but the business rule might require every tag to be associated with a membership. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "risk_level": null,
+          "sql": "SELECT id, membership_id FROM tags WHERE membership_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "tags"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-nullable-fk-user-keys-membership-id",
+          "title": "Advisory: Nullable Foreign Key 'user_keys.membership_id'",
+          "target": "user_keys.membership_id",
+          "rationale": "The 'user_keys.membership_id' column is nullable, but the business rule might require every user key to be associated with a membership. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "risk_level": null,
+          "sql": "SELECT id, membership_id FROM user_keys WHERE membership_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_keys"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-nullable-fk-user-mission-groupe-id",
+          "title": "Advisory: Nullable Foreign Key 'user_mission.groupe_id'",
+          "target": "user_mission.groupe_id",
+          "rationale": "The 'user_mission.groupe_id' column is nullable, but the business rule might require every user mission to be associated with a group. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "risk_level": null,
+          "sql": "SELECT id, groupe_id FROM user_mission WHERE groupe_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "rows_affected_estimate": 4,
+          "tables_touched": [
+            "user_mission"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-nullable-fk-campagne-schedule-id",
+          "title": "Advisory: Nullable Foreign Key 'campagne.schedule_id'",
+          "target": "campagne.schedule_id",
+          "rationale": "The 'campagne.schedule_id' column is nullable, but the business rule might require every campaign to be associated with a schedule. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "risk_level": null,
+          "sql": "SELECT id, schedule_id FROM campagne WHERE schedule_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-nullable-fk-modele-membership-id",
+          "title": "Advisory: Nullable Foreign Key 'modele.membership_id'",
+          "target": "modele.membership_id",
+          "rationale": "The 'modele.membership_id' column is nullable, but the business rule might require every modele to be associated with a membership. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.",
+          "risk_level": null,
+          "sql": "SELECT id, membership_id FROM modele WHERE membership_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "modele"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-fdv-campaign-type-permission",
+          "title": "Advisory: Functional Dependency Violation in 'campaign_type_permission'",
+          "target": "campaign_type_permission",
+          "rationale": "The functional dependency 'groupe_id' -> 'campaign_type' is violated, meaning a single 'groupe_id' is associated with multiple 'campaign_type' values. This indicates a potential data modeling issue or an unexpected business rule. Further investigation is needed to determine the correct resolution.",
+          "risk_level": null,
+          "sql": "SELECT groupe_id, campaign_type, COUNT(*) FROM campaign_type_permission GROUP BY groupe_id, campaign_type HAVING COUNT(*) > 1;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campaign_type_permission"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advise-fdv-campagne-contacts-campagne-id",
+          "title": "Advisory: Functional Dependency Violation in 'campagne_contacts'",
+          "target": "campagne_contacts",
+          "rationale": "The functional dependency 'campagne_id' -> 'contact_id' is violated, meaning a single 'campagne_id' is associated with multiple 'contact_id' values. This indicates a potential data modeling issue or an unexpected business rule. Further investigation is needed to determine the correct resolution.",
+          "risk_level": null,
+          "sql": "SELECT campagne_id, contact_id, COUNT(*) FROM campagne_contacts GROUP BY campagne_id, contact_id HAVING COUNT(*) > 1;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": []
+        }
+      ],
+      "report": "## Data Fix Planner\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 18\n- Passed: 0\n- Flagged: 18\n- Severity split: critical=0, high=0, medium=8, low=10\n- Quality score: 10.0 / 100\n- Confidence: 0.9\n- Flagged tables: budget_history, campagne, campagne_contacts, campagne_tags, campaign_type_permission, expediteur_groupe, groupe, modele, request_api, smsc_routing_rule, tags, user_contact, user_contact_tags, user_keys, user_mission\n\n### Metrics\n- Fixes generated: 18\n- Total issues received: 18\n\n### Findings (18)\n\n#### 1. campagne_contacts [MEDIUM]\n- Problem: Add Primary Key to 'campagne_contacts' table\n- Confidence: 1.0\n- Recommendation: The 'campagne_contacts' table is missing a primary key, which is essential for data integrity, efficient data retrieval, and to uniquely identify each record. A composite primary key on 'campagne_id' and 'contact_id' is appropriate given the table's purpose.\n- Proposed SQL:\n```sql\nALTER TABLE campagne_contacts ADD CONSTRAINT pk_campagne_contacts PRIMARY KEY (campagne_id, contact_id);\n```\n- Explanation: The 'campagne_contacts' table is missing a primary key, which is essential for data integrity, efficient data retrieval, and to uniquely identify each record. A composite primary key on 'campagne_id' and 'contact_id' is appropriate given the table's purpose.\n\n#### 2. expediteur_groupe [MEDIUM]\n- Problem: Add Primary Key to 'expediteur_groupe' table\n- Confidence: 1.0\n- Recommendation: The 'expediteur_groupe' table is missing a primary key, which is essential for data integrity, efficient data retrieval, and to uniquely identify each record. A composite primary key on 'groupe_id' and 'expediteur_id' is appropriate given the table's purpose.\n- Proposed SQL:\n```sql\nALTER TABLE expediteur_groupe ADD CONSTRAINT pk_expediteur_groupe PRIMARY KEY (groupe_id, expediteur_id);\n```\n- Explanation: The 'expediteur_groupe' table is missing a primary key, which is essential for data integrity, efficient data retrieval, and to uniquely identify each record. A composite primary key on 'groupe_id' and 'expediteur_id' is appropriate given the table's purpose.\n\n#### 3. campagne_tags [MEDIUM]\n- Problem: Add Primary Key to 'campagne_tags' table\n- Confidence: 1.0\n- Recommendation: The 'campagne_tags' table is missing a primary key, which is essential for data integrity, efficient data retrieval, and to uniquely identify each record. A composite primary key on 'campagne_id' and 'tag_name' is appropriate given the table's purpose.\n- Proposed SQL:\n```sql\nALTER TABLE campagne_tags ADD CONSTRAINT pk_campagne_tags PRIMARY KEY (campagne_id, tag_name);\n```\n- Explanation: The 'campagne_tags' table is missing a primary key, which is essential for data integrity, efficient data retrieval, and to uniquely identify each record. A composite primary key on 'campagne_id' and 'tag_name' is appropriate given the table's purpose.\n\n#### 4. user_contact_tags [MEDIUM]\n- Problem: Add Primary Key to 'user_contact_tags' table\n- Confidence: 1.0\n- Recommendation: The 'user_contact_tags' table is missing a primary key, which is essential for data integrity, efficient data retrieval, and to uniquely identify each record. A composite primary key on 'user_contact_id' and 'tag_id' is appropriate given the table's purpose.\n- Proposed SQL:\n```sql\nALTER TABLE user_contact_tags ADD CONSTRAINT pk_user_contact_tags PRIMARY KEY (user_contact_id, tag_id);\n```\n- Explanation: The 'user_contact_tags' table is missing a primary key, which is essential for data integrity, efficient data retrieval, and to uniquely identify each record. A composite primary key on 'user_contact_id' and 'tag_id' is appropriate given the table's purpose.\n\n#### 5. campagne_tags [MEDIUM]\n- Problem: Add Foreign Key to 'campagne_tags.tag_name'\n- Confidence: 0.8\n- Recommendation: The 'campagne_tags.tag_name' column is missing a foreign key constraint, which can lead to data inconsistencies if 'tag_name' values do not correspond to valid 'tags.label' entries. Adding this constraint ensures referential integrity.\n- Proposed SQL:\n```sql\nALTER TABLE campagne_tags ADD CONSTRAINT fk_campagne_tags_tag_name FOREIGN KEY (tag_name) REFERENCES tags (label);\n```\n- Explanation: The 'campagne_tags.tag_name' column is missing a foreign key constraint, which can lead to data inconsistencies if 'tag_name' values do not correspond to valid 'tags.label' entries. Adding this constraint ensures referential integrity.\n\n#### 6. budget_history [LOW]\n- Problem: Advisory: Nullable Foreign Key 'budget_history.groupe_id'\n- Confidence: 0.9\n- Recommendation: The 'budget_history.groupe_id' column is nullable, but the business rule might require every budget history record to be associated with a group. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.\n- Proposed SQL:\n```sql\nSELECT id, groupe_id FROM budget_history WHERE groupe_id IS NULL;\n```\n- Explanation: The 'budget_history.groupe_id' column is nullable, but the business rule might require every budget history record to be associated with a group. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.\n\n#### 7. groupe [LOW]\n- Problem: Advisory: Nullable Foreign Key 'groupe.admin_id'\n- Confidence: 0.9\n- Recommendation: The 'groupe.admin_id' column is nullable, but the business rule might require every group to be associated with an administrator. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.\n- Proposed SQL:\n```sql\nSELECT id, admin_id FROM groupe WHERE admin_id IS NULL;\n```\n- Explanation: The 'groupe.admin_id' column is nullable, but the business rule might require every group to be associated with an administrator. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.\n\n#### 8. campagne_contacts [LOW]\n- Problem: Advisory: Nullable Foreign Key 'campagne_contacts.contact_id'\n- Confidence: 0.9\n- Recommendation: The 'campagne_contacts.contact_id' column is nullable, but the business rule might require every campaign contact record to be associated with a contact. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.\n- Proposed SQL:\n```sql\nSELECT campagne_id, contact_id FROM campagne_contacts WHERE contact_id IS NULL;\n```\n- Explanation: The 'campagne_contacts.contact_id' column is nullable, but the business rule might require every campaign contact record to be associated with a contact. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.\n\n#### 9. request_api [LOW]\n- Problem: Advisory: Nullable Foreign Key 'request_api.membership_id'\n- Confidence: 0.9\n- Recommendation: The 'request_api.membership_id' column is nullable, but the business rule might require every API request to be associated with a membership. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.\n- Proposed SQL:\n```sql\nSELECT id, membership_id FROM request_api WHERE membership_id IS NULL;\n```\n- Explanation: The 'request_api.membership_id' column is nullable, but the business rule might require every API request to be associated with a membership. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.\n\n#### 10. smsc_routing_rule [MEDIUM]\n- Problem: Advisory: Nullable Foreign Key 'smsc_routing_rule.expediteur_id'\n- Confidence: 0.75\n- Recommendation: The 'smsc_routing_rule.expediteur_id' column is nullable, but the business rule might require every routing rule to be associated with an expediteur. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.\n- Proposed SQL:\n```sql\nSELECT id, expediteur_id FROM smsc_routing_rule WHERE expediteur_id IS NULL;\n```\n- Explanation: The 'smsc_routing_rule.expediteur_id' column is nullable, but the business rule might require every routing rule to be associated with an expediteur. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.\n\n#### 11. user_contact [LOW]\n- Problem: Advisory: Nullable Foreign Key 'user_contact.membership_id'\n- Confidence: 0.9\n- Recommendation: The 'user_contact.membership_id' column is nullable, but the business rule might require every user contact to be associated with a membership. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.\n- Proposed SQL:\n```sql\nSELECT id, membership_id FROM user_contact WHERE membership_id IS NULL;\n```\n- Explanation: The 'user_contact.membership_id' column is nullable, but the business rule might require every user contact to be associated with a membership. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.\n\n#### 12. tags [LOW]\n- Problem: Advisory: Nullable Foreign Key 'tags.membership_id'\n- Confidence: 0.9\n- Recommendation: The 'tags.membership_id' column is nullable, but the business rule might require every tag to be associated with a membership. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.\n- Proposed SQL:\n```sql\nSELECT id, membership_id FROM tags WHERE membership_id IS NULL;\n```\n- Explanation: The 'tags.membership_id' column is nullable, but the business rule might require every tag to be associated with a membership. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.\n\n#### 13. user_keys [LOW]\n- Problem: Advisory: Nullable Foreign Key 'user_keys.membership_id'\n- Confidence: 0.9\n- Recommendation: The 'user_keys.membership_id' column is nullable, but the business rule might require every user key to be associated with a membership. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.\n- Proposed SQL:\n```sql\nSELECT id, membership_id FROM user_keys WHERE membership_id IS NULL;\n```\n- Explanation: The 'user_keys.membership_id' column is nullable, but the business rule might require every user key to be associated with a membership. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.\n\n#### 14. user_mission [LOW]\n- Problem: Advisory: Nullable Foreign Key 'user_mission.groupe_id'\n- Confidence: 0.9\n- Recommendation: The 'user_mission.groupe_id' column is nullable, but the business rule might require every user mission to be associated with a group. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.\n- Proposed SQL:\n```sql\nSELECT id, groupe_id FROM user_mission WHERE groupe_id IS NULL;\n```\n- Explanation: The 'user_mission.groupe_id' column is nullable, but the business rule might require every user mission to be associated with a group. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.\n\n#### 15. campagne [MEDIUM]\n- Problem: Advisory: Nullable Foreign Key 'campagne.schedule_id'\n- Confidence: 0.75\n- Recommendation: The 'campagne.schedule_id' column is nullable, but the business rule might require every campaign to be associated with a schedule. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.\n- Proposed SQL:\n```sql\nSELECT id, schedule_id FROM campagne WHERE schedule_id IS NULL;\n```\n- Explanation: The 'campagne.schedule_id' column is nullable, but the business rule might require every campaign to be associated with a schedule. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.\n\n#### 16. modele [LOW]\n- Problem: Advisory: Nullable Foreign Key 'modele.membership_id'\n- Confidence: 0.9\n- Recommendation: The 'modele.membership_id' column is nullable, but the business rule might require every modele to be associated with a membership. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.\n- Proposed SQL:\n```sql\nSELECT id, membership_id FROM modele WHERE membership_id IS NULL;\n```\n- Explanation: The 'modele.membership_id' column is nullable, but the business rule might require every modele to be associated with a membership. This is an advisory finding, and further investigation into application logic is recommended before making the column NOT NULL.\n\n#### 17. campaign_type_permission [LOW]\n- Problem: Advisory: Functional Dependency Violation in 'campaign_type_permission'\n- Confidence: 0.8\n- Recommendation: The functional dependency 'groupe_id' -> 'campaign_type' is violated, meaning a single 'groupe_id' is associated with multiple 'campaign_type' values. This indicates a potential data modeling issue or an unexpected business rule. Further investigation is needed to determine the correct resolution.\n- Proposed SQL:\n```sql\nSELECT groupe_id, campaign_type, COUNT(*) FROM campaign_type_permission GROUP BY groupe_id, campaign_type HAVING COUNT(*) > 1;\n```\n- Explanation: The functional dependency 'groupe_id' -> 'campaign_type' is violated, meaning a single 'groupe_id' is associated with multiple 'campaign_type' values. This indicates a potential data modeling issue or an unexpected business rule. Further investigation is needed to determine the correct resolution.\n\n#### 18. campagne_contacts [MEDIUM]\n- Problem: Advisory: Functional Dependency Violation in 'campagne_contacts'\n- Confidence: 1.0\n- Recommendation: The functional dependency 'campagne_id' -> 'contact_id' is violated, meaning a single 'campagne_id' is associated with multiple 'contact_id' values. This indicates a potential data modeling issue or an unexpected business rule. Further investigation is needed to determine the correct resolution.\n- Proposed SQL:\n```sql\nSELECT campagne_id, contact_id, COUNT(*) FROM campagne_contacts GROUP BY campagne_id, contact_id HAVING COUNT(*) > 1;\n```\n- Explanation: The functional dependency 'campagne_id' -> 'contact_id' is violated, meaning a single 'campagne_id' is associated with multiple 'contact_id' values. This indicates a potential data modeling issue or an unexpected business rule. Further investigation is needed to determine the correct resolution."
+    }
+  }
+}

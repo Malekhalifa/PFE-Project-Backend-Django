@@ -136,10 +136,11 @@ def _build_dependency_edges(findings: list[Finding]) -> list[FixDependencyEdge]:
     don't exist at reducer time. The Fix Planner maps these to real fix_id
     values when populating FixCard.depends_on.
 
-    Three ordering rules:
-      1. missing_pk   → orphaned_fk   (FK integrity requires a PK target)
-      2. duplicate    → unique_constr (UNIQUE constraint needs clean data first)
-      3. null_high    → orphaned_fk   (NULLs always appear as orphaned refs)
+    Four ordering rules:
+      1. missing_pk   → orphaned_fk       (FK integrity requires a PK target)
+      2. duplicate    → unique_constr     (UNIQUE constraint needs clean data first)
+      3. null_high    → orphaned_fk       (NULLs always appear as orphaned refs)
+      4. null_high    → not_null_constr   (same column: fill NULLs before adding NOT NULL)
     """
     if not findings:
         return []
@@ -196,6 +197,56 @@ def _build_dependency_edges(findings: list[Finding]) -> list[FixDependencyEdge]:
                         ),
                     ))
 
+        # Rule 4: null fill → NOT NULL constraint (same table.column)
+        # Adding NOT NULL to a column that still contains NULLs raises a constraint
+        # violation at ALTER TABLE time. The fill card must run first.
+        notnull_findings = [
+            f for f in group
+            if _matches(f, {"nullable"}, {"nullable_fk_style_column", "missing_not_null_constraint"})
+        ]
+        for null_f in null_findings:
+            null_col = null_f.entity.split(".", 1)[1] if "." in null_f.entity else ""
+            for nn_f in notnull_findings:
+                nn_col = nn_f.entity.split(".", 1)[1] if "." in nn_f.entity else ""
+                if null_col and nn_col and null_col == nn_col:
+                    edges.append(FixDependencyEdge(
+                        fix_id=nn_f.entity,
+                        depends_on=null_f.entity,
+                        reason=(
+                            f"NOT NULL constraint on '{nn_f.entity}' cannot be added until "
+                            f"NULL values in '{null_f.entity}' are filled first."
+                        ),
+                    ))
+
+        # Rule 5: fk_type_mismatch → nullable_fk / not_null_constr (same table.column)
+        # ALTER COLUMN TYPE (with USING clause) must execute before any NOT NULL or
+        # nullable_fk constraint change on the same column — casting NULL values
+        # changes what values exist and must precede constraint enforcement.
+        type_mismatch_findings = [
+            f for f in group if f.rule in ("fk_type_mismatch", "type_mismatch", "column_type_mismatch")
+        ]
+        nullable_fk_findings = [
+            f for f in group
+            if _matches(f, {"nullable"}, {
+                "nullable_foreign_key", "nullable_fk",
+                "nullable_fk_style_column", "missing_not_null_constraint",
+            })
+        ]
+        for tm_f in type_mismatch_findings:
+            tm_col = tm_f.entity.split(".", 1)[1] if "." in tm_f.entity else ""
+            for nfk_f in nullable_fk_findings:
+                nfk_col = nfk_f.entity.split(".", 1)[1] if "." in nfk_f.entity else ""
+                if tm_col and nfk_col and tm_col == nfk_col:
+                    edges.append(FixDependencyEdge(
+                        fix_id=nfk_f.entity,
+                        depends_on=tm_f.entity,
+                        reason=(
+                            f"Constraint change on '{nfk_f.entity}' must run after the type "
+                            f"mismatch on '{tm_f.entity}' is resolved — ALTER COLUMN TYPE "
+                            "with USING clause must precede NOT NULL or FK constraint changes."
+                        ),
+                    ))
+
     # Deduplicate edges by (fix_id, depends_on) pair
     seen: set[tuple[str, str]] = set()
     deduped: list[FixDependencyEdge] = []
@@ -245,11 +296,17 @@ class ReduceSignals:
             if ws is not None:
                 sd = ws.session_data or {}
                 schema = sd.get("schema") or {}
-                profiler_data = sd.get("profiler_report") or {}
-                if isinstance(profiler_data, dict):
-                    for tbl in profiler_data.get("tables", []):
-                        if isinstance(tbl, dict) and tbl.get("table_name"):
-                            profiler_tables.add(tbl["table_name"])
+                # Fast path: profiler_tables is pre-computed by py_profiler / store_profiler_output.
+                # Backward compat: fall back to deriving from profiler_report when the key is absent.
+                tables_list = sd.get("profiler_tables")
+                if tables_list is not None:
+                    profiler_tables = set(tables_list)
+                else:
+                    profiler_data = sd.get("profiler_report") or {}
+                    if isinstance(profiler_data, dict):
+                        for tbl in profiler_data.get("tables", []):
+                            if isinstance(tbl, dict) and tbl.get("table_name"):
+                                profiler_tables.add(tbl["table_name"])
                 for pattern in sd.get("learned_patterns") or []:
                     if isinstance(pattern, dict) and pattern.get("decision") == "reject":
                         rf = str(pattern.get("rule_family") or "").strip()
@@ -291,6 +348,46 @@ class ReduceSignals:
                     type(content).__name__,
                 )
 
+        # ── 1b. Merge deterministic auto-findings from py_profiler ───────────
+        # profiler_auto_findings (statistical) and schema_auto_findings (schema) are
+        # computed deterministically in py_profiler and stored in session_state.
+        # They must be merged HERE (inside the reduce step) so they participate in
+        # ranking and fix-card generation — not in validation.py's post-processing
+        # which runs after fix_plan and only affects the final report display.
+        try:
+            _sd = (ws.session_data or {}) if ws is not None else {}
+            _profiler_auto: list[dict] = _sd.get("profiler_auto_findings") or []
+            _schema_auto:   list[dict] = _sd.get("schema_auto_findings") or []
+
+            if _profiler_auto or _schema_auto:
+                _stat_report   = next((r for r in reports if r.validator == "statistical"), None)
+                _schema_report = next((r for r in reports if r.validator == "schema"), None)
+
+                def _merge_auto(report: ValidationReport | None, auto_raws: list[dict], label: str) -> None:
+                    if report is None or not auto_raws:
+                        return
+                    existing = {(f.entity, f.rule) for f in report.findings}
+                    added = 0
+                    for raw in auto_raws:
+                        try:
+                            f = Finding.model_validate(raw)
+                            if (f.entity, f.rule) not in existing:
+                                report.findings.append(f)
+                                existing.add((f.entity, f.rule))
+                                added += 1
+                        except Exception:
+                            pass
+                    if added:
+                        logger.info(
+                            "reducer: merged %d deterministic %s finding(s) from py_profiler",
+                            added, label,
+                        )
+
+                _merge_auto(_stat_report,   _profiler_auto, "statistical")
+                _merge_auto(_schema_report, _schema_auto,   "schema")
+        except Exception as _merge_exc:
+            logger.warning("reducer: auto-findings merge failed: %s", _merge_exc)
+
         # ── 2. Flatten ────────────────────────────────────────────────────
         all_findings: list[Finding] = [f for r in reports for f in r.findings]
         logger.info("reducer: %d raw findings from %d reports", len(all_findings), len(reports))
@@ -326,10 +423,15 @@ class ReduceSignals:
             filtered = adjusted
 
         # ── 3a. Row-level violation percentage filter ─────────────────────
+        # domain_rules() reads domain_rules.yaml from disk on every call (no lru_cache).
+        # Load once here and reuse across all filters that need it.
         try:
             from .rules import domain_rules as load_domain_rules
-            _dr_vio = load_domain_rules()
-            _max_vio_pct = _dr_vio.get("max_violation_row_pct")
+            _dr = load_domain_rules()
+        except Exception:
+            _dr = {}
+        try:
+            _max_vio_pct = _dr.get("max_violation_row_pct")
             if _max_vio_pct is not None:
                 _max_vio_pct = float(_max_vio_pct)
         except Exception:
@@ -386,11 +488,7 @@ class ReduceSignals:
             )
 
         # ── 3b. Domain-rule low-cardinality suppressions ──────────────────
-        # These are code-enforced to close the gap between the domain_rules
-        # config and what the model actually honours.
         try:
-            from .rules import domain_rules as load_domain_rules
-            _dr = load_domain_rules()
             min_rows_cardinality: int = int(_dr.get("min_rows_for_cardinality", 100))
             _excl_lc_cols: list[str] = list(_dr.get("excluded_low_cardinality_columns", []))
         except Exception:
@@ -425,6 +523,40 @@ class ReduceSignals:
                 "reducer: suppressed %d low_cardinality finding(s) (small table or FK column)",
                 dropped_lc,
             )
+
+        # ── 3b-2. nullable_fk_by_design suppression ─────────────────────────
+        # Drop nullable_foreign_key findings for columns declared as intentionally
+        # nullable in domain_rules.yaml (nullable_fk_by_design). This is the
+        # config-layer complement to the learn-from-rejection mechanism — users
+        # can preemptively exclude known-nullable FKs without running a full cycle.
+        try:
+            _nullable_by_design: dict[str, list[str]] = dict(
+                _dr.get("nullable_fk_by_design") or {}
+            )
+        except Exception:
+            _nullable_by_design = {}
+
+        if _nullable_by_design:
+            _nbd_rules = frozenset({
+                "nullable_foreign_key", "nullable_fk",
+                "nullable_fk_style_column", "missing_not_null_constraint",
+            })
+
+            def _is_nullable_by_design(f: Finding) -> bool:
+                if f.rule not in _nbd_rules:
+                    return True
+                table = f.entity.split(".")[0]
+                col   = f.entity.split(".", 1)[1] if "." in f.entity else ""
+                return col not in _nullable_by_design.get(table, [])
+
+            before_nbd = len(filtered)
+            filtered = [f for f in filtered if _is_nullable_by_design(f)]
+            dropped_nbd = before_nbd - len(filtered)
+            if dropped_nbd:
+                logger.info(
+                    "reducer: suppressed %d nullable_fk finding(s) declared nullable_by_design",
+                    dropped_nbd,
+                )
 
         # ── 3c-0. Schema-constraint backstop — drop findings that contradict the
         # enriched schema snapshot (PK/UNIQUE/index facts collected at priming time).
@@ -492,6 +624,27 @@ class ReduceSignals:
                 logger.warning(
                     "reducer: dropped %d finding(s) referencing non-existent schema entities",
                     dropped,
+                )
+
+        # ── 3d. Statistical findings require profiler coverage ────────────────────
+        # When the profiler ran for at least some tables, statistical findings for
+        # tables NOT in the profiler baseline are unsupported — the validator had
+        # no measured anchor and any claim is potentially hallucinated. Only
+        # activate this guard when profiler_tables is non-empty so that a total
+        # profiler failure does not incorrectly suppress standalone statistical
+        # findings produced via live queries.
+        if profiler_tables:
+            before_stat = len(filtered)
+            filtered = [
+                f for f in filtered
+                if f.validator != "statistical"
+                or f.entity.split(".")[0] in profiler_tables | {"general", "database"}
+            ]
+            dropped_stat = before_stat - len(filtered)
+            if dropped_stat:
+                logger.warning(
+                    "reducer: dropped %d statistical finding(s) for tables outside profiler coverage",
+                    dropped_stat,
                 )
 
         # ── 4. Dedupe — keep the highest-ranked copy per (validator, entity, rule) ──

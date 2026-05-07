@@ -9,7 +9,6 @@ import re
 import uuid
 import json
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any
 
 from agno.db.in_memory import InMemoryDb
@@ -20,6 +19,7 @@ from agno.workflow.workflow import Workflow
 
 from services.report_service import save_final_pipeline_report
 
+from .py_profiler import python_profile_step
 from .reducer import _try_recover_partial, reduce_signals
 from .reporting import aggregate_pipeline_scores, derive_database_id, report_to_markdown
 from .rules import common_rules, policy_rules
@@ -127,6 +127,11 @@ def _initial_session_state(
         # Pre-initializing to {} ensures {profiler_summary} in agent instructions resolves
         # to an empty dict (not a literal string) if the profiler step fails or is skipped.
         "profiler_summary": {},
+        # Compact schema views — all populated by ensure_schema_primed.
+        "profiler_schema": {},    # column name + data_type only (profiler agent)
+        "validator_schema": {},   # columns + column_details + unique_constraints (statistical + structural)
+        "relational_schema": {},  # adds foreign_keys + PK fields, strips index metadata (relational agent)
+        "fix_planner_schema": {}, # columns + column_details + PK + unique_constraints, no FK/indexes (fix planner)
         "last_reduced_findings": [],
         # Legacy shared keys kept for backward compat; per-agent keys (_tool_calls_seen_<id>)
         # are the primary dedup store since Fix 1. These are no longer written by qualitylab_tool_hook.
@@ -145,6 +150,54 @@ def _build_workflow_prompt(database_id: str, historical_signals: str | None) -> 
     if historical_signals:
         prompt += f"\n\nHistorical signals from the previous run:\n{historical_signals.strip()}"
     return prompt
+
+
+def _make_profiler_executor(session_state: dict[str, Any]):
+    """Wrap python_profile_step with a closure that injects session_state values.
+
+    Agno's step_input.workflow_session.session_data is NOT the same dict as the
+    session_state passed to Workflow(...). Initial values (connection_string,
+    database_id, job_id) and agent hook mutations (schema) are invisible to Step
+    executors that read session_data. This closure captures the live dict reference
+    and injects any missing keys before python_profile_step reads them.
+    """
+    def _executor(step_input):
+        ws = getattr(step_input, "workflow_session", None)
+        if ws is not None:
+            sd = getattr(ws, "session_data", None)
+            if sd is None:
+                sd = {}
+            # Inject keys that session_data may be missing due to the propagation gap.
+            # Use session_state as the authoritative source — it is mutated in-place
+            # by ensure_schema_primed, so schema/validator_schema are available here.
+            for key in (
+                "connection_string", "database_id", "job_id",
+                "schema", "validator_schema", "relational_schema",
+                "fix_planner_schema", "profiler_schema",
+            ):
+                if not sd.get(key) and session_state.get(key):
+                    sd[key] = session_state[key]
+            try:
+                ws.session_data = sd
+            except AttributeError:
+                pass
+
+        result = python_profile_step(step_input)
+
+        # Sync profiler output back to the outer session_state so orchestrator_workflow
+        # can read profiler_summary, profiler_report, and profiler_tables.
+        # The profiler writes to ws.session_data; orchestrator_workflow reads from
+        # the outer session_state — two different dict objects in this Agno version.
+        if ws is not None:
+            sd_after = getattr(ws, "session_data", None) or {}
+            for key in ("profiler_summary", "profiler_report", "profiler_tables"):
+                val = sd_after.get(key)
+                if val:
+                    session_state[key] = val
+
+        return result
+
+    return _executor
 
 
 def build_validation_workflow(
@@ -169,7 +222,11 @@ def build_validation_workflow(
         dependencies=dependencies,
         steps=[
             Step(name="schema",   agent=members.schema_validator),
-            Step(name="profiler", agent=members.profiler),
+            # Pure-Python profiler: deterministic SQL, concurrent table scanning,
+            # no LLM overhead, ~10-15× faster than the LLM profiler agent.
+            # Wrapped in _make_profiler_executor to bridge Agno's session_data
+            # propagation gap (step executors don't see agent pre_hook mutations).
+            Step(name="profiler", executor=_make_profiler_executor(session_state)),
             Parallel(
                 Step(name="statistical", agent=members.statistical_validator, on_error=OnError.fail),
                 Step(name="structural",  agent=members.structural_validator,  on_error=OnError.fail),
@@ -221,6 +278,161 @@ def _run_relational_standalone(
         except Exception as exc:
             logger.error("Relational retry %d/%d failed: %s", attempt, _MAX_RELATIONAL_RETRIES, exc)
     return ValidationReport(validator="relational", findings=[])
+
+
+_MAX_PROFILER_RETRIES = 2
+_PROFILER_RETRY_DELAY_S = 5
+
+
+def _run_profiler_standalone(
+    *,
+    profiler: Any,
+    session_state: dict[str, Any],
+    database_id: str,
+) -> Any:
+    """Retry the profiler agent directly when the workflow step fails silently.
+
+    On success, writes profiler_summary and profiler_report into session_state so
+    downstream statistical/structural validators have the baseline they need.
+    """
+    import time as _time
+
+    for attempt in range(1, _MAX_PROFILER_RETRIES + 1):
+        logger.warning(
+            "Profiler recovery — standalone retry %d/%d in %ds",
+            attempt, _MAX_PROFILER_RETRIES, _PROFILER_RETRY_DELAY_S,
+        )
+        _time.sleep(_PROFILER_RETRY_DELAY_S)
+        try:
+            response = profiler.run(
+                input=f"Profile all tables in database '{database_id}'.",
+                session_state=session_state,
+            )
+            content = getattr(response, "content", None)
+            report = _as_profiler_report(content)
+            if report.tables:
+                # Mirror what store_profiler_output normally does via the post_hook.
+                session_state["profiler_report"] = report.model_dump()
+                session_state["profiler_summary"] = {
+                    t.table_name: {
+                        "row_count": t.row_count,
+                        "columns": {
+                            c.column_name: {
+                                "null_rate":    c.null_rate,
+                                "outlier_flag": c.outlier_flag,
+                                "cardinality":  c.cardinality,
+                                "total_rows":   c.total_rows,
+                            }
+                            for c in t.column_stats
+                        },
+                    }
+                    for t in report.tables
+                }
+                logger.info(
+                    "Profiler recovery succeeded — profiled %d tables on retry %d",
+                    len(report.tables), attempt,
+                )
+                return report
+        except Exception as exc:
+            logger.error(
+                "Profiler standalone retry %d/%d failed: %s",
+                attempt, _MAX_PROFILER_RETRIES, exc,
+            )
+
+    return _as_profiler_report(None)
+
+
+def _rerun_statistical_structural(
+    *,
+    members: Any,
+    session_state: dict[str, Any],
+    database_id: str,
+    skip_statistical: bool = False,
+) -> tuple[Any, Any]:
+    """Re-run statistical and structural validators after a successful profiler recovery.
+
+    Returns a (statistical_report, structural_report) tuple. Falls back to an empty
+    ValidationReport on any error so the overall pipeline can still complete.
+    skip_statistical skips the statistical agent when profiler coverage is too low.
+    """
+    results: dict[str, Any] = {}
+    agents_to_run = []
+    if not skip_statistical:
+        agents_to_run.append(("statistical", members.statistical_validator))
+    agents_to_run.append(("structural", members.structural_validator))
+    for name, agent in agents_to_run:
+        try:
+            response = agent.run(
+                input=(
+                    f"Re-run {name} analysis for database '{database_id}'. "
+                    "Profiler baseline is now available in session state."
+                ),
+                session_state=session_state,
+            )
+            results[name] = _as_validation_report(
+                getattr(response, "content", ""), name
+            )
+            logger.info(
+                "%s re-run after profiler recovery: %d finding(s)",
+                name, len(results[name].findings),
+            )
+        except Exception as exc:
+            logger.error("%s re-run after profiler recovery failed: %s", name, exc)
+            results[name] = ValidationReport(validator=name, findings=[])
+
+    return (
+        results.get("statistical", ValidationReport(validator="statistical", findings=[])),
+        results.get("structural",  ValidationReport(validator="structural",  findings=[])),
+    )
+
+
+class _SyntheticWorkflowSession:
+    """Minimal stub so ReduceSignals can read/write session_data outside a workflow."""
+
+    def __init__(self, session_data: dict[str, Any]) -> None:
+        self.session_data = session_data
+
+
+class _SyntheticStepInput:
+    """Minimal stub so ReduceSignals can call get_step_content() outside a workflow."""
+
+    def __init__(
+        self,
+        reports: dict[str, Any],
+        session_state: dict[str, Any],
+    ) -> None:
+        self._reports = reports
+        self.workflow_session = _SyntheticWorkflowSession(session_state)
+
+    def get_step_content(self, step_name: str) -> Any:
+        return self._reports.get(step_name)
+
+
+def _rerun_fix_planner(
+    *,
+    fix_planner: Any,
+    reduced_findings: Any,
+    session_state: dict[str, Any],
+    database_id: str,
+) -> Any:
+    """Re-run the fix planner after profiler recovery expands the finding set."""
+    try:
+        fdg_json = (
+            reduced_findings.model_dump_json()
+            if hasattr(reduced_findings, "model_dump_json")
+            else json.dumps(reduced_findings)
+        )
+        response = fix_planner.run(
+            input=(
+                f"Generate a fix plan for database '{database_id}' "
+                f"based on these findings:\n{fdg_json}"
+            ),
+            session_state=session_state,
+        )
+        return _as_fix_plan(getattr(response, "content", ""))
+    except Exception as exc:
+        logger.error("Fix planner re-run after profiler recovery failed: %s", exc)
+        return None
 
 
 def _collect_step_outputs(step_results: list[Any]) -> dict[str, StepOutput]:
@@ -533,6 +745,41 @@ def orchestrator_workflow(
 
     step_outputs = _collect_step_outputs(getattr(workflow_result, "step_results", []))
     schema_report      = _as_validation_report(getattr(step_outputs.get("schema"),      "content", ""), "schema")
+
+    # Merge deterministic schema findings (missing_pk, nullable_fk_style_column,
+    # missing_index_fk_column) derived from pure schema metadata. These never vary
+    # across runs unlike LLM output, so they act as a consistency floor for the schema
+    # validator. Only findings not already emitted by the LLM agent are added.
+    _schema_auto = session_state.get("schema_auto_findings") or []
+    _llm_schema_count = len(schema_report.findings)
+    if _schema_auto:
+        _s_existing = {(f.entity, f.rule) for f in schema_report.findings}
+        _s_merged = 0
+        for _raw in _schema_auto:
+            try:
+                _sf = Finding.model_validate(_raw)
+                if (_sf.entity, _sf.rule) not in _s_existing:
+                    schema_report.findings.append(_sf)
+                    _s_existing.add((_sf.entity, _sf.rule))
+                    _s_merged += 1
+            except Exception:
+                pass
+        if _s_merged:
+            logger.info(
+                "Merged %d deterministic schema finding(s) into schema report "
+                "(LLM agent found %d, schema snapshot detected %d)",
+                _s_merged,
+                _llm_schema_count,
+                len(_schema_auto),
+            )
+        if _llm_schema_count < len(_schema_auto) * 0.50:
+            logger.warning(
+                "CONSISTENCY CHECK: LLM schema agent found only %d finding(s) vs "
+                "%d from deterministic schema snapshot — possible under-detection.",
+                _llm_schema_count,
+                len(_schema_auto),
+            )
+
     profiler_report    = _as_profiler_report(  getattr(step_outputs.get("profiler"),     "content", ""))
     statistical_report = _as_validation_report(getattr(step_outputs.get("statistical"), "content", ""), "statistical")
     structural_report  = _as_validation_report(getattr(step_outputs.get("structural"),  "content", ""), "structural")
@@ -549,8 +796,110 @@ def orchestrator_workflow(
                 database_id=database_id,
             )
 
-    reduced_findings   = _as_reduced_findings( getattr(step_outputs.get("reduce"),      "content", ""))
-    fix_plan           = _as_fix_plan(         getattr(step_outputs.get("fix_plan"),    "content", ""))
+    # Merge deterministic profiler-derived findings into the statistical report.
+    # py_profiler._derive_findings() generates null_ratio_high findings based on
+    # tiered thresholds (domain_rules.yaml → null_thresholds), bypassing LLM
+    # non-determinism. Only findings not already emitted by the LLM agent are added.
+    _auto_findings = session_state.get("profiler_auto_findings") or []
+    _llm_stat_count = len(statistical_report.findings)
+    if _auto_findings:
+        from .schemas import Finding as _Finding
+        _existing_keys = {(f.entity, f.rule) for f in statistical_report.findings}
+        _merged = 0
+        for _raw in _auto_findings:
+            try:
+                _f = _Finding.model_validate(_raw)
+                if (_f.entity, _f.rule) not in _existing_keys:
+                    statistical_report.findings.append(_f)
+                    _existing_keys.add((_f.entity, _f.rule))
+                    _merged += 1
+            except Exception:
+                pass
+        if _merged:
+            logger.info(
+                "Merged %d deterministic profiler finding(s) into statistical report "
+                "(LLM agent found %d, profiler detected %d)",
+                _merged,
+                _llm_stat_count,
+                len(_auto_findings),
+            )
+        # Cross-run consistency: warn when the LLM statistical agent detected
+        # substantially fewer issues than the deterministic profiler baseline.
+        # This signals LLM under-detection so the operator can investigate.
+        if _llm_stat_count < len(_auto_findings) * 0.50:
+            logger.warning(
+                "CONSISTENCY CHECK: LLM statistical agent found only %d finding(s) vs "
+                "%d from deterministic profiler — possible under-detection. "
+                "Auto-merged findings are included in the final report.",
+                _llm_stat_count,
+                len(_auto_findings),
+            )
+
+    reduced_findings = _as_reduced_findings(getattr(step_outputs.get("reduce"),   "content", ""))
+    fix_plan         = _as_fix_plan(        getattr(step_outputs.get("fix_plan"), "content", ""))
+
+    # Bug 1: If profiler_summary is still empty after the workflow run, the profiler
+    # step failed silently (MALFORMED_FUNCTION_CALL bypasses post_hooks so
+    # store_profiler_output never fires). Retry the profiler standalone, then re-run
+    # statistical + structural validators with the recovered baseline, and re-reduce
+    # + re-plan so the final report reflects the full validator output.
+    if not session_state.get("profiler_summary"):
+        logger.warning(
+            "profiler_summary empty after workflow run — profiler step likely failed; "
+            "attempting standalone recovery."
+        )
+        profiler_report = _run_profiler_standalone(
+            profiler=members.profiler,
+            session_state=session_state,
+            database_id=database_id,
+        )
+        if profiler_report.tables:
+            known_tables = len(session_state.get("schema") or {})
+            profiled_count = len(profiler_report.tables)
+            coverage_ratio = profiled_count / known_tables if known_tables else 1.0
+            # Skip the statistical re-run when coverage is too thin: with fewer than
+            # half the tables profiled the agent has no baseline for most tables and
+            # any findings it emits are likely hallucinated. Structural does not
+            # depend on the profiler baseline so it always re-runs.
+            skip_stat = known_tables > 0 and coverage_ratio < 0.5
+            if skip_stat:
+                logger.warning(
+                    "Profiler recovery coverage too low (%d/%d tables, %.0f%%) — "
+                    "statistical re-run skipped to prevent hallucinations; structural still runs.",
+                    profiled_count, known_tables, coverage_ratio * 100,
+                )
+            statistical_report, structural_report = _rerun_statistical_structural(
+                members=members,
+                session_state=session_state,
+                database_id=database_id,
+                skip_statistical=skip_stat,
+            )
+            # Re-run reducer with all four validator reports so statistical + structural
+            # findings are included in the dependency graph passed to the fix planner.
+            all_reports = {
+                "schema":      schema_report,
+                "statistical": statistical_report,
+                "structural":  structural_report,
+                "relational":  relational_report,
+            }
+            step_in = _SyntheticStepInput(all_reports, session_state)
+            recovered_fdg = reduce_signals(step_in).content
+            reduced_findings = _as_reduced_findings(recovered_fdg)
+            # Only re-run the fix planner when new findings were actually added.
+            if reduced_findings.findings:
+                recovered_fix = _rerun_fix_planner(
+                    fix_planner=members.fix_planner,
+                    reduced_findings=recovered_fdg,
+                    session_state=session_state,
+                    database_id=database_id,
+                )
+                if recovered_fix is not None:
+                    fix_plan = recovered_fix
+        else:
+            logger.error(
+                "Profiler standalone recovery also produced no output — "
+                "statistical and structural reports will be empty for this run."
+            )
 
     # Total tables inspected is available from the schema priming hook via session_state.
     total_tables = len(session_state.get("schema") or {})

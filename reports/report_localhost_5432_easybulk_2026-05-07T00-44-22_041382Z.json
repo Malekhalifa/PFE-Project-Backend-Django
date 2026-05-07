@@ -1,0 +1,3076 @@
+{
+  "pipeline_run_id": "c4976f83-72a9-47aa-8408-98925c8024a3",
+  "database_id": "localhost_5432_easybulk",
+  "llm_model": "gemini-2.5-flash",
+  "run_timestamp": "2026-05-07T00:44:22.041382Z",
+  "summary": {
+    "confidence_score": 90,
+    "data_quality_score": 24,
+    "final_fix_count": 33
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "c4976f83-72a9-47aa-8408-98925c8024a3",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-07T00:44:22.041382Z",
+      "agent": "Schema Integrity Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 8,
+        "items_flagged": 22,
+        "critical_issues": 0,
+        "high_issues": 4,
+        "medium_issues": 16,
+        "low_issues": 2,
+        "overall_quality_score": 0.0,
+        "overall_confidence": 0.8318,
+        "flagged_tables": [
+          "budget_history",
+          "campagne",
+          "campagne_contacts",
+          "campagne_tags",
+          "expediteur_groupe",
+          "groupe",
+          "membership",
+          "modele",
+          "request_api",
+          "smsc_routing_rule",
+          "tags",
+          "user_contact",
+          "user_contact_tags",
+          "user_keys",
+          "user_mission"
+        ]
+      },
+      "metrics": {
+        "validator": "schema",
+        "findings_count": 22
+      },
+      "findings": [
+        {
+          "table": "campagne_contacts",
+          "column": null,
+          "entity": "campagne_contacts",
+          "rule": "primary_key_required",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "has_primary_key": false
+          },
+          "remediation_hint": "Define a primary key for the table 'campagne_contacts'.",
+          "issues": [
+            {
+              "type": "primary_key_required",
+              "severity": "high",
+              "description": "Define a primary key for the table 'campagne_contacts'.",
+              "evidence": {
+                "has_primary_key": false
+              }
+            }
+          ]
+        },
+        {
+          "table": "budget_history",
+          "column": "groupe_id",
+          "entity": "budget_history.groupe_id",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "is_nullable": true,
+            "foreign_key_column": "groupe_id",
+            "referenced_table": "groupe",
+            "referenced_column": "id"
+          },
+          "remediation_hint": "Consider making the foreign key column 'groupe_id' in table 'budget_history' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'groupe_id' in table 'budget_history' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+              "evidence": {
+                "is_nullable": true,
+                "foreign_key_column": "groupe_id",
+                "referenced_table": "groupe",
+                "referenced_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "entity": "groupe.admin_id",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "is_nullable": true,
+            "foreign_key_column": "admin_id",
+            "referenced_table": "users",
+            "referenced_column": "id"
+          },
+          "remediation_hint": "Consider making the foreign key column 'admin_id' in table 'groupe' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'admin_id' in table 'groupe' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+              "evidence": {
+                "is_nullable": true,
+                "foreign_key_column": "admin_id",
+                "referenced_table": "users",
+                "referenced_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "entity": "groupe.admin_id",
+          "rule": "index_gap",
+          "severity": "low",
+          "confidence": 0.75,
+          "evidence": {
+            "is_indexed": false,
+            "foreign_key_column": "admin_id",
+            "referenced_table": "users",
+            "referenced_column": "id"
+          },
+          "remediation_hint": "Create an index on the foreign key column 'admin_id' in table 'groupe' to improve join performance.",
+          "issues": [
+            {
+              "type": "index_gap",
+              "severity": "low",
+              "description": "Create an index on the foreign key column 'admin_id' in table 'groupe' to improve join performance.",
+              "evidence": {
+                "is_indexed": false,
+                "foreign_key_column": "admin_id",
+                "referenced_table": "users",
+                "referenced_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_contacts",
+          "column": "contact_id",
+          "entity": "campagne_contacts.contact_id",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "is_nullable": true,
+            "foreign_key_column": "contact_id",
+            "referenced_table": "contacts",
+            "referenced_column": "msisdn"
+          },
+          "remediation_hint": "Consider making the foreign key column 'contact_id' in table 'campagne_contacts' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'contact_id' in table 'campagne_contacts' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+              "evidence": {
+                "is_nullable": true,
+                "foreign_key_column": "contact_id",
+                "referenced_table": "contacts",
+                "referenced_column": "msisdn"
+              }
+            }
+          ]
+        },
+        {
+          "table": "expediteur_groupe",
+          "column": null,
+          "entity": "expediteur_groupe",
+          "rule": "primary_key_required",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "has_primary_key": false
+          },
+          "remediation_hint": "Define a primary key for the table 'expediteur_groupe'.",
+          "issues": [
+            {
+              "type": "primary_key_required",
+              "severity": "high",
+              "description": "Define a primary key for the table 'expediteur_groupe'.",
+              "evidence": {
+                "has_primary_key": false
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne_tags",
+          "column": null,
+          "entity": "campagne_tags",
+          "rule": "primary_key_required",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "has_primary_key": false
+          },
+          "remediation_hint": "Define a primary key for the table 'campagne_tags'.",
+          "issues": [
+            {
+              "type": "primary_key_required",
+              "severity": "high",
+              "description": "Define a primary key for the table 'campagne_tags'.",
+              "evidence": {
+                "has_primary_key": false
+              }
+            }
+          ]
+        },
+        {
+          "table": "membership",
+          "column": "status_id",
+          "entity": "membership.status_id",
+          "rule": "index_gap",
+          "severity": "low",
+          "confidence": 0.75,
+          "evidence": {
+            "is_indexed": false,
+            "foreign_key_column": "status_id",
+            "referenced_table": "prm_status",
+            "referenced_column": "id"
+          },
+          "remediation_hint": "Create an index on the foreign key column 'status_id' in table 'membership' to improve join performance.",
+          "issues": [
+            {
+              "type": "index_gap",
+              "severity": "low",
+              "description": "Create an index on the foreign key column 'status_id' in table 'membership' to improve join performance.",
+              "evidence": {
+                "is_indexed": false,
+                "foreign_key_column": "status_id",
+                "referenced_table": "prm_status",
+                "referenced_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "request_api",
+          "column": "membership_id",
+          "entity": "request_api.membership_id",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "is_nullable": true,
+            "foreign_key_column": "membership_id",
+            "referenced_table": "membership",
+            "referenced_column": "id"
+          },
+          "remediation_hint": "Consider making the foreign key column 'membership_id' in table 'request_api' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'membership_id' in table 'request_api' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+              "evidence": {
+                "is_nullable": true,
+                "foreign_key_column": "membership_id",
+                "referenced_table": "membership",
+                "referenced_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "smsc_routing_rule",
+          "column": null,
+          "entity": "smsc_routing_rule",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "is_nullable": true,
+            "foreign_key_column": "expediteur_id",
+            "referenced_table": "expediteur",
+            "referenced_column": "id",
+            "columns_with_high_nulls": [
+              "expediteur_id",
+              "groupe_id"
+            ]
+          },
+          "remediation_hint": "Consider making the foreign key column 'expediteur_id' in table 'smsc_routing_rule' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'expediteur_id' in table 'smsc_routing_rule' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+              "evidence": {
+                "is_nullable": true,
+                "foreign_key_column": "expediteur_id",
+                "referenced_table": "expediteur",
+                "referenced_column": "id",
+                "columns_with_high_nulls": [
+                  "expediteur_id",
+                  "groupe_id"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "smsc_routing_rule",
+          "column": "groupe_id",
+          "entity": "smsc_routing_rule.groupe_id",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "is_nullable": true,
+            "foreign_key_column": "groupe_id",
+            "referenced_table": "groupe",
+            "referenced_column": "id"
+          },
+          "remediation_hint": "Consider making the foreign key column 'groupe_id' in table 'smsc_routing_rule' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'groupe_id' in table 'smsc_routing_rule' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+              "evidence": {
+                "is_nullable": true,
+                "foreign_key_column": "groupe_id",
+                "referenced_table": "groupe",
+                "referenced_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact",
+          "column": "membership_id",
+          "entity": "user_contact.membership_id",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "is_nullable": true,
+            "foreign_key_column": "membership_id",
+            "referenced_table": "membership",
+            "referenced_column": "id"
+          },
+          "remediation_hint": "Consider making the foreign key column 'membership_id' in table 'user_contact' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'membership_id' in table 'user_contact' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+              "evidence": {
+                "is_nullable": true,
+                "foreign_key_column": "membership_id",
+                "referenced_table": "membership",
+                "referenced_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact_tags",
+          "column": null,
+          "entity": "user_contact_tags",
+          "rule": "primary_key_required",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "has_primary_key": false
+          },
+          "remediation_hint": "Define a primary key for the table 'user_contact_tags'.",
+          "issues": [
+            {
+              "type": "primary_key_required",
+              "severity": "high",
+              "description": "Define a primary key for the table 'user_contact_tags'.",
+              "evidence": {
+                "has_primary_key": false
+              }
+            }
+          ]
+        },
+        {
+          "table": "tags",
+          "column": "membership_id",
+          "entity": "tags.membership_id",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "is_nullable": true,
+            "foreign_key_column": "membership_id",
+            "referenced_table": "membership",
+            "referenced_column": "id"
+          },
+          "remediation_hint": "Consider making the foreign key column 'membership_id' in table 'tags' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'membership_id' in table 'tags' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+              "evidence": {
+                "is_nullable": true,
+                "foreign_key_column": "membership_id",
+                "referenced_table": "membership",
+                "referenced_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_keys",
+          "column": "membership_id",
+          "entity": "user_keys.membership_id",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "is_nullable": true,
+            "foreign_key_column": "membership_id",
+            "referenced_table": "membership",
+            "referenced_column": "id"
+          },
+          "remediation_hint": "Consider making the foreign key column 'membership_id' in table 'user_keys' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'membership_id' in table 'user_keys' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+              "evidence": {
+                "is_nullable": true,
+                "foreign_key_column": "membership_id",
+                "referenced_table": "membership",
+                "referenced_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_mission",
+          "column": "groupe_id",
+          "entity": "user_mission.groupe_id",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "is_nullable": true,
+            "foreign_key_column": "groupe_id",
+            "referenced_table": "groupe",
+            "referenced_column": "id"
+          },
+          "remediation_hint": "Consider making the foreign key column 'groupe_id' in table 'user_mission' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'groupe_id' in table 'user_mission' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+              "evidence": {
+                "is_nullable": true,
+                "foreign_key_column": "groupe_id",
+                "referenced_table": "groupe",
+                "referenced_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne",
+          "column": null,
+          "entity": "campagne",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "is_nullable": true,
+            "foreign_key_column": "schedule_id",
+            "referenced_table": "campaign_schedule",
+            "referenced_column": "id",
+            "columns_with_high_nulls": [
+              "schedule_id",
+              "campaign_type_permission_id",
+              "expediteur_id",
+              "modele_id",
+              "user_id"
+            ]
+          },
+          "remediation_hint": "Consider making the foreign key column 'schedule_id' in table 'campagne' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'schedule_id' in table 'campagne' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+              "evidence": {
+                "is_nullable": true,
+                "foreign_key_column": "schedule_id",
+                "referenced_table": "campaign_schedule",
+                "referenced_column": "id",
+                "columns_with_high_nulls": [
+                  "schedule_id",
+                  "campaign_type_permission_id",
+                  "expediteur_id",
+                  "modele_id",
+                  "user_id"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne",
+          "column": "campaign_type_permission_id",
+          "entity": "campagne.campaign_type_permission_id",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "is_nullable": true,
+            "foreign_key_column": "campaign_type_permission_id",
+            "referenced_table": "campaign_type_permission",
+            "referenced_column": "id"
+          },
+          "remediation_hint": "Consider making the foreign key column 'campaign_type_permission_id' in table 'campagne' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'campaign_type_permission_id' in table 'campagne' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+              "evidence": {
+                "is_nullable": true,
+                "foreign_key_column": "campaign_type_permission_id",
+                "referenced_table": "campaign_type_permission",
+                "referenced_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne",
+          "column": "expediteur_id",
+          "entity": "campagne.expediteur_id",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "is_nullable": true,
+            "foreign_key_column": "expediteur_id",
+            "referenced_table": "expediteur",
+            "referenced_column": "id"
+          },
+          "remediation_hint": "Consider making the foreign key column 'expediteur_id' in table 'campagne' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'expediteur_id' in table 'campagne' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+              "evidence": {
+                "is_nullable": true,
+                "foreign_key_column": "expediteur_id",
+                "referenced_table": "expediteur",
+                "referenced_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne",
+          "column": "modele_id",
+          "entity": "campagne.modele_id",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "is_nullable": true,
+            "foreign_key_column": "modele_id",
+            "referenced_table": "modele",
+            "referenced_column": "id"
+          },
+          "remediation_hint": "Consider making the foreign key column 'modele_id' in table 'campagne' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'modele_id' in table 'campagne' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+              "evidence": {
+                "is_nullable": true,
+                "foreign_key_column": "modele_id",
+                "referenced_table": "modele",
+                "referenced_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "campagne",
+          "column": "user_id",
+          "entity": "campagne.user_id",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "is_nullable": true,
+            "foreign_key_column": "user_id",
+            "referenced_table": "users",
+            "referenced_column": "id"
+          },
+          "remediation_hint": "Consider making the foreign key column 'user_id' in table 'campagne' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'user_id' in table 'campagne' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+              "evidence": {
+                "is_nullable": true,
+                "foreign_key_column": "user_id",
+                "referenced_table": "users",
+                "referenced_column": "id"
+              }
+            }
+          ]
+        },
+        {
+          "table": "modele",
+          "column": "membership_id",
+          "entity": "modele.membership_id",
+          "rule": "foreign_key_validation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "is_nullable": true,
+            "foreign_key_column": "membership_id",
+            "referenced_table": "membership",
+            "referenced_column": "id"
+          },
+          "remediation_hint": "Consider making the foreign key column 'membership_id' in table 'modele' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+          "issues": [
+            {
+              "type": "foreign_key_validation",
+              "severity": "medium",
+              "description": "Consider making the foreign key column 'membership_id' in table 'modele' non-nullable if business rules permit, or implement logic to handle null foreign keys.",
+              "evidence": {
+                "is_nullable": true,
+                "foreign_key_column": "membership_id",
+                "referenced_table": "membership",
+                "referenced_column": "id"
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": [],
+      "report": "## Schema Integrity Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 8\n- Flagged: 22\n- Severity split: critical=0, high=4, medium=16, low=2\n- Quality score: 0.0 / 100\n- Confidence: 0.8318\n- Flagged tables: budget_history, campagne, campagne_contacts, campagne_tags, expediteur_groupe, groupe, membership, modele, request_api, smsc_routing_rule, tags, user_contact, user_contact_tags, user_keys, user_mission\n\n### Metrics\n- Findings count: 22\n- Validator: schema\n\n### Findings (22)\n\n#### 1. campagne_contacts [HIGH]\n- Problem: Define a primary key for the table 'campagne_contacts'.\n- Confidence: 1.0\n- Recommendation: Define a primary key for the table 'campagne_contacts'.\n- Detailed issues:\n  - [HIGH] Define a primary key for the table 'campagne_contacts'.\n\n#### 2. budget_history [MEDIUM]\n- Problem: Consider making the foreign key column 'groupe_id' in table 'budget_history' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Confidence: 0.8\n- Column: groupe_id\n- Recommendation: Consider making the foreign key column 'groupe_id' in table 'budget_history' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'groupe_id' in table 'budget_history' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n\n#### 3. groupe [MEDIUM]\n- Problem: Consider making the foreign key column 'admin_id' in table 'groupe' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Confidence: 0.8\n- Column: admin_id\n- Recommendation: Consider making the foreign key column 'admin_id' in table 'groupe' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'admin_id' in table 'groupe' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n\n#### 4. groupe [LOW]\n- Problem: Create an index on the foreign key column 'admin_id' in table 'groupe' to improve join performance.\n- Confidence: 0.75\n- Column: admin_id\n- Recommendation: Create an index on the foreign key column 'admin_id' in table 'groupe' to improve join performance.\n- Detailed issues:\n  - [LOW] Create an index on the foreign key column 'admin_id' in table 'groupe' to improve join performance.\n\n#### 5. campagne_contacts [MEDIUM]\n- Problem: Consider making the foreign key column 'contact_id' in table 'campagne_contacts' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Confidence: 0.8\n- Column: contact_id\n- Recommendation: Consider making the foreign key column 'contact_id' in table 'campagne_contacts' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'contact_id' in table 'campagne_contacts' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n\n#### 6. expediteur_groupe [HIGH]\n- Problem: Define a primary key for the table 'expediteur_groupe'.\n- Confidence: 1.0\n- Recommendation: Define a primary key for the table 'expediteur_groupe'.\n- Detailed issues:\n  - [HIGH] Define a primary key for the table 'expediteur_groupe'.\n\n#### 7. campagne_tags [HIGH]\n- Problem: Define a primary key for the table 'campagne_tags'.\n- Confidence: 1.0\n- Recommendation: Define a primary key for the table 'campagne_tags'.\n- Detailed issues:\n  - [HIGH] Define a primary key for the table 'campagne_tags'.\n\n#### 8. membership [LOW]\n- Problem: Create an index on the foreign key column 'status_id' in table 'membership' to improve join performance.\n- Confidence: 0.75\n- Column: status_id\n- Recommendation: Create an index on the foreign key column 'status_id' in table 'membership' to improve join performance.\n- Detailed issues:\n  - [LOW] Create an index on the foreign key column 'status_id' in table 'membership' to improve join performance.\n\n#### 9. request_api [MEDIUM]\n- Problem: Consider making the foreign key column 'membership_id' in table 'request_api' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Confidence: 0.8\n- Column: membership_id\n- Recommendation: Consider making the foreign key column 'membership_id' in table 'request_api' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'membership_id' in table 'request_api' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n\n#### 10. smsc_routing_rule [MEDIUM]\n- Problem: Consider making the foreign key column 'expediteur_id' in table 'smsc_routing_rule' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Confidence: 0.8\n- Recommendation: Consider making the foreign key column 'expediteur_id' in table 'smsc_routing_rule' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'expediteur_id' in table 'smsc_routing_rule' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n\n#### 11. smsc_routing_rule [MEDIUM]\n- Problem: Consider making the foreign key column 'groupe_id' in table 'smsc_routing_rule' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Confidence: 0.8\n- Column: groupe_id\n- Recommendation: Consider making the foreign key column 'groupe_id' in table 'smsc_routing_rule' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'groupe_id' in table 'smsc_routing_rule' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n\n#### 12. user_contact [MEDIUM]\n- Problem: Consider making the foreign key column 'membership_id' in table 'user_contact' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Confidence: 0.8\n- Column: membership_id\n- Recommendation: Consider making the foreign key column 'membership_id' in table 'user_contact' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'membership_id' in table 'user_contact' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n\n#### 13. user_contact_tags [HIGH]\n- Problem: Define a primary key for the table 'user_contact_tags'.\n- Confidence: 1.0\n- Recommendation: Define a primary key for the table 'user_contact_tags'.\n- Detailed issues:\n  - [HIGH] Define a primary key for the table 'user_contact_tags'.\n\n#### 14. tags [MEDIUM]\n- Problem: Consider making the foreign key column 'membership_id' in table 'tags' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Confidence: 0.8\n- Column: membership_id\n- Recommendation: Consider making the foreign key column 'membership_id' in table 'tags' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'membership_id' in table 'tags' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n\n#### 15. user_keys [MEDIUM]\n- Problem: Consider making the foreign key column 'membership_id' in table 'user_keys' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Confidence: 0.8\n- Column: membership_id\n- Recommendation: Consider making the foreign key column 'membership_id' in table 'user_keys' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'membership_id' in table 'user_keys' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n\n#### 16. user_mission [MEDIUM]\n- Problem: Consider making the foreign key column 'groupe_id' in table 'user_mission' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Confidence: 0.8\n- Column: groupe_id\n- Recommendation: Consider making the foreign key column 'groupe_id' in table 'user_mission' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'groupe_id' in table 'user_mission' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n\n#### 17. campagne [MEDIUM]\n- Problem: Consider making the foreign key column 'schedule_id' in table 'campagne' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Confidence: 0.8\n- Recommendation: Consider making the foreign key column 'schedule_id' in table 'campagne' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'schedule_id' in table 'campagne' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n\n#### 18. campagne [MEDIUM]\n- Problem: Consider making the foreign key column 'campaign_type_permission_id' in table 'campagne' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Confidence: 0.8\n- Column: campaign_type_permission_id\n- Recommendation: Consider making the foreign key column 'campaign_type_permission_id' in table 'campagne' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'campaign_type_permission_id' in table 'campagne' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n\n#### 19. campagne [MEDIUM]\n- Problem: Consider making the foreign key column 'expediteur_id' in table 'campagne' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Confidence: 0.8\n- Column: expediteur_id\n- Recommendation: Consider making the foreign key column 'expediteur_id' in table 'campagne' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'expediteur_id' in table 'campagne' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n\n#### 20. campagne [MEDIUM]\n- Problem: Consider making the foreign key column 'modele_id' in table 'campagne' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Confidence: 0.8\n- Column: modele_id\n- Recommendation: Consider making the foreign key column 'modele_id' in table 'campagne' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'modele_id' in table 'campagne' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n\n#### 21. campagne [MEDIUM]\n- Problem: Consider making the foreign key column 'user_id' in table 'campagne' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Confidence: 0.8\n- Column: user_id\n- Recommendation: Consider making the foreign key column 'user_id' in table 'campagne' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'user_id' in table 'campagne' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n\n#### 22. modele [MEDIUM]\n- Problem: Consider making the foreign key column 'membership_id' in table 'modele' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Confidence: 0.8\n- Column: membership_id\n- Recommendation: Consider making the foreign key column 'membership_id' in table 'modele' non-nullable if business rules permit, or implement logic to handle null foreign keys.\n- Detailed issues:\n  - [MEDIUM] Consider making the foreign key column 'membership_id' in table 'modele' non-nullable if business rules permit, or implement logic to handle null foreign keys."
+    },
+    "statistical_validator": {
+      "pipeline_run_id": "c4976f83-72a9-47aa-8408-98925c8024a3",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-07T00:44:22.041382Z",
+      "agent": "Statistical Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 17,
+        "items_flagged": 13,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 11,
+        "low_issues": 2,
+        "overall_quality_score": 6.0,
+        "overall_confidence": 0.8692,
+        "flagged_tables": [
+          "contacts",
+          "groupe",
+          "prm_status",
+          "smsc_routing_rule",
+          "user_contact",
+          "user_contact_tags",
+          "user_keys",
+          "user_mission"
+        ]
+      },
+      "metrics": {
+        "validator": "statistical",
+        "findings_count": 13
+      },
+      "findings": [
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "entity": "groupe.admin_id",
+          "rule": "null_ratio_high",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "null_ratio": 0.8888888888888888,
+            "threshold": 0.05
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "null_ratio_high",
+              "severity": "medium",
+              "description": "null ratio high",
+              "evidence": {
+                "null_ratio": 0.8888888888888888,
+                "threshold": 0.05
+              }
+            }
+          ]
+        },
+        {
+          "table": "prm_status",
+          "column": "updated_at",
+          "entity": "prm_status.updated_at",
+          "rule": "null_ratio_high",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "null_ratio": 1.0,
+            "threshold": 0.05
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "null_ratio_high",
+              "severity": "medium",
+              "description": "null ratio high",
+              "evidence": {
+                "null_ratio": 1.0,
+                "threshold": 0.05
+              }
+            }
+          ]
+        },
+        {
+          "table": "smsc_routing_rule",
+          "column": null,
+          "entity": "smsc_routing_rule",
+          "rule": "null_ratio_high",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "null_ratio": 0.8571428571428571,
+            "threshold": 0.05,
+            "columns_with_high_nulls": [
+              "expediteur_id",
+              "groupe_id"
+            ]
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "null_ratio_high",
+              "severity": "medium",
+              "description": "null ratio high",
+              "evidence": {
+                "null_ratio": 0.8571428571428571,
+                "threshold": 0.05,
+                "columns_with_high_nulls": [
+                  "expediteur_id",
+                  "groupe_id"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "smsc_routing_rule",
+          "column": "groupe_id",
+          "entity": "smsc_routing_rule.groupe_id",
+          "rule": "null_ratio_high",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "null_ratio": 0.8571428571428571,
+            "threshold": 0.05
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "null_ratio_high",
+              "severity": "medium",
+              "description": "null ratio high",
+              "evidence": {
+                "null_ratio": 0.8571428571428571,
+                "threshold": 0.05
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_keys",
+          "column": null,
+          "entity": "user_keys",
+          "rule": "null_ratio_high",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "null_ratio": 1.0,
+            "threshold": 0.05,
+            "columns_with_high_nulls": [
+              "expiration_date",
+              "last_time_used_date"
+            ]
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "null_ratio_high",
+              "severity": "medium",
+              "description": "null ratio high",
+              "evidence": {
+                "null_ratio": 1.0,
+                "threshold": 0.05,
+                "columns_with_high_nulls": [
+                  "expiration_date",
+                  "last_time_used_date"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_keys",
+          "column": "last_time_used_date",
+          "entity": "user_keys.last_time_used_date",
+          "rule": "null_ratio_high",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "null_ratio": 1.0,
+            "threshold": 0.05
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "null_ratio_high",
+              "severity": "medium",
+              "description": "null ratio high",
+              "evidence": {
+                "null_ratio": 1.0,
+                "threshold": 0.05
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_mission",
+          "column": "groupe_id",
+          "entity": "user_mission.groupe_id",
+          "rule": "null_ratio_high",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "null_ratio": 0.5,
+            "threshold": 0.05
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "null_ratio_high",
+              "severity": "medium",
+              "description": "null ratio high",
+              "evidence": {
+                "null_ratio": 0.5,
+                "threshold": 0.05
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact_tags",
+          "column": "tag_id",
+          "entity": "user_contact_tags.tag_id",
+          "rule": "low_cardinality",
+          "severity": "low",
+          "confidence": 0.8,
+          "evidence": {
+            "cardinality": 7,
+            "total_rows": 20051,
+            "min_rows_for_cardinality": 100
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "low",
+              "description": "low cardinality",
+              "evidence": {
+                "cardinality": 7,
+                "total_rows": 20051,
+                "min_rows_for_cardinality": 100
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact",
+          "column": "membership_id",
+          "entity": "user_contact.membership_id",
+          "rule": "low_cardinality",
+          "severity": "low",
+          "confidence": 0.8,
+          "evidence": {
+            "cardinality": 4,
+            "total_rows": 20042,
+            "min_rows_for_cardinality": 100
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "low_cardinality",
+              "severity": "low",
+              "description": "low cardinality",
+              "evidence": {
+                "cardinality": 4,
+                "total_rows": 20042,
+                "min_rows_for_cardinality": 100
+              }
+            }
+          ]
+        },
+        {
+          "table": "contacts",
+          "column": "country_code",
+          "entity": "contacts.country_code",
+          "rule": "categorical_drift",
+          "severity": "medium",
+          "confidence": 0.85,
+          "evidence": {
+            "top_category": "216",
+            "top_category_percentage": "99.6615"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "categorical_drift",
+              "severity": "medium",
+              "description": "categorical drift",
+              "evidence": {
+                "top_category": "216",
+                "top_category_percentage": "99.6615"
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact",
+          "column": null,
+          "entity": "user_contact",
+          "rule": "categorical_drift",
+          "severity": "medium",
+          "confidence": 0.85,
+          "evidence": {
+            "empty_string_percentage": "99.8154",
+            "columns_with_high_nulls": [
+              "attribute1",
+              "attribute2",
+              "attribute3"
+            ]
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "categorical_drift",
+              "severity": "medium",
+              "description": "categorical drift",
+              "evidence": {
+                "empty_string_percentage": "99.8154",
+                "columns_with_high_nulls": [
+                  "attribute1",
+                  "attribute2",
+                  "attribute3"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact",
+          "column": "attribute2",
+          "entity": "user_contact.attribute2",
+          "rule": "categorical_drift",
+          "severity": "medium",
+          "confidence": 0.85,
+          "evidence": {
+            "empty_string_percentage": "99.8204"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "categorical_drift",
+              "severity": "medium",
+              "description": "categorical drift",
+              "evidence": {
+                "empty_string_percentage": "99.8204"
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact",
+          "column": "attribute3",
+          "entity": "user_contact.attribute3",
+          "rule": "categorical_drift",
+          "severity": "medium",
+          "confidence": 0.85,
+          "evidence": {
+            "empty_string_percentage": "99.8154"
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "categorical_drift",
+              "severity": "medium",
+              "description": "categorical drift",
+              "evidence": {
+                "empty_string_percentage": "99.8154"
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": [],
+      "report": "## Statistical Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 17\n- Flagged: 13\n- Severity split: critical=0, high=0, medium=11, low=2\n- Quality score: 6.0 / 100\n- Confidence: 0.8692\n- Flagged tables: contacts, groupe, prm_status, smsc_routing_rule, user_contact, user_contact_tags, user_keys, user_mission\n\n### Metrics\n- Findings count: 13\n- Validator: statistical\n\n### Findings (9)\n\n#### 1. groupe [MEDIUM]\n- Problem: null ratio high\n- Confidence: 0.9\n- Column: admin_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [MEDIUM] null ratio high\n\n#### 2. prm_status [MEDIUM]\n- Problem: null ratio high\n- Confidence: 0.9\n- Column: updated_at\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [MEDIUM] null ratio high\n\n#### 3. smsc_routing_rule [MEDIUM]\n- Problem: null ratio high\n- Confidence: 0.9\n- Columns: groupe_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [MEDIUM] null ratio high\n\n#### 4. user_keys [MEDIUM]\n- Problem: null ratio high\n- Confidence: 0.9\n- Columns: last_time_used_date\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [MEDIUM] null ratio high\n\n#### 5. user_mission [MEDIUM]\n- Problem: null ratio high\n- Confidence: 0.9\n- Column: groupe_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [MEDIUM] null ratio high\n\n#### 6. user_contact_tags [LOW]\n- Problem: low cardinality\n- Confidence: 0.8\n- Column: tag_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] low cardinality\n\n#### 7. user_contact [LOW]\n- Problem: low cardinality\n- Confidence: 0.8\n- Column: membership_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [LOW] low cardinality\n\n#### 8. contacts [MEDIUM]\n- Problem: categorical drift\n- Confidence: 0.85\n- Column: country_code\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [MEDIUM] categorical drift\n\n#### 9. user_contact [MEDIUM]\n- Problem: categorical drift\n- Confidence: 0.85\n- Columns: attribute2, attribute3\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [MEDIUM] categorical drift"
+    },
+    "structural_validator": {
+      "pipeline_run_id": "c4976f83-72a9-47aa-8408-98925c8024a3",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-07T00:44:22.041382Z",
+      "agent": "Structural Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 30,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "structural",
+        "findings_count": 0
+      },
+      "findings": [],
+      "prior_reports": [],
+      "report": "## Structural Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 30\n- Flagged: 0\n- Severity split: critical=0, high=0, medium=0, low=0\n- Quality score: 100.0 / 100\n- Confidence: 1.0\n\n### Metrics\n- Findings count: 0\n- Validator: structural\n\nNo issues were found by this agent."
+    },
+    "relational_validator": {
+      "pipeline_run_id": "c4976f83-72a9-47aa-8408-98925c8024a3",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-07T00:44:22.041382Z",
+      "agent": "Relational Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 20,
+        "items_flagged": 10,
+        "critical_issues": 0,
+        "high_issues": 1,
+        "medium_issues": 9,
+        "low_issues": 0,
+        "overall_quality_score": 13.0,
+        "overall_confidence": 0.9,
+        "flagged_tables": [
+          "campagne_contacts",
+          "prm_organization",
+          "smsc_route",
+          "user_contact",
+          "user_contact_tags"
+        ]
+      },
+      "metrics": {
+        "validator": "relational",
+        "findings_count": 10
+      },
+      "findings": [
+        {
+          "table": "campagne_contacts",
+          "column": "contact_id",
+          "entity": "campagne_contacts.contact_id",
+          "rule": "orphaned_fk",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "source_table": "campagne_contacts",
+            "source_column": "contact_id",
+            "target_table": "contacts",
+            "target_column": "msisdn",
+            "orphaned_count": 31
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "orphaned_fk",
+              "severity": "high",
+              "description": "orphaned fk",
+              "evidence": {
+                "source_table": "campagne_contacts",
+                "source_column": "contact_id",
+                "target_table": "contacts",
+                "target_column": "msisdn",
+                "orphaned_count": 31
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact",
+          "column": "contact_id",
+          "entity": "user_contact.contact_id",
+          "rule": "functional_dependency_violation",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "user_contact",
+            "determinant_column": "contact_id",
+            "dependent_column": "date_created",
+            "violating_examples_count": 5
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "functional_dependency_violation",
+              "severity": "medium",
+              "description": "functional dependency violation",
+              "evidence": {
+                "table_name": "user_contact",
+                "determinant_column": "contact_id",
+                "dependent_column": "date_created",
+                "violating_examples_count": 5
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact",
+          "column": "contact_id",
+          "entity": "user_contact.contact_id",
+          "rule": "functional_dependency_violation",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "user_contact",
+            "determinant_column": "contact_id",
+            "dependent_column": "date_modified",
+            "violating_examples_count": 5
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "functional_dependency_violation",
+              "severity": "medium",
+              "description": "functional dependency violation",
+              "evidence": {
+                "table_name": "user_contact",
+                "determinant_column": "contact_id",
+                "dependent_column": "date_modified",
+                "violating_examples_count": 5
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact",
+          "column": "contact_id",
+          "entity": "user_contact.contact_id",
+          "rule": "functional_dependency_violation",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "user_contact",
+            "determinant_column": "contact_id",
+            "dependent_column": "membership_id",
+            "violating_examples_count": 5
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "functional_dependency_violation",
+              "severity": "medium",
+              "description": "functional dependency violation",
+              "evidence": {
+                "table_name": "user_contact",
+                "determinant_column": "contact_id",
+                "dependent_column": "membership_id",
+                "violating_examples_count": 5
+              }
+            }
+          ]
+        },
+        {
+          "table": "user_contact_tags",
+          "column": "user_contact_id",
+          "entity": "user_contact_tags.user_contact_id",
+          "rule": "functional_dependency_violation",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "user_contact_tags",
+            "determinant_column": "user_contact_id",
+            "dependent_column": "tag_id",
+            "violating_examples_count": 5
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "functional_dependency_violation",
+              "severity": "medium",
+              "description": "functional dependency violation",
+              "evidence": {
+                "table_name": "user_contact_tags",
+                "determinant_column": "user_contact_id",
+                "dependent_column": "tag_id",
+                "violating_examples_count": 5
+              }
+            }
+          ]
+        },
+        {
+          "table": "prm_organization",
+          "column": "code",
+          "entity": "prm_organization.code",
+          "rule": "duplicate_values",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "prm_organization",
+            "column_name": "code",
+            "duplicate_count": 5,
+            "total_rows": 17
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "duplicate_values",
+              "severity": "medium",
+              "description": "duplicate values",
+              "evidence": {
+                "table_name": "prm_organization",
+                "column_name": "code",
+                "duplicate_count": 5,
+                "total_rows": 17
+              }
+            }
+          ]
+        },
+        {
+          "table": "prm_organization",
+          "column": "organization_id",
+          "entity": "prm_organization.organization_id",
+          "rule": "functional_dependency_violation",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "prm_organization",
+            "determinant_column": "organization_id",
+            "dependent_column": "code",
+            "violating_examples_count": 3
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "functional_dependency_violation",
+              "severity": "medium",
+              "description": "functional dependency violation",
+              "evidence": {
+                "table_name": "prm_organization",
+                "determinant_column": "organization_id",
+                "dependent_column": "code",
+                "violating_examples_count": 3
+              }
+            }
+          ]
+        },
+        {
+          "table": "smsc_route",
+          "column": null,
+          "entity": "smsc_route",
+          "rule": "functional_dependency_violation",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "smsc_route",
+            "determinant_column": "route_smsc_id",
+            "dependent_column": "priority",
+            "violating_examples_count": 5,
+            "columns_with_high_nulls": [
+              "route_smsc_id",
+              "target_smsc_id"
+            ]
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "functional_dependency_violation",
+              "severity": "medium",
+              "description": "functional dependency violation",
+              "evidence": {
+                "table_name": "smsc_route",
+                "determinant_column": "route_smsc_id",
+                "dependent_column": "priority",
+                "violating_examples_count": 5,
+                "columns_with_high_nulls": [
+                  "route_smsc_id",
+                  "target_smsc_id"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "table": "smsc_route",
+          "column": "route_smsc_id",
+          "entity": "smsc_route.route_smsc_id",
+          "rule": "functional_dependency_violation",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "smsc_route",
+            "determinant_column": "route_smsc_id",
+            "dependent_column": "target_smsc_id",
+            "violating_examples_count": 5
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "functional_dependency_violation",
+              "severity": "medium",
+              "description": "functional dependency violation",
+              "evidence": {
+                "table_name": "smsc_route",
+                "determinant_column": "route_smsc_id",
+                "dependent_column": "target_smsc_id",
+                "violating_examples_count": 5
+              }
+            }
+          ]
+        },
+        {
+          "table": "smsc_route",
+          "column": "target_smsc_id",
+          "entity": "smsc_route.target_smsc_id",
+          "rule": "functional_dependency_violation",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "table_name": "smsc_route",
+            "determinant_column": "target_smsc_id",
+            "dependent_column": "priority",
+            "violating_examples_count": 3
+          },
+          "remediation_hint": null,
+          "issues": [
+            {
+              "type": "functional_dependency_violation",
+              "severity": "medium",
+              "description": "functional dependency violation",
+              "evidence": {
+                "table_name": "smsc_route",
+                "determinant_column": "target_smsc_id",
+                "dependent_column": "priority",
+                "violating_examples_count": 3
+              }
+            }
+          ]
+        }
+      ],
+      "prior_reports": [],
+      "report": "## Relational Validator\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 30\n- Passed: 20\n- Flagged: 10\n- Severity split: critical=0, high=1, medium=9, low=0\n- Quality score: 13.0 / 100\n- Confidence: 0.9\n- Flagged tables: campagne_contacts, prm_organization, smsc_route, user_contact, user_contact_tags\n\n### Metrics\n- Findings count: 10\n- Validator: relational\n\n### Findings (6)\n\n#### 1. campagne_contacts [HIGH]\n- Problem: orphaned fk\n- Confidence: 1.0\n- Column: contact_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [HIGH] orphaned fk\n\n#### 2. user_contact [MEDIUM]\n- Problem: functional dependency violation\n- Confidence: 0.9\n- Columns: contact_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [MEDIUM] functional dependency violation\n\n#### 3. user_contact_tags [MEDIUM]\n- Problem: functional dependency violation\n- Confidence: 0.9\n- Column: user_contact_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [MEDIUM] functional dependency violation\n\n#### 4. prm_organization [MEDIUM]\n- Problem: duplicate values\n- Confidence: 0.8\n- Column: code\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [MEDIUM] duplicate values\n\n#### 5. prm_organization [MEDIUM]\n- Problem: functional dependency violation\n- Confidence: 0.9\n- Column: organization_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [MEDIUM] functional dependency violation\n\n#### 6. smsc_route [MEDIUM]\n- Problem: functional dependency violation\n- Confidence: 0.9\n- Columns: route_smsc_id, target_smsc_id\n- Recommendation: Review this item and apply the safest corrective action.\n- Detailed issues:\n  - [MEDIUM] functional dependency violation"
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "c4976f83-72a9-47aa-8408-98925c8024a3",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-07T00:44:22.041382Z",
+      "agent": "Data Fix Planner",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 28,
+        "items_passed": 0,
+        "items_flagged": 33,
+        "critical_issues": 0,
+        "high_issues": 8,
+        "medium_issues": 25,
+        "low_issues": 0,
+        "overall_quality_score": 0.0,
+        "overall_confidence": 0.9091,
+        "flagged_tables": [
+          "budget_history",
+          "campagne",
+          "campagne_contacts",
+          "campagne_tags",
+          "expediteur_groupe",
+          "groupe",
+          "modele",
+          "prm_organization",
+          "prm_status",
+          "request_api",
+          "smsc_route",
+          "smsc_routing_rule",
+          "tags",
+          "user_contact",
+          "user_contact_tags",
+          "user_keys",
+          "user_mission"
+        ]
+      },
+      "metrics": {
+        "total_issues_received": 28,
+        "fixes_generated": 33
+      },
+      "findings": [
+        {
+          "id": "fix_001_campagne_contacts",
+          "fix_id": "delete-orphaned-campagne-contacts",
+          "rows_affected_estimate": 31,
+          "tables_touched": [
+            "campagne_contacts",
+            "contacts"
+          ],
+          "depends_on": [],
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "Delete Orphaned Rows in 'campagne_contacts'",
+          "fix": "The `contact_id` column in `campagne_contacts` references `msisdn` in the `contacts` table. There are 31 rows in `campagne_contacts` with `contact_id` values that do not exist in `contacts.msisdn`, violating referential integrity. Deleting these orphaned rows will restore data consistency. Note: Deleted rows cannot be rolled back.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 31,
+          "queries": [
+            "DELETE FROM campagne_contacts WHERE contact_id IN (SELECT s.contact_id FROM campagne_contacts s LEFT JOIN contacts t ON s.contact_id = t.msisdn WHERE t.msisdn IS NULL AND s.contact_id IS NOT NULL);"
+          ],
+          "explanation": "The `contact_id` column in `campagne_contacts` references `msisdn` in the `contacts` table. There are 31 rows in `campagne_contacts` with `contact_id` values that do not exist in `contacts.msisdn`, violating referential integrity. Deleting these orphaned rows will restore data consistency. Note: Deleted rows cannot be rolled back.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM campagne_contacts s LEFT JOIN contacts t ON s.contact_id = t.msisdn WHERE t.msisdn IS NULL AND s.contact_id IS NOT NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'Rollback not possible for DELETE operations without a prior backup.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_002_prm_organization",
+          "fix_id": "remove-dup-prm-organization-code",
+          "rows_affected_estimate": 10,
+          "tables_touched": [
+            "prm_organization"
+          ],
+          "depends_on": [],
+          "table": "prm_organization",
+          "target_table": "prm_organization",
+          "problem": "Remove Duplicate Values in 'prm_organization.code'",
+          "fix": "The column `prm_organization.code` contains duplicate values, violating data integrity. This fix deletes duplicate rows, retaining one arbitrary row for each `code` value. Note: Deleted rows cannot be rolled back.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 10,
+          "queries": [
+            "DELETE FROM prm_organization WHERE ctid NOT IN (SELECT MIN(ctid) FROM prm_organization GROUP BY code);"
+          ],
+          "explanation": "The column `prm_organization.code` contains duplicate values, violating data integrity. This fix deletes duplicate rows, retaining one arbitrary row for each `code` value. Note: Deleted rows cannot be rolled back.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM prm_organization GROUP BY code HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "SELECT 'Rollback not possible for DELETE operations without a prior backup.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_003_prm_organization",
+          "fix_id": "remove-dup-prm-organization-org-id",
+          "rows_affected_estimate": 14,
+          "tables_touched": [
+            "prm_organization"
+          ],
+          "depends_on": [],
+          "table": "prm_organization",
+          "target_table": "prm_organization",
+          "problem": "Remove Duplicate Values for 'prm_organization.organization_id' to Enforce Functional Dependency",
+          "fix": "The `organization_id` column in `prm_organization` is expected to functionally determine `code`, but violations exist (multiple codes for the same organization_id). This fix deletes duplicate rows based on `organization_id`, retaining one arbitrary row for each `organization_id` value. Note: Deleted rows cannot be rolled back.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 14,
+          "queries": [
+            "DELETE FROM prm_organization WHERE ctid NOT IN (SELECT MIN(ctid) FROM prm_organization GROUP BY organization_id);"
+          ],
+          "explanation": "The `organization_id` column in `prm_organization` is expected to functionally determine `code`, but violations exist (multiple codes for the same organization_id). This fix deletes duplicate rows based on `organization_id`, retaining one arbitrary row for each `organization_id` value. Note: Deleted rows cannot be rolled back.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM prm_organization GROUP BY organization_id HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "SELECT 'Rollback not possible for DELETE operations without a prior backup.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_004_smsc_route",
+          "fix_id": "remove-fd-viol-smsc-route-route-smsc-id",
+          "rows_affected_estimate": 10,
+          "tables_touched": [
+            "smsc_route"
+          ],
+          "depends_on": [],
+          "table": "smsc_route",
+          "target_table": "smsc_route",
+          "problem": "Remove Functional Dependency Violations in 'smsc_route.route_smsc_id'",
+          "fix": "The column `smsc_route.route_smsc_id` is expected to functionally determine `priority`, but violations exist. This fix deletes rows where `route_smsc_id` is duplicated with different `priority` values, keeping one arbitrary `priority` per `route_smsc_id`. Note: Deleted rows cannot be rolled back.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 10,
+          "queries": [
+            "DELETE FROM smsc_route WHERE (route_smsc_id, priority) NOT IN (SELECT route_smsc_id, MIN(priority) FROM smsc_route GROUP BY route_smsc_id);"
+          ],
+          "explanation": "The column `smsc_route.route_smsc_id` is expected to functionally determine `priority`, but violations exist. This fix deletes rows where `route_smsc_id` is duplicated with different `priority` values, keeping one arbitrary `priority` per `route_smsc_id`. Note: Deleted rows cannot be rolled back.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM smsc_route WHERE (route_smsc_id, priority) NOT IN (SELECT route_smsc_id, MIN(priority) FROM smsc_route GROUP BY route_smsc_id);"
+          ],
+          "rollback_queries": [
+            "SELECT 'Rollback not possible for DELETE operations without a prior backup.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_005_user_contact",
+          "fix_id": "remove-fd-viol-user-contact-contact-id",
+          "rows_affected_estimate": 9999,
+          "tables_touched": [
+            "user_contact"
+          ],
+          "depends_on": [],
+          "table": "user_contact",
+          "target_table": "user_contact",
+          "problem": "Remove Functional Dependency Violations in 'user_contact.contact_id'",
+          "fix": "The column `user_contact.contact_id` is expected to functionally determine `date_created`, but violations exist. This fix deletes rows where `contact_id` is duplicated with different `date_created` values, keeping one arbitrary `date_created` per `contact_id`. Note: Deleted rows cannot be rolled back.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 9999,
+          "queries": [
+            "DELETE FROM user_contact WHERE (contact_id, date_created) NOT IN (SELECT contact_id, MIN(date_created) FROM user_contact GROUP BY contact_id);"
+          ],
+          "explanation": "The column `user_contact.contact_id` is expected to functionally determine `date_created`, but violations exist. This fix deletes rows where `contact_id` is duplicated with different `date_created` values, keeping one arbitrary `date_created` per `contact_id`. Note: Deleted rows cannot be rolled back.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM user_contact WHERE (contact_id, date_created) NOT IN (SELECT contact_id, MIN(date_created) FROM user_contact GROUP BY contact_id);"
+          ],
+          "rollback_queries": [
+            "SELECT 'Rollback not possible for DELETE operations without a prior backup.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_006_user_contact_tags",
+          "fix_id": "remove-fd-viol-user-contact-tags-user-contact-id",
+          "rows_affected_estimate": 13,
+          "tables_touched": [
+            "user_contact_tags"
+          ],
+          "depends_on": [],
+          "table": "user_contact_tags",
+          "target_table": "user_contact_tags",
+          "problem": "Remove Functional Dependency Violations in 'user_contact_tags.user_contact_id'",
+          "fix": "The column `user_contact_tags.user_contact_id` is expected to functionally determine `tag_id`, but violations exist. This fix deletes rows where `user_contact_id` is duplicated with different `tag_id` values, keeping one arbitrary `tag_id` per `user_contact_id`. Note: Deleted rows cannot be rolled back.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 13,
+          "queries": [
+            "DELETE FROM user_contact_tags WHERE (user_contact_id, tag_id) NOT IN (SELECT user_contact_id, MIN(tag_id) FROM user_contact_tags GROUP BY user_contact_id);"
+          ],
+          "explanation": "The column `user_contact_tags.user_contact_id` is expected to functionally determine `tag_id`, but violations exist. This fix deletes rows where `user_contact_id` is duplicated with different `tag_id` values, keeping one arbitrary `tag_id` per `user_contact_id`. Note: Deleted rows cannot be rolled back.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM user_contact_tags WHERE (user_contact_id, tag_id) NOT IN (SELECT user_contact_id, MIN(tag_id) FROM user_contact_tags GROUP BY user_contact_id);"
+          ],
+          "rollback_queries": [
+            "SELECT 'Rollback not possible for DELETE operations without a prior backup.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_007_campagne_contacts",
+          "fix_id": "fix-pk-campagne-contacts",
+          "rows_affected_estimate": 31,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": [],
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "Add Primary Key to 'campagne_contacts'",
+          "fix": "The table 'campagne_contacts' is missing a primary key, which is essential for data integrity, efficient data retrieval, and establishing relationships with other tables. A composite primary key on `campagne_id` and `contact_id` is proposed.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 31,
+          "queries": [
+            "ALTER TABLE campagne_contacts ADD CONSTRAINT pk_campagne_contacts PRIMARY KEY (campagne_id, contact_id);"
+          ],
+          "explanation": "The table 'campagne_contacts' is missing a primary key, which is essential for data integrity, efficient data retrieval, and establishing relationships with other tables. A composite primary key on `campagne_id` and `contact_id` is proposed.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'pk_campagne_contacts';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_contacts DROP CONSTRAINT IF EXISTS pk_campagne_contacts;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_008_campagne_tags",
+          "fix_id": "fix-pk-campagne-tags",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_tags"
+          ],
+          "depends_on": [],
+          "table": "campagne_tags",
+          "target_table": "campagne_tags",
+          "problem": "Add Primary Key to 'campagne_tags'",
+          "fix": "The table 'campagne_tags' is missing a primary key, which is essential for data integrity, efficient data retrieval, and establishing relationships with other tables. A composite primary key on `campagne_id` and `tag_name` is proposed.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE campagne_tags ADD CONSTRAINT pk_campagne_tags PRIMARY KEY (campagne_id, tag_name);"
+          ],
+          "explanation": "The table 'campagne_tags' is missing a primary key, which is essential for data integrity, efficient data retrieval, and establishing relationships with other tables. A composite primary key on `campagne_id` and `tag_name` is proposed.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'pk_campagne_tags';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_tags DROP CONSTRAINT IF EXISTS pk_campagne_tags;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_009_expediteur_groupe",
+          "fix_id": "fix-pk-expediteur-groupe",
+          "rows_affected_estimate": 18,
+          "tables_touched": [
+            "expediteur_groupe"
+          ],
+          "depends_on": [],
+          "table": "expediteur_groupe",
+          "target_table": "expediteur_groupe",
+          "problem": "Add Primary Key to 'expediteur_groupe'",
+          "fix": "The table 'expediteur_groupe' is missing a primary key, which is essential for data integrity, efficient data retrieval, and establishing relationships with other tables. A composite primary key on `groupe_id` and `expediteur_id` is proposed.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 18,
+          "queries": [
+            "ALTER TABLE expediteur_groupe ADD CONSTRAINT pk_expediteur_groupe PRIMARY KEY (groupe_id, expediteur_id);"
+          ],
+          "explanation": "The table 'expediteur_groupe' is missing a primary key, which is essential for data integrity, efficient data retrieval, and establishing relationships with other tables. A composite primary key on `groupe_id` and `expediteur_id` is proposed.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'pk_expediteur_groupe';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE expediteur_groupe DROP CONSTRAINT IF EXISTS pk_expediteur_groupe;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_010_user_contact_tags",
+          "fix_id": "fix-pk-user-contact-tags",
+          "rows_affected_estimate": 20051,
+          "tables_touched": [
+            "user_contact_tags"
+          ],
+          "depends_on": [],
+          "table": "user_contact_tags",
+          "target_table": "user_contact_tags",
+          "problem": "Add Primary Key to 'user_contact_tags'",
+          "fix": "The table 'user_contact_tags' is missing a primary key, which is essential for data integrity, efficient data retrieval, and establishing relationships with other tables. A composite primary key on `user_contact_id` and `tag_id` is proposed.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 20051,
+          "queries": [
+            "ALTER TABLE user_contact_tags ADD CONSTRAINT pk_user_contact_tags PRIMARY KEY (user_contact_id, tag_id);"
+          ],
+          "explanation": "The table 'user_contact_tags' is missing a primary key, which is essential for data integrity, efficient data retrieval, and establishing relationships with other tables. A composite primary key on `user_contact_id` and `tag_id` is proposed.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'pk_user_contact_tags';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE user_contact_tags DROP CONSTRAINT IF EXISTS pk_user_contact_tags;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_011_prm_organization",
+          "fix_id": "add-unique-prm-organization-code",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "prm_organization"
+          ],
+          "depends_on": [
+            "remove-dup-prm-organization-code"
+          ],
+          "table": "prm_organization",
+          "target_table": "prm_organization",
+          "problem": "Add Unique Constraint on 'prm_organization.code'",
+          "fix": "To enforce uniqueness for the `code` column in `prm_organization`, a unique constraint is added. This fix depends on the prior removal of duplicate rows.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE prm_organization ADD CONSTRAINT uk_prm_organization_code UNIQUE (code);"
+          ],
+          "explanation": "To enforce uniqueness for the `code` column in `prm_organization`, a unique constraint is added. This fix depends on the prior removal of duplicate rows.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname='uk_prm_organization_code';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE prm_organization DROP CONSTRAINT IF EXISTS uk_prm_organization_code;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_012_prm_organization",
+          "fix_id": "add-unique-prm-organization-org-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "prm_organization"
+          ],
+          "depends_on": [
+            "remove-dup-prm-organization-org-id"
+          ],
+          "table": "prm_organization",
+          "target_table": "prm_organization",
+          "problem": "Add Unique Constraint on 'prm_organization.organization_id'",
+          "fix": "To enforce the functional dependency where `organization_id` determines `code`, a unique constraint is added to `prm_organization.organization_id`. This ensures that each `organization_id` has a single corresponding `code`. This fix depends on the prior removal of violating rows.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE prm_organization ADD CONSTRAINT uk_prm_organization_organization_id UNIQUE (organization_id);"
+          ],
+          "explanation": "To enforce the functional dependency where `organization_id` determines `code`, a unique constraint is added to `prm_organization.organization_id`. This ensures that each `organization_id` has a single corresponding `code`. This fix depends on the prior removal of violating rows.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname='uk_prm_organization_organization_id';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE prm_organization DROP CONSTRAINT IF EXISTS uk_prm_organization_organization_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_013_smsc_route",
+          "fix_id": "add-unique-smsc-route-route-smsc-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "smsc_route"
+          ],
+          "depends_on": [
+            "remove-fd-viol-smsc-route-route-smsc-id"
+          ],
+          "table": "smsc_route",
+          "target_table": "smsc_route",
+          "problem": "Add Unique Constraint on 'smsc_route.route_smsc_id'",
+          "fix": "To enforce the functional dependency where `route_smsc_id` determines `priority`, a unique constraint is added to `smsc_route.route_smsc_id`. This ensures that each `route_smsc_id` has a single corresponding `priority`. This fix depends on the prior removal of violating rows.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE smsc_route ADD CONSTRAINT uk_smsc_route_route_smsc_id UNIQUE (route_smsc_id);"
+          ],
+          "explanation": "To enforce the functional dependency where `route_smsc_id` determines `priority`, a unique constraint is added to `smsc_route.route_smsc_id`. This ensures that each `route_smsc_id` has a single corresponding `priority`. This fix depends on the prior removal of violating rows.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname='uk_smsc_route_route_smsc_id';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE smsc_route DROP CONSTRAINT IF EXISTS uk_smsc_route_route_smsc_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_014_user_contact",
+          "fix_id": "add-unique-user-contact-contact-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_contact"
+          ],
+          "depends_on": [
+            "remove-fd-viol-user-contact-contact-id"
+          ],
+          "table": "user_contact",
+          "target_table": "user_contact",
+          "problem": "Add Unique Constraint on 'user_contact.contact_id'",
+          "fix": "To enforce the functional dependency where `contact_id` determines `date_created`, a unique constraint is added to `user_contact.contact_id`. This ensures that each `contact_id` has a single corresponding `date_created`. This fix depends on the prior removal of violating rows.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE user_contact ADD CONSTRAINT uk_user_contact_contact_id UNIQUE (contact_id);"
+          ],
+          "explanation": "To enforce the functional dependency where `contact_id` determines `date_created`, a unique constraint is added to `user_contact.contact_id`. This ensures that each `contact_id` has a single corresponding `date_created`. This fix depends on the prior removal of violating rows.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname='uk_user_contact_contact_id';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE user_contact DROP CONSTRAINT IF EXISTS uk_user_contact_contact_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_015_user_contact_tags",
+          "fix_id": "add-unique-user-contact-tags-user-contact-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_contact_tags"
+          ],
+          "depends_on": [
+            "remove-fd-viol-user-contact-tags-user-contact-id"
+          ],
+          "table": "user_contact_tags",
+          "target_table": "user_contact_tags",
+          "problem": "Add Unique Constraint on 'user_contact_tags.user_contact_id'",
+          "fix": "To enforce the functional dependency where `user_contact_id` determines `tag_id`, a unique constraint is added to `user_contact_tags.user_contact_id`. This ensures that each `user_contact_id` has a single corresponding `tag_id`. This fix depends on the prior removal of violating rows.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE user_contact_tags ADD CONSTRAINT uk_user_contact_tags_user_contact_id UNIQUE (user_contact_id);"
+          ],
+          "explanation": "To enforce the functional dependency where `user_contact_id` determines `tag_id`, a unique constraint is added to `user_contact_tags.user_contact_id`. This ensures that each `user_contact_id` has a single corresponding `tag_id`. This fix depends on the prior removal of violating rows.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname='uk_user_contact_tags_user_contact_id';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE user_contact_tags DROP CONSTRAINT IF EXISTS uk_user_contact_tags_user_contact_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_016_budget_history",
+          "fix_id": "advisory-budget-history-groupe-id-nullable-fk",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "budget_history"
+          ],
+          "depends_on": [],
+          "table": "budget_history",
+          "target_table": "budget_history",
+          "problem": "Review Nullable Foreign Key 'budget_history.groupe_id'",
+          "fix": "The foreign key column `groupe_id` in table `budget_history` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT groupe_id FROM budget_history WHERE groupe_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "The foreign key column `groupe_id` in table `budget_history` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM budget_history WHERE groupe_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_017_campagne_contacts",
+          "fix_id": "advisory-campagne-contacts-contact-id-nullable-fk",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": [],
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "Review Nullable Foreign Key 'campagne_contacts.contact_id'",
+          "fix": "The foreign key column `contact_id` in table `campagne_contacts` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "severity": "high",
+          "confidence": 1.0,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT contact_id FROM campagne_contacts WHERE contact_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "The foreign key column `contact_id` in table `campagne_contacts` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM campagne_contacts WHERE contact_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_018_campagne",
+          "fix_id": "advisory-campagne-schedule-id-nullable-fk",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne"
+          ],
+          "depends_on": [],
+          "table": "campagne",
+          "target_table": "campagne",
+          "problem": "Review Nullable Foreign Key 'campagne.schedule_id'",
+          "fix": "The foreign key column `schedule_id` in table `campagne` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT schedule_id FROM campagne WHERE schedule_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "The foreign key column `schedule_id` in table `campagne` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM campagne WHERE schedule_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_019_groupe",
+          "fix_id": "advisory-groupe-admin-id-nullable-fk",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": [],
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "Review Nullable Foreign Key 'groupe.admin_id'",
+          "fix": "The foreign key column `admin_id` in table `groupe` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT admin_id FROM groupe WHERE admin_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "The foreign key column `admin_id` in table `groupe` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM groupe WHERE admin_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_020_groupe",
+          "fix_id": "advisory-groupe-admin-id-null-ratio",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": [],
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "Review High Null Ratio in 'groupe.admin_id'",
+          "fix": "The column `admin_id` in table `groupe` has a high null ratio (88.89%), exceeding the defined threshold of 5%. This suggests that the column might not always be populated, potentially indicating an optional relationship or data quality issue. Review business logic to determine if this is expected or if data entry processes need adjustment.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT admin_id, COUNT(*) FROM groupe WHERE admin_id IS NULL GROUP BY admin_id;"
+          ],
+          "explanation": "The column `admin_id` in table `groupe` has a high null ratio (88.89%), exceeding the defined threshold of 5%. This suggests that the column might not always be populated, potentially indicating an optional relationship or data quality issue. Review business logic to determine if this is expected or if data entry processes need adjustment.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT admin_id, COUNT(*) FROM groupe WHERE admin_id IS NULL GROUP BY admin_id;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_021_modele",
+          "fix_id": "advisory-modele-membership-id-nullable-fk",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "modele"
+          ],
+          "depends_on": [],
+          "table": "modele",
+          "target_table": "modele",
+          "problem": "Review Nullable Foreign Key 'modele.membership_id'",
+          "fix": "The foreign key column `membership_id` in table `modele` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT membership_id FROM modele WHERE membership_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "The foreign key column `membership_id` in table `modele` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM modele WHERE membership_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_022_prm_status",
+          "fix_id": "advisory-prm-status-updated-at-null-ratio",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "prm_status"
+          ],
+          "depends_on": [],
+          "table": "prm_status",
+          "target_table": "prm_status",
+          "problem": "Review High Null Ratio in 'prm_status.updated_at'",
+          "fix": "The column `updated_at` in table `prm_status` has a high null ratio (100.00%), exceeding the defined threshold of 5%. This suggests that the column might not always be populated, potentially indicating an optional relationship or data quality issue. Review business logic to determine if this is expected or if data entry processes need adjustment.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT updated_at, COUNT(*) FROM prm_status WHERE updated_at IS NULL GROUP BY updated_at;"
+          ],
+          "explanation": "The column `updated_at` in table `prm_status` has a high null ratio (100.00%), exceeding the defined threshold of 5%. This suggests that the column might not always be populated, potentially indicating an optional relationship or data quality issue. Review business logic to determine if this is expected or if data entry processes need adjustment.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT updated_at, COUNT(*) FROM prm_status WHERE updated_at IS NULL GROUP BY updated_at;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_023_request_api",
+          "fix_id": "advisory-request-api-membership-id-nullable-fk",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "request_api"
+          ],
+          "depends_on": [],
+          "table": "request_api",
+          "target_table": "request_api",
+          "problem": "Review Nullable Foreign Key 'request_api.membership_id'",
+          "fix": "The foreign key column `membership_id` in table `request_api` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT membership_id FROM request_api WHERE membership_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "The foreign key column `membership_id` in table `request_api` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM request_api WHERE membership_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_024_smsc_routing_rule",
+          "fix_id": "advisory-smsc-routing-rule-expediteur-id-nullable-fk",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "smsc_routing_rule"
+          ],
+          "depends_on": [],
+          "table": "smsc_routing_rule",
+          "target_table": "smsc_routing_rule",
+          "problem": "Review Nullable Foreign Key 'smsc_routing_rule.expediteur_id'",
+          "fix": "The foreign key column `expediteur_id` in table `smsc_routing_rule` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT expediteur_id FROM smsc_routing_rule WHERE expediteur_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "The foreign key column `expediteur_id` in table `smsc_routing_rule` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM smsc_routing_rule WHERE expediteur_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_025_smsc_routing_rule",
+          "fix_id": "advisory-smsc-routing-rule-null-ratio",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "smsc_routing_rule"
+          ],
+          "depends_on": [],
+          "table": "smsc_routing_rule",
+          "target_table": "smsc_routing_rule",
+          "problem": "Review High Null Ratio in 'smsc_routing_rule' (expediteur_id, groupe_id)",
+          "fix": "The columns `expediteur_id` and `groupe_id` in table `smsc_routing_rule` have a high null ratio (85.71%), exceeding the defined threshold of 5%. This suggests that these columns might not always be populated, potentially indicating optional relationships or data quality issues. Review business logic to determine if this is expected or if data entry processes need adjustment.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT expediteur_id, groupe_id, COUNT(*) FROM smsc_routing_rule WHERE expediteur_id IS NULL OR groupe_id IS NULL GROUP BY expediteur_id, groupe_id;"
+          ],
+          "explanation": "The columns `expediteur_id` and `groupe_id` in table `smsc_routing_rule` have a high null ratio (85.71%), exceeding the defined threshold of 5%. This suggests that these columns might not always be populated, potentially indicating optional relationships or data quality issues. Review business logic to determine if this is expected or if data entry processes need adjustment.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT expediteur_id, groupe_id, COUNT(*) FROM smsc_routing_rule WHERE expediteur_id IS NULL OR groupe_id IS NULL GROUP BY expediteur_id, groupe_id;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_026_tags",
+          "fix_id": "advisory-tags-membership-id-nullable-fk",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "tags"
+          ],
+          "depends_on": [],
+          "table": "tags",
+          "target_table": "tags",
+          "problem": "Review Nullable Foreign Key 'tags.membership_id'",
+          "fix": "The foreign key column `membership_id` in table `tags` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "severity": "medium",
+          "confidence": 0.8,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT membership_id FROM tags WHERE membership_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "The foreign key column `membership_id` in table `tags` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM tags WHERE membership_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_027_user_contact",
+          "fix_id": "advisory-user-contact-categorical-drift",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_contact"
+          ],
+          "depends_on": [],
+          "table": "user_contact",
+          "target_table": "user_contact",
+          "problem": "Review Categorical Drift in 'user_contact' (attribute1, attribute2, attribute3)",
+          "fix": "The columns `attribute1`, `attribute2`, and `attribute3` in table `user_contact` show a high percentage of empty strings (99.82%), indicating potential categorical drift. This suggests that these columns are rarely populated with meaningful values, which could impact data quality and analysis. Review data collection processes and consider if these columns are still necessary or if their usage needs to be enforced.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT attribute1, attribute2, attribute3 FROM user_contact WHERE attribute1 = '' OR attribute2 = '' OR attribute3 = '' LIMIT 10;"
+          ],
+          "explanation": "The columns `attribute1`, `attribute2`, and `attribute3` in table `user_contact` show a high percentage of empty strings (99.82%), indicating potential categorical drift. This suggests that these columns are rarely populated with meaningful values, which could impact data quality and analysis. Review data collection processes and consider if these columns are still necessary or if their usage needs to be enforced.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM user_contact WHERE attribute1 = '' OR attribute2 = '' OR attribute3 = '';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_028_user_contact",
+          "fix_id": "advisory-user-contact-membership-id-nullable-fk",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_contact"
+          ],
+          "depends_on": [],
+          "table": "user_contact",
+          "target_table": "user_contact",
+          "problem": "Review Nullable Foreign Key 'user_contact.membership_id'",
+          "fix": "The foreign key column `membership_id` in table `user_contact` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT membership_id FROM user_contact WHERE membership_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "The foreign key column `membership_id` in table `user_contact` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM user_contact WHERE membership_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_029_user_keys",
+          "fix_id": "advisory-user-keys-membership-id-nullable-fk",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_keys"
+          ],
+          "depends_on": [],
+          "table": "user_keys",
+          "target_table": "user_keys",
+          "problem": "Review Nullable Foreign Key 'user_keys.membership_id'",
+          "fix": "The foreign key column `membership_id` in table `user_keys` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT membership_id FROM user_keys WHERE membership_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "The foreign key column `membership_id` in table `user_keys` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM user_keys WHERE membership_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_030_user_keys",
+          "fix_id": "advisory-user-keys-null-ratio",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_keys"
+          ],
+          "depends_on": [],
+          "table": "user_keys",
+          "target_table": "user_keys",
+          "problem": "Review High Null Ratio in 'user_keys' (expiration_date, last_time_used_date)",
+          "fix": "The columns `expiration_date` and `last_time_used_date` in table `user_keys` have a high null ratio (100.00%), exceeding the defined threshold of 5%. This suggests that these columns might not always be populated, potentially indicating optional relationships or data quality issue. Review business logic to determine if this is expected or if data entry processes need adjustment.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT expiration_date, last_time_used_date, COUNT(*) FROM user_keys WHERE expiration_date IS NULL OR last_time_used_date IS NULL GROUP BY expiration_date, last_time_used_date;"
+          ],
+          "explanation": "The columns `expiration_date` and `last_time_used_date` in table `user_keys` have a high null ratio (100.00%), exceeding the defined threshold of 5%. This suggests that these columns might not always be populated, potentially indicating optional relationships or data quality issue. Review business logic to determine if this is expected or if data entry processes need adjustment.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT expiration_date, last_time_used_date, COUNT(*) FROM user_keys WHERE expiration_date IS NULL OR last_time_used_date IS NULL GROUP BY expiration_date, last_time_used_date;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_031_user_mission",
+          "fix_id": "advisory-user-mission-groupe-id-nullable-fk",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_mission"
+          ],
+          "depends_on": [],
+          "table": "user_mission",
+          "target_table": "user_mission",
+          "problem": "Review Nullable Foreign Key 'user_mission.groupe_id'",
+          "fix": "The foreign key column `groupe_id` in table `user_mission` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT groupe_id FROM user_mission WHERE groupe_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "The foreign key column `groupe_id` in table `user_mission` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM user_mission WHERE groupe_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_032_user_mission",
+          "fix_id": "advisory-user-mission-groupe-id-null-ratio",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_mission"
+          ],
+          "depends_on": [],
+          "table": "user_mission",
+          "target_table": "user_mission",
+          "problem": "Review High Null Ratio in 'user_mission.groupe_id'",
+          "fix": "The column `groupe_id` in table `user_mission` has a high null ratio (50.00%), exceeding the defined threshold of 5%. This suggests that the column might not always be populated, potentially indicating an optional relationship or data quality issue. Review business logic to determine if this is expected or if data entry processes need adjustment.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT groupe_id, COUNT(*) FROM user_mission WHERE groupe_id IS NULL GROUP BY groupe_id;"
+          ],
+          "explanation": "The column `groupe_id` in table `user_mission` has a high null ratio (50.00%), exceeding the defined threshold of 5%. This suggests that the column might not always be populated, potentially indicating an optional relationship or data quality issue. Review business logic to determine if this is expected or if data entry processes need adjustment.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT groupe_id, COUNT(*) FROM user_mission WHERE groupe_id IS NULL GROUP BY groupe_id;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_033_groupe",
+          "fix_id": "add-index-groupe-admin-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": [],
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "Add Index to 'groupe.admin_id'",
+          "fix": "The foreign key column `admin_id` in table `groupe` is not indexed. Adding an index will improve the performance of queries involving joins or lookups on this column.",
+          "severity": "medium",
+          "confidence": 0.9,
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS ix_groupe_admin_id ON groupe (admin_id);"
+          ],
+          "explanation": "The foreign key column `admin_id` in table `groupe` is not indexed. Adding an index will improve the performance of queries involving joins or lookups on this column.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'groupe' AND indexname = 'ix_groupe_admin_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS ix_groupe_admin_id;"
+          ],
+          "explain_summary": null
+        }
+      ],
+      "cards": [
+        {
+          "fix_id": "delete-orphaned-campagne-contacts",
+          "title": "Delete Orphaned Rows in 'campagne_contacts'",
+          "target": "campagne_contacts",
+          "rationale": "The `contact_id` column in `campagne_contacts` references `msisdn` in the `contacts` table. There are 31 rows in `campagne_contacts` with `contact_id` values that do not exist in `contacts.msisdn`, violating referential integrity. Deleting these orphaned rows will restore data consistency. Note: Deleted rows cannot be rolled back.",
+          "risk_level": "high",
+          "sql": "DELETE FROM campagne_contacts WHERE contact_id IN (SELECT s.contact_id FROM campagne_contacts s LEFT JOIN contacts t ON s.contact_id = t.msisdn WHERE t.msisdn IS NULL AND s.contact_id IS NOT NULL);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM campagne_contacts s LEFT JOIN contacts t ON s.contact_id = t.msisdn WHERE t.msisdn IS NULL AND s.contact_id IS NOT NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'Rollback not possible for DELETE operations without a prior backup.';"
+          ],
+          "rows_affected_estimate": 31,
+          "tables_touched": [
+            "campagne_contacts",
+            "contacts"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "remove-dup-prm-organization-code",
+          "title": "Remove Duplicate Values in 'prm_organization.code'",
+          "target": "prm_organization",
+          "rationale": "The column `prm_organization.code` contains duplicate values, violating data integrity. This fix deletes duplicate rows, retaining one arbitrary row for each `code` value. Note: Deleted rows cannot be rolled back.",
+          "risk_level": "high",
+          "sql": "DELETE FROM prm_organization WHERE ctid NOT IN (SELECT MIN(ctid) FROM prm_organization GROUP BY code);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM prm_organization GROUP BY code HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "SELECT 'Rollback not possible for DELETE operations without a prior backup.';"
+          ],
+          "rows_affected_estimate": 10,
+          "tables_touched": [
+            "prm_organization"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "remove-dup-prm-organization-org-id",
+          "title": "Remove Duplicate Values for 'prm_organization.organization_id' to Enforce Functional Dependency",
+          "target": "prm_organization",
+          "rationale": "The `organization_id` column in `prm_organization` is expected to functionally determine `code`, but violations exist (multiple codes for the same organization_id). This fix deletes duplicate rows based on `organization_id`, retaining one arbitrary row for each `organization_id` value. Note: Deleted rows cannot be rolled back.",
+          "risk_level": "high",
+          "sql": "DELETE FROM prm_organization WHERE ctid NOT IN (SELECT MIN(ctid) FROM prm_organization GROUP BY organization_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM prm_organization GROUP BY organization_id HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "SELECT 'Rollback not possible for DELETE operations without a prior backup.';"
+          ],
+          "rows_affected_estimate": 14,
+          "tables_touched": [
+            "prm_organization"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "remove-fd-viol-smsc-route-route-smsc-id",
+          "title": "Remove Functional Dependency Violations in 'smsc_route.route_smsc_id'",
+          "target": "smsc_route",
+          "rationale": "The column `smsc_route.route_smsc_id` is expected to functionally determine `priority`, but violations exist. This fix deletes rows where `route_smsc_id` is duplicated with different `priority` values, keeping one arbitrary `priority` per `route_smsc_id`. Note: Deleted rows cannot be rolled back.",
+          "risk_level": "high",
+          "sql": "DELETE FROM smsc_route WHERE (route_smsc_id, priority) NOT IN (SELECT route_smsc_id, MIN(priority) FROM smsc_route GROUP BY route_smsc_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM smsc_route WHERE (route_smsc_id, priority) NOT IN (SELECT route_smsc_id, MIN(priority) FROM smsc_route GROUP BY route_smsc_id);"
+          ],
+          "rollback_queries": [
+            "SELECT 'Rollback not possible for DELETE operations without a prior backup.';"
+          ],
+          "rows_affected_estimate": 10,
+          "tables_touched": [
+            "smsc_route"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "remove-fd-viol-user-contact-contact-id",
+          "title": "Remove Functional Dependency Violations in 'user_contact.contact_id'",
+          "target": "user_contact",
+          "rationale": "The column `user_contact.contact_id` is expected to functionally determine `date_created`, but violations exist. This fix deletes rows where `contact_id` is duplicated with different `date_created` values, keeping one arbitrary `date_created` per `contact_id`. Note: Deleted rows cannot be rolled back.",
+          "risk_level": "high",
+          "sql": "DELETE FROM user_contact WHERE (contact_id, date_created) NOT IN (SELECT contact_id, MIN(date_created) FROM user_contact GROUP BY contact_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM user_contact WHERE (contact_id, date_created) NOT IN (SELECT contact_id, MIN(date_created) FROM user_contact GROUP BY contact_id);"
+          ],
+          "rollback_queries": [
+            "SELECT 'Rollback not possible for DELETE operations without a prior backup.';"
+          ],
+          "rows_affected_estimate": 9999,
+          "tables_touched": [
+            "user_contact"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "remove-fd-viol-user-contact-tags-user-contact-id",
+          "title": "Remove Functional Dependency Violations in 'user_contact_tags.user_contact_id'",
+          "target": "user_contact_tags",
+          "rationale": "The column `user_contact_tags.user_contact_id` is expected to functionally determine `tag_id`, but violations exist. This fix deletes rows where `user_contact_id` is duplicated with different `tag_id` values, keeping one arbitrary `tag_id` per `user_contact_id`. Note: Deleted rows cannot be rolled back.",
+          "risk_level": "high",
+          "sql": "DELETE FROM user_contact_tags WHERE (user_contact_id, tag_id) NOT IN (SELECT user_contact_id, MIN(tag_id) FROM user_contact_tags GROUP BY user_contact_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM user_contact_tags WHERE (user_contact_id, tag_id) NOT IN (SELECT user_contact_id, MIN(tag_id) FROM user_contact_tags GROUP BY user_contact_id);"
+          ],
+          "rollback_queries": [
+            "SELECT 'Rollback not possible for DELETE operations without a prior backup.';"
+          ],
+          "rows_affected_estimate": 13,
+          "tables_touched": [
+            "user_contact_tags"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "fix-pk-campagne-contacts",
+          "title": "Add Primary Key to 'campagne_contacts'",
+          "target": "campagne_contacts",
+          "rationale": "The table 'campagne_contacts' is missing a primary key, which is essential for data integrity, efficient data retrieval, and establishing relationships with other tables. A composite primary key on `campagne_id` and `contact_id` is proposed.",
+          "risk_level": "low",
+          "sql": "ALTER TABLE campagne_contacts ADD CONSTRAINT pk_campagne_contacts PRIMARY KEY (campagne_id, contact_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'pk_campagne_contacts';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_contacts DROP CONSTRAINT IF EXISTS pk_campagne_contacts;"
+          ],
+          "rows_affected_estimate": 31,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "fix-pk-campagne-tags",
+          "title": "Add Primary Key to 'campagne_tags'",
+          "target": "campagne_tags",
+          "rationale": "The table 'campagne_tags' is missing a primary key, which is essential for data integrity, efficient data retrieval, and establishing relationships with other tables. A composite primary key on `campagne_id` and `tag_name` is proposed.",
+          "risk_level": "low",
+          "sql": "ALTER TABLE campagne_tags ADD CONSTRAINT pk_campagne_tags PRIMARY KEY (campagne_id, tag_name);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'pk_campagne_tags';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_tags DROP CONSTRAINT IF EXISTS pk_campagne_tags;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_tags"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "fix-pk-expediteur-groupe",
+          "title": "Add Primary Key to 'expediteur_groupe'",
+          "target": "expediteur_groupe",
+          "rationale": "The table 'expediteur_groupe' is missing a primary key, which is essential for data integrity, efficient data retrieval, and establishing relationships with other tables. A composite primary key on `groupe_id` and `expediteur_id` is proposed.",
+          "risk_level": "low",
+          "sql": "ALTER TABLE expediteur_groupe ADD CONSTRAINT pk_expediteur_groupe PRIMARY KEY (groupe_id, expediteur_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'pk_expediteur_groupe';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE expediteur_groupe DROP CONSTRAINT IF EXISTS pk_expediteur_groupe;"
+          ],
+          "rows_affected_estimate": 18,
+          "tables_touched": [
+            "expediteur_groupe"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "fix-pk-user-contact-tags",
+          "title": "Add Primary Key to 'user_contact_tags'",
+          "target": "user_contact_tags",
+          "rationale": "The table 'user_contact_tags' is missing a primary key, which is essential for data integrity, efficient data retrieval, and establishing relationships with other tables. A composite primary key on `user_contact_id` and `tag_id` is proposed.",
+          "risk_level": "low",
+          "sql": "ALTER TABLE user_contact_tags ADD CONSTRAINT pk_user_contact_tags PRIMARY KEY (user_contact_id, tag_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'pk_user_contact_tags';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE user_contact_tags DROP CONSTRAINT IF EXISTS pk_user_contact_tags;"
+          ],
+          "rows_affected_estimate": 20051,
+          "tables_touched": [
+            "user_contact_tags"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "add-unique-prm-organization-code",
+          "title": "Add Unique Constraint on 'prm_organization.code'",
+          "target": "prm_organization",
+          "rationale": "To enforce uniqueness for the `code` column in `prm_organization`, a unique constraint is added. This fix depends on the prior removal of duplicate rows.",
+          "risk_level": "low",
+          "sql": "ALTER TABLE prm_organization ADD CONSTRAINT uk_prm_organization_code UNIQUE (code);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname='uk_prm_organization_code';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE prm_organization DROP CONSTRAINT IF EXISTS uk_prm_organization_code;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "prm_organization"
+          ],
+          "depends_on": [
+            "remove-dup-prm-organization-code"
+          ]
+        },
+        {
+          "fix_id": "add-unique-prm-organization-org-id",
+          "title": "Add Unique Constraint on 'prm_organization.organization_id'",
+          "target": "prm_organization",
+          "rationale": "To enforce the functional dependency where `organization_id` determines `code`, a unique constraint is added to `prm_organization.organization_id`. This ensures that each `organization_id` has a single corresponding `code`. This fix depends on the prior removal of violating rows.",
+          "risk_level": "low",
+          "sql": "ALTER TABLE prm_organization ADD CONSTRAINT uk_prm_organization_organization_id UNIQUE (organization_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname='uk_prm_organization_organization_id';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE prm_organization DROP CONSTRAINT IF EXISTS uk_prm_organization_organization_id;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "prm_organization"
+          ],
+          "depends_on": [
+            "remove-dup-prm-organization-org-id"
+          ]
+        },
+        {
+          "fix_id": "add-unique-smsc-route-route-smsc-id",
+          "title": "Add Unique Constraint on 'smsc_route.route_smsc_id'",
+          "target": "smsc_route",
+          "rationale": "To enforce the functional dependency where `route_smsc_id` determines `priority`, a unique constraint is added to `smsc_route.route_smsc_id`. This ensures that each `route_smsc_id` has a single corresponding `priority`. This fix depends on the prior removal of violating rows.",
+          "risk_level": "low",
+          "sql": "ALTER TABLE smsc_route ADD CONSTRAINT uk_smsc_route_route_smsc_id UNIQUE (route_smsc_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname='uk_smsc_route_route_smsc_id';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE smsc_route DROP CONSTRAINT IF EXISTS uk_smsc_route_route_smsc_id;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "smsc_route"
+          ],
+          "depends_on": [
+            "remove-fd-viol-smsc-route-route-smsc-id"
+          ]
+        },
+        {
+          "fix_id": "add-unique-user-contact-contact-id",
+          "title": "Add Unique Constraint on 'user_contact.contact_id'",
+          "target": "user_contact",
+          "rationale": "To enforce the functional dependency where `contact_id` determines `date_created`, a unique constraint is added to `user_contact.contact_id`. This ensures that each `contact_id` has a single corresponding `date_created`. This fix depends on the prior removal of violating rows.",
+          "risk_level": "low",
+          "sql": "ALTER TABLE user_contact ADD CONSTRAINT uk_user_contact_contact_id UNIQUE (contact_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname='uk_user_contact_contact_id';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE user_contact DROP CONSTRAINT IF EXISTS uk_user_contact_contact_id;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_contact"
+          ],
+          "depends_on": [
+            "remove-fd-viol-user-contact-contact-id"
+          ]
+        },
+        {
+          "fix_id": "add-unique-user-contact-tags-user-contact-id",
+          "title": "Add Unique Constraint on 'user_contact_tags.user_contact_id'",
+          "target": "user_contact_tags",
+          "rationale": "To enforce the functional dependency where `user_contact_id` determines `tag_id`, a unique constraint is added to `user_contact_tags.user_contact_id`. This ensures that each `user_contact_id` has a single corresponding `tag_id`. This fix depends on the prior removal of violating rows.",
+          "risk_level": "low",
+          "sql": "ALTER TABLE user_contact_tags ADD CONSTRAINT uk_user_contact_tags_user_contact_id UNIQUE (user_contact_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname='uk_user_contact_tags_user_contact_id';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE user_contact_tags DROP CONSTRAINT IF EXISTS uk_user_contact_tags_user_contact_id;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_contact_tags"
+          ],
+          "depends_on": [
+            "remove-fd-viol-user-contact-tags-user-contact-id"
+          ]
+        },
+        {
+          "fix_id": "advisory-budget-history-groupe-id-nullable-fk",
+          "title": "Review Nullable Foreign Key 'budget_history.groupe_id'",
+          "target": "budget_history",
+          "rationale": "The foreign key column `groupe_id` in table `budget_history` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "risk_level": "low",
+          "sql": "SELECT groupe_id FROM budget_history WHERE groupe_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM budget_history WHERE groupe_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "budget_history"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advisory-campagne-contacts-contact-id-nullable-fk",
+          "title": "Review Nullable Foreign Key 'campagne_contacts.contact_id'",
+          "target": "campagne_contacts",
+          "rationale": "The foreign key column `contact_id` in table `campagne_contacts` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "risk_level": "low",
+          "sql": "SELECT contact_id FROM campagne_contacts WHERE contact_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM campagne_contacts WHERE contact_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advisory-campagne-schedule-id-nullable-fk",
+          "title": "Review Nullable Foreign Key 'campagne.schedule_id'",
+          "target": "campagne",
+          "rationale": "The foreign key column `schedule_id` in table `campagne` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "risk_level": "low",
+          "sql": "SELECT schedule_id FROM campagne WHERE schedule_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM campagne WHERE schedule_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advisory-groupe-admin-id-nullable-fk",
+          "title": "Review Nullable Foreign Key 'groupe.admin_id'",
+          "target": "groupe",
+          "rationale": "The foreign key column `admin_id` in table `groupe` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "risk_level": "low",
+          "sql": "SELECT admin_id FROM groupe WHERE admin_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM groupe WHERE admin_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advisory-groupe-admin-id-null-ratio",
+          "title": "Review High Null Ratio in 'groupe.admin_id'",
+          "target": "groupe",
+          "rationale": "The column `admin_id` in table `groupe` has a high null ratio (88.89%), exceeding the defined threshold of 5%. This suggests that the column might not always be populated, potentially indicating an optional relationship or data quality issue. Review business logic to determine if this is expected or if data entry processes need adjustment.",
+          "risk_level": "low",
+          "sql": "SELECT admin_id, COUNT(*) FROM groupe WHERE admin_id IS NULL GROUP BY admin_id;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT admin_id, COUNT(*) FROM groupe WHERE admin_id IS NULL GROUP BY admin_id;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advisory-modele-membership-id-nullable-fk",
+          "title": "Review Nullable Foreign Key 'modele.membership_id'",
+          "target": "modele",
+          "rationale": "The foreign key column `membership_id` in table `modele` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "risk_level": "low",
+          "sql": "SELECT membership_id FROM modele WHERE membership_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM modele WHERE membership_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "modele"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advisory-prm-status-updated-at-null-ratio",
+          "title": "Review High Null Ratio in 'prm_status.updated_at'",
+          "target": "prm_status",
+          "rationale": "The column `updated_at` in table `prm_status` has a high null ratio (100.00%), exceeding the defined threshold of 5%. This suggests that the column might not always be populated, potentially indicating an optional relationship or data quality issue. Review business logic to determine if this is expected or if data entry processes need adjustment.",
+          "risk_level": "low",
+          "sql": "SELECT updated_at, COUNT(*) FROM prm_status WHERE updated_at IS NULL GROUP BY updated_at;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT updated_at, COUNT(*) FROM prm_status WHERE updated_at IS NULL GROUP BY updated_at;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "prm_status"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advisory-request-api-membership-id-nullable-fk",
+          "title": "Review Nullable Foreign Key 'request_api.membership_id'",
+          "target": "request_api",
+          "rationale": "The foreign key column `membership_id` in table `request_api` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "risk_level": "low",
+          "sql": "SELECT membership_id FROM request_api WHERE membership_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM request_api WHERE membership_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "request_api"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advisory-smsc-routing-rule-expediteur-id-nullable-fk",
+          "title": "Review Nullable Foreign Key 'smsc_routing_rule.expediteur_id'",
+          "target": "smsc_routing_rule",
+          "rationale": "The foreign key column `expediteur_id` in table `smsc_routing_rule` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "risk_level": "low",
+          "sql": "SELECT expediteur_id FROM smsc_routing_rule WHERE expediteur_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM smsc_routing_rule WHERE expediteur_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "smsc_routing_rule"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advisory-smsc-routing-rule-null-ratio",
+          "title": "Review High Null Ratio in 'smsc_routing_rule' (expediteur_id, groupe_id)",
+          "target": "smsc_routing_rule",
+          "rationale": "The columns `expediteur_id` and `groupe_id` in table `smsc_routing_rule` have a high null ratio (85.71%), exceeding the defined threshold of 5%. This suggests that these columns might not always be populated, potentially indicating optional relationships or data quality issues. Review business logic to determine if this is expected or if data entry processes need adjustment.",
+          "risk_level": "low",
+          "sql": "SELECT expediteur_id, groupe_id, COUNT(*) FROM smsc_routing_rule WHERE expediteur_id IS NULL OR groupe_id IS NULL GROUP BY expediteur_id, groupe_id;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT expediteur_id, groupe_id, COUNT(*) FROM smsc_routing_rule WHERE expediteur_id IS NULL OR groupe_id IS NULL GROUP BY expediteur_id, groupe_id;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "smsc_routing_rule"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advisory-tags-membership-id-nullable-fk",
+          "title": "Review Nullable Foreign Key 'tags.membership_id'",
+          "target": "tags",
+          "rationale": "The foreign key column `membership_id` in table `tags` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "risk_level": "low",
+          "sql": "SELECT membership_id FROM tags WHERE membership_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM tags WHERE membership_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "tags"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advisory-user-contact-categorical-drift",
+          "title": "Review Categorical Drift in 'user_contact' (attribute1, attribute2, attribute3)",
+          "target": "user_contact",
+          "rationale": "The columns `attribute1`, `attribute2`, and `attribute3` in table `user_contact` show a high percentage of empty strings (99.82%), indicating potential categorical drift. This suggests that these columns are rarely populated with meaningful values, which could impact data quality and analysis. Review data collection processes and consider if these columns are still necessary or if their usage needs to be enforced.",
+          "risk_level": "low",
+          "sql": "SELECT attribute1, attribute2, attribute3 FROM user_contact WHERE attribute1 = '' OR attribute2 = '' OR attribute3 = '' LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM user_contact WHERE attribute1 = '' OR attribute2 = '' OR attribute3 = '';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_contact"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advisory-user-contact-membership-id-nullable-fk",
+          "title": "Review Nullable Foreign Key 'user_contact.membership_id'",
+          "target": "user_contact",
+          "rationale": "The foreign key column `membership_id` in table `user_contact` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "risk_level": "low",
+          "sql": "SELECT membership_id FROM user_contact WHERE membership_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM user_contact WHERE membership_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_contact"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advisory-user-keys-membership-id-nullable-fk",
+          "title": "Review Nullable Foreign Key 'user_keys.membership_id'",
+          "target": "user_keys",
+          "rationale": "The foreign key column `membership_id` in table `user_keys` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "risk_level": "low",
+          "sql": "SELECT membership_id FROM user_keys WHERE membership_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM user_keys WHERE membership_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_keys"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advisory-user-keys-null-ratio",
+          "title": "Review High Null Ratio in 'user_keys' (expiration_date, last_time_used_date)",
+          "target": "user_keys",
+          "rationale": "The columns `expiration_date` and `last_time_used_date` in table `user_keys` have a high null ratio (100.00%), exceeding the defined threshold of 5%. This suggests that these columns might not always be populated, potentially indicating optional relationships or data quality issue. Review business logic to determine if this is expected or if data entry processes need adjustment.",
+          "risk_level": "low",
+          "sql": "SELECT expiration_date, last_time_used_date, COUNT(*) FROM user_keys WHERE expiration_date IS NULL OR last_time_used_date IS NULL GROUP BY expiration_date, last_time_used_date;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT expiration_date, last_time_used_date, COUNT(*) FROM user_keys WHERE expiration_date IS NULL OR last_time_used_date IS NULL GROUP BY expiration_date, last_time_used_date;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_keys"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advisory-user-mission-groupe-id-nullable-fk",
+          "title": "Review Nullable Foreign Key 'user_mission.groupe_id'",
+          "target": "user_mission",
+          "rationale": "The foreign key column `groupe_id` in table `user_mission` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.",
+          "risk_level": "low",
+          "sql": "SELECT groupe_id FROM user_mission WHERE groupe_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM user_mission WHERE groupe_id IS NULL;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_mission"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "advisory-user-mission-groupe-id-null-ratio",
+          "title": "Review High Null Ratio in 'user_mission.groupe_id'",
+          "target": "user_mission",
+          "rationale": "The column `groupe_id` in table `user_mission` has a high null ratio (50.00%), exceeding the defined threshold of 5%. This suggests that the column might not always be populated, potentially indicating an optional relationship or data quality issue. Review business logic to determine if this is expected or if data entry processes need adjustment.",
+          "risk_level": "low",
+          "sql": "SELECT groupe_id, COUNT(*) FROM user_mission WHERE groupe_id IS NULL GROUP BY groupe_id;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT groupe_id, COUNT(*) FROM user_mission WHERE groupe_id IS NULL GROUP BY groupe_id;"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for an advisory finding.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_mission"
+          ],
+          "depends_on": []
+        },
+        {
+          "fix_id": "add-index-groupe-admin-id",
+          "title": "Add Index to 'groupe.admin_id'",
+          "target": "groupe",
+          "rationale": "The foreign key column `admin_id` in table `groupe` is not indexed. Adding an index will improve the performance of queries involving joins or lookups on this column.",
+          "risk_level": "low",
+          "sql": "CREATE INDEX IF NOT EXISTS ix_groupe_admin_id ON groupe (admin_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'groupe' AND indexname = 'ix_groupe_admin_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS ix_groupe_admin_id;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": []
+        }
+      ],
+      "report": "## Data Fix Planner\n\n### Executive Summary\n- Status: completed\n- Total analyzed: 28\n- Passed: 0\n- Flagged: 33\n- Severity split: critical=0, high=8, medium=25, low=0\n- Quality score: 0.0 / 100\n- Confidence: 0.9091\n- Flagged tables: budget_history, campagne, campagne_contacts, campagne_tags, expediteur_groupe, groupe, modele, prm_organization, prm_status, request_api, smsc_route, smsc_routing_rule, tags, user_contact, user_contact_tags, user_keys, user_mission\n\n### Metrics\n- Fixes generated: 33\n- Total issues received: 28\n\n### Findings (33)\n\n#### 1. campagne_contacts [HIGH]\n- Problem: Delete Orphaned Rows in 'campagne_contacts'\n- Confidence: 1.0\n- Recommendation: The `contact_id` column in `campagne_contacts` references `msisdn` in the `contacts` table. There are 31 rows in `campagne_contacts` with `contact_id` values that do not exist in `contacts.msisdn`, violating referential integrity. Deleting these orphaned rows will restore data consistency. Note: Deleted rows cannot be rolled back.\n- Proposed SQL:\n```sql\nDELETE FROM campagne_contacts WHERE contact_id IN (SELECT s.contact_id FROM campagne_contacts s LEFT JOIN contacts t ON s.contact_id = t.msisdn WHERE t.msisdn IS NULL AND s.contact_id IS NOT NULL);\n```\n- Explanation: The `contact_id` column in `campagne_contacts` references `msisdn` in the `contacts` table. There are 31 rows in `campagne_contacts` with `contact_id` values that do not exist in `contacts.msisdn`, violating referential integrity. Deleting these orphaned rows will restore data consistency. Note: Deleted rows cannot be rolled back.\n\n#### 2. prm_organization [MEDIUM]\n- Problem: Remove Duplicate Values in 'prm_organization.code'\n- Confidence: 0.9\n- Recommendation: The column `prm_organization.code` contains duplicate values, violating data integrity. This fix deletes duplicate rows, retaining one arbitrary row for each `code` value. Note: Deleted rows cannot be rolled back.\n- Proposed SQL:\n```sql\nDELETE FROM prm_organization WHERE ctid NOT IN (SELECT MIN(ctid) FROM prm_organization GROUP BY code);\n```\n- Explanation: The column `prm_organization.code` contains duplicate values, violating data integrity. This fix deletes duplicate rows, retaining one arbitrary row for each `code` value. Note: Deleted rows cannot be rolled back.\n\n#### 3. prm_organization [MEDIUM]\n- Problem: Remove Duplicate Values for 'prm_organization.organization_id' to Enforce Functional Dependency\n- Confidence: 0.9\n- Recommendation: The `organization_id` column in `prm_organization` is expected to functionally determine `code`, but violations exist (multiple codes for the same organization_id). This fix deletes duplicate rows based on `organization_id`, retaining one arbitrary row for each `organization_id` value. Note: Deleted rows cannot be rolled back.\n- Proposed SQL:\n```sql\nDELETE FROM prm_organization WHERE ctid NOT IN (SELECT MIN(ctid) FROM prm_organization GROUP BY organization_id);\n```\n- Explanation: The `organization_id` column in `prm_organization` is expected to functionally determine `code`, but violations exist (multiple codes for the same organization_id). This fix deletes duplicate rows based on `organization_id`, retaining one arbitrary row for each `organization_id` value. Note: Deleted rows cannot be rolled back.\n\n#### 4. smsc_route [MEDIUM]\n- Problem: Remove Functional Dependency Violations in 'smsc_route.route_smsc_id'\n- Confidence: 0.9\n- Recommendation: The column `smsc_route.route_smsc_id` is expected to functionally determine `priority`, but violations exist. This fix deletes rows where `route_smsc_id` is duplicated with different `priority` values, keeping one arbitrary `priority` per `route_smsc_id`. Note: Deleted rows cannot be rolled back.\n- Proposed SQL:\n```sql\nDELETE FROM smsc_route WHERE (route_smsc_id, priority) NOT IN (SELECT route_smsc_id, MIN(priority) FROM smsc_route GROUP BY route_smsc_id);\n```\n- Explanation: The column `smsc_route.route_smsc_id` is expected to functionally determine `priority`, but violations exist. This fix deletes rows where `route_smsc_id` is duplicated with different `priority` values, keeping one arbitrary `priority` per `route_smsc_id`. Note: Deleted rows cannot be rolled back.\n\n#### 5. user_contact [MEDIUM]\n- Problem: Remove Functional Dependency Violations in 'user_contact.contact_id'\n- Confidence: 0.9\n- Recommendation: The column `user_contact.contact_id` is expected to functionally determine `date_created`, but violations exist. This fix deletes rows where `contact_id` is duplicated with different `date_created` values, keeping one arbitrary `date_created` per `contact_id`. Note: Deleted rows cannot be rolled back.\n- Proposed SQL:\n```sql\nDELETE FROM user_contact WHERE (contact_id, date_created) NOT IN (SELECT contact_id, MIN(date_created) FROM user_contact GROUP BY contact_id);\n```\n- Explanation: The column `user_contact.contact_id` is expected to functionally determine `date_created`, but violations exist. This fix deletes rows where `contact_id` is duplicated with different `date_created` values, keeping one arbitrary `date_created` per `contact_id`. Note: Deleted rows cannot be rolled back.\n\n#### 6. user_contact_tags [HIGH]\n- Problem: Remove Functional Dependency Violations in 'user_contact_tags.user_contact_id'\n- Confidence: 1.0\n- Recommendation: The column `user_contact_tags.user_contact_id` is expected to functionally determine `tag_id`, but violations exist. This fix deletes rows where `user_contact_id` is duplicated with different `tag_id` values, keeping one arbitrary `tag_id` per `user_contact_id`. Note: Deleted rows cannot be rolled back.\n- Proposed SQL:\n```sql\nDELETE FROM user_contact_tags WHERE (user_contact_id, tag_id) NOT IN (SELECT user_contact_id, MIN(tag_id) FROM user_contact_tags GROUP BY user_contact_id);\n```\n- Explanation: The column `user_contact_tags.user_contact_id` is expected to functionally determine `tag_id`, but violations exist. This fix deletes rows where `user_contact_id` is duplicated with different `tag_id` values, keeping one arbitrary `tag_id` per `user_contact_id`. Note: Deleted rows cannot be rolled back.\n\n#### 7. campagne_contacts [HIGH]\n- Problem: Add Primary Key to 'campagne_contacts'\n- Confidence: 1.0\n- Recommendation: The table 'campagne_contacts' is missing a primary key, which is essential for data integrity, efficient data retrieval, and establishing relationships with other tables. A composite primary key on `campagne_id` and `contact_id` is proposed.\n- Proposed SQL:\n```sql\nALTER TABLE campagne_contacts ADD CONSTRAINT pk_campagne_contacts PRIMARY KEY (campagne_id, contact_id);\n```\n- Explanation: The table 'campagne_contacts' is missing a primary key, which is essential for data integrity, efficient data retrieval, and establishing relationships with other tables. A composite primary key on `campagne_id` and `contact_id` is proposed.\n\n#### 8. campagne_tags [HIGH]\n- Problem: Add Primary Key to 'campagne_tags'\n- Confidence: 1.0\n- Recommendation: The table 'campagne_tags' is missing a primary key, which is essential for data integrity, efficient data retrieval, and establishing relationships with other tables. A composite primary key on `campagne_id` and `tag_name` is proposed.\n- Proposed SQL:\n```sql\nALTER TABLE campagne_tags ADD CONSTRAINT pk_campagne_tags PRIMARY KEY (campagne_id, tag_name);\n```\n- Explanation: The table 'campagne_tags' is missing a primary key, which is essential for data integrity, efficient data retrieval, and establishing relationships with other tables. A composite primary key on `campagne_id` and `tag_name` is proposed.\n\n#### 9. expediteur_groupe [HIGH]\n- Problem: Add Primary Key to 'expediteur_groupe'\n- Confidence: 1.0\n- Recommendation: The table 'expediteur_groupe' is missing a primary key, which is essential for data integrity, efficient data retrieval, and establishing relationships with other tables. A composite primary key on `groupe_id` and `expediteur_id` is proposed.\n- Proposed SQL:\n```sql\nALTER TABLE expediteur_groupe ADD CONSTRAINT pk_expediteur_groupe PRIMARY KEY (groupe_id, expediteur_id);\n```\n- Explanation: The table 'expediteur_groupe' is missing a primary key, which is essential for data integrity, efficient data retrieval, and establishing relationships with other tables. A composite primary key on `groupe_id` and `expediteur_id` is proposed.\n\n#### 10. user_contact_tags [HIGH]\n- Problem: Add Primary Key to 'user_contact_tags'\n- Confidence: 1.0\n- Recommendation: The table 'user_contact_tags' is missing a primary key, which is essential for data integrity, efficient data retrieval, and establishing relationships with other tables. A composite primary key on `user_contact_id` and `tag_id` is proposed.\n- Proposed SQL:\n```sql\nALTER TABLE user_contact_tags ADD CONSTRAINT pk_user_contact_tags PRIMARY KEY (user_contact_id, tag_id);\n```\n- Explanation: The table 'user_contact_tags' is missing a primary key, which is essential for data integrity, efficient data retrieval, and establishing relationships with other tables. A composite primary key on `user_contact_id` and `tag_id` is proposed.\n\n#### 11. prm_organization [MEDIUM]\n- Problem: Add Unique Constraint on 'prm_organization.code'\n- Confidence: 0.9\n- Recommendation: To enforce uniqueness for the `code` column in `prm_organization`, a unique constraint is added. This fix depends on the prior removal of duplicate rows.\n- Proposed SQL:\n```sql\nALTER TABLE prm_organization ADD CONSTRAINT uk_prm_organization_code UNIQUE (code);\n```\n- Explanation: To enforce uniqueness for the `code` column in `prm_organization`, a unique constraint is added. This fix depends on the prior removal of duplicate rows.\n\n#### 12. prm_organization [MEDIUM]\n- Problem: Add Unique Constraint on 'prm_organization.organization_id'\n- Confidence: 0.9\n- Recommendation: To enforce the functional dependency where `organization_id` determines `code`, a unique constraint is added to `prm_organization.organization_id`. This ensures that each `organization_id` has a single corresponding `code`. This fix depends on the prior removal of violating rows.\n- Proposed SQL:\n```sql\nALTER TABLE prm_organization ADD CONSTRAINT uk_prm_organization_organization_id UNIQUE (organization_id);\n```\n- Explanation: To enforce the functional dependency where `organization_id` determines `code`, a unique constraint is added to `prm_organization.organization_id`. This ensures that each `organization_id` has a single corresponding `code`. This fix depends on the prior removal of violating rows.\n\n#### 13. smsc_route [MEDIUM]\n- Problem: Add Unique Constraint on 'smsc_route.route_smsc_id'\n- Confidence: 0.9\n- Recommendation: To enforce the functional dependency where `route_smsc_id` determines `priority`, a unique constraint is added to `smsc_route.route_smsc_id`. This ensures that each `route_smsc_id` has a single corresponding `priority`. This fix depends on the prior removal of violating rows.\n- Proposed SQL:\n```sql\nALTER TABLE smsc_route ADD CONSTRAINT uk_smsc_route_route_smsc_id UNIQUE (route_smsc_id);\n```\n- Explanation: To enforce the functional dependency where `route_smsc_id` determines `priority`, a unique constraint is added to `smsc_route.route_smsc_id`. This ensures that each `route_smsc_id` has a single corresponding `priority`. This fix depends on the prior removal of violating rows.\n\n#### 14. user_contact [MEDIUM]\n- Problem: Add Unique Constraint on 'user_contact.contact_id'\n- Confidence: 0.9\n- Recommendation: To enforce the functional dependency where `contact_id` determines `date_created`, a unique constraint is added to `user_contact.contact_id`. This ensures that each `contact_id` has a single corresponding `date_created`. This fix depends on the prior removal of violating rows.\n- Proposed SQL:\n```sql\nALTER TABLE user_contact ADD CONSTRAINT uk_user_contact_contact_id UNIQUE (contact_id);\n```\n- Explanation: To enforce the functional dependency where `contact_id` determines `date_created`, a unique constraint is added to `user_contact.contact_id`. This ensures that each `contact_id` has a single corresponding `date_created`. This fix depends on the prior removal of violating rows.\n\n#### 15. user_contact_tags [HIGH]\n- Problem: Add Unique Constraint on 'user_contact_tags.user_contact_id'\n- Confidence: 1.0\n- Recommendation: To enforce the functional dependency where `user_contact_id` determines `tag_id`, a unique constraint is added to `user_contact_tags.user_contact_id`. This ensures that each `user_contact_id` has a single corresponding `tag_id`. This fix depends on the prior removal of violating rows.\n- Proposed SQL:\n```sql\nALTER TABLE user_contact_tags ADD CONSTRAINT uk_user_contact_tags_user_contact_id UNIQUE (user_contact_id);\n```\n- Explanation: To enforce the functional dependency where `user_contact_id` determines `tag_id`, a unique constraint is added to `user_contact_tags.user_contact_id`. This ensures that each `user_contact_id` has a single corresponding `tag_id`. This fix depends on the prior removal of violating rows.\n\n#### 16. budget_history [MEDIUM]\n- Problem: Review Nullable Foreign Key 'budget_history.groupe_id'\n- Confidence: 0.8\n- Recommendation: The foreign key column `groupe_id` in table `budget_history` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.\n- Proposed SQL:\n```sql\nSELECT groupe_id FROM budget_history WHERE groupe_id IS NULL LIMIT 10;\n```\n- Explanation: The foreign key column `groupe_id` in table `budget_history` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.\n\n#### 17. campagne_contacts [HIGH]\n- Problem: Review Nullable Foreign Key 'campagne_contacts.contact_id'\n- Confidence: 1.0\n- Recommendation: The foreign key column `contact_id` in table `campagne_contacts` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.\n- Proposed SQL:\n```sql\nSELECT contact_id FROM campagne_contacts WHERE contact_id IS NULL LIMIT 10;\n```\n- Explanation: The foreign key column `contact_id` in table `campagne_contacts` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.\n\n#### 18. campagne [MEDIUM]\n- Problem: Review Nullable Foreign Key 'campagne.schedule_id'\n- Confidence: 0.8\n- Recommendation: The foreign key column `schedule_id` in table `campagne` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.\n- Proposed SQL:\n```sql\nSELECT schedule_id FROM campagne WHERE schedule_id IS NULL LIMIT 10;\n```\n- Explanation: The foreign key column `schedule_id` in table `campagne` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.\n\n#### 19. groupe [MEDIUM]\n- Problem: Review Nullable Foreign Key 'groupe.admin_id'\n- Confidence: 0.9\n- Recommendation: The foreign key column `admin_id` in table `groupe` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.\n- Proposed SQL:\n```sql\nSELECT admin_id FROM groupe WHERE admin_id IS NULL LIMIT 10;\n```\n- Explanation: The foreign key column `admin_id` in table `groupe` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.\n\n#### 20. groupe [MEDIUM]\n- Problem: Review High Null Ratio in 'groupe.admin_id'\n- Confidence: 0.9\n- Recommendation: The column `admin_id` in table `groupe` has a high null ratio (88.89%), exceeding the defined threshold of 5%. This suggests that the column might not always be populated, potentially indicating an optional relationship or data quality issue. Review business logic to determine if this is expected or if data entry processes need adjustment.\n- Proposed SQL:\n```sql\nSELECT admin_id, COUNT(*) FROM groupe WHERE admin_id IS NULL GROUP BY admin_id;\n```\n- Explanation: The column `admin_id` in table `groupe` has a high null ratio (88.89%), exceeding the defined threshold of 5%. This suggests that the column might not always be populated, potentially indicating an optional relationship or data quality issue. Review business logic to determine if this is expected or if data entry processes need adjustment.\n\n#### 21. modele [MEDIUM]\n- Problem: Review Nullable Foreign Key 'modele.membership_id'\n- Confidence: 0.8\n- Recommendation: The foreign key column `membership_id` in table `modele` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.\n- Proposed SQL:\n```sql\nSELECT membership_id FROM modele WHERE membership_id IS NULL LIMIT 10;\n```\n- Explanation: The foreign key column `membership_id` in table `modele` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.\n\n#### 22. prm_status [MEDIUM]\n- Problem: Review High Null Ratio in 'prm_status.updated_at'\n- Confidence: 0.9\n- Recommendation: The column `updated_at` in table `prm_status` has a high null ratio (100.00%), exceeding the defined threshold of 5%. This suggests that the column might not always be populated, potentially indicating an optional relationship or data quality issue. Review business logic to determine if this is expected or if data entry processes need adjustment.\n- Proposed SQL:\n```sql\nSELECT updated_at, COUNT(*) FROM prm_status WHERE updated_at IS NULL GROUP BY updated_at;\n```\n- Explanation: The column `updated_at` in table `prm_status` has a high null ratio (100.00%), exceeding the defined threshold of 5%. This suggests that the column might not always be populated, potentially indicating an optional relationship or data quality issue. Review business logic to determine if this is expected or if data entry processes need adjustment.\n\n#### 23. request_api [MEDIUM]\n- Problem: Review Nullable Foreign Key 'request_api.membership_id'\n- Confidence: 0.8\n- Recommendation: The foreign key column `membership_id` in table `request_api` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.\n- Proposed SQL:\n```sql\nSELECT membership_id FROM request_api WHERE membership_id IS NULL LIMIT 10;\n```\n- Explanation: The foreign key column `membership_id` in table `request_api` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.\n\n#### 24. smsc_routing_rule [MEDIUM]\n- Problem: Review Nullable Foreign Key 'smsc_routing_rule.expediteur_id'\n- Confidence: 0.9\n- Recommendation: The foreign key column `expediteur_id` in table `smsc_routing_rule` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.\n- Proposed SQL:\n```sql\nSELECT expediteur_id FROM smsc_routing_rule WHERE expediteur_id IS NULL LIMIT 10;\n```\n- Explanation: The foreign key column `expediteur_id` in table `smsc_routing_rule` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.\n\n#### 25. smsc_routing_rule [MEDIUM]\n- Problem: Review High Null Ratio in 'smsc_routing_rule' (expediteur_id, groupe_id)\n- Confidence: 0.9\n- Recommendation: The columns `expediteur_id` and `groupe_id` in table `smsc_routing_rule` have a high null ratio (85.71%), exceeding the defined threshold of 5%. This suggests that these columns might not always be populated, potentially indicating optional relationships or data quality issues. Review business logic to determine if this is expected or if data entry processes need adjustment.\n- Proposed SQL:\n```sql\nSELECT expediteur_id, groupe_id, COUNT(*) FROM smsc_routing_rule WHERE expediteur_id IS NULL OR groupe_id IS NULL GROUP BY expediteur_id, groupe_id;\n```\n- Explanation: The columns `expediteur_id` and `groupe_id` in table `smsc_routing_rule` have a high null ratio (85.71%), exceeding the defined threshold of 5%. This suggests that these columns might not always be populated, potentially indicating optional relationships or data quality issues. Review business logic to determine if this is expected or if data entry processes need adjustment.\n\n#### 26. tags [MEDIUM]\n- Problem: Review Nullable Foreign Key 'tags.membership_id'\n- Confidence: 0.8\n- Recommendation: The foreign key column `membership_id` in table `tags` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.\n- Proposed SQL:\n```sql\nSELECT membership_id FROM tags WHERE membership_id IS NULL LIMIT 10;\n```\n- Explanation: The foreign key column `membership_id` in table `tags` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.\n\n#### 27. user_contact [MEDIUM]\n- Problem: Review Categorical Drift in 'user_contact' (attribute1, attribute2, attribute3)\n- Confidence: 0.9\n- Recommendation: The columns `attribute1`, `attribute2`, and `attribute3` in table `user_contact` show a high percentage of empty strings (99.82%), indicating potential categorical drift. This suggests that these columns are rarely populated with meaningful values, which could impact data quality and analysis. Review data collection processes and consider if these columns are still necessary or if their usage needs to be enforced.\n- Proposed SQL:\n```sql\nSELECT attribute1, attribute2, attribute3 FROM user_contact WHERE attribute1 = '' OR attribute2 = '' OR attribute3 = '' LIMIT 10;\n```\n- Explanation: The columns `attribute1`, `attribute2`, and `attribute3` in table `user_contact` show a high percentage of empty strings (99.82%), indicating potential categorical drift. This suggests that these columns are rarely populated with meaningful values, which could impact data quality and analysis. Review data collection processes and consider if these columns are still necessary or if their usage needs to be enforced.\n\n#### 28. user_contact [MEDIUM]\n- Problem: Review Nullable Foreign Key 'user_contact.membership_id'\n- Confidence: 0.9\n- Recommendation: The foreign key column `membership_id` in table `user_contact` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.\n- Proposed SQL:\n```sql\nSELECT membership_id FROM user_contact WHERE membership_id IS NULL LIMIT 10;\n```\n- Explanation: The foreign key column `membership_id` in table `user_contact` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.\n\n#### 29. user_keys [MEDIUM]\n- Problem: Review Nullable Foreign Key 'user_keys.membership_id'\n- Confidence: 0.9\n- Recommendation: The foreign key column `membership_id` in table `user_keys` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.\n- Proposed SQL:\n```sql\nSELECT membership_id FROM user_keys WHERE membership_id IS NULL LIMIT 10;\n```\n- Explanation: The foreign key column `membership_id` in table `user_keys` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.\n\n#### 30. user_keys [MEDIUM]\n- Problem: Review High Null Ratio in 'user_keys' (expiration_date, last_time_used_date)\n- Confidence: 0.9\n- Recommendation: The columns `expiration_date` and `last_time_used_date` in table `user_keys` have a high null ratio (100.00%), exceeding the defined threshold of 5%. This suggests that these columns might not always be populated, potentially indicating optional relationships or data quality issue. Review business logic to determine if this is expected or if data entry processes need adjustment.\n- Proposed SQL:\n```sql\nSELECT expiration_date, last_time_used_date, COUNT(*) FROM user_keys WHERE expiration_date IS NULL OR last_time_used_date IS NULL GROUP BY expiration_date, last_time_used_date;\n```\n- Explanation: The columns `expiration_date` and `last_time_used_date` in table `user_keys` have a high null ratio (100.00%), exceeding the defined threshold of 5%. This suggests that these columns might not always be populated, potentially indicating optional relationships or data quality issue. Review business logic to determine if this is expected or if data entry processes need adjustment.\n\n#### 31. user_mission [MEDIUM]\n- Problem: Review Nullable Foreign Key 'user_mission.groupe_id'\n- Confidence: 0.9\n- Recommendation: The foreign key column `groupe_id` in table `user_mission` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.\n- Proposed SQL:\n```sql\nSELECT groupe_id FROM user_mission WHERE groupe_id IS NULL LIMIT 10;\n```\n- Explanation: The foreign key column `groupe_id` in table `user_mission` is nullable, which can lead to orphaned child records or complex join logic. Consider making this column non-nullable if business rules permit, or implement explicit logic to handle null foreign keys to maintain data integrity.\n\n#### 32. user_mission [MEDIUM]\n- Problem: Review High Null Ratio in 'user_mission.groupe_id'\n- Confidence: 0.9\n- Recommendation: The column `groupe_id` in table `user_mission` has a high null ratio (50.00%), exceeding the defined threshold of 5%. This suggests that the column might not always be populated, potentially indicating an optional relationship or data quality issue. Review business logic to determine if this is expected or if data entry processes need adjustment.\n- Proposed SQL:\n```sql\nSELECT groupe_id, COUNT(*) FROM user_mission WHERE groupe_id IS NULL GROUP BY groupe_id;\n```\n- Explanation: The column `groupe_id` in table `user_mission` has a high null ratio (50.00%), exceeding the defined threshold of 5%. This suggests that the column might not always be populated, potentially indicating an optional relationship or data quality issue. Review business logic to determine if this is expected or if data entry processes need adjustment.\n\n#### 33. groupe [MEDIUM]\n- Problem: Add Index to 'groupe.admin_id'\n- Confidence: 0.9\n- Recommendation: The foreign key column `admin_id` in table `groupe` is not indexed. Adding an index will improve the performance of queries involving joins or lookups on this column.\n- Proposed SQL:\n```sql\nCREATE INDEX IF NOT EXISTS ix_groupe_admin_id ON groupe (admin_id);\n```\n- Explanation: The foreign key column `admin_id` in table `groupe` is not indexed. Adding an index will improve the performance of queries involving joins or lookups on this column."
+    }
+  }
+}

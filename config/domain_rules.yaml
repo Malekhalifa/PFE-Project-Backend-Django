@@ -89,6 +89,30 @@ excluded_low_cardinality_columns:
 # last_name, etc.) are explicitly excluded from duplicate checks.
 duplicate_check_scope: unique_columns_only
 
+# ── Nullable FK by design ───────────────────────────────────────────────────
+# FK columns that are intentionally nullable in your schema. The reducer will
+# suppress nullable_foreign_key findings for these columns so they never appear
+# in the fix plan. Configure per deployment — do not add generic defaults.
+#
+# Format:
+#   nullable_fk_by_design:
+#     some_table:
+#       - fk_column_name   # reason: why this is nullable by design
+nullable_fk_by_design: {}
+
+# ── Tiered null thresholds ───────────────────────────────────────────────────
+# Null rate thresholds used by the deterministic profiler finding generator.
+# Columns whose null rate exceeds the applicable threshold are flagged as
+# null_ratio_high regardless of LLM statistical agent output.
+#
+#   fk_columns:        columns ending in _id (foreign key references)
+#   timestamp_columns: columns matching *updated_at, *modified_at, *last_*
+#   default:           all other columns
+null_thresholds:
+  fk_columns: 0.10        # flag FK cols with >10% null
+  timestamp_columns: 0.80 # flag timestamp cols with >80% null
+  default: 0.40           # flag all other cols with >40% null
+
 # ── Custom business rules ──────────────────────────────────────────────────
 # Free-form rules injected verbatim into agent instructions.
 # Each entry is a plain-English sentence the agents will enforce.

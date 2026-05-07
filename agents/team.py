@@ -95,6 +95,10 @@ def default_session_state(*, ql_mode: str) -> dict[str, Any]:
         # Pre-initialized so {profiler_summary} in agent instructions always resolves
         # to an empty dict rather than a missing-key literal.
         "profiler_summary": {},
+        # Compact schema for the profiler agent (column names + data types only).
+        # Populated by ensure_schema_primed. Pre-initialized so {profiler_schema}
+        # in profiler instructions resolves to an empty dict rather than a missing-key literal.
+        "profiler_schema": {},
         "last_reduced_findings": [],
         "_tool_calls_seen": {},
     }

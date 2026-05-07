@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import csv
 import fnmatch
+import hashlib
 import io
 import json
 import logging
@@ -27,6 +28,7 @@ logger = logging.getLogger("qualitylab")
 
 _DSN_PATTERN = re.compile(r"(postgres(?:ql)?://[^\s'\"`<>]+)", re.IGNORECASE)
 _WS_RE = re.compile(r"\s+")
+_SAFE_IDENTIFIER = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
 
 def normalize_query(query: str) -> str:
@@ -66,6 +68,8 @@ def qualitylab_tool_hook(
     (statistical / structural / relational) from sharing cache state with the schema
     and profiler agents that ran before them.
     """
+    if run_context.session_state is None:
+        return function_call(**arguments)
     aid = _agent_id(run_context)
     job_id = (run_context.session_state or {}).get("job_id") or "nojob"
     seen: dict[str, Any] = run_context.session_state.setdefault(f"_tool_calls_seen_{aid}", {})
@@ -95,7 +99,18 @@ def qualitylab_tool_hook(
         arg_str = str(arguments)
 
     local_key = f"{function_name}:{arg_str}"
-    redis_key = f"ql:tool:{job_id}:{aid}:{local_key}"
+    # Read-only queries are database-scoped so the cache stays warm across pipeline runs
+    # against the same database (e.g. repeated analysis during development). Write-path or
+    # job-sensitive calls remain job-scoped to avoid cross-run contamination.
+    raw_sql = arguments.get("query", "") or ""
+    is_read_only = function_name not in ("run_query", "_run_query") or \
+                   raw_sql.strip().upper().startswith("SELECT")
+    if is_read_only:
+        db_id = (run_context.session_state or {}).get("database_id") or "unknown"
+        arg_hash = hashlib.md5(arg_str.encode(), usedforsecurity=False).hexdigest()
+        redis_key = f"ql:schema:{db_id}:{function_name}:{arg_hash}"
+    else:
+        redis_key = f"ql:tool:{job_id}:{aid}:{local_key}"
 
     if local_key in seen:
         logger.debug("tool_hook: L1 hit for %s", function_name)
@@ -119,6 +134,12 @@ def qualitylab_tool_hook(
     elapsed_ms = (time.perf_counter() - t0) * 1000
 
     # ── Loop detection (per-agent streak to avoid parallel-agent cross-talk) ───
+    # Tools that scan for anomalies on individual columns legitimately return empty
+    # when data is clean (no FD violations, no duplicates). Counting those as
+    # "loop indicators" causes false positives when an agent scans many clean columns
+    # in sequence.  Non-empty results from ANY tool reset the streak as normal.
+    _LOOP_EXEMPT_TOOLS = frozenset({"detect_fd", "find_duplicate_rows"})
+
     streak_key = f"_empty_results_streak_{aid}"
     is_empty = (
         result is None
@@ -127,7 +148,9 @@ def qualitylab_tool_hook(
         or (isinstance(result, str) and result.strip() == "[]")
     )
     streak: int = run_context.session_state.get(streak_key, 0)
-    if is_empty:
+    if not is_empty:
+        run_context.session_state[streak_key] = 0
+    elif function_name not in _LOOP_EXEMPT_TOOLS:
         streak += 1
         run_context.session_state[streak_key] = streak
         if streak >= 6:
@@ -141,8 +164,6 @@ def qualitylab_tool_hook(
                 f"Execution halted: {streak} consecutive empty query results detected. "
                 "The agent is looping. Check your analysis strategy."
             )
-    else:
-        run_context.session_state[streak_key] = 0
 
     # ── Enhanced logging ─────────────────────────────────────────────────
     raw_query = arguments.get("query", "")
@@ -235,7 +256,9 @@ def _normalize_describe_table_result(table_name: str, payload: Any) -> dict[str,
         "table_name": table_name,
         "columns": columns,
         "column_details": column_details,
-        "raw": str(payload or ""),
+        # raw deliberately omitted — it's the unparsed CSV text and contributes
+        # significant bytes to session_state without being read by any agent.
+        # Removing it cuts deepcopy cost on the large schema dict (30+ tables).
     }
 
 
@@ -247,6 +270,8 @@ def prime_connection_from_prompt(run_input: RunInput, run_context: RunContext) -
     separate connect tool or global environment mutation.
     """
     state = run_context.session_state
+    if state is None:
+        return
     if state.get("connection_string"):
         return
 
@@ -269,6 +294,8 @@ def prime_connection_from_prompt(run_input: RunInput, run_context: RunContext) -
 
 
 def mark_run_start(run_context: RunContext) -> None:
+    if run_context.session_state is None:
+        return
     run_context.session_state["_run_start"] = time.time()
     # Reset the per-agent empty-results streak so each agent starts with a clean slate.
     # Without this, empty results from a previous agent's clean-data checks
@@ -289,18 +316,15 @@ def _is_excluded(table_name: str, patterns: list[str]) -> bool:
     return any(fnmatch.fnmatch(table_name, pat) for pat in patterns)
 
 
-def _query_table_constraints(table_name: str) -> dict:
-    """Query PK, UNIQUE constraints and index names for *table_name*.
+def _query_all_table_constraints(table_names: list[str]) -> dict[str, dict]:
+    """Fetch PK, UNIQUE, index, and FK metadata for all tables in 4 batch queries.
 
-    Returns a dict with:
-      primary_key_columns  – list[str], empty if no PK
-      has_primary_key      – bool
-      unique_constraints   – list[{"name": str, "columns": list[str]}]
-      indexes              – list[str] (index names, including PK/UNIQUE indexes)
+    Replaces the old per-table _query_table_constraints loop, cutting 4×N sequential
+    DB connections down to exactly 4 connections regardless of schema size.
     """
     from .tools import _q
 
-    result: dict = {
+    empty: dict = {
         "primary_key_columns": [],
         "has_primary_key": False,
         "unique_constraints": [],
@@ -308,85 +332,97 @@ def _query_table_constraints(table_name: str) -> dict:
         "indexed_columns": [],
         "foreign_keys": [],
     }
+    result: dict[str, dict] = {t: {**empty} for t in table_names}
 
-    # PK + UNIQUE in one round-trip
-    constraints_raw = _q(
-        f"""
-        SELECT tc.constraint_type, tc.constraint_name,
+    # Filter to safe identifiers before embedding in SQL
+    safe = [t for t in table_names if _SAFE_IDENTIFIER.match(t)]
+    if len(safe) != len(table_names):
+        unsafe = sorted(set(table_names) - set(safe))
+        logger.warning("_query_all_table_constraints: skipping unsafe table name(s): %s", unsafe)
+    if not safe:
+        return result
+
+    names_literal = "ARRAY[" + ", ".join(f"'{n}'" for n in safe) + "]"
+    limit = len(safe) * 40
+
+    # ── Query 1: PK + UNIQUE constraints ────────────────────────────────────
+    raw = _q(f"""
+        SELECT tc.table_name, tc.constraint_type, tc.constraint_name,
                array_agg(kcu.column_name ORDER BY kcu.ordinal_position) AS columns
         FROM information_schema.table_constraints tc
         JOIN information_schema.key_column_usage kcu
             ON  tc.constraint_name = kcu.constraint_name
             AND tc.table_schema    = kcu.table_schema
             AND tc.table_name      = kcu.table_name
-        WHERE tc.table_schema     = 'public'
-          AND tc.table_name       = '{table_name}'
+        WHERE tc.table_schema = 'public'
+          AND tc.table_name   = ANY({names_literal}::text[])
           AND tc.constraint_type IN ('PRIMARY KEY', 'UNIQUE')
-        GROUP BY tc.constraint_type, tc.constraint_name
-        LIMIT 30
-        """
-    )
-    if constraints_raw and not constraints_raw.startswith("Error") and not constraints_raw.startswith("Query executed"):
+        GROUP BY tc.table_name, tc.constraint_type, tc.constraint_name
+        LIMIT {limit}
+    """)
+    if raw and not raw.startswith("Error") and not raw.startswith("Query executed"):
         try:
-            for row in json.loads(constraints_raw):
+            for row in json.loads(raw):
+                tbl = row.get("table_name", "")
+                if tbl not in result:
+                    continue
                 ctype = row.get("constraint_type", "")
                 cols = row.get("columns") or []
                 if isinstance(cols, str):
                     cols = [c.strip().strip('"') for c in cols.strip("{}").split(",") if c.strip()]
                 if ctype == "PRIMARY KEY":
-                    result["primary_key_columns"] = cols
-                    result["has_primary_key"] = bool(cols)
+                    result[tbl]["primary_key_columns"] = cols
+                    result[tbl]["has_primary_key"] = bool(cols)
                 elif ctype == "UNIQUE":
-                    result["unique_constraints"].append({
+                    result[tbl]["unique_constraints"].append({
                         "name": row.get("constraint_name", ""),
                         "columns": cols,
                     })
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning("_query_all_table_constraints: PK/UNIQUE parse error: %s", exc)
 
-    # Index names
-    indexes_raw = _q(
-        f"""
-        SELECT indexname FROM pg_indexes
-        WHERE schemaname = 'public' AND tablename = '{table_name}'
-        LIMIT 40
-        """
-    )
-    if indexes_raw and not indexes_raw.startswith("Error") and not indexes_raw.startswith("Query executed"):
+    # ── Query 2: Index names ─────────────────────────────────────────────────
+    raw = _q(f"""
+        SELECT tablename, indexname FROM pg_indexes
+        WHERE schemaname = 'public'
+          AND tablename = ANY({names_literal}::text[])
+        LIMIT {limit}
+    """)
+    if raw and not raw.startswith("Error") and not raw.startswith("Query executed"):
         try:
-            result["indexes"] = [
-                r.get("indexname", "") for r in json.loads(indexes_raw)
-                if r.get("indexname")
-            ]
-        except Exception:
-            pass
+            for row in json.loads(raw):
+                tbl = row.get("tablename", "")
+                idx = row.get("indexname", "")
+                if tbl in result and idx:
+                    result[tbl]["indexes"].append(idx)
+        except Exception as exc:
+            logger.warning("_query_all_table_constraints: index names parse error: %s", exc)
 
-    # Columns covered by at least one index — used by the reducer backstop to
-    # reliably catch missing_index false positives regardless of index naming convention.
-    indexed_raw = _q(
-        f"""
-        SELECT DISTINCT a.attname AS column_name
+    # ── Query 3: Indexed columns ─────────────────────────────────────────────
+    raw = _q(f"""
+        SELECT DISTINCT t.relname AS table_name, a.attname AS column_name
         FROM pg_class t
         JOIN pg_index ix ON t.oid = ix.indrelid
         JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = ANY(ix.indkey)
         JOIN pg_namespace n ON n.oid = t.relnamespace
-        WHERE n.nspname = 'public' AND t.relname = '{table_name}'
-        """
-    )
-    if indexed_raw and not indexed_raw.startswith("Error") and not indexed_raw.startswith("Query executed"):
+        WHERE n.nspname = 'public'
+          AND t.relname = ANY({names_literal}::text[])
+        LIMIT {limit}
+    """)
+    if raw and not raw.startswith("Error") and not raw.startswith("Query executed"):
         try:
-            result["indexed_columns"] = [
-                r.get("column_name", "") for r in json.loads(indexed_raw)
-                if r.get("column_name")
-            ]
-        except Exception:
-            pass
+            for row in json.loads(raw):
+                tbl = row.get("table_name", "")
+                col = row.get("column_name", "")
+                if tbl in result and col:
+                    result[tbl]["indexed_columns"].append(col)
+        except Exception as exc:
+            logger.warning("_query_all_table_constraints: indexed columns parse error: %s", exc)
 
-    # FK definitions — queried once at schema-prime time so relational validator
-    # can iterate directly without spending tool calls on describe_constraints().
-    fk_raw = _q(
-        f"""
+    # ── Query 4: FK definitions ──────────────────────────────────────────────
+    raw = _q(f"""
         SELECT
+            tc.table_name,
             tc.constraint_name,
             kcu.column_name,
             fk_target.table_name  AS foreign_table,
@@ -403,27 +439,28 @@ def _query_table_constraints(table_name: str) -> dict:
             ON  rc.unique_constraint_name   = fk_target.constraint_name
             AND rc.unique_constraint_schema = fk_target.constraint_schema
             AND kcu.ordinal_position        = fk_target.ordinal_position
-        WHERE tc.table_name    = '{table_name}'
-          AND tc.table_schema  = 'public'
+        WHERE tc.table_schema    = 'public'
+          AND tc.table_name      = ANY({names_literal}::text[])
           AND tc.constraint_type = 'FOREIGN KEY'
-        ORDER BY kcu.ordinal_position
-        LIMIT 30
-        """
-    )
-    if fk_raw and not fk_raw.startswith("Error") and not fk_raw.startswith("Query executed"):
+        ORDER BY tc.table_name, kcu.ordinal_position
+        LIMIT {limit}
+    """)
+    if raw and not raw.startswith("Error") and not raw.startswith("Query executed"):
         try:
-            result["foreign_keys"] = [
-                {
-                    "constraint_name": r.get("constraint_name", ""),
-                    "column":          r.get("column_name", ""),
-                    "foreign_table":   r.get("foreign_table", ""),
-                    "foreign_column":  r.get("foreign_column", ""),
-                }
-                for r in json.loads(fk_raw)
-                if r.get("column_name") and r.get("foreign_table")
-            ]
-        except Exception:
-            pass
+            for row in json.loads(raw):
+                tbl = row.get("table_name", "")
+                col = row.get("column_name", "")
+                ftbl = row.get("foreign_table", "")
+                if tbl not in result or not col or not ftbl:
+                    continue
+                result[tbl]["foreign_keys"].append({
+                    "constraint_name": row.get("constraint_name", ""),
+                    "column":          col,
+                    "foreign_table":   ftbl,
+                    "foreign_column":  row.get("foreign_column", ""),
+                })
+        except Exception as exc:
+            logger.warning("_query_all_table_constraints: FK parse error: %s", exc)
 
     return result
 
@@ -439,6 +476,8 @@ def ensure_schema_primed(run_input: RunInput, run_context: RunContext) -> None:
     attempt priming when a DSN is already available.
     """
     state = run_context.session_state
+    if state is None:
+        return
     if state.get("schema"):
         return
 
@@ -469,6 +508,9 @@ def ensure_schema_primed(run_input: RunInput, run_context: RunContext) -> None:
         skipped = sorted(set(all_tables) - set(tables))
         logger.info("ensure_schema_primed: excluded %d table(s): %s", len(skipped), skipped)
 
+    # Fetch PK/UNIQUE/index/FK data for all tables in 4 batch queries instead of 4×N.
+    all_constraints = _query_all_table_constraints(tables) if connection_string else {}
+
     schema: dict[str, Any] = {}
     for table_name in tables:
         try:
@@ -476,16 +518,66 @@ def ensure_schema_primed(run_input: RunInput, run_context: RunContext) -> None:
                 table_name,
                 pg.describe_table(table_name),
             )
-            # Embed full constraint info so every agent sees the definitive state
-            # without needing to call describe_constraints() themselves.
             if connection_string:
-                constraints = _query_table_constraints(table_name)
-                entry.update(constraints)
+                entry.update(all_constraints.get(table_name, {}))
             schema[table_name] = entry
         except Exception as exc:
             logger.warning("ensure_schema_primed: failed to describe %s: %s", table_name, exc)
 
     state["schema"] = schema
+
+    # Compact schema for the profiler: only (column_name, data_type) — no constraints.
+    # Reduces context by ~60% and prevents MALFORMED_FUNCTION_CALL on large schemas.
+    state["profiler_schema"] = {
+        table_name: {
+            "column_details": [
+                {"column_name": c["column_name"], "data_type": c["data_type"]}
+                for c in entry.get("column_details", [])
+            ]
+        }
+        for table_name, entry in schema.items()
+    }
+
+    # Compact schema for statistical and structural validators: column_details +
+    # unique_constraints only. Strips FK/index metadata (~40% of the full schema)
+    # that these agents never need, reducing their input token cost.
+    state["validator_schema"] = {
+        table_name: {
+            "columns": entry.get("columns", []),
+            "column_details": entry.get("column_details", []),
+            "unique_constraints": entry.get("unique_constraints", []),
+        }
+        for table_name, entry in schema.items()
+    }
+
+    # Compact schema for the relational validator: keeps FK list (needed for orphan sweep
+    # Phase 1) and unique_constraints (for duplicate threshold check), strips index metadata.
+    state["relational_schema"] = {
+        table_name: {
+            "columns":            entry.get("columns", []),
+            "column_details":     entry.get("column_details", []),
+            "has_primary_key":    entry.get("has_primary_key", False),
+            "primary_key_columns": entry.get("primary_key_columns", []),
+            "unique_constraints": entry.get("unique_constraints", []),
+            "foreign_keys":       entry.get("foreign_keys", []),
+        }
+        for table_name, entry in schema.items()
+    }
+
+    # Compact schema for the fix planner: keeps column types and PK/UNIQUE facts
+    # needed for DDL generation; strips FK list (planner uses describe_constraints()
+    # for FK discovery) and index metadata.
+    state["fix_planner_schema"] = {
+        table_name: {
+            "columns":             entry.get("columns", []),
+            "column_details":      entry.get("column_details", []),
+            "has_primary_key":     entry.get("has_primary_key", False),
+            "primary_key_columns": entry.get("primary_key_columns", []),
+            "unique_constraints":  entry.get("unique_constraints", []),
+        }
+        for table_name, entry in schema.items()
+    }
+
     logger.info("ensure_schema_primed: loaded %d tables", len(schema))
 
 
@@ -528,7 +620,7 @@ def validate_findings_entities(run_output: RunOutput, run_context: RunContext) -
     if not isinstance(content, (ValidationReport, FixPlan)):
         return
 
-    schema: dict[str, Any] = run_context.session_state.get("schema") or {}
+    schema: dict[str, Any] = (run_context.session_state or {}).get("schema") or {}
     if not schema:
         logger.warning("validate_findings_entities: schema unavailable, skipping")
         return
@@ -552,6 +644,51 @@ def validate_findings_entities(run_output: RunOutput, run_context: RunContext) -
                 "validate_findings_entities: stripped %d finding(s) with non-existent entities",
                 dropped,
             )
+
+        # FK-rule guard: foreign_key_validation, orphaned_fk, and index_gap are only valid
+        # for columns that are actual FK constraints in the schema. Strip inferred-FK findings
+        # (LLM hallucinating FKs from naming patterns like contact_id → contacts).
+        if content.validator in ("schema", "relational"):
+            _fk_gated_rules = {"foreign_key_validation", "orphaned_fk", "index_gap"}
+            before_fk = len(content.findings)
+
+            def _column_is_actual_fk(finding) -> bool:
+                if finding.rule not in _fk_gated_rules:
+                    return True
+                parts = finding.entity.split(".", 1)
+                if len(parts) != 2:
+                    return True
+                tbl, col = parts
+                fk_cols = {fk.get("column") for fk in (schema.get(tbl) or {}).get("foreign_keys", [])}
+                return col in fk_cols
+
+            content.findings = [f for f in content.findings if _column_is_actual_fk(f)]
+            dropped_fk = before_fk - len(content.findings)
+            if dropped_fk:
+                logger.warning(
+                    "validate_findings_entities: stripped %d FK-rule finding(s) for non-FK columns",
+                    dropped_fk,
+                )
+
+        # Statistical findings must have a profiler-measured anchor. Strip any that
+        # reference a table the profiler didn't cover — catches hallucinations that
+        # slip past the agent-level scope guard before the reducer's 3d filter runs.
+        profiler_tables: set[str] = set(
+            (run_context.session_state or {}).get("profiler_tables") or []
+        )
+        if content.validator == "statistical" and profiler_tables:
+            before_cov = len(content.findings)
+            content.findings = [
+                f for f in content.findings
+                if f.entity.split(".")[0] in profiler_tables | {"general", "database"}
+            ]
+            dropped_cov = before_cov - len(content.findings)
+            if dropped_cov:
+                logger.warning(
+                    "validate_findings_entities: stripped %d statistical finding(s) "
+                    "for tables outside profiler coverage",
+                    dropped_cov,
+                )
     else:
         before = len(content.cards)
         content.cards = [c for c in content.cards if _valid(c.target)]
@@ -575,6 +712,8 @@ def store_profiler_output(run_output: RunOutput, run_context: RunContext) -> Non
     if not isinstance(content, ProfilerReport):
         return
     try:
+        if run_context.session_state is None:
+            return
         run_context.session_state["profiler_report"] = content.model_dump()
         run_context.session_state["profiler_summary"] = {
             t.table_name: {
@@ -591,6 +730,9 @@ def store_profiler_output(run_output: RunOutput, run_context: RunContext) -> Non
             }
             for t in content.tables
         }
+        # Pre-computed table name list so the reducer doesn't need to re-derive it
+        # from the full profiler_report (avoids re-deserializing a large dict).
+        run_context.session_state["profiler_tables"] = [t.table_name for t in content.tables]
         logger.info("store_profiler_output: profiled %d table(s)", len(content.tables))
     except Exception as exc:
         logger.warning("store_profiler_output: failed to serialize profiler report: %s", exc)
@@ -641,7 +783,7 @@ def emit_pipeline_status(run_input: RunInput, run_context: RunContext) -> None:
         logger.debug("emit_pipeline_status: WebSocket push skipped: %s", exc)
 
 def log_run_metrics(run_output: RunOutput, run_context: RunContext) -> None:
-    state = run_context.session_state
+    state = run_context.session_state or {}
     elapsed_ms = (time.time() - state.get("_run_start", time.time())) * 1000
     aid = _agent_id(run_context)
     tool_calls = len(state.get(f"_tool_calls_seen_{aid}", {}))

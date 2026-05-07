@@ -55,6 +55,9 @@ BASE_VALIDATOR_RULES: list[str] = [
     "CRITICAL: Only report findings for tables and columns explicitly listed in the schema snapshot. "
     "Never invent or assume names. Call describe_table() to verify before reporting if uncertain.",
     f"Omit findings with confidence < {MIN_CONFIDENCE}.",
+    "CRITICAL: The 'confidence' field MUST always be a float between 0.0 and 1.0. "
+    "Never set confidence to null, undefined, or omit it. "
+    "If you are uncertain about evidence strength, use 0.75 as the default value.",
     "Keep each 'evidence' dict to at most 5 scalar keys (number or string ≤ 120 chars). "
     "Do NOT embed raw SQL result sets or row samples in evidence.",
 ]
@@ -73,7 +76,10 @@ PROFILER_AGENT_CONFIG = {
     ),
     "instructions": [
         "{common_rules}",
-        "Schema snapshot: {schema}",
+        # profiler_schema is a compact view (column name + data_type only) built by
+        # ensure_schema_primed. Using it instead of the full {schema} reduces the
+        # prompt context by ~60% and prevents MALFORMED_FUNCTION_CALL on Gemini Flash.
+        "Schema snapshot: {profiler_schema}",
         "This is a data-collection step only. Do NOT report findings, issues, or recommendations.",
         # ── Per-table batched query strategy ─────────────────────────────
         "Collect statistics table by table, issuing ONE run_query() per table that gathers ALL "
@@ -131,11 +137,17 @@ SCHEMA_AGENT_CONFIG = {
     "instructions": [
         "{common_rules}",
         "Domain rules: {domain_rules}",
+        # ── Schema snapshot ───────────────────────────────────────────────
+        # {schema} is pre-primed by ensure_schema_primed before this agent runs.
+        # It includes has_primary_key, primary_key_columns, unique_constraints,
+        # indexes, indexed_columns, foreign_keys, and full column_details for every table.
+        "Schema snapshot (authoritative — includes has_primary_key, primary_key_columns, "
+        "unique_constraints, indexes, indexed_columns, foreign_keys): {schema}",
         # ── Constraint source precedence ──────────────────────────────────
         (
             "Constraint source precedence (highest → lowest): "
             "1. describe_constraints(table) — authoritative live metadata. "
-            "2. Schema snapshot fields: has_primary_key, primary_key_columns, unique_constraints, indexes. "
+            "2. Schema snapshot fields above: has_primary_key, primary_key_columns, unique_constraints, indexes. "
             "3. Fallback assumption — only when both (1) and (2) are unavailable. "
             "Never override a higher-precedence source with a lower one."
         ),
@@ -150,9 +162,16 @@ SCHEMA_AGENT_CONFIG = {
         "CRITICAL: Do NOT report missing_index for a column when an index whose name contains that column "
         "already appears in the table's indexes list in the schema snapshot.",
         "Do not inspect row values or cross-row behavior in this step.",
+        "CRITICAL — FK inference guard: For foreign_key_validation and index_gap rules, ONLY flag "
+        "a column if it is explicitly listed in the table's 'foreign_keys' list in the schema snapshot. "
+        "A column named 'contact_id' or 'user_id' is NOT a FK unless it appears in foreign_keys. "
+        "If a column looks like a FK by name but is absent from foreign_keys, it has no FK constraint — "
+        "do not report it under foreign_key_validation or index_gap. "
+        "If foreign_keys is empty for a table, that table has zero FK columns to check.",
         "Cover all structural rule categories in one pass: missing PKs, nullable FK-style columns, "
         "naming convention, and index gaps. Do not spend all tool calls on a single rule type.",
-        "Return validator='schema' and emit only validated structural findings.",
+        "Return validator='schema' and emit only validated structural findings. "
+        "Order findings by severity descending (critical → high → medium → low).",
         "Populate metadata: tables_scanned = integer COUNT of tables processed (not a list of names), "
         "tool_calls_used = integer COUNT of tool calls made, "
         "skipped_tables = list of table name strings that could not be processed.",
@@ -179,8 +198,17 @@ STATISTICAL_AGENT_CONFIG = {
     "instructions": [
         "{common_rules}",
         "Domain rules: {domain_rules}",
-        "Schema snapshot: {schema}",
+        # validator_schema is a compact view (columns, column_details, unique_constraints only).
+        # The statistical agent does not need FK definitions, index names, or PK metadata.
+        "Schema snapshot: {validator_schema}",
         "Profiler baseline: {profiler_summary}",
+        # Scope guard: when the profiler baseline is non-empty, only analyze tables
+        # that appear in it — the baseline is the measurement anchor and without it
+        # any statistical claim is unsupported. When the baseline is empty (profiler
+        # not yet run), fall back to live query analysis for all schema tables.
+        "CRITICAL: When {profiler_summary} is non-empty, ONLY report findings for tables "
+        "that appear as keys in {profiler_summary}. For any table absent from the profiler "
+        "baseline, produce NO findings — you cannot assess deviations without measured statistics.",
         "Stay within single-column statistical analysis only. "
         "Do not report schema-structure issues or cross-row relationship anomalies.",
         # ── Deterministic thresholds ──────────────────────────────────────
@@ -206,7 +234,8 @@ STATISTICAL_AGENT_CONFIG = {
         "(e.g. three columns all have null_rate_high), emit ONE finding for the table entity "
         "and list all affected columns in evidence as 'affected_columns': ['col1', 'col2', ...]. "
         "Never emit one finding per column for the same rule on the same table.",
-        "Return validator='statistical' and cite entity as table or table.column only.",
+        "Return validator='statistical' and cite entity as table or table.column only. "
+        "Order findings by severity descending (critical → high → medium → low).",
         "Populate metadata: tables_scanned = integer COUNT of tables processed (not a list of names), "
         "tool_calls_used = integer COUNT of tool calls made, "
         "skipped_tables = list of table name strings that could not be processed.",
@@ -233,7 +262,9 @@ STRUCTURAL_AGENT_CONFIG = {
     "instructions": [
         "{common_rules}",
         "Domain rules: {domain_rules}",
-        "Schema snapshot: {schema}",
+        # validator_schema is a compact view (columns, column_details, unique_constraints only).
+        # The structural agent needs column names and types for row checks but not FK/index metadata.
+        "Schema snapshot: {validator_schema}",
         "Profiler baseline: {profiler_summary}",
         "Use targeted WHERE-clause queries only. Never scan full tables when a predicate can isolate violations.",
         # ── Deterministic table ordering ──────────────────────────────────
@@ -252,21 +283,25 @@ STRUCTURAL_AGENT_CONFIG = {
         "If your predicate returns 0 rows, do NOT emit a finding.",
         "For each row-level check, always include both 'violation_count' (integer) and "
         "'violation_pct' (float, violation_count / total_rows) in the evidence dict. "
-        f"If violation_count == 0 or violation_pct < max_violation_row_pct from domain_rules, do NOT emit the finding.",
+        "If violation_count == 0 or violation_pct < max_violation_row_pct from domain_rules, do NOT emit the finding.",
         (
-            "For date/timestamp columns, derive the plausible range from the data itself before checking for outliers. "
-            "CRITICAL: PERCENTILE_CONT() does NOT work on date/timestamp types — do NOT use it on those columns. "
-            "Use this single query per date/timestamp column: "
-            "SELECT MIN(col) AS min_val, MAX(col) AS max_val, "
-            "COUNT(*) FILTER (WHERE col IS NOT NULL) AS non_null_count FROM table; "
-            "Then set lower_bound = LEAST(min_val, current_date - INTERVAL '100 years') and "
-            "upper_bound = GREATEST(max_val, current_date + INTERVAL '5 years'). "
-            "Only flag rows where col < lower_bound OR col > upper_bound as 'impossible_date'. "
-            "If all non-null values fall within [lower_bound, upper_bound], violation_count = 0 — do NOT emit a finding."
+            "For date/timestamp columns, use static plausibility bounds — do NOT derive bounds from the data. "
+            "CRITICAL: PERCENTILE_CONT() does NOT work on date/timestamp types — never use it on those columns. "
+            "Run ONE query per date/timestamp column: "
+            "SELECT "
+            "COUNT(*) FILTER (WHERE col IS NOT NULL) AS non_null_count, "
+            "COUNT(*) FILTER (WHERE col < (CURRENT_DATE - INTERVAL '100 years') "
+            "  OR col > (CURRENT_DATE + INTERVAL '5 years')) AS violation_count, "
+            "COUNT(*) AS total_rows FROM table; "
+            "If non_null_count = 0, skip. "
+            "If violation_count > 0 AND violation_count::float / total_rows >= max_violation_row_pct "
+            "from domain_rules, flag as 'impossible_date' with violation_count and violation_pct in evidence. "
+            "The bounds are always CURRENT_DATE ± fixed interval — never set from MIN/MAX of the data."
         ),
         "Stay within row-level data conformance. Do not report cross-row aggregates, "
         "relational integrity issues, or schema definition issues.",
-        "Return validator='structural' and cite entity as table or table.column only.",
+        "Return validator='structural' and cite entity as table or table.column only. "
+        "Order findings by severity descending (critical → high → medium → low).",
         "Populate metadata: tables_scanned = integer COUNT of tables processed (not a list of names), "
         "tool_calls_used = integer COUNT of tool calls made, "
         "skipped_tables = list of table name strings that could not be processed.",
@@ -293,7 +328,10 @@ RELATIONAL_AGENT_CONFIG = {
     "instructions": [
         "{common_rules}",
         "Domain rules: {domain_rules}",
-        "Schema snapshot: {schema}",
+        # relational_schema is a compact view: columns, column_details, foreign_keys,
+        # unique_constraints, has_primary_key, primary_key_columns.
+        # Strips indexes and indexed_columns (not used by this agent, saves ~20% tokens).
+        "Schema snapshot: {relational_schema}",
         "Profiler baseline: {profiler_summary}",
         "Stay within cross-row and cross-table relational analysis only. "
         "Do not report single-column statistical anomalies or schema definition issues.",
@@ -302,38 +340,63 @@ RELATIONAL_AGENT_CONFIG = {
         # ── Deterministic duplicate threshold ─────────────────────────────
         (
             f"Flag duplicate_values only when dup_count / total_rows ≥ {DUPLICATE_RATIO_THRESHOLD:.2f} "
-            f"AND the column does not appear in unique_constraints in the schema snapshot. "
-            f"If the snapshot is unclear, call describe_constraints(table) to confirm before flagging."
+            f"AND the column is not the sole column in any single-column unique constraint. "
+            f"CRITICAL — composite unique guard: if a column appears ONLY in composite unique "
+            f"constraints (2+ columns, e.g. UNIQUE(code, organization_id)), duplicate values in "
+            f"that column alone are BY DESIGN — the same value is valid when paired with different "
+            f"partner columns. Do NOT flag these as duplicate_values. "
+            f"Only flag a column for duplicate_values when: (a) it has a single-column UNIQUE "
+            f"constraint and duplicates still exist, OR (b) it has no unique constraint at all "
+            f"and matches unique_column_patterns from domain_rules."
         ),
-        # ── FK orphan check: read from schema snapshot ───────────────────
+        # ── FK orphan check: read from schema snapshot only ─────────────
         (
             "The schema snapshot includes a 'foreign_keys' list per table: "
             "[{constraint_name, column, foreign_table, foreign_column}]. "
             "Read FK definitions from this list — do NOT call describe_constraints() for FK discovery. "
-            "Only call describe_constraints(table) if foreign_keys is empty or missing for that table. "
+            "CRITICAL — FK inference guard: ONLY run orphan checks for FK relationships explicitly "
+            "listed in foreign_keys. Do NOT infer FK relationships from column naming patterns "
+            "(e.g. a column named 'contact_id' is NOT a FK to 'contacts' unless foreign_keys says so). "
+            "If foreign_keys is non-empty, treat it as the complete and authoritative FK list — "
+            "do NOT call describe_constraints() to discover additional FKs beyond what is listed. "
+            "A column absent from foreign_keys has no FK relationship to check. "
             "Use LEFT JOIN … IS NULL for all orphaned FK queries — never NOT IN (mishandles NULLs): "
             "SELECT COUNT(*) FROM source s "
             "LEFT JOIN target t ON s.source_col = t.target_col "
             "WHERE t.target_col IS NULL AND s.source_col IS NOT NULL"
         ),
-        # ── Two-phase execution ────────────────────────────────────────────
+        # ── FD violation composite-unique guard ───────────────────────────
         (
-            "Execute in two phases:\n"
-            "PHASE 1 — FK orphan sweep: "
-            "Call analyze_relationship() for every FK in the schema snapshot's foreign_keys lists. "
-            "If a FK returns zero orphans, accept it and move on — "
-            "when all FKs return zero it means DB-level constraints are enforced. "
-            "Do NOT re-query a FK that already returned 0.\n"
-            "HARD CAP: Stop Phase 1 after at most 15 analyze_relationship() calls, "
-            "regardless of how many FKs remain. Phase 2 must always run.\n"
-            "PHASE 2 — Cross-row duplicate and FD analysis (spend at least half your budget here): "
+            "CRITICAL — composite unique guard for FD analysis: before flagging a "
+            "functional_dependency_violation for column X → column Y in table T, check T's "
+            "unique_constraints in the schema snapshot. "
+            "If any composite unique constraint includes X among its columns (e.g. UNIQUE(X, Z)), "
+            "then different Y values for the same X are valid whenever Z differs — this is the "
+            "intended design of the composite key, NOT a violation. Skip the FD check entirely. "
+            "Only flag a functional_dependency_violation when X has NO unique constraint, "
+            "OR when X is the sole column in a single-column unique constraint and violations still occur. "
+            "Junction tables (many-to-many relations such as user_contact_tags, campagne_contacts) "
+            "NEVER have functional dependencies between their two FK columns — never run FD checks on them."
+        ),
+        # ── Two-phase execution with explicit budget split ─────────────────
+        (
+            "You have 25 tool calls total. Budget: at most 10 for Phase 1, at least 15 for Phase 2.\n"
+            "PHASE 1 — FK orphan sweep (≤ 10 calls): "
+            "Call analyze_relationship() for each FK in the schema snapshot's foreign_keys lists. "
+            "If a FK returns zero orphans, accept it and move on. "
+            "Do NOT re-query a FK that already returned 0. "
+            "HARD STOP after 10 calls regardless of remaining FKs — Phase 2 must always run.\n"
+            "PHASE 2 — Cross-row duplicate and FD analysis (≥ 15 calls): "
             "For every table with >10 rows, call find_duplicate_rows() on columns matching "
             "unique_column_patterns from domain_rules (email, msisdn, reference, *_code). "
-            "Then call detect_fd() on FK-style columns to verify they functionally determine "
-            "their expected dependent column (e.g. groupe_id → quota, organization_id → name). "
-            "Phase 2 is where most real findings come from — execute it even if Phase 1 found nothing."
+            "Then call detect_fd() on columns that have a single-column unique constraint or "
+            "are known determinants (e.g. groupe_id → quota, organization_id → name). "
+            "Skip detect_fd() for any column covered by a composite unique constraint. "
+            "Phase 2 is where most real findings come from — always execute it even if Phase 1 found nothing."
         ),
-        "Return validator='relational' and cite entity as table or table.column only.",
+        "Return validator='relational' and cite entity as table or table.column only. "
+        "CRITICAL: Order findings in the output list by severity descending (critical → high → medium → low). "
+        "This ensures the most important findings survive if the response is truncated.",
         "Populate metadata: tables_scanned = integer COUNT of tables processed (not a list of names), "
         "tool_calls_used = integer COUNT of tool calls made, "
         "skipped_tables = list of table name strings that could not be processed.",
@@ -342,7 +405,7 @@ RELATIONAL_AGENT_CONFIG = {
     "output_schema": ValidationReport,
     "parser_model": _make_parser_model(),
     "use_json_mode": True,
-    "tool_call_limit": 30,
+    "tool_call_limit": 25,
 }
 
 
@@ -359,7 +422,10 @@ FIX_PLANNER_AGENT_CONFIG = {
     "instructions": [
         "{common_rules}",
         "Domain rules: {domain_rules}",
-        "Schema snapshot: {schema}",
+        # fix_planner_schema is a compact view: columns, column_details, has_primary_key,
+        # primary_key_columns, unique_constraints. Strips FK list (planner calls
+        # describe_constraints() for FK discovery) and index metadata (~25% token reduction).
+        "Schema snapshot: {fix_planner_schema}",
         # ── Input contract ────────────────────────────────────────────────
         "The input is a FixDependencyGraph with two fields: 'findings' (the ranked issues) "
         "and 'dependency_edges' (ordering constraints inferred by the reducer). "
@@ -458,5 +524,5 @@ FIX_PLANNER_AGENT_CONFIG = {
     ],
     "output_schema": FixPlan,
     "parser_model": _make_parser_model(),
-    "tool_call_limit": 15,
+    "tool_call_limit": 20,
 }
