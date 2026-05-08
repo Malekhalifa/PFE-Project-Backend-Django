@@ -497,6 +497,12 @@ FIX_PLANNER_AGENT_CONFIG = {
         (
             "For orphaned_foreign_key findings: FIRST call describe_constraints(source_table) to confirm "
             "the exact FK target table and column — never derive them from the column name alone. "
+            "If describe_constraints shows NO foreign key between these tables, do NOT write any JOIN — "
+            "the relationship does not exist and no fix is possible; skip this card entirely. "
+            "Before writing a JOIN, verify both join columns have the same data type from the schema snapshot. "
+            "If types differ (e.g. bigint vs character varying), add an explicit cast: "
+            "s.source_col::text = t.target_col  OR  s.source_col = t.target_col::bigint — "
+            "never join mismatched types without a cast or PostgreSQL will raise a type error. "
             "Then write the fix using LEFT JOIN IS NULL — never NOT IN (mishandles NULLs): "
             "DELETE FROM source WHERE id IN ( "
             "  SELECT s.id FROM source s "

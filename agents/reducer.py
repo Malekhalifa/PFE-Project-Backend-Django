@@ -626,6 +626,85 @@ class ReduceSignals:
                     dropped,
                 )
 
+        # ── 3c-4. Orphaned-FK hallucination / type-safety guard ─────────────────
+        # Drop orphaned FK findings in two cases:
+        #   (a) source column has NO FK in schema → hallucinated relationship
+        #   (b) FK exists but source/target types are incompatible (e.g. bigint→varchar)
+        #       → fix planner cannot generate a safe JOIN-based DELETE query
+        if schema:
+            _orphaned_fk_rules = frozenset({
+                "orphaned_fk", "orphaned_foreign_key", "referential_integrity",
+                "orphaned_fk_references",
+            })
+
+            _int_families   = frozenset({"smallint", "integer", "int", "bigint", "int2", "int4", "int8"})
+            _text_families  = frozenset({"character varying", "varchar", "text", "char", "character", "bpchar"})
+            _float_families = frozenset({"numeric", "decimal", "real", "double precision", "float4", "float8"})
+
+            def _col_type_family(data_type: str) -> str:
+                t = data_type.strip().lower()
+                if t in _int_families:
+                    return "integer"
+                if any(t.startswith(p) for p in ("character varying", "varchar", "char", "bpchar", "text")):
+                    return "text"
+                if t in _float_families or t.startswith(("numeric", "decimal")):
+                    return "numeric"
+                return t
+
+            def _is_unsound_fk(f: Finding) -> bool:
+                if f.rule not in _orphaned_fk_rules:
+                    return False
+                if "." not in f.entity:
+                    return False
+                table, col = f.entity.split(".", 1)
+                table_info = schema.get(table, {})
+                fk_list    = table_info.get("foreign_keys", [])
+                fk_columns = {fk.get("column") for fk in fk_list}
+
+                # (a) No FK declared → hallucinated
+                if col not in fk_columns:
+                    return True
+
+                # (b) FK exists — check type compatibility
+                fk_entry = next((fk for fk in fk_list if fk.get("column") == col), None)
+                if fk_entry is None:
+                    return False
+                foreign_table = fk_entry.get("foreign_table")
+                foreign_col   = fk_entry.get("foreign_column")
+                if not foreign_table or not foreign_col:
+                    return False
+
+                src_type = next(
+                    (d.get("data_type", "") for d in table_info.get("column_details", [])
+                     if d.get("column_name") == col),
+                    None,
+                )
+                tgt_type = next(
+                    (d.get("data_type", "") for d in schema.get(foreign_table, {}).get("column_details", [])
+                     if d.get("column_name") == foreign_col),
+                    None,
+                )
+                if src_type is None or tgt_type is None:
+                    return False  # can't determine — keep
+
+                if _col_type_family(src_type) != _col_type_family(tgt_type):
+                    logger.debug(
+                        "reducer: orphaned_fk '%s.%s' type mismatch (%s → %s.%s %s) — dropping",
+                        table, col, src_type, foreign_table, foreign_col, tgt_type,
+                    )
+                    return True
+
+                return False
+
+            before_hfk = len(filtered)
+            filtered = [f for f in filtered if not _is_unsound_fk(f)]
+            dropped_hfk = before_hfk - len(filtered)
+            if dropped_hfk:
+                logger.warning(
+                    "reducer: dropped %d orphaned_fk finding(s) — no FK in schema or incompatible FK types",
+                    dropped_hfk,
+                )
+
         # ── 3d. Statistical findings require profiler coverage ────────────────────
         # When the profiler ran for at least some tables, statistical findings for
         # tables NOT in the profiler baseline are unsupported — the validator had

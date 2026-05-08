@@ -332,7 +332,17 @@ def _query_all_table_constraints(table_names: list[str]) -> dict[str, dict]:
         "indexed_columns": [],
         "foreign_keys": [],
     }
-    result: dict[str, dict] = {t: {**empty} for t in table_names}
+    result: dict[str, dict] = {
+        t: {
+            "primary_key_columns": [],
+            "has_primary_key": False,
+            "unique_constraints": [],
+            "indexes": [],
+            "indexed_columns": [],
+            "foreign_keys": [],
+        }
+        for t in table_names
+    }
 
     # Filter to safe identifiers before embedding in SQL
     safe = [t for t in table_names if _SAFE_IDENTIFIER.match(t)]
