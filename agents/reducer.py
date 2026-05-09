@@ -26,17 +26,56 @@ from .schemas import (
 logger = logging.getLogger(__name__)
 
 
-def _try_recover_partial(value: str, step_name: str) -> ValidationReport | None:
-    """Two-strategy rescue for a truncated JSON ValidationReport string.
+_TRAILING_COMMA_RE = re.compile(r",(\s*[\]}])")
+_UNQUOTED_KEY_RE = re.compile(r"([{,]\s*)([A-Za-z_][A-Za-z0-9_]*)(\s*:)")
+_SMART_QUOTES = str.maketrans({"“": '"', "”": '"', "‘": "'", "’": "'"})
 
-    Strategy 1 — append ']}' to close the structure and parse normally.
+
+def _clean_llm_json(text: str) -> str:
+    """Repair common Gemini/LLM JSON glitches before json.loads.
+
+    Fixes: smart quotes, trailing commas before `}` / `]`, unquoted property keys,
+    and stray ```json fences. Conservative — leaves string contents alone.
+    """
+    cleaned = text.translate(_SMART_QUOTES)
+    if "```" in cleaned:
+        cleaned = re.sub(r"^\s*```(?:json)?\s*", "", cleaned)
+        cleaned = re.sub(r"\s*```\s*$", "", cleaned)
+    cleaned = _TRAILING_COMMA_RE.sub(r"\1", cleaned)
+    cleaned = _UNQUOTED_KEY_RE.sub(r'\1"\2"\3', cleaned)
+    return cleaned
+
+
+def _try_recover_partial(value: str, step_name: str) -> ValidationReport | None:
+    """Three-strategy rescue for a malformed/truncated JSON ValidationReport.
+
+    Strategy 0 — clean common LLM glitches (trailing commas, unquoted keys,
+                 smart quotes, code fences) and reparse.
+    Strategy 1 — append ']}' to close a truncated structure.
     Strategy 2 — walk the string finding every complete '{...}' object
                  inside the findings array and reconstruct a valid report.
     """
-    # Strategy 1: cheap close
+    # Strategy 0: clean common LLM JSON malformations and retry.
+    # Catches the "Expecting property name enclosed in double quotes" /
+    # trailing-comma class of failures the suffix close can't repair.
+    cleaned = _clean_llm_json(value)
+    if cleaned != value:
+        try:
+            parsed = json.loads(cleaned)
+            report = ValidationReport.model_validate(parsed)
+            logger.warning(
+                "reducer: recovered %d findings from step '%s' via json-clean.",
+                len(report.findings),
+                step_name,
+            )
+            return report
+        except Exception:
+            pass
+
+    # Strategy 1: cheap close (use cleaned text — fixes both truncation and glitches).
     for suffix in ("\n]}", "]}"):
         try:
-            parsed = json.loads(value + suffix)
+            parsed = json.loads(cleaned + suffix)
             report = ValidationReport.model_validate(parsed)
             logger.warning(
                 "reducer: recovered %d findings from step '%s' via suffix close.",
@@ -47,29 +86,30 @@ def _try_recover_partial(value: str, step_name: str) -> ValidationReport | None:
         except Exception:
             pass
 
-    # Strategy 2: detect validator name, extract complete finding objects
-    validator_match = re.search(r'"validator"\s*:\s*"([^"]+)"', value)
+    # Strategy 2: detect validator name, extract complete finding objects.
+    # Operate on the cleaned text so per-object parses also benefit from glitch repair.
+    validator_match = re.search(r'"validator"\s*:\s*"([^"]+)"', cleaned)
     detected_validator = validator_match.group(1) if validator_match else step_name
 
-    findings_start = value.find('"findings"')
+    findings_start = cleaned.find('"findings"')
     if findings_start == -1:
         return None
-    bracket = value.find('[', findings_start)
+    bracket = cleaned.find('[', findings_start)
     if bracket == -1:
         return None
 
     findings: list[dict] = []
     pos = bracket + 1
-    while pos < len(value):
-        open_pos = value.find('{', pos)
+    while pos < len(cleaned):
+        open_pos = cleaned.find('{', pos)
         if open_pos == -1:
             break
         depth = 0
         close_pos = -1
         in_string = False
         escape = False
-        for i in range(open_pos, len(value)):
-            char = value[i]
+        for i in range(open_pos, len(cleaned)):
+            char = cleaned[i]
             if not in_string:
                 if char == '{':
                     depth += 1
@@ -89,10 +129,14 @@ def _try_recover_partial(value: str, step_name: str) -> ValidationReport | None:
                     in_string = False
         if close_pos == -1:
             break
+        obj_text = cleaned[open_pos : close_pos + 1]
         try:
-            findings.append(json.loads(value[open_pos : close_pos + 1]))
+            findings.append(json.loads(obj_text))
         except Exception:
-            pass
+            try:
+                findings.append(json.loads(_clean_llm_json(obj_text)))
+            except Exception:
+                pass
         pos = close_pos + 1
 
     if findings:
@@ -275,6 +319,9 @@ class ReduceSignals:
         self.top_n = top_n
 
     def __call__(self, step_input: StepInput) -> StepOutput:
+        import time as _time
+        _reducer_t0 = _time.perf_counter()
+
         # Push running_reducer status immediately so the UI advances past the
         # parallel validators as soon as they all complete.
         try:
@@ -283,8 +330,17 @@ class ReduceSignals:
             if job_id:
                 from api.db import update_job_status
                 update_job_status(job_id, "running_reducer")
-        except Exception:
-            pass
+                logger.info(
+                    "pipeline_status: running_reducer job=%s source=reducer_start",
+                    job_id,
+                )
+            else:
+                logger.warning(
+                    "pipeline_status: SKIPPED running_reducer — job_id missing from session_data "
+                    "(_make_reducer_executor injection failed)"
+                )
+        except Exception as exc:
+            logger.warning("reducer: status push failed at start: %s", exc)
 
         # Resolve schema, profiler baseline, and learned patterns from session state.
         schema: dict = {}
@@ -321,22 +377,49 @@ class ReduceSignals:
         # "profiler" is skipped here — it returns ProfilerReport, not ValidationReport.
         # All steps are accessible via step_input.get_step_content().
         reports: list[ValidationReport] = []
+        # Map step_name → report so downstream code can look up by step rather than
+        # trusting report.validator (LLM occasionally mis-labels: e.g. statistical
+        # agent emits validator='profiler' in its ValidationReport, breaking
+        # any `next((r for r in reports if r.validator == 'statistical'))` lookup).
+        reports_by_step: dict[str, ValidationReport] = {}
+        # Track parse outcome per step so we can audit silent failures below.
+        parse_failures: list[str] = []
+
+        def _record(step: str, report: ValidationReport) -> None:
+            # Coerce report.validator to match the step it came from. Downstream
+            # code (and the final per-validator JSON view) trusts report.validator,
+            # and the LLM has been observed setting it to 'profiler' inside the
+            # statistical step's output — which would mis-attribute findings and
+            # skip auto-merge.
+            if report.validator != step and step in {"schema", "statistical", "structural", "relational"}:
+                logger.warning(
+                    "reducer: step '%s' report has mis-labeled validator='%s' — coercing to step name.",
+                    step, report.validator,
+                )
+                try:
+                    report.validator = step  # type: ignore[assignment]
+                except Exception:
+                    pass
+            reports.append(report)
+            reports_by_step[step] = report
+
         for step_name in ("schema", "statistical", "structural", "relational"):
             content = step_input.get_step_content(step_name)
             if isinstance(content, ValidationReport):
-                reports.append(content)
+                _record(step_name, content)
             elif isinstance(content, dict):
-                reports.append(ValidationReport.model_validate(content))
+                _record(step_name, ValidationReport.model_validate(content))
             elif isinstance(content, str):
                 try:
                     parsed = json.loads(content)
-                    reports.append(ValidationReport.model_validate(parsed))
+                    _record(step_name, ValidationReport.model_validate(parsed))
                 except Exception:
                     # Primary parse failed — attempt partial recovery before giving up.
                     recovered = _try_recover_partial(content, step_name)
                     if recovered is not None:
-                        reports.append(recovered)
+                        _record(step_name, recovered)
                     else:
+                        parse_failures.append(step_name)
                         logger.warning(
                             "reducer: step '%s' returned unparseable string — could not recover. skipping.",
                             step_name,
@@ -346,6 +429,68 @@ class ReduceSignals:
                     "reducer: step '%s' returned unexpected type %s — skipping.",
                     step_name,
                     type(content).__name__,
+                )
+
+        # ── 1a. Audit: detect silent false-positive validators ────────────
+        # A validator step that returned 0 findings AFTER executing tool calls is
+        # almost always a parse failure (LLM JSON unparseable, fell back to empty)
+        # rather than a genuine "no issues found". The downstream report would
+        # claim 100% pass for that validator — masking real findings. Escalate to
+        # ERROR so this surfaces in monitoring and the run quality metric.
+        try:
+            sd_audit = (ws.session_data or {}) if ws is not None else {}
+        except Exception:
+            sd_audit = {}
+        _step_to_aid = {
+            "schema":      "schema-validator",
+            "statistical": "statistical-validator",
+            "structural":  "structural-validator",
+            "relational":  "relational-validator",
+        }
+        # Primary source: stable counter dict written by log_run_metrics post-hook.
+        # Fallback: raw _tool_calls_seen_<aid> dict (may be missing due to agent→
+        # workflow session propagation gap).
+        tool_call_counts: dict = sd_audit.get("_validator_tool_calls") or {}
+        # Side-channel fallback: tool hook persists per-agent counts to Redis under
+        # ql:tcounts:{job_id}:{aid}. Reads transparently here when the in-memory
+        # session-state propagation gap (Agno per-agent isolation) drops the dict.
+        _job_id_audit = sd_audit.get("job_id")
+        for step_name, aid in _step_to_aid.items():
+            tool_calls = int(tool_call_counts.get(aid, 0))
+            if tool_calls == 0:
+                tool_calls = len(sd_audit.get(f"_tool_calls_seen_{aid}", {}) or {})
+            if tool_calls == 0 and _job_id_audit:
+                try:
+                    from .hooks import _redis_client
+                    _rc = _redis_client()
+                    if _rc is not None:
+                        _v = _rc.get(f"ql:tcounts:{_job_id_audit}:{aid}")
+                        if _v is not None:
+                            tool_calls = int(_v)
+                except Exception:
+                    pass
+            report = reports_by_step.get(step_name)
+            findings_count = len(report.findings) if report is not None else 0
+            logger.info(
+                "reducer audit: step=%s aid=%s tool_calls=%d findings=%d parse_failed=%s",
+                step_name, aid, tool_calls, findings_count, step_name in parse_failures,
+            )
+            if step_name in parse_failures and tool_calls > 0:
+                logger.error(
+                    "reducer: SILENT FAILURE — step '%s' ran %d tool call(s) but its output "
+                    "was unparseable; reported findings will be empty. "
+                    "Investigate LLM JSON output for this validator.",
+                    step_name, tool_calls,
+                )
+                continue
+            if report is not None and findings_count == 0 and tool_calls > 0:
+                # Findings == 0 with non-trivial tool activity is suspicious but
+                # legally valid (everything passed). Log at WARNING so it's
+                # noticeable without flooding logs.
+                logger.warning(
+                    "reducer: step '%s' ran %d tool call(s) but produced 0 findings — "
+                    "verify this is a genuine pass and not a silent parse fallback.",
+                    step_name, tool_calls,
                 )
 
         # ── 1b. Merge deterministic auto-findings from py_profiler ───────────
@@ -360,8 +505,11 @@ class ReduceSignals:
             _schema_auto:   list[dict] = _sd.get("schema_auto_findings") or []
 
             if _profiler_auto or _schema_auto:
-                _stat_report   = next((r for r in reports if r.validator == "statistical"), None)
-                _schema_report = next((r for r in reports if r.validator == "schema"), None)
+                # Look up by step name (not by report.validator). LLM has been
+                # observed mis-labeling validator='profiler' in the statistical
+                # step's output, which would silently skip the merge below.
+                _stat_report   = reports_by_step.get("statistical")
+                _schema_report = reports_by_step.get("schema")
 
                 def _merge_auto(report: ValidationReport | None, auto_raws: list[dict], label: str) -> None:
                     if report is None or not auto_raws:
@@ -761,9 +909,22 @@ class ReduceSignals:
                 if f is not representative
             ]
             if extra_cols and representative.evidence is not None:
-                lead_col = representative.entity.split(".", 1)[1] if "." in representative.entity else ""
-                all_cols = [lead_col] + [c for c in extra_cols if c != lead_col]
-                representative.evidence["columns_with_high_nulls"] = all_cols
+                # Table-level findings (e.g. missing_pk on entity='campagne_contacts')
+                # have no column part — falling back to "" produced an empty-string
+                # first element in columns_with_high_nulls, which downstream LLMs
+                # interpret as ambiguous evidence and drop the entire fix card.
+                lead_col = (
+                    representative.entity.split(".", 1)[1]
+                    if "." in representative.entity
+                    else None
+                )
+                if lead_col:
+                    all_cols = [lead_col] + [c for c in extra_cols if c and c != lead_col]
+                else:
+                    all_cols = [c for c in extra_cols if c]
+                # Only attach the field if we actually have non-empty columns.
+                if all_cols:
+                    representative.evidence["columns_with_high_nulls"] = all_cols
                 representative.entity = table
             merged.append(representative)
             logger.info(
@@ -809,9 +970,25 @@ class ReduceSignals:
             if job_id:
                 from api.db import update_job_status
                 update_job_status(job_id, "running_fix_planner")
-                logger.debug("reducer: pushed running_fix_planner status for job %s", job_id)
+                logger.info(
+                    "pipeline_status: running_fix_planner job=%s source=reducer_end",
+                    job_id,
+                )
+            else:
+                logger.warning(
+                    "pipeline_status: SKIPPED running_fix_planner — job_id missing at reducer end"
+                )
+        except Exception as exc:
+            logger.warning("reducer: status push failed at end: %s", exc)
+
+        elapsed_ms = round((_time.perf_counter() - _reducer_t0) * 1000)
+        try:
+            ws = step_input.workflow_session
+            if ws is not None:
+                timing = (ws.session_data or {}).setdefault("_phase_timing_ms", {})
+                timing["Reducer"] = elapsed_ms
         except Exception:
-            pass  # non-critical — fix planner pre-hook will push the status itself
+            pass
 
         return StepOutput(content=result)
 

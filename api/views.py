@@ -1213,7 +1213,9 @@ class JobDetailView(APIView):
 # ──────────────────────────────────────────────
 
 AGENT_OS_BASE_URL = os.environ.get('AGENT_OS_URL', 'http://localhost:7777')
-AGENT_OS_TEAM_ID  = 'qualitylab-validation-team'
+# Must match Team(id=...) in agents/team.py — agent_os.py registers the team
+# under that id and AgentOS routes /teams/<id>/runs from it.
+AGENT_OS_TEAM_ID  = os.environ.get('AGENT_OS_TEAM_ID', 'qualitylab-team')
 _DEFAULT_CHAT_LLM_MODEL = 'gemini-2.0-flash'
 
 

@@ -47,12 +47,41 @@ def _agent_id(run_context: RunContext) -> str:
     return getattr(getattr(run_context, "agent", None), "id", "") or "global"
 
 
+_REDIS_PROBE_LOGGED = False
+
+
 def _redis_client():
+    """Return a Redis client if REDIS_URL resolves, else None.
+
+    On first call per process, log once whether the connection succeeded or
+    why it failed. Without this probe, all downstream Redis users (tool cache,
+    tool-count side-channel) silently degrade with no signal in logs.
+    """
+    global _REDIS_PROBE_LOGGED
     try:
         import redis as _redis
         url = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
-        return _redis.from_url(url, decode_responses=True, socket_connect_timeout=1)
-    except Exception:
+        client = _redis.from_url(url, decode_responses=True, socket_connect_timeout=1)
+        if not _REDIS_PROBE_LOGGED:
+            _REDIS_PROBE_LOGGED = True
+            try:
+                client.ping()
+                logger.info("redis: connected to %s (probe ok)", url)
+            except Exception as ping_exc:
+                logger.warning(
+                    "redis: connect to %s returned client but ping failed: %s "
+                    "(tool-cache + audit fallback degraded)",
+                    url, ping_exc,
+                )
+        return client
+    except Exception as exc:
+        if not _REDIS_PROBE_LOGGED:
+            _REDIS_PROBE_LOGGED = True
+            logger.warning(
+                "redis: client init failed (REDIS_URL=%s): %s "
+                "(tool-cache + audit fallback degraded)",
+                os.environ.get("REDIS_URL", "redis://localhost:6379/0"), exc,
+            )
         return None
 
 def qualitylab_tool_hook(
@@ -73,6 +102,30 @@ def qualitylab_tool_hook(
     aid = _agent_id(run_context)
     job_id = (run_context.session_state or {}).get("job_id") or "nojob"
     seen: dict[str, Any] = run_context.session_state.setdefault(f"_tool_calls_seen_{aid}", {})
+
+    # ── Activity counter — bump on EVERY tool hook entry, regardless of cache.
+    # Reads by reducer's silent-failure audit. Must fire even when L1/L2 cache
+    # hits return early below; otherwise an agent that legitimately did 25
+    # queries (all cache-hit) reports tool_calls=0 → audit thinks the agent
+    # silently failed when it actually worked normally.
+    counts = run_context.session_state.setdefault("_validator_tool_calls", {})
+    counts[aid] = int(counts.get(aid, 0)) + 1
+    _new_count = counts[aid]
+
+    # Mirror to Redis side-channel (bypasses the agent→workflow session
+    # propagation gap — reducer reads this when in-memory dict missing).
+    _r_counter = _redis_client()
+    if _r_counter is not None and job_id != "nojob":
+        try:
+            _r_counter.setex(f"ql:tcounts:{job_id}:{aid}", 3600, str(_new_count))
+        except Exception as _exc:
+            _key = f"_redis_tcounts_warned_{aid}"
+            if not run_context.session_state.get(_key):
+                run_context.session_state[_key] = True
+                logger.warning(
+                    "tool_hook: Redis setex for tcounts failed (aid=%s): %s",
+                    aid, _exc,
+                )
 
     # ── Query-pattern deduplication (run_query only) ─────────────────────
     if function_name in ("run_query", "_run_query"):
@@ -182,6 +235,8 @@ def qualitylab_tool_hook(
     )
 
     seen[local_key] = result
+    # NOTE: _validator_tool_calls + Redis tcounts are bumped at the TOP of the
+    # hook (so cache hits also count). No double-write needed here.
 
     if r is not None:
         try:
@@ -491,6 +546,8 @@ def ensure_schema_primed(run_input: RunInput, run_context: RunContext) -> None:
     if state.get("schema"):
         return
 
+    _prime_t0 = time.perf_counter()
+
     pg = build_postgres_tools(
         include=["show_tables", "describe_table"],
         session_state=state,
@@ -587,6 +644,10 @@ def ensure_schema_primed(run_input: RunInput, run_context: RunContext) -> None:
         }
         for table_name, entry in schema.items()
     }
+
+    elapsed_ms = round((time.perf_counter() - _prime_t0) * 1000)
+    timing = state.setdefault("_phase_timing_ms", {})
+    timing["schema_priming"] = elapsed_ms
 
     logger.info("ensure_schema_primed: loaded %d tables", len(schema))
 
@@ -777,7 +838,10 @@ def emit_pipeline_status(run_input: RunInput, run_context: RunContext) -> None:
     try:
         from api.db import update_job_status
         update_job_status(job_id, step_status)
-        logger.debug("emit_pipeline_status: %s → %s", agent_id, step_status)
+        logger.info(
+            "pipeline_status: %s job=%s source=agent_pre_hook(%s)",
+            step_status, job_id, agent_id,
+        )
     except Exception as exc:
         logger.warning("emit_pipeline_status: failed to update job status for %s: %s", agent_id, exc)
     try:
@@ -792,6 +856,16 @@ def emit_pipeline_status(run_input: RunInput, run_context: RunContext) -> None:
     except Exception as exc:
         logger.debug("emit_pipeline_status: WebSocket push skipped: %s", exc)
 
+_AGENT_ID_TO_PHASE = {
+    "schema-validator": "Schema Integrity Validator",
+    "profiler": "Database Profiler",
+    "statistical-validator": "Statistical Validator",
+    "structural-validator": "Structural Validator",
+    "relational-validator": "Relational Validator",
+    "fix-planner": "Data Fix Planner",
+}
+
+
 def log_run_metrics(run_output: RunOutput, run_context: RunContext) -> None:
     state = run_context.session_state or {}
     elapsed_ms = (time.time() - state.get("_run_start", time.time())) * 1000
@@ -804,9 +878,26 @@ def log_run_metrics(run_output: RunOutput, run_context: RunContext) -> None:
     elif isinstance(run_output.content, FixPlan):
         findings_count = len(run_output.content.cards)
 
+    agent = getattr(run_context, "agent", None)
+    phase_name = (
+        getattr(agent, "name", None)
+        or _AGENT_ID_TO_PHASE.get(aid)
+        or "team"
+    )
+
+    timing = state.setdefault("_phase_timing_ms", {})
+    timing[phase_name] = round(elapsed_ms)
+
+    # Stable per-agent tool-call counter the reducer can audit. The raw
+    # `_tool_calls_seen_<aid>` dicts may not survive the agent→workflow session
+    # propagation gap, so we record an integer count keyed by agent id under a
+    # well-known key that the reducer's session_data view can read reliably.
+    tool_call_counts = state.setdefault("_validator_tool_calls", {})
+    tool_call_counts[aid] = tool_calls
+
     logger.info(
         "run_complete agent=%s ms=%.0f tool_calls=%d findings=%d",
-        getattr(getattr(run_context, "agent", None), "name", "team"),
+        phase_name,
         elapsed_ms,
         tool_calls,
         findings_count,
@@ -874,15 +965,21 @@ def validate_fix_sql_safety(run_output: RunOutput) -> None:
                 #   • DO $$ ... $$ PL/pgSQL blocks — used for idempotent constraint adds
                 #     (e.g. IF NOT EXISTS guards). sqlglot cannot parse anonymous blocks.
                 if statement_type == "Command":
-                    raw_upper = sql_text.strip().upper()
-                    # Normalize internal whitespace for prefix matching so
-                    # "DO $$", "DO  $$", "DO\t$$" all match as well as "DO$$".
-                    raw_upper_ws = " ".join(raw_upper.split())
+                    # Render the individual statement back to SQL so the prefix check
+                    # works in multi-statement batches (e.g. "DELETE ...; DO $$ ... $$").
+                    # Falling back to the whole sql_text would always start with the
+                    # FIRST statement and miss DO blocks that appear later.
+                    try:
+                        stmt_text = statement.sql(dialect="postgres")
+                    except Exception:
+                        stmt_text = str(statement)
+                    stmt_upper_ws = " ".join(stmt_text.strip().upper().split())
                     _safe_ddl = ("ALTER TABLE", "CREATE INDEX", "CREATE TABLE", "COMMENT ON")
                     if (
-                        any(raw_upper.startswith(p) for p in _safe_ddl)
-                        or raw_upper_ws.startswith("DO $$")
-                        or raw_upper_ws.startswith("DO$$")
+                        any(stmt_upper_ws.startswith(p) for p in _safe_ddl)
+                        or stmt_upper_ws.startswith("DO $$")
+                        or stmt_upper_ws.startswith("DO$$")
+                        or stmt_upper_ws.startswith("DO ")
                     ):
                         continue
                 violations.append(f"{card.target}: unexpected statement type '{statement_type}'")
@@ -892,3 +989,279 @@ def validate_fix_sql_safety(run_output: RunOutput) -> None:
             f"FixPlan contains unsafe SQL: {violations[:5]}",
             check_trigger=CheckTrigger.OUTPUT_NOT_ALLOWED,
         )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Pre-flight data-safety guard for fix cards
+# ─────────────────────────────────────────────────────────────────────────────
+# Pattern matches for the SQL shapes the LLM emits. Conservative — only the
+# common forms we want to inspect; anything else passes through unchanged.
+
+_RE_ADD_PK = re.compile(
+    r"ALTER\s+TABLE\s+(?:ONLY\s+)?(?:\"?(\w+)\"?\.)?\"?(\w+)\"?\s+"
+    r"ADD\s+(?:CONSTRAINT\s+\"?\w+\"?\s+)?PRIMARY\s+KEY\s*\(\s*([^)]+?)\s*\)\s*;?",
+    re.IGNORECASE,
+)
+_RE_ADD_UNIQUE = re.compile(
+    r"ALTER\s+TABLE\s+(?:ONLY\s+)?(?:\"?(\w+)\"?\.)?\"?(\w+)\"?\s+"
+    r"ADD\s+CONSTRAINT\s+\"?(\w+)\"?\s+UNIQUE\s*\(\s*([^)]+?)\s*\)\s*;?",
+    re.IGNORECASE,
+)
+_RE_SET_NOT_NULL = re.compile(
+    r"ALTER\s+TABLE\s+(?:ONLY\s+)?(?:\"?\w+\"?\.)?\"?(\w+)\"?\s+"
+    r"ALTER\s+COLUMN\s+\"?(\w+)\"?\s+SET\s+NOT\s+NULL\s*;?",
+    re.IGNORECASE,
+)
+_RE_UPDATE_FK_PLACEHOLDER = re.compile(
+    r"UPDATE\s+(?:\"?\w+\"?\.)?\"?(\w+)\"?\s+SET\s+\"?(\w+)\"?\s*=\s*(\d+)\s+"
+    r"WHERE\s+\"?\2\"?\s+IS\s+NULL\s*;?",
+    re.IGNORECASE,
+)
+
+
+def _split_cols(cols_text: str) -> list[str]:
+    return [c.strip().strip('"') for c in cols_text.split(",") if c.strip()]
+
+
+def _conn_str_from_state(state: dict) -> str | None:
+    return state.get("connection_string") or state.get("dsn")
+
+
+def _safe_query(conn_str: str, sql: str) -> Any:
+    """Run a single read-only SQL via psycopg2. Returns first column of first row,
+    or None on failure. Wrapped tightly so any DB error degrades to 'cannot prove safe'.
+    """
+    import psycopg2
+    conn = None
+    try:
+        conn = psycopg2.connect(conn_str, connect_timeout=5)
+        with conn.cursor() as cur:
+            cur.execute("SET statement_timeout = 5000;")
+            cur.execute(sql)
+            row = cur.fetchone()
+            return row[0] if row else None
+    except Exception as exc:
+        logger.warning("preflight: query failed (%s): %s", sql[:80], exc)
+        return None
+    finally:
+        if conn is not None:
+            try:
+                conn.close()
+            except Exception:
+                pass
+
+
+def _block_card(card: Any, reason: str) -> None:
+    """Replace card SQL with a no-op advisory comment. Keeps the card visible in
+    the report so the user knows what was attempted, but prevents it from running.
+    """
+    original = card.sql or ""
+    card.sql = f"-- BLOCKED BY PREFLIGHT: {reason}\n-- Original SQL was unsafe to execute against this database.\nSELECT 'preflight_blocked' AS status;"
+    card.risk_level = "low"
+    if hasattr(card, "rationale"):
+        card.rationale = (
+            f"[Pre-flight blocked: {reason}] " + (card.rationale or "")
+        ).strip()
+    if hasattr(card, "preconditions"):
+        card.preconditions = list(card.preconditions or []) + [
+            f"BLOCKED: {reason}",
+            f"Original SQL: {original[:200]}",
+        ]
+
+
+def _prepend_set_not_null(card: Any, table: str, columns: list[str]) -> None:
+    """Insert ALTER COLUMN ... SET NOT NULL statements before the existing SQL."""
+    prefix = " ".join(
+        f"ALTER TABLE {table} ALTER COLUMN {c} SET NOT NULL;" for c in columns
+    )
+    card.sql = f"{prefix} {card.sql}".strip()
+    if hasattr(card, "rationale"):
+        card.rationale = (
+            f"[Pre-flight: prepended SET NOT NULL on {', '.join(columns)} — required for PK] "
+            + (card.rationale or "")
+        ).strip()
+
+
+def _is_pattern_not_unique_card(card: Any) -> bool:
+    """Detect cards derived from the noisy `pattern_not_unique` schema rule.
+    Pattern matches like *_code, *_type fire even on country codes / enum types
+    that legitimately repeat — promoting them to UNIQUE constraints destroys data.
+    """
+    rationale = (getattr(card, "rationale", "") or "").lower()
+    title = (getattr(card, "title", "") or "").lower()
+    needles = ("pattern_not_unique", "matches a unique pattern", "matches a unique column pattern")
+    return any(n in rationale or n in title for n in needles)
+
+
+def validate_fix_preflight(run_output: RunOutput, run_context: RunContext) -> None:
+    """Pre-flight data-safety guard. Runs after the LLM emits a FixPlan and after
+    SQL syntax validation. For each card, queries the live database to verify
+    that the proposed SQL will not destroy data or fail at execution time.
+
+    Five guards:
+      1. ADD PRIMARY KEY — verify the column(s) have no NULLs and no duplicates.
+         Auto-prepend SET NOT NULL when nullable but unique. Block when duplicate.
+      2. ADD CONSTRAINT ... UNIQUE — verify column has no duplicate non-null values.
+         Block when duplicates exist (constraint creation would fail anyway, and
+         the LLM sometimes prepends a DELETE that would destroy real data).
+      3. UPDATE <fk_col> = <N> WHERE <fk_col> IS NULL — verify N exists in the
+         FK target table. Block when target row absent (creates orphaned FK).
+      4. Cards derived from `pattern_not_unique` rule — block outright. The
+         schema-rule's `*_code` / `*_type` regex is too noisy to safely promote
+         to a UNIQUE constraint without human review.
+      5. (Inherited from upstream hooks) entity existence + SQL syntax safety.
+
+    Failure mode: if the database is unreachable, all queries return None and
+    cards pass through untouched (we can't prove unsafe → don't break the run).
+    Blocked cards keep their slot in the FixPlan so the user sees what was
+    attempted, but their SQL is replaced with an inert comment.
+    """
+    plan = run_output.content
+    if not isinstance(plan, FixPlan):
+        return
+
+    state = run_context.session_state or {}
+    conn_str = _conn_str_from_state(state)
+    if not conn_str:
+        # Try the executor's stored DSN as fallback.
+        try:
+            from .tools import postgres_tool
+            conn_str = postgres_tool.connection_string
+        except Exception:
+            conn_str = None
+    if not conn_str:
+        logger.warning("preflight: no connection_string available — skipping all checks")
+        return
+
+    blocked_count = 0
+    modified_count = 0
+    for card in plan.cards:
+        sql_text = card.sql or ""
+        if not sql_text.strip():
+            continue
+
+        # Guard 4: pattern_not_unique advisory — block before any DB query.
+        if _is_pattern_not_unique_card(card):
+            _block_card(
+                card,
+                "rule 'pattern_not_unique' is advisory; promoting *_code/*_type to UNIQUE "
+                "destroys legitimate enum-like values (country codes, status types)",
+            )
+            blocked_count += 1
+            continue
+
+        # Guard 1: PK addition. Match the first occurrence; multi-statement
+        # cards may chain SET NOT NULL + ADD PK so we only inspect the PK part.
+        m_pk = _RE_ADD_PK.search(sql_text)
+        if m_pk:
+            table = m_pk.group(2)
+            cols = _split_cols(m_pk.group(3))
+            if not cols:
+                continue
+
+            # Skip the NULL check for columns the SAME card already declared NOT NULL.
+            already_set_not_null: set[str] = set()
+            for m_snn in _RE_SET_NOT_NULL.finditer(sql_text):
+                if m_snn.group(1).lower() == table.lower():
+                    already_set_not_null.add(m_snn.group(2).lower())
+
+            cols_to_check = [c for c in cols if c.lower() not in already_set_not_null]
+            null_violators: list[str] = []
+            for col in cols_to_check:
+                cnt = _safe_query(
+                    conn_str,
+                    f"SELECT COUNT(*) FROM {table} WHERE {col} IS NULL",
+                )
+                if cnt is not None and cnt > 0:
+                    null_violators.append(col)
+
+            cols_csv = ", ".join(cols)
+            dup_count = _safe_query(
+                conn_str,
+                f"SELECT COUNT(*) - COUNT(DISTINCT ({cols_csv})) FROM {table} WHERE "
+                + " AND ".join(f"{c} IS NOT NULL" for c in cols),
+            )
+            if dup_count is not None and dup_count > 0:
+                _block_card(
+                    card,
+                    f"PK on ({cols_csv}) on table '{table}' would fail: "
+                    f"{dup_count} duplicate row(s) found",
+                )
+                blocked_count += 1
+                continue
+
+            if null_violators:
+                _prepend_set_not_null(card, table, null_violators)
+                modified_count += 1
+            continue
+
+        # Guard 2: UNIQUE constraint addition.
+        m_uq = _RE_ADD_UNIQUE.search(sql_text)
+        if m_uq:
+            table = m_uq.group(2)
+            cols = _split_cols(m_uq.group(4))
+            if not cols:
+                continue
+            cols_csv = ", ".join(cols)
+            dup_count = _safe_query(
+                conn_str,
+                f"SELECT COUNT(*) - COUNT(DISTINCT ({cols_csv})) FROM {table} WHERE "
+                + " AND ".join(f"{c} IS NOT NULL" for c in cols),
+            )
+            if dup_count is not None and dup_count > 0:
+                _block_card(
+                    card,
+                    f"UNIQUE on ({cols_csv}) on table '{table}' would fail: "
+                    f"{dup_count} duplicate row(s) found",
+                )
+                blocked_count += 1
+            continue
+
+        # Guard 3: UPDATE fk_col = N WHERE fk_col IS NULL — verify FK target exists.
+        m_upd = _RE_UPDATE_FK_PLACEHOLDER.search(sql_text)
+        if m_upd:
+            src_table = m_upd.group(1)
+            fk_col = m_upd.group(2)
+            placeholder = int(m_upd.group(3))
+            schema_map = state.get("schema") or {}
+            tbl_meta = schema_map.get(src_table) or {}
+            fks = tbl_meta.get("foreign_keys") or []
+            target_table = None
+            target_col = None
+            for fk in fks:
+                if (fk.get("column") or "").lower() == fk_col.lower():
+                    target_table = fk.get("foreign_table") or fk.get("references_table")
+                    target_col = fk.get("foreign_column") or fk.get("references_column")
+                    break
+            # Without confirmed FK target table AND target column from the
+            # information_schema-derived metadata, we have no way to verify the
+            # placeholder is a valid FK target. Don't guess (no '_id' → 'id'
+            # convention assumption) — leave the card alone.
+            if not target_table or not target_col:
+                continue
+            exists = _safe_query(
+                conn_str,
+                f"SELECT EXISTS(SELECT 1 FROM {target_table} WHERE {target_col} = {placeholder})",
+            )
+            if exists is False or exists == 0:
+                _block_card(
+                    card,
+                    f"placeholder {fk_col}={placeholder} does not exist in "
+                    f"{target_table}({target_col}); would create orphan FK references",
+                )
+                blocked_count += 1
+            continue
+
+    if blocked_count or modified_count:
+        logger.warning(
+            "preflight: blocked %d card(s), modified %d card(s) for safety",
+            blocked_count, modified_count,
+        )
+        # Stash counts in session_state so the verdict logic can read them.
+        try:
+            run_context.session_state.setdefault("_preflight_summary", {}).update({
+                "blocked": blocked_count,
+                "modified": modified_count,
+            })
+        except Exception:
+            pass

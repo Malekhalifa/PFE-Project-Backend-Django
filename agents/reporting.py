@@ -94,9 +94,17 @@ def _resolve_primary_issue(finding: dict[str, Any]) -> dict[str, Any]:
     issues = _extract_item_issues(finding)
     if issues:
         return issues[0]
+    description = (
+        finding.get("remediation_hint")
+        or finding.get("description")
+        or finding.get("problem")
+        or str(finding.get("rule") or "Issue detected").replace("_", " ")
+    )
     return {
         "severity": normalize_severity(finding.get("severity")),
-        "description": finding.get("description") or finding.get("problem") or "Issue detected",
+        "description": description,
+        "type": finding.get("rule"),
+        "evidence": finding.get("evidence") or {},
     }
 
 
@@ -198,21 +206,87 @@ def _merge_findings_by_table_and_problem(findings: list[dict[str, Any]]) -> list
 def aggregate_pipeline_scores(reports: list[dict[str, Any]]) -> tuple[int, int]:
     """
     Computes an overall combined confidence score and data quality score.
+
+    Quality score is weighted by items_flagged so validators that emitted no
+    findings can't dilute a low score from a validator that found real problems.
+    Each validator still contributes a baseline weight of 1 — a fully clean DB
+    (zero findings everywhere) keeps scoring 100.
+
+    Confidence stays a flat mean across validators that emitted findings; an
+    empty validator has no per-finding confidence to contribute.
     """
     summaries = [
-        _as_dict(report.get("summary")) 
+        _as_dict(report.get("summary"))
         for report in reports if isinstance(report, dict)
     ]
     if not summaries:
         return 0, 0
 
-    confidence_values = [max(0.0, min(1.0, _as_float(s.get("overall_confidence"), 0.0))) for s in summaries]
     quality_values = [max(0.0, min(100.0, _as_float(s.get("overall_quality_score"), 0.0))) for s in summaries]
+    weights = [max(1, int(_as_float(s.get("items_flagged"), 0))) for s in summaries]
+    weighted_quality = sum(q * w for q, w in zip(quality_values, weights))
+    total_weight = sum(weights)
+    data_quality_score = int(round(weighted_quality / total_weight)) if total_weight else int(round(sum(quality_values) / len(quality_values)))
 
-    confidence_score = int(round((sum(confidence_values) / len(confidence_values)) * 100.0))
-    data_quality_score = int(round(sum(quality_values) / len(quality_values)))
+    confidence_inputs = [
+        max(0.0, min(1.0, _as_float(s.get("overall_confidence"), 0.0)))
+        for s in summaries
+        if int(_as_float(s.get("items_flagged"), 0)) > 0
+    ]
+    if confidence_inputs:
+        confidence_score = int(round((sum(confidence_inputs) / len(confidence_inputs)) * 100.0))
+    else:
+        confidence_score = 100
 
     return confidence_score, data_quality_score
+
+
+def confidence_breakdown(reports: list[dict[str, Any]]) -> dict[str, Any]:
+    """
+    Explain what 'confidence_score' represents: distribution of per-finding
+    confidence across all validators. Returns counts of findings at each tier
+    plus a one-line plain-English summary.
+    """
+    high_conf = 0
+    mid_conf = 0
+    low_conf = 0
+    total = 0
+    for report in reports:
+        if not isinstance(report, dict):
+            continue
+        for f in _as_list(report.get("findings")):
+            if not isinstance(f, dict):
+                continue
+            c = _as_float(f.get("confidence"), 0.0)
+            total += 1
+            if c >= 0.9:
+                high_conf += 1
+            elif c >= 0.75:
+                mid_conf += 1
+            else:
+                low_conf += 1
+
+    if total == 0:
+        return {
+            "total_findings": 0,
+            "high_confidence_count": 0,
+            "medium_confidence_count": 0,
+            "low_confidence_count": 0,
+            "summary": "No findings emitted — confidence not applicable.",
+        }
+
+    pct = round(100 * high_conf / total)
+    return {
+        "total_findings": total,
+        "high_confidence_count": high_conf,
+        "medium_confidence_count": mid_conf,
+        "low_confidence_count": low_conf,
+        "summary": (
+            f"{pct}% of findings have confidence ≥ 0.9 "
+            f"({high_conf}/{total} high, {mid_conf} medium, {low_conf} low). "
+            "Deterministic (py_profiler) findings are 0.92–1.0; LLM findings vary."
+        ),
+    }
 
 
 def report_to_markdown(report: dict[str, Any], title: str) -> str:
@@ -284,9 +358,9 @@ def report_to_markdown(report: dict[str, Any], title: str) -> str:
                 lines.append(f"- Confidence: {finding['confidence']}")
 
             # Merged finding: show all affected columns; single finding: show one column.
-            merged_cols: list[str] = finding.get("columns") or []
+            merged_cols: list[str] = finding.get("affected_columns") or finding.get("columns") or []
             if merged_cols:
-                lines.append(f"- Columns: {', '.join(merged_cols)}")
+                lines.append(f"- Columns ({len(merged_cols)}): {', '.join(merged_cols)}")
             elif "column" in finding and finding["column"] is not None:
                 lines.append(f"- Column: {finding['column']}")
 

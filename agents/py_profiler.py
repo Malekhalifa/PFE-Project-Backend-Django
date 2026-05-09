@@ -509,6 +509,9 @@ def python_profile_step(step_input: StepInput) -> StepOutput:
     ws = getattr(step_input, "workflow_session", None)
     session_state: dict[str, Any] = (getattr(ws, "session_data", None) or {}) if ws else {}
 
+    import time as _time
+    _profiler_t0 = _time.perf_counter()
+
     schema: dict[str, Any] = session_state.get("schema") or {}
     connection_string: str = session_state.get("connection_string") or ""
 
@@ -518,8 +521,17 @@ def python_profile_step(step_input: StepInput) -> StepOutput:
         try:
             from api.db import update_job_status
             update_job_status(job_id, "running_profiler")
+            logger.info(
+                "pipeline_status: running_profiler job=%s source=py_profiler_executor",
+                job_id,
+            )
         except Exception:
             pass
+    else:
+        logger.warning(
+            "pipeline_status: SKIPPED running_profiler — job_id missing from session_data "
+            "(_make_profiler_executor injection failed)"
+        )
         try:
             from asgiref.sync import async_to_sync
             from channels.layers import get_channel_layer
@@ -626,8 +638,14 @@ def python_profile_step(step_input: StepInput) -> StepOutput:
                 len(table_names),
             )
 
+        elapsed_ms = round((_time.perf_counter() - _profiler_t0) * 1000)
+        if ws is not None:
+            timing = session_state.setdefault("_phase_timing_ms", {})
+            timing["Python Profiler"] = elapsed_ms
+
         logger.info(
-            "run_complete agent=Python Profiler ms=N/A tool_calls=0 findings=0 tables=%d/%d",
+            "run_complete agent=Python Profiler ms=%d tool_calls=0 findings=0 tables=%d/%d",
+            elapsed_ms,
             covered,
             len(table_names),
         )

@@ -21,7 +21,7 @@ from services.report_service import save_final_pipeline_report
 
 from .py_profiler import python_profile_step
 from .reducer import _try_recover_partial, reduce_signals
-from .reporting import aggregate_pipeline_scores, derive_database_id, report_to_markdown
+from .reporting import aggregate_pipeline_scores, confidence_breakdown, derive_database_id, report_to_markdown
 from .rules import common_rules, policy_rules
 from .schemas import Finding, FixCard, FixDependencyGraph, FixPlan, ProfilerReport, ReducedFindings, ValidationReport
 from .team import build_members, resolve_model_id
@@ -195,6 +195,78 @@ def _make_profiler_executor(session_state: dict[str, Any]):
                 if val:
                     session_state[key] = val
 
+            # Phase-timing dict is mutated by both pre_hooks (schema_priming) and
+            # post_hooks (log_run_metrics) on each agent run. Merge into outer state.
+            inner_timing = sd_after.get("_phase_timing_ms")
+            if isinstance(inner_timing, dict):
+                outer_timing = session_state.setdefault("_phase_timing_ms", {})
+                outer_timing.update(inner_timing)
+
+        return result
+
+    return _executor
+
+
+def _make_reducer_executor(session_state: dict[str, Any]):
+    """Wrap reduce_signals with the same session_data injection as the profiler.
+
+    The reducer pushes two job-status updates (running_reducer at start,
+    running_fix_planner at end) so the loading screen advances past the
+    parallel-validators phase.  Both calls read job_id from
+    step_input.workflow_session.session_data, which is a SEPARATE dict from
+    the session_state passed to Workflow(...).  Without this wrapper, job_id
+    is None inside the reducer and the status pushes silently no-op — the
+    UI then sticks at 'running_reducer' (or earlier) for the full duration
+    of the fix-planner LLM call (60-90s).
+    """
+    def _executor(step_input):
+        ws = getattr(step_input, "workflow_session", None)
+        if ws is not None:
+            sd = getattr(ws, "session_data", None)
+            if sd is None:
+                sd = {}
+            for key in (
+                "connection_string", "database_id", "job_id",
+                "schema", "validator_schema", "relational_schema",
+                "fix_planner_schema", "profiler_schema",
+                "profiler_report", "profiler_tables", "profiler_summary",
+                # Bridge for the reducer's silent-failure audit. log_run_metrics
+                # writes per-agent tool-call counts here; the audit reads them to
+                # detect validators that ran tools but emitted 0 findings.
+                "_validator_tool_calls",
+            ):
+                if not sd.get(key) and session_state.get(key):
+                    sd[key] = session_state[key]
+            # Merge from sd_after-style writes too: even if the agents wrote
+            # _validator_tool_calls into the inner ws.session_data on their own,
+            # union the dicts so neither side wins by overwrite.
+            inner_counts = sd.get("_validator_tool_calls") or {}
+            outer_counts = session_state.get("_validator_tool_calls") or {}
+            if outer_counts or inner_counts:
+                merged = {**outer_counts, **inner_counts}
+                sd["_validator_tool_calls"] = merged
+            try:
+                ws.session_data = sd
+            except AttributeError:
+                pass
+
+        result = reduce_signals(step_input)
+
+        # Sync reducer-produced state back so the orchestrator can read it.
+        if ws is not None:
+            sd_after = getattr(ws, "session_data", None) or {}
+            reduced = sd_after.get("last_reduced_findings")
+            if reduced:
+                session_state["last_reduced_findings"] = reduced
+            inner_timing = sd_after.get("_phase_timing_ms")
+            if isinstance(inner_timing, dict):
+                outer_timing = session_state.setdefault("_phase_timing_ms", {})
+                outer_timing.update(inner_timing)
+            inner_counts = sd_after.get("_validator_tool_calls")
+            if isinstance(inner_counts, dict):
+                outer_counts = session_state.setdefault("_validator_tool_calls", {})
+                outer_counts.update(inner_counts)
+
         return result
 
     return _executor
@@ -233,7 +305,10 @@ def build_validation_workflow(
                 Step(name="relational",  agent=members.relational_validator,  on_error=OnError.fail),
                 name="Validation Phase",
             ),
-            Step(name="reduce",   executor=reduce_signals),
+            # Reducer is also a Step executor with the same session_data
+            # propagation gap as the profiler — wrap it so its status pushes
+            # (running_reducer, running_fix_planner) actually fire.
+            Step(name="reduce",   executor=_make_reducer_executor(session_state)),
             Step(name="fix_plan", agent=members.fix_planner),
         ],
     )
@@ -542,17 +617,93 @@ def _severity_summary(findings: list[Finding]) -> dict[str, int]:
     return counts
 
 
-def _quality_score(findings: list[Finding]) -> float:
-    penalty = 0
-    weights = {"critical": 25, "high": 15, "medium": 8, "low": 3}
-    for finding in findings:
-        penalty += weights.get(finding.severity, 0)
-    return float(max(0, 100 - penalty))
+# Map duplicate rule names to a canonical rule. Different code paths (LLM agents
+# vs deterministic py_profiler) emit the same logical issue under different names.
+# Canonicalize before dedup so each issue counts once.
+_RULE_ALIASES: dict[str, str] = {
+    # Schema: missing primary key
+    "primary_key_required": "missing_pk",
+    "missing_pk": "missing_pk",
+    # Schema: nullable foreign-key column
+    "nullable_foreign_key": "nullable_fk",
+    "nullable_fk_column": "nullable_fk",
+    "nullable_fk": "nullable_fk",
+    # Schema: foreign-key column without an index
+    "missing_index": "missing_fk_index",
+    "missing_index_fk_column": "missing_fk_index",
+    "missing_fk_index": "missing_fk_index",
+    # Statistical: high null rate
+    "null_rate_high": "null_rate_high",
+    "null_ratio_high": "null_rate_high",
+}
+
+
+def _canonical_rule(rule: str | None) -> str:
+    if not rule:
+        return ""
+    return _RULE_ALIASES.get(rule, rule)
+
+
+def _dedup_findings_by_alias(findings: list[Finding]) -> list[Finding]:
+    """Collapse findings whose rule maps to the same canonical name on the same entity.
+
+    Keeps the highest-severity finding, averages confidence, rewrites the rule
+    field to the canonical name. Drops the duplicate copy entirely.
+    """
+    if not findings:
+        return findings
+
+    sev_rank = {"low": 1, "medium": 2, "high": 3, "critical": 4}
+    groups: dict[tuple[str, str], list[Finding]] = {}
+    order: list[tuple[str, str]] = []
+    for f in findings:
+        key = (f.entity or "", _canonical_rule(f.rule))
+        if key not in groups:
+            groups[key] = []
+            order.append(key)
+        groups[key].append(f)
+
+    deduped: list[Finding] = []
+    for key in order:
+        bucket = groups[key]
+        if len(bucket) == 1:
+            f = bucket[0]
+            canon = _canonical_rule(f.rule)
+            if canon and canon != f.rule:
+                f = f.model_copy(update={"rule": canon})
+            deduped.append(f)
+            continue
+
+        best = max(bucket, key=lambda f: sev_rank.get(f.severity, 0))
+        confidences = [f.confidence for f in bucket if isinstance(f.confidence, (int, float))]
+        avg_confidence = round(sum(confidences) / len(confidences), 4) if confidences else best.confidence
+        deduped.append(best.model_copy(update={
+            "rule": _canonical_rule(best.rule),
+            "confidence": avg_confidence,
+        }))
+    return deduped
+
+
+def _quality_score(findings: list[Finding], total_tables: int) -> float:
+    """
+    Severity-weighted score normalized by table count.
+
+    weights:    critical=18, high=7, medium=1.5, low=0.1
+    denominator: max(1, total_tables // 5)   — 30-table schema → 6
+    score      = max(0, 100 - min(100, total_penalty / denominator))
+
+    Calibration: 4 critical PK violations alone on a 30-table schema score ~88
+    (4*18=72, 72/6=12 → 88). Pre-dedup bloat no longer hides serious issues.
+    """
+    weights = {"critical": 18.0, "high": 7.0, "medium": 1.5, "low": 0.1}
+    penalty = sum(weights.get(f.severity, 0) for f in findings)
+    denom = max(1.0, total_tables / 5.0)
+    normalized = penalty / denom
+    return round(max(0.0, 100.0 - min(100.0, normalized)), 1)
 
 
 def _legacy_validation_finding(finding: Finding) -> dict[str, Any]:
     table_name, column_name = _split_entity(finding.entity)
-    issue_description = finding.suggested_action or finding.rule.replace("_", " ")
     return {
         "table": table_name,
         "column": column_name,
@@ -562,15 +713,48 @@ def _legacy_validation_finding(finding: Finding) -> dict[str, Any]:
         "confidence": finding.confidence,
         "evidence": finding.evidence,
         "remediation_hint": finding.suggested_action,
-        "issues": [
-            {
-                "type": finding.rule,
-                "severity": finding.severity,
-                "description": issue_description,
-                "evidence": finding.evidence,
-            }
-        ],
     }
+
+
+def _group_findings_by_table_rule(findings: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """
+    Roll up multiple (table, rule) findings into one entry with affected_columns.
+    Cuts row count when same rule fires across many columns of the same table.
+    """
+    from collections import OrderedDict
+
+    groups: "OrderedDict[tuple[str, str], list[dict[str, Any]]]" = OrderedDict()
+    for f in findings:
+        key = (f.get("table") or "", f.get("rule") or "")
+        groups.setdefault(key, []).append(f)
+
+    rolled: list[dict[str, Any]] = []
+    for (_table, _rule), group in groups.items():
+        if len(group) == 1:
+            rolled.append(group[0])
+            continue
+
+        cols: list[str] = []
+        seen: set[str] = set()
+        for f in group:
+            c = f.get("column")
+            if c and c not in seen:
+                seen.add(c)
+                cols.append(c)
+
+        sev_rank = {"low": 1, "medium": 2, "high": 3, "critical": 4}
+        best = max(group, key=lambda f: sev_rank.get(f.get("severity", "low"), 0))
+        confidences = [f["confidence"] for f in group if isinstance(f.get("confidence"), (int, float))]
+        avg_confidence = round(sum(confidences) / len(confidences), 4) if confidences else best.get("confidence")
+
+        merged = dict(best)
+        merged["column"] = None
+        merged["affected_columns"] = cols
+        merged["count"] = len(group)
+        merged["confidence"] = avg_confidence
+        rolled.append(merged)
+
+    return rolled
 
 
 def _legacy_validation_report(
@@ -582,17 +766,20 @@ def _legacy_validation_report(
     run_timestamp: str,
     total_entities: int | None = None,
 ) -> dict[str, Any]:
-    findings = [_legacy_validation_finding(item) for item in report.findings]
-    severity = _severity_summary(report.findings)
+    deduped_findings = _dedup_findings_by_alias(report.findings)
+    raw_findings = [_legacy_validation_finding(item) for item in deduped_findings]
+    findings = _group_findings_by_table_rule(raw_findings)
+
+    severity = _severity_summary(deduped_findings)
     flagged_tables = sorted({item["table"] for item in findings if item.get("table")})
     avg_confidence = (
-        round(sum(item.confidence for item in report.findings) / len(report.findings), 4)
-        if report.findings
+        round(sum(item.confidence for item in deduped_findings) / len(deduped_findings), 4)
+        if deduped_findings
         else 1.0
     )
-    quality_score = _quality_score(report.findings)
-    items_flagged = len(report.findings)
-    items_total = total_entities if total_entities is not None else items_flagged
+    items_total = total_entities if total_entities is not None else len(deduped_findings)
+    quality_score = _quality_score(deduped_findings, items_total)
+    items_flagged = len(findings)
     items_passed = max(0, items_total - items_flagged)
 
     return {
@@ -616,9 +803,10 @@ def _legacy_validation_report(
         "metrics": {
             "validator": report.validator,
             "findings_count": len(report.findings),
+            "deduped_finding_count": len(deduped_findings),
+            "grouped_finding_count": len(findings),
         },
         "findings": findings,
-        "prior_reports": [],
     }
 
 
@@ -681,6 +869,14 @@ def _legacy_fix_report(
         if fixes
         else 1.0
     )
+    # Severity-weighted, normalized by table count — matches validator formula.
+    weights = {"critical": 10.0, "high": 5.0, "medium": 1.0, "low": 0.1}
+    flagged_tables_list = sorted({item["table"] for item in fixes if item.get("table")})
+    penalty = sum(weights.get(f.get("severity", "low"), 0) for f in fixes)
+    quality_score = round(
+        max(0.0, 100.0 - min(100.0, penalty / max(1, len(flagged_tables_list)))),
+        1,
+    )
     report = {
         "pipeline_run_id": pipeline_run_id,
         "database_id": database_id,
@@ -695,9 +891,9 @@ def _legacy_fix_report(
             "high_issues": len([f for f in fixes if f["severity"] == "high"]),
             "medium_issues": len([f for f in fixes if f["severity"] == "medium"]),
             "low_issues": len([f for f in fixes if f["severity"] == "low"]),
-            "overall_quality_score": float(max(0, 100 - (len(fixes) * 5))),
+            "overall_quality_score": quality_score,
             "overall_confidence": avg_confidence,
-            "flagged_tables": sorted({item["table"] for item in fixes if item.get("table")}),
+            "flagged_tables": flagged_tables_list,
         },
         "metrics": {
             "total_issues_received": len(reduced_findings.findings),
@@ -709,6 +905,186 @@ def _legacy_fix_report(
     return report, fixes
 
 
+def _build_executive_summary(
+    *,
+    schema_dict: dict[str, Any],
+    statistical_dict: dict[str, Any],
+    structural_dict: dict[str, Any],
+    relational_dict: dict[str, Any],
+    fix_dict: dict[str, Any],
+    data_quality_score: int,
+    total_tables: int,
+    profiler_table_count: int,
+) -> dict[str, Any]:
+    """Top-level verdict, top issues, scan stats — surfaces signal above the 200+ findings."""
+    all_reports = [schema_dict, statistical_dict, structural_dict, relational_dict]
+    sev_rank = {"critical": 4, "high": 3, "medium": 2, "low": 1}
+
+    flat: list[dict[str, Any]] = []
+    for r in all_reports:
+        for f in r.get("findings", []) or []:
+            if isinstance(f, dict):
+                flat.append(f)
+
+    flat.sort(
+        key=lambda f: (sev_rank.get(f.get("severity", "low"), 0), f.get("confidence") or 0),
+        reverse=True,
+    )
+
+    top_issues: list[str] = []
+    for f in flat[:3]:
+        sev = (f.get("severity") or "?").upper()
+        rule = (f.get("rule") or "issue").replace("_", " ")
+        entity = f.get("entity") or f.get("table") or "?"
+        cols = f.get("affected_columns") or []
+        suffix = f" ({len(cols)} columns)" if cols else ""
+        top_issues.append(f"[{sev}] {rule} on {entity}{suffix}")
+
+    if data_quality_score >= 80:
+        verdict = "low_risk"
+    elif data_quality_score >= 50:
+        verdict = "medium_risk"
+    elif data_quality_score >= 25:
+        verdict = "high_risk"
+    else:
+        verdict = "critical"
+
+    fix_findings = fix_dict.get("findings", []) or []
+    cards = fix_dict.get("cards", []) or []
+
+    # ── Migration risk scoring ────────────────────────────────────────────
+    # The data_quality_score reflects diagnosis quality only. The verdict the
+    # user sees should also reflect remediation safety: a clean diagnosis
+    # paired with destructive fix cards (DELETE, placeholder FK fills, blocked
+    # cards) is NOT low risk in practice. Demote the verdict accordingly.
+    high_risk_cards = sum(
+        1 for c in cards
+        if isinstance(c, dict) and (c.get("risk_level") or "").lower() == "high"
+    )
+    blocked_cards = sum(
+        1 for c in cards
+        if isinstance(c, dict) and "BLOCKED BY PREFLIGHT" in (c.get("sql") or "")
+    )
+    destructive_cards = sum(
+        1 for c in cards
+        if isinstance(c, dict)
+        and any(
+            kw in (c.get("sql") or "").upper()
+            for kw in ("DELETE FROM", "DROP TABLE", "DROP CONSTRAINT", "TRUNCATE")
+        )
+    )
+    migration_risk_score = (
+        high_risk_cards * 10
+        + blocked_cards * 15
+        + destructive_cards * 8
+    )
+
+    _verdict_rank = {"low_risk": 1, "medium_risk": 2, "high_risk": 3, "critical": 4}
+    _rank_to_verdict = {v: k for k, v in _verdict_rank.items()}
+
+    # Demotion rules — bump verdict severity by N levels based on migration_risk_score.
+    base_rank = _verdict_rank.get(verdict, 1)
+    if migration_risk_score >= 30:
+        adjusted_rank = max(base_rank, 3)  # at least high_risk
+    elif migration_risk_score >= 15:
+        adjusted_rank = max(base_rank, 2)  # at least medium_risk
+    elif blocked_cards > 0:
+        adjusted_rank = max(base_rank, 2)  # any blocked card → at least medium
+    else:
+        adjusted_rank = base_rank
+    verdict = _rank_to_verdict.get(adjusted_rank, verdict)
+
+    return {
+        "verdict": verdict,
+        "top_issues": top_issues or ["No issues detected."],
+        "tables_scanned": total_tables,
+        "tables_profiled": profiler_table_count,
+        "fixes_recommended": len(fix_findings),
+        "critical_fix_count": sum(1 for x in fix_findings if x.get("severity") == "critical"),
+        "migration_risk": {
+            "score": migration_risk_score,
+            "high_risk_cards": high_risk_cards,
+            "blocked_cards": blocked_cards,
+            "destructive_cards": destructive_cards,
+        },
+    }
+
+
+def _build_migration_script(fix_dict: dict[str, Any]) -> dict[str, Any]:
+    """
+    Concatenate all fix card SQL into one transactional script.
+    Respects depends_on graph for ordering — topological sort.
+    """
+    cards = fix_dict.get("cards", []) or []
+    if not cards:
+        return {"sql": "-- No fixes generated.", "card_count": 0, "phases": {}}
+
+    by_id = {c.get("fix_id"): c for c in cards if c.get("fix_id")}
+    visited: set[str] = set()
+    ordered: list[dict[str, Any]] = []
+
+    def _visit(fix_id: str) -> None:
+        if fix_id in visited or fix_id not in by_id:
+            return
+        visited.add(fix_id)
+        for dep in by_id[fix_id].get("depends_on") or []:
+            _visit(dep)
+        ordered.append(by_id[fix_id])
+
+    for fix_id in by_id:
+        _visit(fix_id)
+
+    pre_sql: list[str] = []
+    pk_sql: list[str] = []
+    idx_sql: list[str] = []
+    other_sql: list[str] = []
+
+    # Match both `ALTER TABLE x ADD PRIMARY KEY (...)` and the named-constraint
+    # form `ALTER TABLE x ADD CONSTRAINT pk_x PRIMARY KEY (...)`. LLM picks
+    # either freely; substring `"ADD PRIMARY KEY"` misses the named form.
+    _pk_re  = re.compile(r"\bADD\s+(?:CONSTRAINT\s+\S+\s+)?PRIMARY\s+KEY\b", re.IGNORECASE)
+    # Indexes: cover CREATE INDEX, CREATE UNIQUE INDEX, CREATE INDEX CONCURRENTLY.
+    _idx_re = re.compile(r"\bCREATE(?:\s+UNIQUE)?\s+INDEX\b", re.IGNORECASE)
+
+    for c in ordered:
+        sql = (c.get("sql") or "").strip()
+        if not sql:
+            continue
+        title = c.get("title") or c.get("fix_id") or ""
+        block = f"-- {title}\n{sql}"
+        sql_upper = sql.upper()
+        if sql_upper.startswith("SELECT"):
+            pre_sql.append(block)
+        elif _pk_re.search(sql):
+            pk_sql.append(block)
+        elif _idx_re.search(sql):
+            idx_sql.append(block)
+        else:
+            other_sql.append(block)
+
+    parts = ["BEGIN;", ""]
+    phases: dict[str, int] = {}
+    if pre_sql:
+        parts += ["-- Phase 1: Investigate (read-only — review before phases 2+)", *pre_sql, ""]
+        phases["investigate"] = len(pre_sql)
+    if pk_sql:
+        parts += ["-- Phase 2: Add primary keys (data-integrity baseline)", *pk_sql, ""]
+        phases["add_primary_keys"] = len(pk_sql)
+    if idx_sql:
+        parts += ["-- Phase 3: Add indexes (query performance)", *idx_sql, ""]
+        phases["add_indexes"] = len(idx_sql)
+    if other_sql:
+        parts += ["-- Phase 4: Other DDL", *other_sql, ""]
+        phases["other"] = len(other_sql)
+    parts += ["-- Review EXPLAIN output before COMMIT.", "COMMIT;"]
+
+    return {
+        "sql": "\n".join(parts),
+        "card_count": len(ordered),
+        "phases": phases,
+    }
+
+
 def orchestrator_workflow(
     connection_string: str,
     domain_rules: Any,
@@ -717,10 +1093,14 @@ def orchestrator_workflow(
     historical_signals: str | None = None,
     learned_patterns: list[dict] | None = None,
 ) -> dict[str, Any]:
+    import time as _time
+    _pipeline_t0 = _time.perf_counter()
+    _started_at = datetime.now(timezone.utc)
+
     resolved_model_id = resolve_model_id(llm_model)
     pipeline_run_id = str(uuid.uuid4())
     database_id = derive_database_id(connection_string)
-    run_timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    run_timestamp = _started_at.isoformat().replace("+00:00", "Z")
 
     merged_domain_rules = _merge_domain_rules(domain_rules)
     dependencies = _workflow_dependencies(merged_domain_rules)
@@ -944,12 +1324,56 @@ def orchestrator_workflow(
         run_timestamp=run_timestamp,
     )
 
+    # Aggregate over the 4 validators only. Fix planner mirrors schema findings
+    # one-to-one (each fix corresponds to a finding) so including it would
+    # double-weight schema issues and pull the score back up.
     confidence_score, data_quality_score = aggregate_pipeline_scores(
-        [schema_dict, statistical_dict, structural_dict, relational_dict, fix_dict]
+        [schema_dict, statistical_dict, structural_dict, relational_dict]
     )
 
-    # Build agent_reports with markdown report fields so the frontend's
-    # agent panel can render each validator's output without a fallback.
+    confidence_info = confidence_breakdown(
+        [schema_dict, statistical_dict, structural_dict, relational_dict]
+    )
+
+    # Build executive summary first (uses pre-grouped findings).
+    exec_summary = _build_executive_summary(
+        schema_dict=schema_dict,
+        statistical_dict=statistical_dict,
+        structural_dict=structural_dict,
+        relational_dict=relational_dict,
+        fix_dict=fix_dict,
+        data_quality_score=data_quality_score,
+        total_tables=total_tables,
+        profiler_table_count=len(profiler_report.tables),
+    )
+
+    # Migration script bundle — concatenated, phased, transactional DDL.
+    migration_script = _build_migration_script(fix_dict)
+
+    # Pipeline timing — collected per-phase via session_state["_phase_timing_ms"].
+    # Merge any timings from the workflow's inner session_data (pre/post hooks
+    # write there because Agno doesn't share the dict with the outer session_state).
+    _inner_sd = getattr(getattr(workflow_result, "session", None), "session_data", None)
+    if isinstance(_inner_sd, dict):
+        _inner_timing = _inner_sd.get("_phase_timing_ms")
+        if isinstance(_inner_timing, dict):
+            outer_t = session_state.setdefault("_phase_timing_ms", {})
+            outer_t.update(_inner_timing)
+
+    _ended_at = datetime.now(timezone.utc)
+    _total_ms = round((_time.perf_counter() - _pipeline_t0) * 1000)
+    _phases = dict(session_state.get("_phase_timing_ms") or {})
+    _bottleneck = max(_phases.items(), key=lambda kv: kv[1])[0] if _phases else None
+    timing_info = {
+        "started_at": _started_at.isoformat().replace("+00:00", "Z"),
+        "ended_at": _ended_at.isoformat().replace("+00:00", "Z"),
+        "total_duration_ms": _total_ms,
+        "total_duration_human": f"{_total_ms / 1000:.1f}s",
+        "phases_ms": _phases,
+        "bottleneck": _bottleneck,
+    }
+
+    # Frontend agent_reports — keep markdown for UI rendering.
     agent_reports = {
         "schema_integrity_validator": {
             **schema_dict,
@@ -973,17 +1397,31 @@ def orchestrator_workflow(
         },
     }
 
+    # Saved JSON: drop markdown bodies (cuts file size ~50%); UI can re-render
+    # from the structured findings.
+    saved_reports = {
+        "schema_integrity_validator": schema_dict,
+        "statistical_validator": statistical_dict,
+        "structural_validator": structural_dict,
+        "relational_validator": relational_dict,
+        "data_fix_planner": fix_dict,
+    }
+
     download_report_bundle = {
         "pipeline_run_id": pipeline_run_id,
         "database_id": database_id,
         "llm_model": resolved_model_id,
         "run_timestamp": run_timestamp,
+        "executive_summary": exec_summary,
         "summary": {
             "confidence_score": confidence_score,
             "data_quality_score": data_quality_score,
             "final_fix_count": len(legacy_fixes),
+            "confidence_explanation": confidence_info,
+            "timing": timing_info,
         },
-        "reports": agent_reports,
+        "migration_script": migration_script,
+        "reports": saved_reports,
     }
 
     try:
@@ -1027,6 +1465,10 @@ def orchestrator_workflow(
         "agent_reports": agent_reports,
         "final_report": fix_dict,
         "download_report_json": download_report_bundle,
+        "executive_summary": exec_summary,
+        "migration_script": migration_script,
+        "timing": timing_info,
+        "confidence_explanation": confidence_info,
         "confidence_score": confidence_score,
         "data_quality_score": data_quality_score,
         **report_artifact,

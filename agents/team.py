@@ -40,6 +40,7 @@ from .hooks import (
     qualitylab_tool_hook,
     store_profiler_output,
     validate_findings_entities,
+    validate_fix_preflight,
     validate_fix_sql_safety,
 )
 from .rules import common_rules, domain_rules, policy_rules
@@ -208,7 +209,12 @@ def build_members(
         id="fix-planner",
         tools=fixplanner_tools,
         model=build_model(model_id),
-        post_hooks=[validate_findings_entities, validate_fix_sql_safety, log_run_metrics],
+        post_hooks=[
+            validate_findings_entities,
+            validate_fix_sql_safety,
+            validate_fix_preflight,
+            log_run_metrics,
+        ],
         **FIX_PLANNER_AGENT_CONFIG,
         **{k: v for k, v in agent_kwargs.items() if k != "post_hooks"},
     )

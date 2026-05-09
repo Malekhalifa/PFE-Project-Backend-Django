@@ -103,6 +103,7 @@ def analyze_postgres_task(
     close_old_connections()
 
     update_job_status(job_id, 'running')
+    _logger.info("pipeline_status: running job=%s source=celery_task_start", job_id)
     if str((get_job(job_id) or {}).get('status') or '').upper() == 'CANCELLED':
         audit_log(job_id, 'DB_ANALYSIS_CANCELLED_BEFORE_START', {'status_code': 200})
         update_job_celery_task_id(job_id, None)
@@ -200,6 +201,7 @@ def analyze_postgres_task(
         )
 
         update_job_status(job_id, 'completed')
+        _logger.info("pipeline_status: completed job=%s source=celery_task_end", job_id)
         update_job_celery_task_id(job_id, None)
         audit_log(job_id, 'DB_ANALYSIS_COMPLETED', {
             'analysis_type': 'postgres_agentic',
@@ -223,6 +225,7 @@ def analyze_postgres_task(
             _logger.exception('Failed to resolve failed pipeline step for job %s', job_id)
 
         update_job_status(job_id, 'failed')
+        _logger.info("pipeline_status: failed job=%s source=celery_task_exception", job_id)
         update_job_celery_task_id(job_id, None)
         audit_log(job_id, 'DB_ANALYSIS_FAILED', {
             'error': str(e),
