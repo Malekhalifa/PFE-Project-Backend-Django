@@ -26,7 +26,14 @@ class QueryExecutorAgent:
 
     name = "QueryExecutorAgent"
 
-    def execute(self, *, queries: list[str], connection_string: str, admin_dsn: str | None = None) -> dict:
+    def execute(
+        self,
+        *,
+        queries: list[str],
+        connection_string: str,
+        admin_dsn: str | None = None,
+        job_id: str | None = None,
+    ) -> dict:
         """
         Execute all queries in order within one transaction and return an execution log.
 
@@ -35,6 +42,8 @@ class QueryExecutorAgent:
         admin_dsn: privileged DSN used only for CREATE/DROP DATABASE on the target server.
                    Must belong to a role with CREATEDB.  Defaults to the job DSN's own user
                    (which requires that user to hold CREATEDB on the target server).
+        job_id:    When provided, scopes the sandbox name to this job so concurrent fix
+                   executions against the same database by different jobs don't collide.
         """
         self._validate_queries(queries)
 
@@ -42,7 +51,10 @@ class QueryExecutorAgent:
         started_at = time.perf_counter()
         parsed = urlparse(connection_string)
         original_db = (parsed.path or "").lstrip("/")
-        sandbox_db = f"{original_db}_clean"
+        # Scope sandbox to the job so concurrent executions on the same database
+        # by different jobs don't overwrite each other's accumulated fixes.
+        _job_suffix = job_id.replace("-", "")[:12] if job_id else "clean"
+        sandbox_db = f"{original_db}_ql_{_job_suffix}"
 
         # 1. Admin setup: disconnect users and duplicate DB.
         # Use the supplied admin_dsn (app admin credentials) when available so that
@@ -59,27 +71,41 @@ class QueryExecutorAgent:
             admin_conn = psycopg2.connect(_admin_dsn)
             admin_conn.autocommit = True
             with admin_conn.cursor() as admin_cursor:
-                # Always free connections so we can use/create the sandbox cleanly.
+                # Preflight: verify admin user has CREATEDB before attempting template copy.
                 admin_cursor.execute(
-                    "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
-                    "WHERE datname = %s AND pid <> pg_backend_pid();",
-                    [original_db],
+                    "SELECT rolcreatedb FROM pg_roles WHERE rolname = current_user;"
                 )
-                admin_cursor.execute(
-                    "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
-                    "WHERE datname = %s AND pid <> pg_backend_pid();",
-                    [sandbox_db],
-                )
+                row = admin_cursor.fetchone()
+                if row is not None and not row[0]:
+                    raise Exception(
+                        "Admin user lacks CREATEDB privilege — cannot create sandbox database. "
+                        "Grant CREATEDB to the admin role or provide a DSN for a superuser."
+                    )
 
-                # Reuse the sandbox if it already exists so that successive fix
-                # executions accumulate — each fix is applied on top of the
-                # previous ones rather than starting from a clean slate every time.
-                # This allows the re-run analysis to see all fixes in effect.
+                # Check sandbox existence first. Only terminate source DB connections
+                # when we actually need to copy the template (first fix execution).
+                # Reusing an existing sandbox skips the disruptive terminate step.
                 admin_cursor.execute(
                     "SELECT 1 FROM pg_catalog.pg_database WHERE datname = %s",
                     [sandbox_db],
                 )
                 sandbox_exists = admin_cursor.fetchone() is not None
+
+                if not sandbox_exists:
+                    # Terminate connections on source DB — PostgreSQL requires zero
+                    # active connections on the template database during CREATE DATABASE.
+                    admin_cursor.execute(
+                        "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
+                        "WHERE datname = %s AND pid <> pg_backend_pid();",
+                        [original_db],
+                    )
+
+                # Always free lingering sandbox connections (safe regardless of reuse).
+                admin_cursor.execute(
+                    "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
+                    "WHERE datname = %s AND pid <> pg_backend_pid();",
+                    [sandbox_db],
+                )
 
                 if not sandbox_exists:
                     admin_cursor.execute(
@@ -183,7 +209,12 @@ class QueryExecutorAgent:
             self._safe_close(connection)
 
     def execute_streaming(
-        self, *, queries: list[str], connection_string: str, admin_dsn: str | None = None
+        self,
+        *,
+        queries: list[str],
+        connection_string: str,
+        admin_dsn: str | None = None,
+        job_id: str | None = None,
     ):
         """
         Generator variant of execute() that yields per-query progress dicts.
@@ -202,7 +233,8 @@ class QueryExecutorAgent:
         started_at = time.perf_counter()
         parsed = urlparse(connection_string)
         original_db = (parsed.path or "").lstrip("/")
-        sandbox_db = f"{original_db}_clean"
+        _job_suffix = job_id.replace("-", "")[:12] if job_id else "clean"
+        sandbox_db = f"{original_db}_ql_{_job_suffix}"
 
         # ── Admin setup (sandbox creation) ───────────────────────────────
         if admin_dsn:
@@ -217,21 +249,35 @@ class QueryExecutorAgent:
             admin_conn = psycopg2.connect(_admin_dsn)
             admin_conn.autocommit = True
             with admin_conn.cursor() as admin_cursor:
+                # Preflight: verify admin user has CREATEDB before attempting template copy.
                 admin_cursor.execute(
-                    "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
-                    "WHERE datname = %s AND pid <> pg_backend_pid();",
-                    [original_db],
+                    "SELECT rolcreatedb FROM pg_roles WHERE rolname = current_user;"
                 )
-                admin_cursor.execute(
-                    "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
-                    "WHERE datname = %s AND pid <> pg_backend_pid();",
-                    [sandbox_db],
-                )
+                row = admin_cursor.fetchone()
+                if row is not None and not row[0]:
+                    raise Exception(
+                        "Admin user lacks CREATEDB privilege — cannot create sandbox database. "
+                        "Grant CREATEDB to the admin role or provide a DSN for a superuser."
+                    )
+
                 admin_cursor.execute(
                     "SELECT 1 FROM pg_catalog.pg_database WHERE datname = %s",
                     [sandbox_db],
                 )
                 sandbox_exists = admin_cursor.fetchone() is not None
+
+                if not sandbox_exists:
+                    admin_cursor.execute(
+                        "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
+                        "WHERE datname = %s AND pid <> pg_backend_pid();",
+                        [original_db],
+                    )
+
+                admin_cursor.execute(
+                    "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
+                    "WHERE datname = %s AND pid <> pg_backend_pid();",
+                    [sandbox_db],
+                )
 
                 if not sandbox_exists:
                     admin_cursor.execute(

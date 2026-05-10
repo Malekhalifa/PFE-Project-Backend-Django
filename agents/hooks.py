@@ -880,8 +880,8 @@ def log_run_metrics(run_output: RunOutput, run_context: RunContext) -> None:
 
     agent = getattr(run_context, "agent", None)
     phase_name = (
-        getattr(agent, "name", None)
-        or _AGENT_ID_TO_PHASE.get(aid)
+        _AGENT_ID_TO_PHASE.get(aid)
+        or getattr(agent, "name", None)
         or "team"
     )
 

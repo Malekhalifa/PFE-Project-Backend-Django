@@ -8,6 +8,7 @@ import logging
 import re
 import uuid
 import json
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
@@ -529,6 +530,37 @@ def _collect_step_outputs(step_results: list[Any]) -> dict[str, StepOutput]:
     for step in step_results or []:
         visit(step)
     return outputs
+
+
+_STEP_TO_PHASE: dict[str, str] = {
+    "schema":      "Schema Integrity Validator",
+    "statistical": "Statistical Validator",
+    "structural":  "Structural Validator",
+    "relational":  "Relational Validator",
+    "fix_plan":    "Data Fix Planner",
+}
+
+
+def _update_phase_timing_from_steps(
+    step_outputs: dict[str, Any],
+    session_state: dict[str, Any],
+) -> None:
+    """Overwrite _phase_timing_ms entries for agent steps using Agno's own RunMetrics.
+
+    RunContext.agent is not available in post_hooks for workflow steps, so log_run_metrics
+    cannot identify which phase fired and writes all entries under the generic key "team".
+    This function reads step_output.metrics.duration (seconds, set by Agno's agent runner)
+    and writes correctly-named entries, replacing the "team" overwrites.
+    """
+    timing = session_state.setdefault("_phase_timing_ms", {})
+    for step_name, step_output in step_outputs.items():
+        phase = _STEP_TO_PHASE.get(step_name)
+        if phase is None:
+            continue
+        metrics = getattr(step_output, "metrics", None)
+        duration_s = getattr(metrics, "duration", None)
+        if duration_s is not None:
+            timing[phase] = round(duration_s * 1000)
 
 
 def _as_validation_report(value: Any, fallback_validator: str = "unknown") -> ValidationReport:
@@ -1085,6 +1117,551 @@ def _build_migration_script(fix_dict: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+# ──────────────────────────────────────────────────────────────────────────
+# Orchestrator decomposition — typed state containers + focused helpers.
+#
+# Mutation contract:
+#   • In-place mutators end with `_into` and return None.
+#   • Replacers return the new value (caller assigns).
+#   • The recovery helper mutates several fields of a shared dataclass in
+#     place because it conditionally replaces 5 different reports — packing
+#     all those returns would be more error-prone than the dataclass write.
+# ──────────────────────────────────────────────────────────────────────────
+
+
+@dataclass
+class _InitialReports:
+    """Container for the 7 pipeline reports.
+
+    Mutation rules:
+      • schema and statistical have their .findings list appended to by the
+        auto-merge helpers (in-place mutation of the report objects).
+      • profiler / statistical / structural / relational / reduced / fix_plan
+        may be wholesale REPLACED by the relational retry and recovery paths.
+      • schema is never replaced; relational is never replaced by the recovery
+        path (only by the transient retry).
+    """
+    schema: ValidationReport
+    profiler: ProfilerReport
+    statistical: ValidationReport
+    structural: ValidationReport
+    relational: ValidationReport
+    reduced: ReducedFindings
+    fix_plan: FixPlan
+
+
+@dataclass
+class _LegacyReports:
+    """Dict-shaped outputs consumed by the frontend / saved bundle."""
+    schema: dict[str, Any]
+    statistical: dict[str, Any]
+    structural: dict[str, Any]
+    relational: dict[str, Any]
+    fix: dict[str, Any]
+    legacy_fixes: list[dict[str, Any]]
+
+
+@dataclass
+class _SummaryArtifacts:
+    """Computed summary-layer outputs."""
+    confidence_score: int
+    data_quality_score: int
+    confidence_info: dict[str, Any]
+    exec_summary: dict[str, Any]
+    migration_script: dict[str, Any]
+    timing_info: dict[str, Any]
+
+
+def _parse_initial_reports(step_outputs: dict[str, Any]) -> _InitialReports:
+    """Pure parse: convert each step output into its typed report.
+
+    Identical to the inline parsing in the legacy orchestrator — only
+    difference is that ALL parses are grouped here. _as_* parsers are
+    pure (no side effects), so call order is irrelevant.
+    """
+    return _InitialReports(
+        schema=_as_validation_report(
+            getattr(step_outputs.get("schema"), "content", ""), "schema"
+        ),
+        profiler=_as_profiler_report(
+            getattr(step_outputs.get("profiler"), "content", "")
+        ),
+        statistical=_as_validation_report(
+            getattr(step_outputs.get("statistical"), "content", ""), "statistical"
+        ),
+        structural=_as_validation_report(
+            getattr(step_outputs.get("structural"), "content", ""), "structural"
+        ),
+        relational=_as_validation_report(
+            getattr(step_outputs.get("relational"), "content", ""), "relational"
+        ),
+        reduced=_as_reduced_findings(
+            getattr(step_outputs.get("reduce"), "content", "")
+        ),
+        fix_plan=_as_fix_plan(
+            getattr(step_outputs.get("fix_plan"), "content", "")
+        ),
+    )
+
+
+def _merge_schema_auto_findings_into(
+    schema_report: ValidationReport,
+    session_state: dict[str, Any],
+) -> None:
+    """Inject deterministic schema findings post-LLM (in-place).
+
+    Reads session_state['schema_auto_findings'] (populated by the schema
+    priming hook) and appends any (entity, rule) pairs not already present in
+    schema_report.findings. Logs a consistency warning when LLM coverage
+    falls below 50% of the deterministic baseline.
+
+    Mutates: schema_report.findings (list append).
+    Returns: None.
+    """
+    auto = session_state.get("schema_auto_findings") or []
+    llm_count = len(schema_report.findings)
+    if not auto:
+        return
+    existing = {(f.entity, f.rule) for f in schema_report.findings}
+    merged = 0
+    for raw in auto:
+        try:
+            sf = Finding.model_validate(raw)
+            if (sf.entity, sf.rule) not in existing:
+                schema_report.findings.append(sf)
+                existing.add((sf.entity, sf.rule))
+                merged += 1
+        except Exception:
+            pass
+    if merged:
+        logger.info(
+            "Merged %d deterministic schema finding(s) into schema report "
+            "(LLM agent found %d, schema snapshot detected %d)",
+            merged, llm_count, len(auto),
+        )
+    if llm_count < len(auto) * 0.50:
+        logger.warning(
+            "CONSISTENCY CHECK: LLM schema agent found only %d finding(s) vs "
+            "%d from deterministic schema snapshot — possible under-detection.",
+            llm_count, len(auto),
+        )
+
+
+def _maybe_retry_relational(
+    relational_report: ValidationReport,
+    raw_relational_content: Any,
+    *,
+    members: Any,
+    session_state: dict[str, Any],
+    database_id: str,
+) -> ValidationReport:
+    """Retry the relational agent when the initial run was a transient error.
+
+    Trigger: relational_report has zero findings AND the raw step content
+    matches a transient error marker (504, DEADLINE_EXCEEDED, timeout, etc.).
+    Step.max_retries cannot catch this because Agno surfaces the error as
+    string content rather than an exception.
+
+    Returns: the new ValidationReport on retry success, otherwise the
+    original report unchanged.
+    """
+    if relational_report.findings:
+        return relational_report
+    if not _is_transient_error(raw_relational_content):
+        return relational_report
+    return _run_relational_standalone(
+        relational_validator=members.relational_validator,
+        session_state=session_state,
+        database_id=database_id,
+    )
+
+
+def _merge_profiler_auto_findings_into(
+    statistical_report: ValidationReport,
+    session_state: dict[str, Any],
+) -> None:
+    """Inject deterministic profiler findings into the statistical report.
+
+    Reads session_state['profiler_auto_findings'] (populated by py_profiler's
+    deterministic null-rate detector) and appends any new (entity, rule)
+    pairs to statistical_report.findings. Logs a consistency warning on LLM
+    under-detection (LLM emitted < 50% of deterministic count).
+
+    Mutates: statistical_report.findings (list append).
+    Returns: None.
+    """
+    auto = session_state.get("profiler_auto_findings") or []
+    llm_count = len(statistical_report.findings)
+    if not auto:
+        return
+    existing = {(f.entity, f.rule) for f in statistical_report.findings}
+    merged = 0
+    for raw in auto:
+        try:
+            f = Finding.model_validate(raw)
+            if (f.entity, f.rule) not in existing:
+                statistical_report.findings.append(f)
+                existing.add((f.entity, f.rule))
+                merged += 1
+        except Exception:
+            pass
+    if merged:
+        logger.info(
+            "Merged %d deterministic profiler finding(s) into statistical report "
+            "(LLM agent found %d, profiler detected %d)",
+            merged, llm_count, len(auto),
+        )
+    if llm_count < len(auto) * 0.50:
+        logger.warning(
+            "CONSISTENCY CHECK: LLM statistical agent found only %d finding(s) vs "
+            "%d from deterministic profiler — possible under-detection. "
+            "Auto-merged findings are included in the final report.",
+            llm_count, len(auto),
+        )
+
+
+def _run_recovery_path_if_needed(
+    reports: _InitialReports,
+    *,
+    members: Any,
+    session_state: dict[str, Any],
+    database_id: str,
+) -> None:
+    """Recover from a silent profiler-step failure (e.g. MALFORMED_FUNCTION_CALL).
+
+    Trigger: session_state['profiler_summary'] is empty/missing after the
+    workflow run — meaning the profiler post_hook never fired (Agno bypasses
+    post_hooks when the agent returns a malformed function call).
+
+    Recovery sequence (each step gated on prior success):
+      1. Re-run the profiler agent standalone → reports.profiler replaced.
+         If that produces no tables, log error and return early.
+      2. Compute coverage_ratio. If known_tables > 0 and coverage < 0.5,
+         skip the statistical re-run (too few tables profiled to ground
+         the LLM — likely-hallucinated output). Structural always re-runs.
+      3. Re-run statistical and structural validators against the recovered
+         baseline → reports.statistical, reports.structural replaced.
+      4. Re-run the deterministic reducer over all four validator reports
+         using a SyntheticStepInput → reports.reduced replaced.
+      5. Re-run the fix planner — only if the new reducer produced findings —
+         passing the raw FixDependencyGraph (NOT the parsed ReducedFindings)
+         so model_dump_json() works on the agent input. reports.fix_plan
+         replaced when the planner returned a result.
+
+    Mutates: reports.{profiler, statistical, structural, reduced, fix_plan}
+             in-place. reports.schema and reports.relational are never touched.
+    Returns: None.
+
+    Note: the auto-findings merge that ran on reports.statistical BEFORE this
+    helper is discarded when statistical is replaced here. This matches legacy
+    behavior — preserved as-is, NOT a bug being fixed.
+    """
+    if session_state.get("profiler_summary"):
+        return
+    logger.warning(
+        "profiler_summary empty after workflow run — profiler step likely failed; "
+        "attempting standalone recovery."
+    )
+    reports.profiler = _run_profiler_standalone(
+        profiler=members.profiler,
+        session_state=session_state,
+        database_id=database_id,
+    )
+    if not reports.profiler.tables:
+        logger.error(
+            "Profiler standalone recovery also produced no output — "
+            "statistical and structural reports will be empty for this run."
+        )
+        return
+
+    known_tables = len(session_state.get("schema") or {})
+    profiled_count = len(reports.profiler.tables)
+    coverage_ratio = profiled_count / known_tables if known_tables else 1.0
+    skip_stat = known_tables > 0 and coverage_ratio < 0.5
+    if skip_stat:
+        logger.warning(
+            "Profiler recovery coverage too low (%d/%d tables, %.0f%%) — "
+            "statistical re-run skipped to prevent hallucinations; structural still runs.",
+            profiled_count, known_tables, coverage_ratio * 100,
+        )
+
+    reports.statistical, reports.structural = _rerun_statistical_structural(
+        members=members,
+        session_state=session_state,
+        database_id=database_id,
+        skip_statistical=skip_stat,
+    )
+
+    all_reports = {
+        "schema":      reports.schema,
+        "statistical": reports.statistical,
+        "structural":  reports.structural,
+        "relational":  reports.relational,
+    }
+    step_in = _SyntheticStepInput(all_reports, session_state)
+    recovered_fdg = reduce_signals(step_in).content
+    reports.reduced = _as_reduced_findings(recovered_fdg)
+
+    if not reports.reduced.findings:
+        return
+    recovered_fix = _rerun_fix_planner(
+        fix_planner=members.fix_planner,
+        reduced_findings=recovered_fdg,
+        session_state=session_state,
+        database_id=database_id,
+    )
+    if recovered_fix is not None:
+        reports.fix_plan = recovered_fix
+
+
+def _build_legacy_reports(
+    reports: _InitialReports,
+    *,
+    pipeline_run_id: str,
+    database_id: str,
+    run_timestamp: str,
+    total_tables: int,
+) -> _LegacyReports:
+    """Convert each typed report into the legacy dict shape. No side effects."""
+    schema_dict = _legacy_validation_report(
+        report=reports.schema,
+        agent_name="Schema Integrity Validator",
+        pipeline_run_id=pipeline_run_id,
+        database_id=database_id,
+        run_timestamp=run_timestamp,
+        total_entities=total_tables,
+    )
+    statistical_dict = _legacy_validation_report(
+        report=reports.statistical,
+        agent_name="Statistical Validator",
+        pipeline_run_id=pipeline_run_id,
+        database_id=database_id,
+        run_timestamp=run_timestamp,
+        total_entities=total_tables,
+    )
+    structural_dict = _legacy_validation_report(
+        report=reports.structural,
+        agent_name="Structural Validator",
+        pipeline_run_id=pipeline_run_id,
+        database_id=database_id,
+        run_timestamp=run_timestamp,
+        total_entities=total_tables,
+    )
+    relational_dict = _legacy_validation_report(
+        report=reports.relational,
+        agent_name="Relational Validator",
+        pipeline_run_id=pipeline_run_id,
+        database_id=database_id,
+        run_timestamp=run_timestamp,
+        total_entities=total_tables,
+    )
+    fix_dict, legacy_fixes = _legacy_fix_report(
+        fix_plan=reports.fix_plan,
+        reduced_findings=reports.reduced,
+        pipeline_run_id=pipeline_run_id,
+        database_id=database_id,
+        run_timestamp=run_timestamp,
+    )
+    return _LegacyReports(
+        schema=schema_dict,
+        statistical=statistical_dict,
+        structural=structural_dict,
+        relational=relational_dict,
+        fix=fix_dict,
+        legacy_fixes=legacy_fixes,
+    )
+
+
+def _build_summary_artifacts(
+    legacy: _LegacyReports,
+    reports: _InitialReports,
+    *,
+    session_state: dict[str, Any],
+    workflow_result: Any,
+    started_at: datetime,
+    pipeline_t0: float,
+) -> _SummaryArtifacts:
+    """Build executive summary, migration script, scores, and timing.
+
+    Score aggregation uses the 4 validators only (NOT the fix planner) —
+    including the fix planner would double-weight schema findings because
+    each fix mirrors a schema finding one-to-one.
+
+    Mutates session_state['_phase_timing_ms'] when the inner workflow session
+    has its own timing dict — required so per-phase timings recorded by
+    pre_hooks/post_hooks during agent runs are reflected in the timing report
+    (Agno keeps a separate session_data dict from the outer session_state).
+    """
+    import time as _time
+
+    validator_dicts = [legacy.schema, legacy.statistical, legacy.structural, legacy.relational]
+    confidence_score, data_quality_score = aggregate_pipeline_scores(validator_dicts)
+    confidence_info = confidence_breakdown(validator_dicts)
+
+    total_tables = len(session_state.get("schema") or {})
+    exec_summary = _build_executive_summary(
+        schema_dict=legacy.schema,
+        statistical_dict=legacy.statistical,
+        structural_dict=legacy.structural,
+        relational_dict=legacy.relational,
+        fix_dict=legacy.fix,
+        data_quality_score=data_quality_score,
+        total_tables=total_tables,
+        profiler_table_count=len(reports.profiler.tables),
+    )
+
+    migration_script = _build_migration_script(legacy.fix)
+
+    # Merge inner workflow timing into the outer session_state.
+    inner_sd = getattr(getattr(workflow_result, "session", None), "session_data", None)
+    if isinstance(inner_sd, dict):
+        inner_timing = inner_sd.get("_phase_timing_ms")
+        if isinstance(inner_timing, dict):
+            outer_t = session_state.setdefault("_phase_timing_ms", {})
+            outer_t.update(inner_timing)
+
+    ended_at = datetime.now(timezone.utc)
+    total_ms = round((_time.perf_counter() - pipeline_t0) * 1000)
+    phases = {k: v for k, v in (session_state.get("_phase_timing_ms") or {}).items() if k != "team"}
+    bottleneck = max(phases.items(), key=lambda kv: kv[1])[0] if phases else None
+    timing_info = {
+        "started_at": started_at.isoformat().replace("+00:00", "Z"),
+        "ended_at": ended_at.isoformat().replace("+00:00", "Z"),
+        "total_duration_ms": total_ms,
+        "total_duration_human": f"{total_ms / 1000:.1f}s",
+        "phases_ms": phases,
+        "bottleneck": bottleneck,
+    }
+
+    return _SummaryArtifacts(
+        confidence_score=confidence_score,
+        data_quality_score=data_quality_score,
+        confidence_info=confidence_info,
+        exec_summary=exec_summary,
+        migration_script=migration_script,
+        timing_info=timing_info,
+    )
+
+
+def _assemble_final_payload(
+    legacy: _LegacyReports,
+    summary: _SummaryArtifacts,
+    reports: _InitialReports,
+    *,
+    pipeline_run_id: str,
+    database_id: str,
+    resolved_model_id: str,
+    run_timestamp: str,
+) -> dict[str, Any]:
+    """Build the final response dict and persist the bundle to disk.
+
+    Output schema is preserved exactly from the legacy implementation.
+    Every key — including ones that look duplicated (e.g. statistical_dict
+    spread + json_report holding the same dict) — is part of the contract
+    consumed by the frontend.
+
+    save_final_pipeline_report failures fall back to a stub artifact dict
+    so the response remains shape-compatible with the success path.
+    """
+    agent_reports = {
+        "schema_integrity_validator": {
+            **legacy.schema,
+            "report": report_to_markdown(legacy.schema, "Schema Integrity Validator"),
+        },
+        "statistical_validator": {
+            **legacy.statistical,
+            "report": report_to_markdown(legacy.statistical, "Statistical Validator"),
+        },
+        "structural_validator": {
+            **legacy.structural,
+            "report": report_to_markdown(legacy.structural, "Structural Validator"),
+        },
+        "relational_validator": {
+            **legacy.relational,
+            "report": report_to_markdown(legacy.relational, "Relational Validator"),
+        },
+        "data_fix_planner": {
+            **legacy.fix,
+            "report": report_to_markdown(legacy.fix, "Data Fix Planner"),
+        },
+    }
+
+    saved_reports = {
+        "schema_integrity_validator": legacy.schema,
+        "statistical_validator": legacy.statistical,
+        "structural_validator": legacy.structural,
+        "relational_validator": legacy.relational,
+        "data_fix_planner": legacy.fix,
+    }
+
+    download_report_bundle = {
+        "pipeline_run_id": pipeline_run_id,
+        "database_id": database_id,
+        "llm_model": resolved_model_id,
+        "run_timestamp": run_timestamp,
+        "executive_summary": summary.exec_summary,
+        "summary": {
+            "confidence_score": summary.confidence_score,
+            "data_quality_score": summary.data_quality_score,
+            "final_fix_count": len(legacy.legacy_fixes),
+            "confidence_explanation": summary.confidence_info,
+            "timing": summary.timing_info,
+        },
+        "migration_script": summary.migration_script,
+        "reports": saved_reports,
+    }
+
+    try:
+        report_artifact = save_final_pipeline_report(download_report_bundle)
+    except Exception as exc:
+        logger.error("Failed to save final report: %s", exc)
+        report_artifact = {
+            "report_file_path": "",
+            "report_file_name": "",
+            "report_timestamp": run_timestamp,
+            "report_database_id": database_id,
+        }
+
+    return {
+        "pipeline_run_id": pipeline_run_id,
+        "database_id": database_id,
+        "llm_model": resolved_model_id,
+        "schema_analysis": {
+            "report": report_to_markdown(legacy.schema, "Schema Integrity Validator"),
+            "json_report": legacy.schema,
+        },
+        "statistical_analysis": {
+            **legacy.statistical,
+            "report": report_to_markdown(legacy.statistical, "Statistical Validator"),
+            "json_report": legacy.statistical,
+        },
+        "structural_analysis": {
+            **legacy.structural,
+            "report": report_to_markdown(legacy.structural, "Structural Validator"),
+            "json_report": legacy.structural,
+        },
+        "relational_analysis": {
+            **legacy.relational,
+            "report": report_to_markdown(legacy.relational, "Relational Validator"),
+            "json_report": legacy.relational,
+        },
+        "profiler_tables_count": len(reports.profiler.tables),
+        "fixes": {
+            "fixes": legacy.legacy_fixes,
+        },
+        "agent_reports": agent_reports,
+        "final_report": legacy.fix,
+        "download_report_json": download_report_bundle,
+        "executive_summary": summary.exec_summary,
+        "migration_script": summary.migration_script,
+        "timing": summary.timing_info,
+        "confidence_explanation": summary.confidence_info,
+        "confidence_score": summary.confidence_score,
+        "data_quality_score": summary.data_quality_score,
+        **report_artifact,
+    }
+
+
 def orchestrator_workflow(
     connection_string: str,
     domain_rules: Any,
@@ -1094,13 +1671,13 @@ def orchestrator_workflow(
     learned_patterns: list[dict] | None = None,
 ) -> dict[str, Any]:
     import time as _time
-    _pipeline_t0 = _time.perf_counter()
-    _started_at = datetime.now(timezone.utc)
+    pipeline_t0 = _time.perf_counter()
+    started_at = datetime.now(timezone.utc)
 
     resolved_model_id = resolve_model_id(llm_model)
     pipeline_run_id = str(uuid.uuid4())
     database_id = derive_database_id(connection_string)
-    run_timestamp = _started_at.isoformat().replace("+00:00", "Z")
+    run_timestamp = started_at.isoformat().replace("+00:00", "Z")
 
     merged_domain_rules = _merge_domain_rules(domain_rules)
     dependencies = _workflow_dependencies(merged_domain_rules)
@@ -1124,352 +1701,60 @@ def orchestrator_workflow(
     )
 
     step_outputs = _collect_step_outputs(getattr(workflow_result, "step_results", []))
-    schema_report      = _as_validation_report(getattr(step_outputs.get("schema"),      "content", ""), "schema")
+    _update_phase_timing_from_steps(step_outputs, session_state)
+    reports = _parse_initial_reports(step_outputs)
 
-    # Merge deterministic schema findings (missing_pk, nullable_fk_style_column,
-    # missing_index_fk_column) derived from pure schema metadata. These never vary
-    # across runs unlike LLM output, so they act as a consistency floor for the schema
-    # validator. Only findings not already emitted by the LLM agent are added.
-    _schema_auto = session_state.get("schema_auto_findings") or []
-    _llm_schema_count = len(schema_report.findings)
-    if _schema_auto:
-        _s_existing = {(f.entity, f.rule) for f in schema_report.findings}
-        _s_merged = 0
-        for _raw in _schema_auto:
-            try:
-                _sf = Finding.model_validate(_raw)
-                if (_sf.entity, _sf.rule) not in _s_existing:
-                    schema_report.findings.append(_sf)
-                    _s_existing.add((_sf.entity, _sf.rule))
-                    _s_merged += 1
-            except Exception:
-                pass
-        if _s_merged:
-            logger.info(
-                "Merged %d deterministic schema finding(s) into schema report "
-                "(LLM agent found %d, schema snapshot detected %d)",
-                _s_merged,
-                _llm_schema_count,
-                len(_schema_auto),
-            )
-        if _llm_schema_count < len(_schema_auto) * 0.50:
-            logger.warning(
-                "CONSISTENCY CHECK: LLM schema agent found only %d finding(s) vs "
-                "%d from deterministic schema snapshot — possible under-detection.",
-                _llm_schema_count,
-                len(_schema_auto),
-            )
+    # Schema auto-findings — mutates reports.schema.findings in place.
+    _merge_schema_auto_findings_into(reports.schema, session_state)
 
-    profiler_report    = _as_profiler_report(  getattr(step_outputs.get("profiler"),     "content", ""))
-    statistical_report = _as_validation_report(getattr(step_outputs.get("statistical"), "content", ""), "statistical")
-    structural_report  = _as_validation_report(getattr(step_outputs.get("structural"),  "content", ""), "structural")
-    relational_report  = _as_validation_report(getattr(step_outputs.get("relational"),  "content", ""), "relational")
+    # Relational transient retry — replaces reports.relational on success.
+    raw_relational = getattr(step_outputs.get("relational"), "content", "")
+    reports.relational = _maybe_retry_relational(
+        reports.relational,
+        raw_relational,
+        members=members,
+        session_state=session_state,
+        database_id=database_id,
+    )
 
-    # Retry relational on transient 504 / timeout — the step returns an error string, not an exception,
-    # so Step.max_retries cannot catch it. We detect it here and re-run the agent directly.
-    if not relational_report.findings:
-        raw_relational = getattr(step_outputs.get("relational"), "content", "")
-        if _is_transient_error(raw_relational):
-            relational_report = _run_relational_standalone(
-                relational_validator=members.relational_validator,
-                session_state=session_state,
-                database_id=database_id,
-            )
+    # Profiler auto-findings — mutates reports.statistical.findings in place.
+    # Runs BEFORE recovery, matching legacy behavior. When recovery replaces
+    # reports.statistical, the merged auto-findings are discarded — preserved
+    # as-is to avoid behavior drift.
+    _merge_profiler_auto_findings_into(reports.statistical, session_state)
 
-    # Merge deterministic profiler-derived findings into the statistical report.
-    # py_profiler._derive_findings() generates null_ratio_high findings based on
-    # tiered thresholds (domain_rules.yaml → null_thresholds), bypassing LLM
-    # non-determinism. Only findings not already emitted by the LLM agent are added.
-    _auto_findings = session_state.get("profiler_auto_findings") or []
-    _llm_stat_count = len(statistical_report.findings)
-    if _auto_findings:
-        from .schemas import Finding as _Finding
-        _existing_keys = {(f.entity, f.rule) for f in statistical_report.findings}
-        _merged = 0
-        for _raw in _auto_findings:
-            try:
-                _f = _Finding.model_validate(_raw)
-                if (_f.entity, _f.rule) not in _existing_keys:
-                    statistical_report.findings.append(_f)
-                    _existing_keys.add((_f.entity, _f.rule))
-                    _merged += 1
-            except Exception:
-                pass
-        if _merged:
-            logger.info(
-                "Merged %d deterministic profiler finding(s) into statistical report "
-                "(LLM agent found %d, profiler detected %d)",
-                _merged,
-                _llm_stat_count,
-                len(_auto_findings),
-            )
-        # Cross-run consistency: warn when the LLM statistical agent detected
-        # substantially fewer issues than the deterministic profiler baseline.
-        # This signals LLM under-detection so the operator can investigate.
-        if _llm_stat_count < len(_auto_findings) * 0.50:
-            logger.warning(
-                "CONSISTENCY CHECK: LLM statistical agent found only %d finding(s) vs "
-                "%d from deterministic profiler — possible under-detection. "
-                "Auto-merged findings are included in the final report.",
-                _llm_stat_count,
-                len(_auto_findings),
-            )
+    # Profiler recovery — replaces reports.{profiler, statistical, structural,
+    # reduced, fix_plan} when the workflow profiler step failed silently.
+    _run_recovery_path_if_needed(
+        reports,
+        members=members,
+        session_state=session_state,
+        database_id=database_id,
+    )
 
-    reduced_findings = _as_reduced_findings(getattr(step_outputs.get("reduce"),   "content", ""))
-    fix_plan         = _as_fix_plan(        getattr(step_outputs.get("fix_plan"), "content", ""))
-
-    # Bug 1: If profiler_summary is still empty after the workflow run, the profiler
-    # step failed silently (MALFORMED_FUNCTION_CALL bypasses post_hooks so
-    # store_profiler_output never fires). Retry the profiler standalone, then re-run
-    # statistical + structural validators with the recovered baseline, and re-reduce
-    # + re-plan so the final report reflects the full validator output.
-    if not session_state.get("profiler_summary"):
-        logger.warning(
-            "profiler_summary empty after workflow run — profiler step likely failed; "
-            "attempting standalone recovery."
-        )
-        profiler_report = _run_profiler_standalone(
-            profiler=members.profiler,
-            session_state=session_state,
-            database_id=database_id,
-        )
-        if profiler_report.tables:
-            known_tables = len(session_state.get("schema") or {})
-            profiled_count = len(profiler_report.tables)
-            coverage_ratio = profiled_count / known_tables if known_tables else 1.0
-            # Skip the statistical re-run when coverage is too thin: with fewer than
-            # half the tables profiled the agent has no baseline for most tables and
-            # any findings it emits are likely hallucinated. Structural does not
-            # depend on the profiler baseline so it always re-runs.
-            skip_stat = known_tables > 0 and coverage_ratio < 0.5
-            if skip_stat:
-                logger.warning(
-                    "Profiler recovery coverage too low (%d/%d tables, %.0f%%) — "
-                    "statistical re-run skipped to prevent hallucinations; structural still runs.",
-                    profiled_count, known_tables, coverage_ratio * 100,
-                )
-            statistical_report, structural_report = _rerun_statistical_structural(
-                members=members,
-                session_state=session_state,
-                database_id=database_id,
-                skip_statistical=skip_stat,
-            )
-            # Re-run reducer with all four validator reports so statistical + structural
-            # findings are included in the dependency graph passed to the fix planner.
-            all_reports = {
-                "schema":      schema_report,
-                "statistical": statistical_report,
-                "structural":  structural_report,
-                "relational":  relational_report,
-            }
-            step_in = _SyntheticStepInput(all_reports, session_state)
-            recovered_fdg = reduce_signals(step_in).content
-            reduced_findings = _as_reduced_findings(recovered_fdg)
-            # Only re-run the fix planner when new findings were actually added.
-            if reduced_findings.findings:
-                recovered_fix = _rerun_fix_planner(
-                    fix_planner=members.fix_planner,
-                    reduced_findings=recovered_fdg,
-                    session_state=session_state,
-                    database_id=database_id,
-                )
-                if recovered_fix is not None:
-                    fix_plan = recovered_fix
-        else:
-            logger.error(
-                "Profiler standalone recovery also produced no output — "
-                "statistical and structural reports will be empty for this run."
-            )
-
-    # Total tables inspected is available from the schema priming hook via session_state.
     total_tables = len(session_state.get("schema") or {})
-
-    schema_dict = _legacy_validation_report(
-        report=schema_report,
-        agent_name="Schema Integrity Validator",
+    legacy = _build_legacy_reports(
+        reports,
         pipeline_run_id=pipeline_run_id,
         database_id=database_id,
         run_timestamp=run_timestamp,
-        total_entities=total_tables,
-    )
-    statistical_dict = _legacy_validation_report(
-        report=statistical_report,
-        agent_name="Statistical Validator",
-        pipeline_run_id=pipeline_run_id,
-        database_id=database_id,
-        run_timestamp=run_timestamp,
-        total_entities=total_tables,
-    )
-    structural_dict = _legacy_validation_report(
-        report=structural_report,
-        agent_name="Structural Validator",
-        pipeline_run_id=pipeline_run_id,
-        database_id=database_id,
-        run_timestamp=run_timestamp,
-        total_entities=total_tables,
-    )
-    relational_dict = _legacy_validation_report(
-        report=relational_report,
-        agent_name="Relational Validator",
-        pipeline_run_id=pipeline_run_id,
-        database_id=database_id,
-        run_timestamp=run_timestamp,
-        total_entities=total_tables,
-    )
-    fix_dict, legacy_fixes = _legacy_fix_report(
-        fix_plan=fix_plan,
-        reduced_findings=reduced_findings,
-        pipeline_run_id=pipeline_run_id,
-        database_id=database_id,
-        run_timestamp=run_timestamp,
-    )
-
-    # Aggregate over the 4 validators only. Fix planner mirrors schema findings
-    # one-to-one (each fix corresponds to a finding) so including it would
-    # double-weight schema issues and pull the score back up.
-    confidence_score, data_quality_score = aggregate_pipeline_scores(
-        [schema_dict, statistical_dict, structural_dict, relational_dict]
-    )
-
-    confidence_info = confidence_breakdown(
-        [schema_dict, statistical_dict, structural_dict, relational_dict]
-    )
-
-    # Build executive summary first (uses pre-grouped findings).
-    exec_summary = _build_executive_summary(
-        schema_dict=schema_dict,
-        statistical_dict=statistical_dict,
-        structural_dict=structural_dict,
-        relational_dict=relational_dict,
-        fix_dict=fix_dict,
-        data_quality_score=data_quality_score,
         total_tables=total_tables,
-        profiler_table_count=len(profiler_report.tables),
+    )
+    summary = _build_summary_artifacts(
+        legacy,
+        reports,
+        session_state=session_state,
+        workflow_result=workflow_result,
+        started_at=started_at,
+        pipeline_t0=pipeline_t0,
     )
 
-    # Migration script bundle — concatenated, phased, transactional DDL.
-    migration_script = _build_migration_script(fix_dict)
-
-    # Pipeline timing — collected per-phase via session_state["_phase_timing_ms"].
-    # Merge any timings from the workflow's inner session_data (pre/post hooks
-    # write there because Agno doesn't share the dict with the outer session_state).
-    _inner_sd = getattr(getattr(workflow_result, "session", None), "session_data", None)
-    if isinstance(_inner_sd, dict):
-        _inner_timing = _inner_sd.get("_phase_timing_ms")
-        if isinstance(_inner_timing, dict):
-            outer_t = session_state.setdefault("_phase_timing_ms", {})
-            outer_t.update(_inner_timing)
-
-    _ended_at = datetime.now(timezone.utc)
-    _total_ms = round((_time.perf_counter() - _pipeline_t0) * 1000)
-    _phases = dict(session_state.get("_phase_timing_ms") or {})
-    _bottleneck = max(_phases.items(), key=lambda kv: kv[1])[0] if _phases else None
-    timing_info = {
-        "started_at": _started_at.isoformat().replace("+00:00", "Z"),
-        "ended_at": _ended_at.isoformat().replace("+00:00", "Z"),
-        "total_duration_ms": _total_ms,
-        "total_duration_human": f"{_total_ms / 1000:.1f}s",
-        "phases_ms": _phases,
-        "bottleneck": _bottleneck,
-    }
-
-    # Frontend agent_reports — keep markdown for UI rendering.
-    agent_reports = {
-        "schema_integrity_validator": {
-            **schema_dict,
-            "report": report_to_markdown(schema_dict, "Schema Integrity Validator"),
-        },
-        "statistical_validator": {
-            **statistical_dict,
-            "report": report_to_markdown(statistical_dict, "Statistical Validator"),
-        },
-        "structural_validator": {
-            **structural_dict,
-            "report": report_to_markdown(structural_dict, "Structural Validator"),
-        },
-        "relational_validator": {
-            **relational_dict,
-            "report": report_to_markdown(relational_dict, "Relational Validator"),
-        },
-        "data_fix_planner": {
-            **fix_dict,
-            "report": report_to_markdown(fix_dict, "Data Fix Planner"),
-        },
-    }
-
-    # Saved JSON: drop markdown bodies (cuts file size ~50%); UI can re-render
-    # from the structured findings.
-    saved_reports = {
-        "schema_integrity_validator": schema_dict,
-        "statistical_validator": statistical_dict,
-        "structural_validator": structural_dict,
-        "relational_validator": relational_dict,
-        "data_fix_planner": fix_dict,
-    }
-
-    download_report_bundle = {
-        "pipeline_run_id": pipeline_run_id,
-        "database_id": database_id,
-        "llm_model": resolved_model_id,
-        "run_timestamp": run_timestamp,
-        "executive_summary": exec_summary,
-        "summary": {
-            "confidence_score": confidence_score,
-            "data_quality_score": data_quality_score,
-            "final_fix_count": len(legacy_fixes),
-            "confidence_explanation": confidence_info,
-            "timing": timing_info,
-        },
-        "migration_script": migration_script,
-        "reports": saved_reports,
-    }
-
-    try:
-        report_artifact = save_final_pipeline_report(download_report_bundle)
-    except Exception as exc:
-        logger.error("Failed to save final report: %s", exc)
-        report_artifact = {
-            "report_file_path": "",
-            "report_file_name": "",
-            "report_timestamp": run_timestamp,
-            "report_database_id": database_id,
-        }
-
-    return {
-        "pipeline_run_id": pipeline_run_id,
-        "database_id": database_id,
-        "llm_model": resolved_model_id,
-        "schema_analysis": {
-            "report": report_to_markdown(schema_dict, "Schema Integrity Validator"),
-            "json_report": schema_dict,
-        },
-        "statistical_analysis": {
-            **statistical_dict,
-            "report": report_to_markdown(statistical_dict, "Statistical Validator"),
-            "json_report": statistical_dict,
-        },
-        "structural_analysis": {
-            **structural_dict,
-            "report": report_to_markdown(structural_dict, "Structural Validator"),
-            "json_report": structural_dict,
-        },
-        "relational_analysis": {
-            **relational_dict,
-            "report": report_to_markdown(relational_dict, "Relational Validator"),
-            "json_report": relational_dict,
-        },
-        "profiler_tables_count": len(profiler_report.tables),
-        "fixes": {
-            "fixes": legacy_fixes,
-        },
-        "agent_reports": agent_reports,
-        "final_report": fix_dict,
-        "download_report_json": download_report_bundle,
-        "executive_summary": exec_summary,
-        "migration_script": migration_script,
-        "timing": timing_info,
-        "confidence_explanation": confidence_info,
-        "confidence_score": confidence_score,
-        "data_quality_score": data_quality_score,
-        **report_artifact,
-    }
+    return _assemble_final_payload(
+        legacy,
+        summary,
+        reports,
+        pipeline_run_id=pipeline_run_id,
+        database_id=database_id,
+        resolved_model_id=resolved_model_id,
+        run_timestamp=run_timestamp,
+    )

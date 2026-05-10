@@ -11,6 +11,7 @@ Zero LLM tokens consumed here — this is plain Python.
 
 import json
 import logging
+import os
 import re
 
 from agno.workflow.types import StepInput, StepOutput
@@ -994,4 +995,8 @@ class ReduceSignals:
 
 
 # Default singleton — used by the Workflow step wiring.
-reduce_signals = ReduceSignals(min_confidence=0.75, top_n=50)
+# QL_MAX_FINDINGS and QL_MIN_CONFIDENCE can be overridden via environment variables.
+reduce_signals = ReduceSignals(
+    min_confidence=float(os.environ.get("QL_MIN_CONFIDENCE", "0.75")),
+    top_n=int(os.environ.get("QL_MAX_FINDINGS", "50")),
+)

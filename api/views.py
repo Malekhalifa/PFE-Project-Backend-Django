@@ -1573,6 +1573,7 @@ class ExecuteFixView(APIView):
             queries=queries,
             connection_string=connection_string,
             admin_dsn=_admin_dsn,
+            job_id=job_id,
         )
 
         ex_status = payload.get('status')

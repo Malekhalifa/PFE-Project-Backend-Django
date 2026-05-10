@@ -45,9 +45,33 @@ def _normalize_throttle_rate(raw_value: str, default: str) -> str:
 
     return f'{int(requests_count)}/{period.lower()}'
 
-SECRET_KEY = env('SECRET_KEY', default='QualityLabSecretKey123!')
+_DEFAULT_SECRET_KEY = 'QualityLabSecretKey123!'
+SECRET_KEY = env('SECRET_KEY', default=_DEFAULT_SECRET_KEY)
 DEBUG = env('DEBUG')
 PRODUCTION = env('PRODUCTION')
+
+if PRODUCTION and SECRET_KEY == _DEFAULT_SECRET_KEY:
+    from django.core.exceptions import ImproperlyConfigured
+    raise ImproperlyConfigured(
+        "SECRET_KEY must be overridden in production. "
+        "Set SECRET_KEY in your .env file."
+    )
+
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
+if not GEMINI_API_KEY:
+    import warnings
+    if PRODUCTION:
+        from django.core.exceptions import ImproperlyConfigured
+        raise ImproperlyConfigured(
+            "GEMINI_API_KEY is not set — all AI pipeline calls will fail. "
+            "Set GEMINI_API_KEY in your .env file."
+        )
+    warnings.warn(
+        "GEMINI_API_KEY is not set — AI pipeline calls will fail at runtime.",
+        RuntimeWarning,
+        stacklevel=1,
+    )
+
 JOB_CONNECTION_STRING_ENCRYPTION_KEY = env('JOB_CONNECTION_STRING_ENCRYPTION_KEY', default='')
 ANALYZE_POSTGRES_RATE_LIMIT = _normalize_throttle_rate(
     env('ANALYZE_POSTGRES_RATE_LIMIT', default='10/hour'),
