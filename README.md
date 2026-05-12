@@ -1,239 +1,231 @@
 # QualityLab Backend (Django)
 
-Last updated: April 2026
+Last updated: May 2026
 
-This backend powers authentication, CSV analysis, PostgreSQL AI validation, chat history, guidelines, and human-in-the-loop SQL fix execution.
+Powers authentication, PostgreSQL AI validation, chat history, guidelines, domain rules, human-in-the-loop SQL fix execution, admin dashboard, and report export.
 
-## Architecture Snapshot
+## Tech Stack
 
-Current runtime stack:
-
-- Django 5 + Django REST Framework
-- PostgreSQL (main application database)
-- Redis (Celery broker/result backend)
-- Celery worker (async processing)
-- Optional AgentOS playground for developer testing
-
-Important:
-
-- Runtime persistence is PostgreSQL-first.
+- Python 3.14 + Django 5 + Django REST Framework
+- PostgreSQL (application database)
+- Redis (Celery broker + result backend)
+- Celery (async pipeline execution)
+- Agno multi-agent framework
+- LLM backends: Gemini 2.0 Flash (default), configurable via `LLM_MODEL`
 
 ## High-Level Architecture
 
-```text
+```
 Browser (Angular SPA)
-   -> Django API (auth + jobs + reports + chat + guidelines + fixes)
- -> PostgreSQL (users, jobs, analysis, chat, guidelines, audit)
- -> Redis (Celery broker/result backend)
- -> Celery workers (async CSV/PG pipelines)
-    -> Agents pipeline (guidelines + validators + fix planner)
-  -> Report artifacts (backend-django/reports)
-
-Optional developer path:
-AgentOS playground (port 7777) for interactive agent testing
+  → Django API (auth + jobs + pipeline + chat + guidelines + fixes + admin)
+    → PostgreSQL (users, jobs, results, chat, guidelines, audit)
+    → Redis (Celery broker/result backend)
+    → Celery workers (async PostgreSQL AI pipeline)
+      → Multi-agent pipeline (Profiler + 4 Validators + Fix Planner)
 ```
 
-Request lifecycle summary:
+Request lifecycle:
 
-1. Frontend sends authenticated API calls to Django.
-2. Django persists job state to PostgreSQL and dispatches long tasks to Celery.
-3. Celery executes analysis pipelines and writes results/status updates.
-4. Frontend polls status and renders results, chat, guidelines, and fix cards.
+1. Frontend sends authenticated requests to Django.
+2. Django persists job state and dispatches long tasks to Celery.
+3. Celery runs the multi-agent validation pipeline; writes results/status.
+4. Frontend polls `/api/status/<jobId>` and renders results, chat, and fix cards.
 
-## Multi-Agent Validation System Architecture (6 Agents)
+## Multi-Agent Pipeline (6 Agents)
 
-The backend agent architecture includes six distinct agent roles.
+Defined in `agents/agent_config.py` and orchestrated in `agents/validation.py`.
 
-### Agent List (All 6)
+| Agent | Role |
+|-------|------|
+| **Database Profiler** | Baseline pass — row counts, null rates, cardinality, FK/index map, column type inference |
+| **Schema Integrity Validator** | PKs, FK constraints, nullable FKs, missing indexes, constraint coverage |
+| **Statistical Validator** | Null rate anomalies, distribution drift, high-cardinality columns, outlier detection |
+| **Structural Validator** | Row-level conformance — impossible dates, blank required fields, negative amounts |
+| **Relational Validator** | Cross-table integrity — orphaned FKs, duplicates, functional dependency violations |
+| **Data Fix Planner** | Synthesises ranked findings into human-reviewable SQL fix cards with dry-run impact |
 
-1. Schema Integrity Validator
-2. Column Validator
-3. Row-Level Logic Validator
-4. Cross-Row Validator
-5. Data Fix Planner
-6. Query Executor Agent
+### Pipeline Flow
 
-### How They Work Together
-
-```text
-Automated analysis pipeline (Celery):
-
-1) Schema Integrity Validator
- -> structure constraints, PK/FK, nullability, schema quality
-
-2) Column Validator
- -> column-level quality, semantics, null/cardinality/distribution checks
-
-3) Row-Level Logic Validator
- -> per-row business-rule and format violations
-
-4) Cross-Row Validator
- -> temporal, relational, and multi-row anomaly checks
-
-5) Data Fix Planner
- -> synthesizes findings into human-reviewable SQL fix cards
-
-Human-in-the-loop execution path:
-
-6) Query Executor Agent
- -> executes approved fix-card SQL in one safe transaction
+```
+Celery task starts
+  → Profiler (schema + baseline stats)
+  → Schema Integrity Validator  ┐
+  → Statistical Validator       ├─ parallel via agno Team (coordinate mode)
+  → Structural Validator        │
+  → Relational Validator        ┘
+  → Reducer (dedup + rank + dependency graph)
+  → Fix Planner (SQL fix cards with pre-flight checks)
+  → Results persisted to PostgreSQL
 ```
 
-### Pipeline Notes & Hybrid Signal-Based Architecture
+### Key Design Decisions
 
-The pipeline uses a **Hybrid Signal-Based Architecture** to minimize LLM token costs and ensure deterministic fixes:
-- **Signals over Reports:** Inter-agent communication is strictly limited to compact `ValidationSignal` objects containing math-based `metrics` and exact SQL `predicate` clauses.
-- **Minimal Context Sampling:** Tools run aggregations rather than returning raw rows. When semantic clarity is required, agents append a maximum of 3 `context_samples` to a signal.
-- **Execution Safety:** The Data Fix Planner inherently acts on upstream signal predicates, but strictly dry-runs them (`EXPLAIN` or read-only `COUNT`) to verify safety before proposing the final `UPDATE` or `DELETE` SQL.
-- Query Executor Agent executes only user-approved queries from fix cards in a standalone phase.
+- **Domain rules**: injected into every agent at runtime; loaded once per pipeline run.
+- **Schema snapshot**: compact per-agent view (stripped of FK/index lists) to reduce token cost ~25%.
+- **Reducer**: deduplicates findings, scores severity, builds dependency graph before fix planner runs.
+- **Fix pre-flight**: each fix card runs a `COUNT(*)` impact estimate; high-risk cards get `EXPLAIN` checks.
+- **Migration script**: ordered DDL/DML bundle generated from the fix plan for one-shot execution.
 
 ## Project Structure
 
-```text
+```
 backend-django/
-├── config/       Django settings, root URLs, Celery app
-├── users/        User model, auth views, cookie JWT backend
-├── api/          API views, URL routes, ORM models, DB adapter
-├── services/     Analysis and domain services
-├── tasks/        Celery tasks (CSV + PostgreSQL workflows)
-├── agents/       Multi-agent orchestration and query executor
-├── uploads/      Uploaded CSV files
-├── reports/      Generated report artifacts
+├── config/          Django settings, root URLs, Celery app
+├── users/           User model, auth views, cookie JWT backend, social login
+├── api/
+│   ├── models.py    Job, AnalysisResult, ChatMessage, JobGuideline, AuditLog
+│   ├── views.py     All API view classes
+│   ├── urls.py      URL routing
+│   └── db.py        PostgreSQL adapter (connect, query, schema introspection)
+├── agents/
+│   ├── agent_config.py   Per-agent instruction sets and output schemas
+│   ├── team.py           Agent + Team construction (agno)
+│   ├── validation.py     Full pipeline orchestration (Celery entry point)
+│   ├── reducer.py        Finding dedup, ranking, dependency graph
+│   ├── hooks.py          Pre/post hooks (schema priming, domain rules, logging)
+│   ├── schemas.py        Pydantic output schemas (FixPlan, ValidatorReport, …)
+│   └── tool_factories.py Per-agent DB tool sets
+├── tasks/
+│   └── postgres_tasks.py  Celery tasks for PostgreSQL pipeline
+├── reports/         Generated report artifacts
 ├── manage.py
 └── requirements.txt
 ```
 
-## Main Data Models
+## Data Models (`api/models.py`)
 
-Defined in api/models.py:
+| Model | Purpose |
+|-------|---------|
+| `Job` | Tracks pipeline job state, status, timestamps, DB name |
+| `AnalysisResult` | Full pipeline results JSON blob per job |
+| `ChatMessage` | Persisted chat history per job |
+| `JobGuideline` | Domain rules / guidelines attached to a job |
+| `AuditLog` | Admin audit trail for fix executions and sensitive ops |
 
-- Job
-- AnalysisResult
-- CleaningResult
-- ChatMessage
-- JobGuideline
-- AuditLog
+## API Endpoints
 
-## API Overview
+All endpoints under `/api`.
 
-All endpoints are mounted under /api.
+### Auth (`users/urls.py`)
 
-Auth (users/urls.py):
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/api/register` | Email + password registration |
+| POST | `/api/login` | Cookie JWT login |
+| POST | `/api/logout` | Clear auth cookie |
+| GET | `/api/me` | Current user info |
+| POST | `/api/social-login` | Google OAuth token exchange |
+| GET | `/api/github/login` | GitHub OAuth redirect |
+| GET | `/api/github/callback` | GitHub OAuth callback |
+| POST | `/api/password/reset` | Request password reset email |
+| POST | `/api/password/reset/confirm` | Confirm reset with token |
+| POST | `/api/password/change` | Change password (authenticated) |
+| POST | `/api/resend-verification` | Resend email verification link |
 
-- POST /api/register
-- POST /api/login
-- POST /api/logout
-- GET /api/me
-- POST /api/social-login
-- GET /api/github/login
-- GET /api/github/callback
-- POST /api/password/reset
-- POST /api/password/reset/confirm
-- POST /api/password/change
+### Core Pipeline (`api/urls.py`)
 
-Core data workflows (api/urls.py):
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/api/test-postgres` | Test DSN connectivity |
+| POST | `/api/analyze-postgres` | Start async validation pipeline |
+| GET | `/api/status/<jobId>` | Poll pipeline status |
+| GET | `/api/results/<jobId>` | Full results payload |
+| GET | `/api/results/<jobId>/diff` | Results diff between two runs |
+| GET | `/api/results/<jobId>/export` | Download results as JSON report |
+| GET | `/api/jobs` | List all jobs for current user |
+| DELETE | `/api/jobs` | Bulk delete jobs |
+| GET/DELETE | `/api/jobs/<job_id>` | Job detail / delete single job |
 
-- POST /api/upload
-- POST /api/analyze/<jobId>
-- POST /api/test-postgres
-- POST /api/analyze-postgres
-- GET /api/status/<jobId>
-- GET /api/results/<jobId>
-- GET /api/results/<jobId>/export
-- GET /api/raw/<jobId>
-- GET /api/raw_with_outliers/<jobId>
-- POST /api/clean/<jobId>
-- GET /api/cleaned/<jobId>
-- GET /api/cleaning-result/<jobId>
-- GET /api/cleaning-result/<jobId>/export
-- GET /api/jobs
-- DELETE /api/jobs
-- POST /api/agent-chat
-- GET /api/chat-history/<jobId>
-- POST /api/chat-history/<jobId>
-- GET /api/guidelines/<jobId>
-- GET /api/fixes/<job_id>/
-- POST /api/execute-fix/<job_id>/
+### Chat
 
-Health endpoint:
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/api/agent-chat` | Send message to QualityLab team agent |
+| GET | `/api/chat-history/<jobId>` | Load persisted chat history |
+| POST | `/api/chat-history/<jobId>` | Save chat message |
+| GET/POST | `/api/jobs/<job_id>/chat` | Alias for chat history |
 
-- GET /health
+### Fixes
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/fixes/<job_id>/` | Get generated fix cards |
+| POST | `/api/execute-fix/<job_id>/` | Execute approved fix SQL (human-in-the-loop) |
+
+### Guidelines
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/guidelines/<jobId>` | Get domain rules/guidelines for job |
+
+### Admin
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/admin/stats/` | Platform-wide job + user stats |
+| GET | `/api/admin/pipeline-performance/` | Agent timing + success metrics |
+| GET | `/api/admin/audit-log/` | Fix execution audit trail |
+| GET | `/api/admin/error-timeline/` | Pipeline error history |
+| POST | `/api/admin/test-email/` | Send test email |
+| GET | `/api/admin/users/` | List all users |
+| GET/PATCH/DELETE | `/api/admin/users/<user_id>/` | User detail management |
+
+### Health
+
+| Method | Path |
+|--------|------|
+| GET | `/health` |
+
+## Authentication
+
+- Transport: httpOnly cookie named `token`
+- Algorithm: JWT (HS256), expiry configurable
+- DRF auth class: `users.backends.CookieJWTAuthentication`
+- Social: Google OAuth (token exchange), GitHub OAuth (redirect flow)
+- Email verification required before running analysis
 
 ## Async Processing
 
-Celery tasks handle long-running operations:
+Celery tasks in `tasks/postgres_tasks.py`:
 
-- CSV analysis and cleaning
-- PostgreSQL AI validation pipeline
-- Legacy PostgreSQL cleaning-plan execution
-- Stuck-job monitoring task
+- `run_postgres_analysis_task` — full multi-agent pipeline
+- Stuck-job monitor (periodic beat task)
 
-Main task modules:
+Worker startup:
 
-- tasks/csv_tasks.py
-- tasks/postgres_tasks.py
-
-## Authentication Model
-
-- JWT cookie name: token
-- Cookie transport: httpOnly, SameSite=Lax
-- Frontend sends credentials with every request (withCredentials)
-- DRF auth class: users.backends.CookieJWTAuthentication
+```bash
+celery -A config worker -l info --concurrency=1 --prefetch-multiplier=1
+```
 
 ## Local Setup
-
-1. Create and activate virtual environment:
 
 ```bash
 cd backend-django
 python3 -m venv venv
 source venv/bin/activate
-```
-
-1. Install dependencies:
-
-```bash
 pip install -r requirements.txt
-```
 
-1. Ensure PostgreSQL and Redis are running.
-
-2. Apply migrations:
-
-```bash
+# Ensure PostgreSQL and Redis are running
 python manage.py migrate
-```
-
-1. Start API server:
-
-```bash
 python manage.py runserver 0.0.0.0:8000
-```
 
-1. Start Celery worker (new terminal):
-
-```bash
-cd backend-django
-source venv/bin/activate
+# Second terminal — Celery worker
 celery -A config worker -l info --concurrency=1 --prefetch-multiplier=1
 ```
-
-Optional: start celery beat if you use scheduled jobs.
 
 ## Useful Commands
 
 ```bash
-# Django checks
 python manage.py check
-
-# Unit tests (example auth test module)
-python -m unittest users.tests.test_register_cookie_flow
-
-# Health check (from another terminal)
 curl http://localhost:8000/health
+
+# Run backend tests
+python -m pytest agents/tests/ -v
 ```
 
 ## Notes
 
-- Use localhost consistently (frontend and backend) to avoid cookie-origin mismatches.
-- If backend behavior changes, update ARCHITECTURE.md and this README together.
+- Use `localhost` consistently — mixing `127.0.0.1` causes cookie-origin mismatches.
+- Agent names in `agent_config.py` must match `id=` in `team.py`.
+- Domain rules are injected via `inject_domain_rules` pre-hook; never hardcode table/column names in config.
+- The fix planner schema snapshot strips FK/index metadata to reduce token cost; planner calls `describe_constraints()` directly when needed.
