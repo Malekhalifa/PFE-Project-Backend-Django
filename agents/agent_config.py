@@ -530,5 +530,6 @@ FIX_PLANNER_AGENT_CONFIG = {
     ],
     "output_schema": FixPlan,
     "parser_model": _make_parser_model(),
+    "use_json_mode": True,
     "tool_call_limit": 20,
 }

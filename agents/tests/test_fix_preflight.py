@@ -46,8 +46,10 @@ class PreflightPKGuardTests(unittest.TestCase):
         # First call → null check (returns 0 nulls). Second call → duplicate check (returns >0).
         with patch("agents.hooks._safe_query", side_effect=[0, 5]):
             validate_fix_preflight(_run_output(plan), _ctx())
-        self.assertIn("BLOCKED BY PREFLIGHT", plan.cards[0].sql)
-        self.assertIn("duplicate", plan.cards[0].sql.lower() + plan.cards[0].rationale.lower())
+        self.assertEqual(plan.cards[0].sql, "")
+        self.assertEqual(plan.cards[0].interaction_model, "blocked")
+        self.assertIn("duplicate", plan.cards[0].rationale.lower())
+        self.assertEqual(plan.cards[0].evidence_payload["_type"], "blocked")
 
     def test_pk_with_nulls_only_gets_set_not_null_prepended(self):
         plan = FixPlan(cards=[FixCard(
@@ -90,7 +92,8 @@ class PreflightUniqueGuardTests(unittest.TestCase):
         # 9997 duplicate non-null country_code values (FR repeats etc).
         with patch("agents.hooks._safe_query", return_value=9997):
             validate_fix_preflight(_run_output(plan), _ctx())
-        self.assertIn("BLOCKED BY PREFLIGHT", plan.cards[0].sql)
+        self.assertEqual(plan.cards[0].sql, "")
+        self.assertEqual(plan.cards[0].interaction_model, "blocked")
         self.assertIn("UNIQUE", plan.cards[0].rationale)
 
     def test_unique_no_dups_passes(self):
@@ -124,7 +127,8 @@ class PreflightFKPlaceholderTests(unittest.TestCase):
         # EXISTS query returns False — id 0 not in users.
         with patch("agents.hooks._safe_query", return_value=False):
             validate_fix_preflight(_run_output(plan), _ctx(schema=schema))
-        self.assertIn("BLOCKED BY PREFLIGHT", plan.cards[0].sql)
+        self.assertEqual(plan.cards[0].sql, "")
+        self.assertEqual(plan.cards[0].interaction_model, "blocked")
         self.assertIn("orphan", plan.cards[0].rationale.lower())
 
     def test_fk_fill_with_existing_target_passes(self):
@@ -158,7 +162,8 @@ class PreflightPatternNotUniqueTests(unittest.TestCase):
         # _safe_query should NOT be called — this is a pattern-based block.
         with patch("agents.hooks._safe_query", side_effect=AssertionError("DB query should not run")):
             validate_fix_preflight(_run_output(plan), _ctx())
-        self.assertIn("BLOCKED BY PREFLIGHT", plan.cards[0].sql)
+        self.assertEqual(plan.cards[0].sql, "")
+        self.assertEqual(plan.cards[0].interaction_model, "blocked")
         self.assertIn("pattern_not_unique", plan.cards[0].rationale.lower())
 
 

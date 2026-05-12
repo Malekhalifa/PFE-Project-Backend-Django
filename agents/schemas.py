@@ -5,8 +5,11 @@ These are the ONLY types that travel between agents, steps, and the reducer.
 Every agent declares output_schema= one of these models. No DSL strings.
 """
 
+import logging
 from typing import Any, Literal, Optional
 from pydantic import BaseModel, Field, field_validator, model_validator
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -34,6 +37,27 @@ class AgentMetadata(BaseModel):
 # ---------------------------------------------------------------------------
 
 Severity  = Literal["low", "medium", "high", "critical"]
+RemediationFamily = Literal[
+    "schema_design",
+    "referential",
+    "nullability",
+    "duplicates",
+    "statistical",
+    "temporal",
+    "content",
+    "type_integrity",
+    "business_rules",
+    "ai_investigative",
+    "unknown",
+]
+InteractionModel = Literal[
+    "execute_ddl",
+    "human_decision",
+    "advisory",
+    "blocked",
+    "investigate",
+]
+SourceType = Literal["deterministic", "ai", "hybrid"]
 
 # Old values kept for backward compat; new pipeline uses structural/statistical/relational
 Validator = Literal[
@@ -256,6 +280,23 @@ class FixCard(BaseModel):
         default_factory=list,
         description="fix_id values that must be accepted before this fix can run",
     )
+    card_family: RemediationFamily = Field(
+        default="unknown",
+        description="Semantic remediation family used by frontend evidence renderers.",
+    )
+    interaction_model: InteractionModel = Field(
+        default="investigate",
+        description="User interaction model: execute, decide, advisory, blocked, or investigate.",
+    )
+    evidence: dict = Field(default_factory=dict)
+    evidence_payload: Optional[dict] = Field(
+        default=None,
+        description="Family-specific evidence payload with a '_type' discriminator.",
+    )
+    source_rule: str = Field(default="", description="Finding.rule that produced this card.")
+    source_type: SourceType = Field(default="ai", description="deterministic, ai, or hybrid provenance.")
+    confidence: float = Field(default=0.9, ge=0.0, le=1.0)
+    severity: Severity = "medium"
 
     @field_validator("sql", mode="before")
     @classmethod
@@ -267,6 +308,30 @@ class FixCard(BaseModel):
 
     @model_validator(mode="after")
     def infer_risk_level(self) -> "FixCard":
+        if self.interaction_model == "blocked" and self.sql:
+            self.sql = ""
+        if self.interaction_model == "blocked":
+            self.risk_level = self.risk_level or "medium"
+            return self
+        # Semantic contract enforcement — warn, never hard-fail (LLM is the source)
+        if self.interaction_model == "execute_ddl" and not self.rollback_queries:
+            logger.warning(
+                "FixCard contract: execute_ddl '%s' has no rollback_queries",
+                self.fix_id or self.title,
+            )
+        if self.interaction_model == "advisory":
+            sql_upper = (self.sql or "").upper().strip()
+            if sql_upper and not sql_upper.startswith("SELECT"):
+                logger.warning(
+                    "FixCard contract: advisory '%s' has non-SELECT sql — clearing",
+                    self.fix_id or self.title,
+                )
+                self.sql = ""
+        if self.interaction_model == "human_decision" and not self.evidence_payload:
+            logger.warning(
+                "FixCard contract: human_decision '%s' missing evidence_payload",
+                self.fix_id or self.title,
+            )
         if self.risk_level is not None:
             return self
         sql = (self.sql or "").upper()

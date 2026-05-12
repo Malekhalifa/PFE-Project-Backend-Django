@@ -1052,12 +1052,26 @@ def _safe_query(conn_str: str, sql: str) -> Any:
 
 
 def _block_card(card: Any, reason: str) -> None:
-    """Replace card SQL with a no-op advisory comment. Keeps the card visible in
-    the report so the user knows what was attempted, but prevents it from running.
-    """
+    """Mark a card as blocked and remove executable SQL from the fix payload."""
     original = card.sql or ""
-    card.sql = f"-- BLOCKED BY PREFLIGHT: {reason}\n-- Original SQL was unsafe to execute against this database.\nSELECT 'preflight_blocked' AS status;"
-    card.risk_level = "low"
+    card.sql = ""
+    card.risk_level = "medium"
+    if hasattr(card, "interaction_model"):
+        card.interaction_model = "blocked"
+    if hasattr(card, "card_family") and getattr(card, "card_family", "unknown") == "unknown":
+        card.card_family = "nullability" if "placeholder" in reason.lower() else "schema_design"
+    if hasattr(card, "source_rule") and not getattr(card, "source_rule", ""):
+        card.source_rule = "fill_nulls_blocked"
+    if hasattr(card, "evidence_payload"):
+        card.evidence_payload = {
+            "_type": "blocked",
+            "block_reason": reason,
+            "original_sql": original,
+        }
+    if hasattr(card, "evidence"):
+        evidence = dict(getattr(card, "evidence", {}) or {})
+        evidence.update({"block_reason": reason, "original_sql": original})
+        card.evidence = evidence
     if hasattr(card, "rationale"):
         card.rationale = (
             f"[Pre-flight blocked: {reason}] " + (card.rationale or "")

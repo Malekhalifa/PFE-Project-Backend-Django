@@ -67,8 +67,7 @@ class VerdictDemotionTests(unittest.TestCase):
 
     def test_blocked_cards_alone_demote_low_to_medium(self):
         cards = [
-            {"sql": "-- BLOCKED BY PREFLIGHT: duplicate values\nSELECT 'x';",
-             "risk_level": "low"},
+            {"sql": "", "risk_level": "medium", "interaction_model": "blocked"},
         ]
         result = _summary(score=95, cards=cards)
         self.assertEqual(result["verdict"], "medium_risk")

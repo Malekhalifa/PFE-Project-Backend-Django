@@ -1524,6 +1524,22 @@ class ExecuteFixView(APIView):
         rule_family = str(request.data.get('rule_family') or '').strip()
         entity      = str(request.data.get('entity')      or '').strip()
         decision    = str(request.data.get('decision')    or '').strip().lower()
+        fix_id = str(request.data.get('fix_id') or '').strip()
+        interaction_model = str(request.data.get('interaction_model') or '').strip()
+        source_rule = str(request.data.get('source_rule') or '').strip()
+        source_type = str(request.data.get('source_type') or '').strip()
+        confidence = request.data.get('confidence')
+
+        # 3a — Dependency guard: reject if a declared prerequisite has not been accepted
+        depends_on = request.data.get('depends_on') or []
+        accepted_fix_ids = set(request.data.get('accepted_fix_ids') or [])
+        if isinstance(depends_on, list) and depends_on:
+            unmet = [dep for dep in depends_on if dep not in accepted_fix_ids]
+            if unmet:
+                return Response(
+                    {'detail': f"Dependency not satisfied: {', '.join(str(d) for d in unmet)}"},
+                    status=status.HTTP_409_CONFLICT,
+                )
 
         if not queries or not isinstance(queries, list) or len(queries) == 0:
             return Response(
@@ -1588,6 +1604,12 @@ class ExecuteFixView(APIView):
                         'duration_ms': payload.get('duration_ms'),
                         'query_count': len(queries),
                         'transaction': payload.get('transaction'),
+                        'fix_id': fix_id,
+                        'card_family': rule_family,
+                        'interaction_model': interaction_model,
+                        'source_rule': source_rule,
+                        'source_type': source_type,
+                        'confidence': confidence,
                         'status_code': 200,
                     },
                     user_id=user_id_str,
@@ -1611,6 +1633,12 @@ class ExecuteFixView(APIView):
                         'query_count': len(queries),
                         'transaction': payload.get('transaction'),
                         'error': payload.get('error'),
+                        'fix_id': fix_id,
+                        'card_family': rule_family,
+                        'interaction_model': interaction_model,
+                        'source_rule': source_rule,
+                        'source_type': source_type,
+                        'confidence': confidence,
                         'status_code': 500,
                     },
                     user_id=user_id_str,
@@ -1623,6 +1651,9 @@ class ExecuteFixView(APIView):
                 notify_user_fix_executed(user_email, job_id, ex_status, db_name=_db_name)
             except Exception:
                 logger.exception('Failed to send fix execution notification for job %s', job_id)
+
+        if fix_id:
+            payload['fix_id'] = fix_id
 
         return Response(payload, status=status.HTTP_200_OK)
 
@@ -2394,4 +2425,3 @@ class GuidelinesView(APIView):
                 ordered[key] = value
 
         return Response(ordered)
-

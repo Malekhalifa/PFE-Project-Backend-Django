@@ -1,0 +1,741 @@
+{
+  "pipeline_run_id": "3c2cbc2b-de2f-4c81-bcbd-9ca955d84f7c",
+  "database_id": "localhost_5432_easybulk",
+  "llm_model": "gemini-2.5-flash",
+  "run_timestamp": "2026-05-12T00:21:13.434518Z",
+  "executive_summary": {
+    "verdict": "low_risk",
+    "top_issues": [
+      "[CRITICAL] missing pk on campagne_contacts",
+      "[CRITICAL] missing pk on expediteur_groupe",
+      "[CRITICAL] missing pk on campagne_tags"
+    ],
+    "tables_scanned": 30,
+    "tables_profiled": 30,
+    "fixes_recommended": 0,
+    "critical_fix_count": 0,
+    "migration_risk": {
+      "score": 0,
+      "high_risk_cards": 0,
+      "blocked_cards": 0,
+      "destructive_cards": 0
+    }
+  },
+  "summary": {
+    "confidence_score": 93,
+    "data_quality_score": 83,
+    "final_fix_count": 0,
+    "confidence_explanation": {
+      "total_findings": 32,
+      "high_confidence_count": 30,
+      "medium_confidence_count": 2,
+      "low_confidence_count": 0,
+      "summary": "94% of findings have confidence ≥ 0.9 (30/32 high, 2 medium, 0 low). Deterministic (py_profiler) findings are 0.92–1.0; LLM findings vary."
+    },
+    "timing": {
+      "started_at": "2026-05-12T00:21:13.434518Z",
+      "ended_at": "2026-05-12T00:25:25.062852Z",
+      "total_duration_ms": 251633,
+      "total_duration_human": "251.6s",
+      "phases_ms": {
+        "schema_priming": 301,
+        "Python Profiler": 410,
+        "Reducer": 39,
+        "Schema Integrity Validator": 91747,
+        "Statistical Validator": 85317,
+        "Structural Validator": 70652,
+        "Relational Validator": 89283,
+        "Data Fix Planner": 69742
+      },
+      "bottleneck": "Schema Integrity Validator"
+    }
+  },
+  "migration_script": {
+    "sql": "-- No fixes generated.",
+    "card_count": 0,
+    "phases": {}
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "3c2cbc2b-de2f-4c81-bcbd-9ca955d84f7c",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-12T00:21:13.434518Z",
+      "agent": "Schema Integrity Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 4,
+        "items_flagged": 26,
+        "critical_issues": 4,
+        "high_issues": 0,
+        "medium_issues": 36,
+        "low_issues": 2,
+        "overall_quality_score": 79.0,
+        "overall_confidence": 0.9177,
+        "flagged_tables": [
+          "budget_history",
+          "campagne",
+          "campagne_contacts",
+          "campagne_tags",
+          "contacts",
+          "expediteur",
+          "expediteur_groupe",
+          "groupe",
+          "membership",
+          "mention",
+          "modele",
+          "request_api",
+          "smsc_routing_rule",
+          "tags",
+          "user_contact",
+          "user_contact_tags",
+          "user_keys",
+          "user_mission"
+        ]
+      },
+      "metrics": {
+        "validator": "schema",
+        "findings_count": 70,
+        "deduped_finding_count": 42,
+        "grouped_finding_count": 26
+      },
+      "findings": [
+        {
+          "table": "campagne_contacts",
+          "column": null,
+          "entity": "campagne_contacts",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table": "campagne_contacts",
+            "primary_key_required": true,
+            "columns_with_high_nulls": [
+              "campagne_id"
+            ]
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "expediteur_groupe",
+          "column": null,
+          "entity": "expediteur_groupe",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table": "expediteur_groupe",
+            "primary_key_required": true,
+            "columns_with_high_nulls": [
+              "expediteur_id",
+              "groupe_id"
+            ]
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "campagne_tags",
+          "column": null,
+          "entity": "campagne_tags",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table": "campagne_tags",
+            "primary_key_required": true,
+            "columns_with_high_nulls": [
+              "campagne_id"
+            ]
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "user_contact_tags",
+          "column": null,
+          "entity": "user_contact_tags",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table": "user_contact_tags",
+            "primary_key_required": true
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "budget_history",
+          "column": "groupe_id",
+          "entity": "budget_history.groupe_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.91,
+          "evidence": {
+            "table": "budget_history",
+            "column": "groupe_id",
+            "is_nullable": "YES",
+            "foreign_table": "groupe"
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "groupe",
+          "column": null,
+          "entity": "groupe.admin_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.925,
+          "evidence": {
+            "table": "groupe",
+            "column": "admin_id",
+            "foreign_table": "users",
+            "indexed_columns": "['id', 'name', 'organization_id']"
+          },
+          "remediation_hint": null,
+          "affected_columns": [
+            "admin_id",
+            "status_id"
+          ],
+          "count": 3
+        },
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "entity": "groupe.admin_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.91,
+          "evidence": {
+            "table": "groupe",
+            "column": "admin_id",
+            "is_nullable": "YES",
+            "foreign_table": "users"
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "expediteur",
+          "column": "organization_id",
+          "entity": "expediteur.organization_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.925,
+          "evidence": {
+            "table": "expediteur",
+            "column": "organization_id",
+            "foreign_table": "organization",
+            "indexed_columns": "['id', 'name']"
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "campagne_contacts",
+          "column": "campagne_id",
+          "entity": "campagne_contacts.campagne_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.925,
+          "evidence": {
+            "table": "campagne_contacts",
+            "column": "campagne_id",
+            "foreign_table": "campagne",
+            "indexed_columns": "[]"
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "membership",
+          "column": "status_id",
+          "entity": "membership.status_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.925,
+          "evidence": {
+            "table": "membership",
+            "column": "status_id",
+            "foreign_table": "prm_status",
+            "indexed_columns": "['id', 'organization_id', 'user_id']"
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "expediteur_groupe",
+          "column": null,
+          "entity": "expediteur_groupe.expediteur_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.925,
+          "evidence": {
+            "table": "expediteur_groupe",
+            "column": "expediteur_id",
+            "foreign_table": "expediteur",
+            "indexed_columns": "[]"
+          },
+          "remediation_hint": null,
+          "affected_columns": [
+            "expediteur_id",
+            "groupe_id"
+          ],
+          "count": 2
+        },
+        {
+          "table": "campagne_tags",
+          "column": "campagne_id",
+          "entity": "campagne_tags.campagne_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.925,
+          "evidence": {
+            "table": "campagne_tags",
+            "column": "campagne_id",
+            "foreign_table": "campagne",
+            "indexed_columns": "[]"
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "mention",
+          "column": "modele_id",
+          "entity": "mention.modele_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.925,
+          "evidence": {
+            "table": "mention",
+            "column": "modele_id",
+            "foreign_table": "modele",
+            "indexed_columns": "['id']"
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "request_api",
+          "column": "membership_id",
+          "entity": "request_api.membership_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.91,
+          "evidence": {
+            "table": "request_api",
+            "column": "membership_id",
+            "is_nullable": "YES",
+            "foreign_table": "membership"
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "smsc_routing_rule",
+          "column": null,
+          "entity": "smsc_routing_rule.expediteur_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.91,
+          "evidence": {
+            "table": "smsc_routing_rule",
+            "column": "expediteur_id",
+            "is_nullable": "YES",
+            "foreign_table": "expediteur"
+          },
+          "remediation_hint": null,
+          "affected_columns": [
+            "expediteur_id",
+            "groupe_id"
+          ],
+          "count": 3
+        },
+        {
+          "table": "smsc_routing_rule",
+          "column": "target_smsc_org_id",
+          "entity": "smsc_routing_rule.target_smsc_org_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.925,
+          "evidence": {
+            "table": "smsc_routing_rule",
+            "column": "target_smsc_org_id",
+            "foreign_table": "smsc_organization",
+            "indexed_columns": "['expediteur_id', 'groupe_id', 'id', 'label', 'organization_id', 'pattern', 'priority']"
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "user_contact",
+          "column": "membership_id",
+          "entity": "user_contact.membership_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.91,
+          "evidence": {
+            "table": "user_contact",
+            "column": "membership_id",
+            "is_nullable": "YES",
+            "foreign_table": "membership"
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "tags",
+          "column": "membership_id",
+          "entity": "tags.membership_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.91,
+          "evidence": {
+            "table": "tags",
+            "column": "membership_id",
+            "is_nullable": "YES",
+            "foreign_table": "membership"
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "user_keys",
+          "column": "membership_id",
+          "entity": "user_keys.membership_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.91,
+          "evidence": {
+            "table": "user_keys",
+            "column": "membership_id",
+            "is_nullable": "YES",
+            "foreign_table": "membership"
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "user_mission",
+          "column": "groupe_id",
+          "entity": "user_mission.groupe_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.91,
+          "evidence": {
+            "table": "user_mission",
+            "column": "groupe_id",
+            "is_nullable": "YES",
+            "foreign_table": "groupe"
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "campagne",
+          "column": null,
+          "entity": "campagne.user_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.925,
+          "evidence": {
+            "table": "campagne",
+            "column": "user_id",
+            "foreign_table": "users",
+            "indexed_columns": "['id']"
+          },
+          "remediation_hint": null,
+          "affected_columns": [
+            "user_id",
+            "expediteur_id",
+            "modele_id",
+            "status_id",
+            "campaign_type_permission_id",
+            "schedule_id"
+          ],
+          "count": 7
+        },
+        {
+          "table": "campagne",
+          "column": null,
+          "entity": "campagne.user_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.91,
+          "evidence": {
+            "table": "campagne",
+            "column": "user_id",
+            "is_nullable": "YES",
+            "foreign_table": "users"
+          },
+          "remediation_hint": null,
+          "affected_columns": [
+            "user_id",
+            "expediteur_id",
+            "modele_id",
+            "campaign_type_permission_id",
+            "schedule_id"
+          ],
+          "count": 6
+        },
+        {
+          "table": "modele",
+          "column": "campaign_type",
+          "entity": "modele.campaign_type",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.925,
+          "evidence": {
+            "table": "modele",
+            "column": "campaign_type",
+            "foreign_table": "prm_campaign_type",
+            "indexed_columns": "['id', 'libelle', 'membership_id']"
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "modele",
+          "column": "membership_id",
+          "entity": "modele.membership_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.91,
+          "evidence": {
+            "table": "modele",
+            "column": "membership_id",
+            "is_nullable": "YES",
+            "foreign_table": "membership"
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "contacts",
+          "column": "country_code",
+          "entity": "contacts.country_code",
+          "rule": "pattern_not_unique",
+          "severity": "low",
+          "confidence": 0.75,
+          "evidence": {
+            "table": "contacts",
+            "column": "country_code",
+            "pattern": "*_code",
+            "is_nullable": "NO"
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "modele",
+          "column": "campaign_type",
+          "entity": "modele.campaign_type",
+          "rule": "pattern_not_unique",
+          "severity": "low",
+          "confidence": 0.75,
+          "evidence": {
+            "table": "modele",
+            "column": "campaign_type",
+            "pattern": "*_type",
+            "is_nullable": "NO"
+          },
+          "remediation_hint": null
+        }
+      ]
+    },
+    "statistical_validator": {
+      "pipeline_run_id": "3c2cbc2b-de2f-4c81-bcbd-9ca955d84f7c",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-12T00:21:13.434518Z",
+      "agent": "Statistical Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 24,
+        "items_flagged": 6,
+        "critical_issues": 0,
+        "high_issues": 6,
+        "medium_issues": 2,
+        "low_issues": 0,
+        "overall_quality_score": 92.5,
+        "overall_confidence": 0.95,
+        "flagged_tables": [
+          "groupe",
+          "prm_status",
+          "smsc_routing_rule",
+          "user_keys",
+          "user_mission",
+          "users"
+        ]
+      },
+      "metrics": {
+        "validator": "statistical",
+        "findings_count": 8,
+        "deduped_finding_count": 8,
+        "grouped_finding_count": 6
+      },
+      "findings": [
+        {
+          "table": "users",
+          "column": "email",
+          "entity": "users.email",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 0.95,
+          "evidence": {
+            "null_count": 1500,
+            "total_rows": 10000,
+            "null_ratio": 0.15
+          },
+          "remediation_hint": "Investigate why the 'email' column has a 15% null rate. Consider making it a required field if it's critical for user identification or business processes."
+        },
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "entity": "groupe.admin_id",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "null_ratio": 0.8889,
+            "total_rows": 9,
+            "threshold_used": 0.1
+          },
+          "remediation_hint": "Investigate why 'groupe.admin_id' has 89% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "prm_status",
+          "column": "updated_at",
+          "entity": "prm_status.updated_at",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 25,
+            "threshold_used": 0.8
+          },
+          "remediation_hint": "Investigate why 'prm_status.updated_at' has 100% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "smsc_routing_rule",
+          "column": null,
+          "entity": "smsc_routing_rule",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "null_ratio": 0.8571,
+            "total_rows": 7,
+            "threshold_used": 0.1,
+            "columns_with_high_nulls": [
+              "expediteur_id",
+              "groupe_id"
+            ]
+          },
+          "remediation_hint": "Investigate why 'smsc_routing_rule.expediteur_id' has 86% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "groupe_id"
+          ],
+          "count": 2
+        },
+        {
+          "table": "user_keys",
+          "column": null,
+          "entity": "user_keys",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 1,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "expiration_date",
+              "last_time_used_date"
+            ]
+          },
+          "remediation_hint": "Investigate why 'user_keys.expiration_date' has 100% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "last_time_used_date"
+          ],
+          "count": 2
+        },
+        {
+          "table": "user_mission",
+          "column": "groupe_id",
+          "entity": "user_mission.groupe_id",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 0.95,
+          "evidence": {
+            "null_ratio": 0.5,
+            "total_rows": 8,
+            "threshold_used": 0.1
+          },
+          "remediation_hint": "Investigate why 'user_mission.groupe_id' has 50% null values. Consider enforcing NOT NULL if this column is required."
+        }
+      ]
+    },
+    "structural_validator": {
+      "pipeline_run_id": "3c2cbc2b-de2f-4c81-bcbd-9ca955d84f7c",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-12T00:21:13.434518Z",
+      "agent": "Structural Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 30,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "structural",
+        "findings_count": 0,
+        "deduped_finding_count": 0,
+        "grouped_finding_count": 0
+      },
+      "findings": []
+    },
+    "relational_validator": {
+      "pipeline_run_id": "3c2cbc2b-de2f-4c81-bcbd-9ca955d84f7c",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-12T00:21:13.434518Z",
+      "agent": "Relational Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 30,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "relational",
+        "findings_count": 0,
+        "deduped_finding_count": 0,
+        "grouped_finding_count": 0
+      },
+      "findings": []
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "3c2cbc2b-de2f-4c81-bcbd-9ca955d84f7c",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-12T00:21:13.434518Z",
+      "agent": "Data Fix Planner",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 29,
+        "items_passed": 29,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "total_issues_received": 29,
+        "fixes_generated": 0
+      },
+      "findings": [],
+      "cards": []
+    }
+  }
+}

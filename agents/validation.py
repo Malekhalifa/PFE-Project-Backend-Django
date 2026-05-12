@@ -23,6 +23,7 @@ from services.report_service import save_final_pipeline_report
 from .py_profiler import python_profile_step
 from .reducer import _try_recover_partial, reduce_signals
 from .reporting import aggregate_pipeline_scores, confidence_breakdown, derive_database_id, report_to_markdown
+from .rule_family_map import build_evidence_payload, classify_fix
 from .rules import common_rules, policy_rules
 from .schemas import Finding, FixCard, FixDependencyGraph, FixPlan, ProfilerReport, ReducedFindings, ValidationReport
 from .team import build_members, resolve_model_id
@@ -861,6 +862,28 @@ def _legacy_fix_entry(card: FixCard, index: int, reduced_findings: ReducedFindin
     matched = _match_finding_for_card(card, reduced_findings)
     table_name, _ = _split_entity(card.target)
     queries = _split_sql_statements(card.sql)
+    source_rule = card.source_rule or (matched.rule if matched else "")
+    if not source_rule:
+        logger.warning(
+            "FixCard '%s' empty source_rule → classification fallback to unknown. "
+            "target=%s card_family=%s",
+            card.fix_id or card.title, card.target, card.card_family,
+        )
+    severity = matched.severity if matched else card.severity
+    confidence = matched.confidence if matched else card.confidence
+    evidence = dict(card.evidence or (matched.evidence if matched else {}))
+    if card.card_family != "unknown" or not matched:
+        family = card.card_family
+        interaction_model = card.interaction_model
+        source_type = card.source_type
+    else:
+        family, interaction_model, source_type = classify_fix(source_rule, matched.validator)
+    evidence_payload = card.evidence_payload or build_evidence_payload(
+        family=family,
+        rule=source_rule,
+        target=card.target,
+        evidence=evidence,
+    )
     return {
         "id": f"fix_{index:03d}_{_slug(card.target)}",
         # Phase 6 fields — dependency-aware fix review
@@ -872,8 +895,15 @@ def _legacy_fix_entry(card: FixCard, index: int, reduced_findings: ReducedFindin
         "target_table": table_name,
         "problem": card.title,
         "fix": card.rationale,
-        "severity": matched.severity if matched else "medium",
-        "confidence": matched.confidence if matched else 0.75,
+        "severity": severity,
+        "confidence": confidence,
+        "risk_level": card.risk_level,
+        "card_family": family,
+        "interaction_model": interaction_model,
+        "source_rule": source_rule,
+        "source_type": source_type,
+        "evidence": evidence,
+        "evidence_payload": evidence_payload,
         "estimated_rows_affected": card.rows_affected_estimate or 0,
         "queries": queries,
         "explanation": card.rationale,
@@ -995,7 +1025,11 @@ def _build_executive_summary(
     )
     blocked_cards = sum(
         1 for c in cards
-        if isinstance(c, dict) and "BLOCKED BY PREFLIGHT" in (c.get("sql") or "")
+        if isinstance(c, dict)
+        and (
+            (c.get("interaction_model") or "").lower() == "blocked"
+            or "BLOCKED BY PREFLIGHT" in (c.get("sql") or "")
+        )
     )
     destructive_cards = sum(
         1 for c in cards

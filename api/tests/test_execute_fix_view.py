@@ -68,6 +68,8 @@ class ExecuteFixViewTests(unittest.TestCase):
         mock_query_executor_cls.return_value.execute.assert_called_once_with(
             queries=["UPDATE users SET email = lower(email);"],
             connection_string="postgresql://user:pass@localhost:5432/qualitylab",
+            admin_dsn="postgresql://:@localhost:5432/postgres",
+            job_id="job-1",
         )
         mock_audit_log.assert_called_once()
         self.assertEqual(mock_audit_log.call_args[0][1], "FIX_EXECUTED")
@@ -163,6 +165,82 @@ class ExecuteFixViewTests(unittest.TestCase):
         self.assertIn("Safety violation", response.data.get("detail", ""))
         mock_query_executor_cls.return_value.execute.assert_not_called()
         self.assertEqual(mock_audit_log.call_args[0][1], "FIX_EXECUTION_REJECTED")
+
+    @patch("api.views.QueryExecutorAgent")
+    @patch("api.views.find_owned_job")
+    def test_post_rejects_when_dependency_not_satisfied(self, mock_find_owned_job, mock_query_executor_cls):
+        mock_find_owned_job.return_value = {
+            "connection_string": "postgresql://user:pass@localhost:5432/qualitylab"
+        }
+
+        request = self._request({
+            "queries": ["ALTER TABLE orders ADD PRIMARY KEY (id);"],
+            "depends_on": ["fix_001_users"],
+            "accepted_fix_ids": [],
+        })
+        response = ExecuteFixView().post(request, "job-1")
+
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+        self.assertIn("Dependency not satisfied", response.data.get("detail", ""))
+        mock_query_executor_cls.return_value.execute.assert_not_called()
+
+    @patch("api.views.QueryExecutorAgent")
+    @patch("api.views.find_owned_job")
+    def test_post_allows_execution_when_dependency_satisfied(self, mock_find_owned_job, mock_query_executor_cls):
+        mock_find_owned_job.return_value = {
+            "connection_string": "postgresql://user:pass@localhost:5432/qualitylab"
+        }
+        mock_query_executor_cls.return_value.execute.return_value = {
+            "status": "success",
+            "query": "ALTER TABLE orders ADD PRIMARY KEY (id);",
+            "queries": ["ALTER TABLE orders ADD PRIMARY KEY (id);"],
+            "database_id": "localhost_5432_qualitylab",
+            "executed_at": "2026-05-12T10:00:00Z",
+            "duration_ms": 8,
+            "rows_affected": 0,
+            "transaction": "committed",
+            "error": None,
+            "query_logs": [],
+        }
+
+        request = self._request({
+            "queries": ["ALTER TABLE orders ADD PRIMARY KEY (id);"],
+            "fix_id": "fix_002_orders",
+            "depends_on": ["fix_001_users"],
+            "accepted_fix_ids": ["fix_001_users"],
+        })
+        response = ExecuteFixView().post(request, "job-1")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data.get("fix_id"), "fix_002_orders")
+
+    @patch("api.views.QueryExecutorAgent")
+    @patch("api.views.find_owned_job")
+    def test_post_injects_fix_id_into_response(self, mock_find_owned_job, mock_query_executor_cls):
+        mock_find_owned_job.return_value = {
+            "connection_string": "postgresql://user:pass@localhost:5432/qualitylab"
+        }
+        mock_query_executor_cls.return_value.execute.return_value = {
+            "status": "success",
+            "query": "UPDATE users SET email = lower(email);",
+            "queries": ["UPDATE users SET email = lower(email);"],
+            "database_id": "localhost_5432_qualitylab",
+            "executed_at": "2026-05-12T10:00:00Z",
+            "duration_ms": 5,
+            "rows_affected": 3,
+            "transaction": "committed",
+            "error": None,
+            "query_logs": [],
+        }
+
+        request = self._request({
+            "queries": ["UPDATE users SET email = lower(email);"],
+            "fix_id": "fix_003_users_email",
+        })
+        response = ExecuteFixView().post(request, "job-1")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data.get("fix_id"), "fix_003_users_email")
 
 
 if __name__ == "__main__":
