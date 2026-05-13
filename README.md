@@ -82,7 +82,8 @@ backend-django/
 │   ├── team.py           Agent + Team construction (agno)
 │   ├── validation.py     Full pipeline orchestration (Celery entry point)
 │   ├── reducer.py        Finding dedup, ranking, dependency graph
-│   ├── hooks.py          Pre/post hooks (schema priming, domain rules, logging)
+│   ├── hooks.py          Pre/post hooks (schema priming, domain rules, logging, Langfuse spans)
+│   ├── langfuse_tracer.py Fail-safe Langfuse v4 observability (traces, spans, generations)
 │   ├── schemas.py        Pydantic output schemas (FixPlan, ValidatorReport, …)
 │   └── tool_factories.py Per-agent DB tool sets
 ├── tasks/
@@ -169,6 +170,8 @@ All endpoints under `/api`.
 | POST | `/api/admin/test-email/` | Send test email |
 | GET | `/api/admin/users/` | List all users |
 | GET/PATCH/DELETE | `/api/admin/users/<user_id>/` | User detail management |
+| GET | `/api/admin/langfuse/status/` | Langfuse connectivity status |
+| GET | `/api/admin/langfuse/traces/` | Pipeline traces proxy (admin-only) |
 
 ### Health
 
@@ -223,9 +226,68 @@ curl http://localhost:8000/health
 python -m pytest agents/tests/ -v
 ```
 
+## LLM Observability (Langfuse)
+
+Every pipeline run is automatically traced in [Langfuse](https://langfuse.com) when the env vars are set.
+
+### Self-hosted setup (local, one-time)
+
+```bash
+# From project root — Projet_Fin_Etude/
+docker compose -f langfuse-compose.yml up -d
+```
+
+First start takes ~3 min (ClickHouse schema migration). Subsequent starts are instant.
+
+- **UI:** http://localhost:3001
+- **Login:** `admin@qualitylab.local` / `admin1234`
+- **Port:** 3001 (3000 is taken by Angular dev server)
+
+### Required env vars (already in `.env`)
+
+```
+LANGFUSE_PUBLIC_KEY=pk-lf-...
+LANGFUSE_SECRET_KEY=sk-lf-...
+LANGFUSE_HOST=http://localhost:3001
+```
+
+Leave blank to disable tracing (pipeline runs unaffected — fully fail-safe).
+
+### What gets traced per pipeline run
+
+| Observation | Type | Data |
+|---|---|---|
+| `qualitylab-pipeline` | Root span | `database_id`, `model_id`, `job_id` |
+| `Schema Integrity Validator` | Generation | input/output tokens, tool_calls, findings_count |
+| `Statistical Validator` | Generation | input/output tokens, tool_calls, findings_count |
+| `Structural Validator` | Generation | input/output tokens, tool_calls, findings_count |
+| `Relational Validator` | Generation | input/output tokens, tool_calls, findings_count |
+| `Data Fix Planner` | Generation | input/output tokens, tool_calls, findings_count |
+| Trace output | — | `data_quality_score`, `confidence_score`, `total_findings`, `total_fixes`, `total_duration_ms` |
+
+Langfuse auto-calculates cost from model name + token counts.
+
+### Stop / wipe Langfuse
+
+```bash
+# Stop (keeps data)
+docker compose -f langfuse-compose.yml down
+
+# Wipe all data
+docker compose -f langfuse-compose.yml down -v
+```
+
+### Admin dashboard integration
+
+The Angular admin dashboard includes an "LLM Observability" section that proxies
+`/api/admin/langfuse/traces/` through Django (admin-only, never exposes keys to browser).
+
+---
+
 ## Notes
 
 - Use `localhost` consistently — mixing `127.0.0.1` causes cookie-origin mismatches.
 - Agent names in `agent_config.py` must match `id=` in `team.py`.
 - Domain rules are injected via `inject_domain_rules` pre-hook; never hardcode table/column names in config.
 - The fix planner schema snapshot strips FK/index metadata to reduce token cost; planner calls `describe_constraints()` directly when needed.
+- Langfuse keys are read from `.env` at import time; changing them requires a Django process restart.

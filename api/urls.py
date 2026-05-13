@@ -46,6 +46,7 @@ urlpatterns = [
     path('admin/test-email/', views.AdminTestEmailView.as_view(), name='admin-test-email'),
     path('admin/users/', views.AdminUsersView.as_view(), name='admin-users'),
     path('admin/users/<str:user_id>/', views.AdminUserDetailView.as_view(), name='admin-user-detail'),
+    path('admin/langfuse/<str:endpoint>/', views.LangfuseProxyView.as_view(), name='admin-langfuse'),
 
     # AI-Generated Guidelines
     path('guidelines/<str:jobId>', views.GuidelinesView.as_view(), name='guidelines'),

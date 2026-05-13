@@ -2425,3 +2425,53 @@ class GuidelinesView(APIView):
                 ordered[key] = value
 
         return Response(ordered)
+
+
+class LangfuseProxyView(APIView):
+    """
+    GET /api/admin/langfuse/status/  → {enabled, host}
+    GET /api/admin/langfuse/traces/  → proxied /api/public/traces filtered to qualitylab-pipeline
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    _LANGFUSE_TIMEOUT = 10
+
+    def get(self, request, endpoint='status'):
+        admin_error = _require_admin_staff(request)
+        if admin_error:
+            return admin_error
+
+        public_key = os.environ.get('LANGFUSE_PUBLIC_KEY', '').strip()
+        secret_key = os.environ.get('LANGFUSE_SECRET_KEY', '').strip()
+        host = os.environ.get('LANGFUSE_HOST', 'https://cloud.langfuse.com').rstrip('/')
+
+        if endpoint == 'status':
+            return Response({
+                'enabled': bool(public_key and secret_key),
+                'host': host if (public_key and secret_key) else None,
+            })
+
+        if endpoint == 'traces':
+            if not (public_key and secret_key):
+                return Response({'enabled': False, 'data': [], 'meta': {}})
+
+            page = _coerce_int(request.query_params.get('page', 1), default=1, minimum=1)
+            limit = _coerce_int(request.query_params.get('limit', 10), default=10, minimum=1, maximum=50)
+
+            try:
+                resp = http_requests.get(
+                    f'{host}/api/public/traces',
+                    auth=(public_key, secret_key),
+                    params={'page': page, 'limit': limit, 'name': 'qualitylab-pipeline'},
+                    timeout=self._LANGFUSE_TIMEOUT,
+                )
+                resp.raise_for_status()
+                return Response(resp.json())
+            except http_requests.exceptions.Timeout:
+                return Response({'error': 'Langfuse request timed out.'}, status=status.HTTP_504_GATEWAY_TIMEOUT)
+            except http_requests.exceptions.RequestException as exc:
+                logger.warning('LangfuseProxyView: request failed: %s', exc)
+                return Response({'error': 'Failed to reach Langfuse.', 'detail': str(exc)}, status=status.HTTP_502_BAD_GATEWAY)
+
+        return Response({'error': 'Unknown endpoint.'}, status=status.HTTP_404_NOT_FOUND)

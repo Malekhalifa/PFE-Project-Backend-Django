@@ -1661,6 +1661,8 @@ def orchestrator_workflow(
         learned_patterns=learned_patterns,
     )
     session_state["learned_rules"] = format_for_prompt(_active_learned)
+    # Stored so log_run_metrics hook can pass it to Langfuse generation spans.
+    session_state["model_id"] = resolved_model_id
 
     workflow, members = build_validation_workflow(
         resolved_model_id=resolved_model_id,
@@ -1668,82 +1670,103 @@ def orchestrator_workflow(
         dependencies=dependencies,
         job_id=job_id,
     )
-    workflow_result = workflow.run(
-        input=_build_workflow_prompt(database_id, historical_signals),
-        session_state=session_state,
-        dependencies=dependencies,
-    )
 
-    step_outputs = _collect_step_outputs(getattr(workflow_result, "step_results", []))
-    _update_phase_timing_from_steps(step_outputs, session_state)
-    reports = _parse_initial_reports(step_outputs)
-
-    # Schema auto-findings — mutates reports.schema.findings in place.
-    _merge_schema_auto_findings_into(reports.schema, session_state)
-
-    # Relational transient retry — replaces reports.relational on success.
-    raw_relational = getattr(step_outputs.get("relational"), "content", "")
-    reports.relational = _maybe_retry_relational(
-        reports.relational,
-        raw_relational,
-        members=members,
-        session_state=session_state,
-        database_id=database_id,
-    )
-
-    # Profiler auto-findings — mutates reports.statistical.findings in place.
-    # Runs BEFORE recovery, matching legacy behavior. When recovery replaces
-    # reports.statistical, the merged auto-findings are discarded — preserved
-    # as-is to avoid behavior drift.
-    _merge_profiler_auto_findings_into(reports.statistical, session_state)
-
-    # Profiler recovery — replaces reports.{profiler, statistical, structural,
-    # reduced, fix_plan} when the workflow profiler step failed silently.
-    _run_recovery_path_if_needed(
-        reports,
-        members=members,
-        session_state=session_state,
-        database_id=database_id,
-    )
-
-    total_tables = len(session_state.get("schema") or {})
-    legacy = _build_legacy_reports(
-        reports,
+    from .langfuse_tracer import finish_pipeline_trace, start_pipeline_trace
+    start_pipeline_trace(
         pipeline_run_id=pipeline_run_id,
+        job_id=job_id,
         database_id=database_id,
-        run_timestamp=run_timestamp,
-        total_tables=total_tables,
-    )
-    summary = _build_summary_artifacts(
-        legacy,
-        reports,
-        session_state=session_state,
-        workflow_result=workflow_result,
-        started_at=started_at,
-        pipeline_t0=pipeline_t0,
+        model_id=resolved_model_id,
     )
 
-    # Persist structural findings as regression guards for future runs.
-    # Convert Finding objects → dicts for the learned_rules writer.
-    _structural_dicts = [
-        {
-            "rule": f.rule,
-            "table": f.entity.split(".")[0] if f.entity else "",
-            "column": f.entity.split(".")[1] if f.entity and "." in f.entity else None,
-            "evidence": f.evidence,
-            "remediation_hint": f.suggested_action,
-        }
-        for f in reports.structural.findings
-    ]
-    save_learned_rules(database_id, pipeline_run_id, _structural_dicts)
-    prune_learned_rules(database_id)
+    try:
+        workflow_result = workflow.run(
+            input=_build_workflow_prompt(database_id, historical_signals),
+            session_state=session_state,
+            dependencies=dependencies,
+        )
 
-    return _assemble_final_payload(
-        legacy,
-        summary,
-        reports,
-        pipeline_run_id=pipeline_run_id,
-        database_id=database_id,
-        resolved_model_id=resolved_model_id,
-        run_timestamp=run_timestamp,
-    )
+        step_outputs = _collect_step_outputs(getattr(workflow_result, "step_results", []))
+        _update_phase_timing_from_steps(step_outputs, session_state)
+        reports = _parse_initial_reports(step_outputs)
+
+        # Schema auto-findings — mutates reports.schema.findings in place.
+        _merge_schema_auto_findings_into(reports.schema, session_state)
+
+        # Relational transient retry — replaces reports.relational on success.
+        raw_relational = getattr(step_outputs.get("relational"), "content", "")
+        reports.relational = _maybe_retry_relational(
+            reports.relational,
+            raw_relational,
+            members=members,
+            session_state=session_state,
+            database_id=database_id,
+        )
+
+        # Profiler auto-findings — mutates reports.statistical.findings in place.
+        # Runs BEFORE recovery, matching legacy behavior. When recovery replaces
+        # reports.statistical, the merged auto-findings are discarded — preserved
+        # as-is to avoid behavior drift.
+        _merge_profiler_auto_findings_into(reports.statistical, session_state)
+
+        # Profiler recovery — replaces reports.{profiler, statistical, structural,
+        # reduced, fix_plan} when the workflow profiler step failed silently.
+        _run_recovery_path_if_needed(
+            reports,
+            members=members,
+            session_state=session_state,
+            database_id=database_id,
+        )
+
+        total_tables = len(session_state.get("schema") or {})
+        legacy = _build_legacy_reports(
+            reports,
+            pipeline_run_id=pipeline_run_id,
+            database_id=database_id,
+            run_timestamp=run_timestamp,
+            total_tables=total_tables,
+        )
+        summary = _build_summary_artifacts(
+            legacy,
+            reports,
+            session_state=session_state,
+            workflow_result=workflow_result,
+            started_at=started_at,
+            pipeline_t0=pipeline_t0,
+        )
+
+        # Persist structural findings as regression guards for future runs.
+        # Convert Finding objects → dicts for the learned_rules writer.
+        _structural_dicts = [
+            {
+                "rule": f.rule,
+                "table": f.entity.split(".")[0] if f.entity else "",
+                "column": f.entity.split(".")[1] if f.entity and "." in f.entity else None,
+                "evidence": f.evidence,
+                "remediation_hint": f.suggested_action,
+            }
+            for f in reports.structural.findings
+        ]
+        save_learned_rules(database_id, pipeline_run_id, _structural_dicts)
+        prune_learned_rules(database_id)
+
+        finish_pipeline_trace(
+            data_quality_score=summary.data_quality_score,
+            confidence_score=summary.confidence_score,
+            total_findings=len(reports.reduced.findings),
+            total_fixes=len(legacy.legacy_fixes),
+            total_duration_ms=summary.timing_info.get("total_duration_ms"),
+        )
+
+        return _assemble_final_payload(
+            legacy,
+            summary,
+            reports,
+            pipeline_run_id=pipeline_run_id,
+            database_id=database_id,
+            resolved_model_id=resolved_model_id,
+            run_timestamp=run_timestamp,
+        )
+    except Exception:
+        finish_pipeline_trace(error="pipeline failed — see Django logs")
+        raise

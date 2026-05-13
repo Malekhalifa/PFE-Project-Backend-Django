@@ -936,6 +936,30 @@ def log_run_metrics(run_output: RunOutput, run_context: RunContext) -> None:
         findings_count,
     )
 
+    # Extract token counts from Agno's RunOutput metrics (populated by the Gemini backend).
+    # Agno stores accumulated token usage on RunMetrics; some versions use int, some list.
+    metrics = getattr(run_output, "metrics", None)
+    input_tokens: int | None = getattr(metrics, "input_tokens", None)
+    output_tokens: int | None = getattr(metrics, "output_tokens", None)
+    if isinstance(input_tokens, list):
+        input_tokens = sum(x for x in input_tokens if isinstance(x, int)) or None
+    if isinstance(output_tokens, list):
+        output_tokens = sum(x for x in output_tokens if isinstance(x, int)) or None
+
+    try:
+        from .langfuse_tracer import create_agent_span
+        create_agent_span(
+            agent_name=phase_name,
+            elapsed_ms=elapsed_ms,
+            tool_calls=tool_calls,
+            findings_count=findings_count,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            model_id=state.get("model_id"),
+        )
+    except Exception as _lf_exc:
+        logger.debug("Langfuse span skipped: %s", _lf_exc)
+
 
 try:
     import sqlglot
