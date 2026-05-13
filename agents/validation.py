@@ -1083,80 +1083,6 @@ def _build_executive_summary(
     }
 
 
-def _build_migration_script(fix_dict: dict[str, Any]) -> dict[str, Any]:
-    """
-    Concatenate all fix card SQL into one transactional script.
-    Respects depends_on graph for ordering — topological sort.
-    """
-    cards = fix_dict.get("cards", []) or []
-    if not cards:
-        return {"sql": "-- No fixes generated.", "card_count": 0, "phases": {}}
-
-    by_id = {c.get("fix_id"): c for c in cards if c.get("fix_id")}
-    visited: set[str] = set()
-    ordered: list[dict[str, Any]] = []
-
-    def _visit(fix_id: str) -> None:
-        if fix_id in visited or fix_id not in by_id:
-            return
-        visited.add(fix_id)
-        for dep in by_id[fix_id].get("depends_on") or []:
-            _visit(dep)
-        ordered.append(by_id[fix_id])
-
-    for fix_id in by_id:
-        _visit(fix_id)
-
-    pre_sql: list[str] = []
-    pk_sql: list[str] = []
-    idx_sql: list[str] = []
-    other_sql: list[str] = []
-
-    # Match both `ALTER TABLE x ADD PRIMARY KEY (...)` and the named-constraint
-    # form `ALTER TABLE x ADD CONSTRAINT pk_x PRIMARY KEY (...)`. LLM picks
-    # either freely; substring `"ADD PRIMARY KEY"` misses the named form.
-    _pk_re  = re.compile(r"\bADD\s+(?:CONSTRAINT\s+\S+\s+)?PRIMARY\s+KEY\b", re.IGNORECASE)
-    # Indexes: cover CREATE INDEX, CREATE UNIQUE INDEX, CREATE INDEX CONCURRENTLY.
-    _idx_re = re.compile(r"\bCREATE(?:\s+UNIQUE)?\s+INDEX\b", re.IGNORECASE)
-
-    for c in ordered:
-        sql = (c.get("sql") or "").strip()
-        if not sql:
-            continue
-        title = c.get("title") or c.get("fix_id") or ""
-        block = f"-- {title}\n{sql}"
-        sql_upper = sql.upper()
-        if sql_upper.startswith("SELECT"):
-            pre_sql.append(block)
-        elif _pk_re.search(sql):
-            pk_sql.append(block)
-        elif _idx_re.search(sql):
-            idx_sql.append(block)
-        else:
-            other_sql.append(block)
-
-    parts = ["BEGIN;", ""]
-    phases: dict[str, int] = {}
-    if pre_sql:
-        parts += ["-- Phase 1: Investigate (read-only — review before phases 2+)", *pre_sql, ""]
-        phases["investigate"] = len(pre_sql)
-    if pk_sql:
-        parts += ["-- Phase 2: Add primary keys (data-integrity baseline)", *pk_sql, ""]
-        phases["add_primary_keys"] = len(pk_sql)
-    if idx_sql:
-        parts += ["-- Phase 3: Add indexes (query performance)", *idx_sql, ""]
-        phases["add_indexes"] = len(idx_sql)
-    if other_sql:
-        parts += ["-- Phase 4: Other DDL", *other_sql, ""]
-        phases["other"] = len(other_sql)
-    parts += ["-- Review EXPLAIN output before COMMIT.", "COMMIT;"]
-
-    return {
-        "sql": "\n".join(parts),
-        "card_count": len(ordered),
-        "phases": phases,
-    }
-
 
 # ──────────────────────────────────────────────────────────────────────────
 # Orchestrator decomposition — typed state containers + focused helpers.
@@ -1209,7 +1135,6 @@ class _SummaryArtifacts:
     data_quality_score: int
     confidence_info: dict[str, Any]
     exec_summary: dict[str, Any]
-    migration_script: dict[str, Any]
     timing_info: dict[str, Any]
 
 
@@ -1522,7 +1447,7 @@ def _build_summary_artifacts(
     started_at: datetime,
     pipeline_t0: float,
 ) -> _SummaryArtifacts:
-    """Build executive summary, migration script, scores, and timing.
+    """Build executive summary, scores, and timing.
 
     Score aggregation uses the 4 validators only (NOT the fix planner) —
     including the fix planner would double-weight schema findings because
@@ -1551,8 +1476,6 @@ def _build_summary_artifacts(
         profiler_table_count=len(reports.profiler.tables),
     )
 
-    migration_script = _build_migration_script(legacy.fix)
-
     # Merge inner workflow timing into the outer session_state.
     inner_sd = getattr(getattr(workflow_result, "session", None), "session_data", None)
     if isinstance(inner_sd, dict):
@@ -1579,7 +1502,6 @@ def _build_summary_artifacts(
         data_quality_score=data_quality_score,
         confidence_info=confidence_info,
         exec_summary=exec_summary,
-        migration_script=migration_script,
         timing_info=timing_info,
     )
 
@@ -1648,7 +1570,6 @@ def _assemble_final_payload(
             "confidence_explanation": summary.confidence_info,
             "timing": summary.timing_info,
         },
-        "migration_script": summary.migration_script,
         "reports": saved_reports,
     }
 
@@ -1694,7 +1615,6 @@ def _assemble_final_payload(
         "final_report": legacy.fix,
         "download_report_json": download_report_bundle,
         "executive_summary": summary.exec_summary,
-        "migration_script": summary.migration_script,
         "timing": summary.timing_info,
         "confidence_explanation": summary.confidence_info,
         "confidence_score": summary.confidence_score,

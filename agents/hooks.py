@@ -960,27 +960,17 @@ def validate_fix_sql_safety(run_output: RunOutput) -> None:
                 violations.append(f"{card.target}: forbidden statement type '{statement_type}'")
             elif statement_type not in _ALLOWED_STATEMENT_TYPES:
                 # sqlglot falls back to 'Command' for valid DDL it cannot fully parse.
-                # Whitelist known-safe patterns before rejecting:
-                #   • Standard DDL prefixes (ALTER TABLE, CREATE INDEX, etc.)
-                #   • DO $$ ... $$ PL/pgSQL blocks — used for idempotent constraint adds
-                #     (e.g. IF NOT EXISTS guards). sqlglot cannot parse anonymous blocks.
+                # Whitelist known-safe standard DDL prefixes before rejecting.
                 if statement_type == "Command":
                     # Render the individual statement back to SQL so the prefix check
-                    # works in multi-statement batches (e.g. "DELETE ...; DO $$ ... $$").
-                    # Falling back to the whole sql_text would always start with the
-                    # FIRST statement and miss DO blocks that appear later.
+                    # works in multi-statement batches.
                     try:
                         stmt_text = statement.sql(dialect="postgres")
                     except Exception:
                         stmt_text = str(statement)
                     stmt_upper_ws = " ".join(stmt_text.strip().upper().split())
                     _safe_ddl = ("ALTER TABLE", "CREATE INDEX", "CREATE TABLE", "COMMENT ON")
-                    if (
-                        any(stmt_upper_ws.startswith(p) for p in _safe_ddl)
-                        or stmt_upper_ws.startswith("DO $$")
-                        or stmt_upper_ws.startswith("DO$$")
-                        or stmt_upper_ws.startswith("DO ")
-                    ):
+                    if any(stmt_upper_ws.startswith(p) for p in _safe_ddl):
                         continue
                 violations.append(f"{card.target}: unexpected statement type '{statement_type}'")
 

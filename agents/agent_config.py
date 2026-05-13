@@ -497,11 +497,13 @@ FIX_PLANNER_AGENT_CONFIG = {
         "Target the original table names directly. Do not use *_clean table names in generated SQL.",
         "Every card MUST include: title, target, rationale, and sql. "
         "The 'sql' field must always be a non-empty SQL string — never null, never omitted.",
-        # ── Idempotency ───────────────────────────────────────────────────
+        # ── SQL style ─────────────────────────────────────────────────────
         (
-            "All DDL must be idempotent: "
+            "Write plain SQL only — never DO $$ PL/pgSQL blocks. "
             "ADD COLUMN: ALTER TABLE t ADD COLUMN IF NOT EXISTS col type; "
-            "ADD CONSTRAINT: guard with a pg_constraint existence check before executing. "
+            "ADD CONSTRAINT: ALTER TABLE t ADD CONSTRAINT name UNIQUE (col); "
+            "No existence guard needed — the pre-flight system verifies the constraint "
+            "does not exist before this card is applied. "
             "DELETE: safe to re-run when the predicate is deterministic."
         ),
         (
