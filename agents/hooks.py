@@ -606,11 +606,10 @@ def ensure_schema_primed(run_input: RunInput, run_context: RunContext) -> None:
     }
 
     # Compact schema for statistical and structural validators: column_details +
-    # unique_constraints only. Strips FK/index metadata (~40% of the full schema)
-    # that these agents never need, reducing their input token cost.
+    # unique_constraints only. Strips columns list (derivable from column_details),
+    # FK/index metadata that these agents never need.
     state["validator_schema"] = {
         table_name: {
-            "columns": entry.get("columns", []),
             "column_details": entry.get("column_details", []),
             "unique_constraints": entry.get("unique_constraints", []),
         }
@@ -618,25 +617,24 @@ def ensure_schema_primed(run_input: RunInput, run_context: RunContext) -> None:
     }
 
     # Compact schema for the relational validator: keeps FK list (needed for orphan sweep
-    # Phase 1) and unique_constraints (for duplicate threshold check), strips index metadata.
+    # Phase 1) and unique_constraints (for duplicate threshold check), strips index metadata
+    # and redundant columns list.
     state["relational_schema"] = {
         table_name: {
-            "columns":            entry.get("columns", []),
-            "column_details":     entry.get("column_details", []),
-            "has_primary_key":    entry.get("has_primary_key", False),
+            "column_details":      entry.get("column_details", []),
+            "has_primary_key":     entry.get("has_primary_key", False),
             "primary_key_columns": entry.get("primary_key_columns", []),
-            "unique_constraints": entry.get("unique_constraints", []),
-            "foreign_keys":       entry.get("foreign_keys", []),
+            "unique_constraints":  entry.get("unique_constraints", []),
+            "foreign_keys":        entry.get("foreign_keys", []),
         }
         for table_name, entry in schema.items()
     }
 
     # Compact schema for the fix planner: keeps column types and PK/UNIQUE facts
     # needed for DDL generation; strips FK list (planner uses describe_constraints()
-    # for FK discovery) and index metadata.
+    # for FK discovery), index metadata, and redundant columns list.
     state["fix_planner_schema"] = {
         table_name: {
-            "columns":             entry.get("columns", []),
             "column_details":      entry.get("column_details", []),
             "has_primary_key":     entry.get("has_primary_key", False),
             "primary_key_columns": entry.get("primary_key_columns", []),
@@ -650,6 +648,30 @@ def ensure_schema_primed(run_input: RunInput, run_context: RunContext) -> None:
     timing["schema_priming"] = elapsed_ms
 
     logger.info("ensure_schema_primed: loaded %d tables", len(schema))
+
+
+# Per-agent slim domain_rules key sets. Each agent only receives the keys it
+# actually uses — cuts ~50% of domain_rules injection tokens per call.
+_SCHEMA_RULES_KEYS: frozenset[str] = frozenset({
+    "naming_convention", "primary_key_required", "foreign_key_validation",
+    "nullable_fk_by_design", "excluded_tables",
+})
+_STATISTICAL_RULES_KEYS: frozenset[str] = frozenset({
+    "max_null_pct", "unique_column_patterns", "min_rows_for_cardinality",
+    "lookup_table_patterns", "excluded_low_cardinality_columns",
+    "duplicate_check_scope", "null_thresholds",
+})
+_STRUCTURAL_RULES_KEYS: frozenset[str] = frozenset({
+    "max_violation_row_pct", "custom_rules", "null_thresholds",
+})
+_RELATIONAL_RULES_KEYS: frozenset[str] = frozenset({
+    "unique_column_patterns", "duplicate_check_scope",
+    "nullable_fk_by_design", "foreign_key_validation",
+})
+_FIX_PLANNER_RULES_KEYS: frozenset[str] = frozenset({
+    "max_violation_row_pct", "nullable_fk_by_design",
+    "custom_rules", "foreign_key_validation",
+})
 
 
 def inject_domain_rules(run_input: RunInput, run_context: RunContext) -> None:
@@ -678,6 +700,14 @@ def inject_domain_rules(run_input: RunInput, run_context: RunContext) -> None:
             f"domain_rules is missing required keys: {sorted(missing)}.",
             check_trigger=CheckTrigger.INPUT_NOT_ALLOWED,
         )
+
+    state = run_context.session_state
+    if state is not None:
+        state["schema_rules"]      = {k: rules[k] for k in _SCHEMA_RULES_KEYS      if k in rules}
+        state["statistical_rules"] = {k: rules[k] for k in _STATISTICAL_RULES_KEYS if k in rules}
+        state["structural_rules"]  = {k: rules[k] for k in _STRUCTURAL_RULES_KEYS  if k in rules}
+        state["relational_rules"]  = {k: rules[k] for k in _RELATIONAL_RULES_KEYS  if k in rules}
+        state["fix_planner_rules"] = {k: rules[k] for k in _FIX_PLANNER_RULES_KEYS if k in rules}
 
 
 def validate_findings_entities(run_output: RunOutput, run_context: RunContext) -> None:
@@ -801,8 +831,11 @@ def store_profiler_output(run_output: RunOutput, run_context: RunContext) -> Non
             }
             for t in content.tables
         }
-        # Pre-computed table name list so the reducer doesn't need to re-derive it
-        # from the full profiler_report (avoids re-deserializing a large dict).
+        # row_count only — structural agent uses this for table ordering (descending).
+        # Avoids injecting full profiler stats into the structural agent context.
+        run_context.session_state["structural_profiler_summary"] = {
+            t.table_name: t.row_count for t in content.tables
+        }
         run_context.session_state["profiler_tables"] = [t.table_name for t in content.tables]
         logger.info("store_profiler_output: profiled %d table(s)", len(content.tables))
     except Exception as exc:

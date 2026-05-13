@@ -2,17 +2,18 @@
 rules.py — Callable rule loaders for the QualityLab pipeline.
 
 Usage in Workflow / Team:
-    from agents.rules import common_rules, policy_rules, domain_rules
+    from agents.rules import common_rules, domain_rules
     workflow = Workflow(
         dependencies={
             "common_rules": common_rules,
-            "policy_rules": policy_rules,
             "domain_rules": domain_rules,
         },
         ...
     )
 
 Each agent then templates {common_rules} etc. into its instructions string.
+Per-agent slim domain_rules views ({schema_rules}, {statistical_rules}, etc.)
+are injected into session_state by inject_domain_rules in hooks.py.
 """
 
 import os
@@ -35,17 +36,6 @@ def common_rules() -> str:
         "for all database interaction — never call pg_catalog directly.\n"
         "run_query is read-only by design; never attempt writes through it.\n"
         "Respect user-provided domain_rules as strict business logic constraints."
-    )
-
-
-@lru_cache(maxsize=1)
-def policy_rules() -> str:
-    """Anti-hallucination and evidence guardrails."""
-    return (
-        "Never invent table or column names that were not observed via describe_table or show_tables.\n"
-        "Every finding must cite a real identifier from the schema.\n"
-        "Provide quantifiable evidence (metrics with concrete numbers) for every finding.\n"
-        "If a required table or column is missing, still report it as a finding — do not silently skip."
     )
 
 

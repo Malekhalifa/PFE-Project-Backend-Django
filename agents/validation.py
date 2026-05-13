@@ -24,7 +24,7 @@ from .py_profiler import python_profile_step
 from .reducer import _try_recover_partial, reduce_signals
 from .reporting import aggregate_pipeline_scores, confidence_breakdown, derive_database_id, report_to_markdown
 from .rule_family_map import build_evidence_payload, classify_fix
-from .rules import common_rules, policy_rules
+from .rules import common_rules
 from .schemas import Finding, FixCard, FixDependencyGraph, FixPlan, ProfilerReport, ReducedFindings, ValidationReport
 from .team import build_members, resolve_model_id
 
@@ -106,7 +106,6 @@ def _merge_domain_rules(raw_domain_rules: Any) -> dict[str, Any]:
 def _workflow_dependencies(merged_domain_rules: dict[str, Any]) -> dict[str, Any]:
     return {
         "common_rules": common_rules,
-        "policy_rules": policy_rules,
         "domain_rules": merged_domain_rules,
     }
 
@@ -129,15 +128,25 @@ def _initial_session_state(
         # Pre-initializing to {} ensures {profiler_summary} in agent instructions resolves
         # to an empty dict (not a literal string) if the profiler step fails or is skipped.
         "profiler_summary": {},
+        "structural_profiler_summary": {},  # row_count only — structural agent ordering
         # Compact schema views — all populated by ensure_schema_primed.
         "profiler_schema": {},    # column name + data_type only (profiler agent)
-        "validator_schema": {},   # columns + column_details + unique_constraints (statistical + structural)
+        "validator_schema": {},   # column_details + unique_constraints (statistical + structural)
         "relational_schema": {},  # adds foreign_keys + PK fields, strips index metadata (relational agent)
-        "fix_planner_schema": {}, # columns + column_details + PK + unique_constraints, no FK/indexes (fix planner)
+        "fix_planner_schema": {}, # column_details + PK + unique_constraints, no FK/indexes (fix planner)
+        # Per-agent slim domain_rules views — populated by inject_domain_rules hook.
+        "schema_rules": {},
+        "statistical_rules": {},
+        "structural_rules": {},
+        "relational_rules": {},
+        "fix_planner_rules": {},
         "last_reduced_findings": [],
         # Formatted learned rules string injected into the structural agent prompt via {learned_rules}.
         # Populated by orchestrator_workflow from LearnedRule DB rows before the workflow runs.
         "learned_rules": "",
+        # Set by py_profiler when no unique-pattern columns or low-cardinality columns exist.
+        # Statistical agent reads {statistical_skip_reason} and returns empty report immediately.
+        "statistical_skip_reason": "",
         # Legacy shared keys kept for backward compat; per-agent keys (_tool_calls_seen_<id>)
         # are the primary dedup store since Fix 1. These are no longer written by qualitylab_tool_hook.
         "_tool_calls_seen": {},

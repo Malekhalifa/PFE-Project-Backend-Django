@@ -346,6 +346,63 @@ def _build_schema_from_db(connection_string: str) -> dict[str, Any]:
 _TS_SUFFIXES = ("updated_at", "modified_at", "last_used", "last_time", "last_login", "last_seen")
 
 
+def _compute_statistical_skip_reason(
+    schema: dict[str, Any],
+    profiler_summary: dict[str, Any],
+    domain_rules: dict[str, Any],
+) -> str:
+    """
+    Return a non-empty skip reason when the statistical LLM pass would produce
+    zero tool calls — i.e. no unique-pattern columns and no low-cardinality
+    columns exist in this database.
+
+    The statistical agent reads {statistical_skip_reason} and returns an empty
+    ValidationReport immediately without calling any tool, saving one full
+    Gemini API round-trip (~30-100 tool calls).
+    """
+    unique_patterns: list[str] = domain_rules.get("unique_column_patterns") or []
+    min_rows: int = int(domain_rules.get("min_rows_for_cardinality") or 100)
+
+    has_unique_col = False
+    for table_info in schema.values():
+        for col in table_info.get("column_details", []):
+            col_name = (col.get("column_name") or "").lower()
+            for pattern in unique_patterns:
+                if pattern.startswith("*"):
+                    if col_name.endswith(pattern[1:].lower()):
+                        has_unique_col = True
+                        break
+                elif col_name == pattern.lower():
+                    has_unique_col = True
+                    break
+            if has_unique_col:
+                break
+        if has_unique_col:
+            break
+
+    has_low_cardinality = False
+    for table_name, table_stats in profiler_summary.items():
+        row_count = table_stats.get("row_count") or 0
+        if row_count < min_rows:
+            continue
+        for col_stats in table_stats.get("columns", {}).values():
+            card = col_stats.get("cardinality") or 0
+            if 2 <= card <= 50:
+                has_low_cardinality = True
+                break
+        if has_low_cardinality:
+            break
+
+    if not has_unique_col and not has_low_cardinality:
+        return (
+            "No columns matching unique_column_patterns exist in this schema and "
+            "no low-cardinality columns (cardinality 2–50) were detected by the profiler. "
+            "The py_profiler auto-findings already cover all statistical issues for this run. "
+            "Return an empty ValidationReport immediately — do not make any tool calls."
+        )
+    return ""
+
+
 def _derive_findings(
     report: ProfilerReport,
     domain_rules: dict[str, Any],
@@ -601,6 +658,9 @@ def python_profile_step(step_input: StepInput) -> StepOutput:
                 }
                 for t in report.tables
             }
+            session_state["structural_profiler_summary"] = {
+                t.table_name: t.row_count for t in report.tables
+            }
             session_state["profiler_tables"] = [t.table_name for t in report.tables]
 
         covered = sum(1 for t in report.tables if t.row_count > 0 or t.column_stats)
@@ -629,6 +689,13 @@ def python_profile_step(step_input: StepInput) -> StepOutput:
                     "py_profiler: derived %d deterministic schema finding(s) from schema snapshot",
                     len(schema_findings),
                 )
+
+            skip_reason = _compute_statistical_skip_reason(
+                schema, session_state.get("profiler_summary", {}), _dr
+            )
+            session_state["statistical_skip_reason"] = skip_reason
+            if skip_reason:
+                logger.info("py_profiler: statistical LLM skip flagged — no unique-pattern or low-cardinality columns")
 
         if covered < len(table_names) * 0.5:
             logger.warning(

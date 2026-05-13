@@ -136,7 +136,7 @@ SCHEMA_AGENT_CONFIG = {
     ),
     "instructions": [
         "{common_rules}",
-        "Domain rules: {domain_rules}",
+        "Domain rules: {schema_rules}",
         # ── Schema snapshot ───────────────────────────────────────────────
         # {schema} is pre-primed by ensure_schema_primed before this agent runs.
         # It includes has_primary_key, primary_key_columns, unique_constraints,
@@ -197,8 +197,14 @@ STATISTICAL_AGENT_CONFIG = {
     ),
     "instructions": [
         "{common_rules}",
-        "Domain rules: {domain_rules}",
-        # validator_schema is a compact view (columns, column_details, unique_constraints only).
+        "Domain rules: {statistical_rules}",
+        # Skip instruction — set by py_profiler when no unique-pattern or low-cardinality
+        # columns exist. Agent returns empty report immediately without any tool calls.
+        "SKIP CHECK: if {statistical_skip_reason} is non-empty, return an empty "
+        "ValidationReport immediately (validator='statistical', findings=[], "
+        "metadata.tables_scanned=0, metadata.tool_calls_used=0). Do NOT call any tool. "
+        "Skip reason: {statistical_skip_reason}",
+        # validator_schema is a compact view (column_details + unique_constraints only).
         # The statistical agent does not need FK definitions, index names, or PK metadata.
         "Schema snapshot: {validator_schema}",
         "Profiler baseline: {profiler_summary}",
@@ -266,11 +272,13 @@ STRUCTURAL_AGENT_CONFIG = {
     ),
     "instructions": [
         "{common_rules}",
-        "Domain rules: {domain_rules}",
-        # validator_schema is a compact view (columns, column_details, unique_constraints only).
+        "Domain rules: {structural_rules}",
+        # validator_schema is a compact view (column_details + unique_constraints only).
         # The structural agent needs column names and types for row checks but not FK/index metadata.
         "Schema snapshot: {validator_schema}",
-        "Profiler baseline: {profiler_summary}",
+        # structural_profiler_summary is {table_name: row_count} only — sufficient for
+        # ordering tables descending by row count without sending full profiler stats.
+        "Profiler baseline (row counts): {structural_profiler_summary}",
         "{learned_rules}",
         "Use targeted WHERE-clause queries only. Never scan full tables when a predicate can isolate violations.",
         # ── Deterministic table ordering ──────────────────────────────────
@@ -339,8 +347,8 @@ RELATIONAL_AGENT_CONFIG = {
     ),
     "instructions": [
         "{common_rules}",
-        "Domain rules: {domain_rules}",
-        # relational_schema is a compact view: columns, column_details, foreign_keys,
+        "Domain rules: {relational_rules}",
+        # relational_schema is a compact view: column_details, foreign_keys,
         # unique_constraints, has_primary_key, primary_key_columns.
         # Strips indexes and indexed_columns (not used by this agent, saves ~20% tokens).
         "Schema snapshot: {relational_schema}",
@@ -440,8 +448,8 @@ FIX_PLANNER_AGENT_CONFIG = {
     ),
     "instructions": [
         "{common_rules}",
-        "Domain rules: {domain_rules}",
-        # fix_planner_schema is a compact view: columns, column_details, has_primary_key,
+        "Domain rules: {fix_planner_rules}",
+        # fix_planner_schema is a compact view: column_details, has_primary_key,
         # primary_key_columns, unique_constraints. Strips FK list (planner calls
         # describe_constraints() for FK discovery) and index metadata (~25% token reduction).
         "Schema snapshot: {fix_planner_schema}",

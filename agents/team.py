@@ -43,7 +43,7 @@ from .hooks import (
     validate_fix_preflight,
     validate_fix_sql_safety,
 )
-from .rules import common_rules, domain_rules, policy_rules
+from .rules import common_rules, domain_rules
 from .tool_factories import fixplanner_tools, profiler_tools, relational_tools, schema_tools, statistical_tools, structural_tools
 
 _BASE_DIR = Path(__file__).resolve().parent.parent
@@ -82,7 +82,6 @@ def build_model(model_id: str | None = None, max_tokens: int | None = None) -> G
 def default_dependencies() -> dict[str, Any]:
     return {
         "common_rules": common_rules,
-        "policy_rules": policy_rules,
         "domain_rules": domain_rules,
     }
 
@@ -93,13 +92,19 @@ def default_session_state(*, ql_mode: str) -> dict[str, Any]:
         "require_database": ql_mode == "pipeline",
         "connection_string": None,
         "schema": None,
-        # Pre-initialized so {profiler_summary} in agent instructions always resolves
-        # to an empty dict rather than a missing-key literal.
         "profiler_summary": {},
-        # Compact schema for the profiler agent (column names + data types only).
-        # Populated by ensure_schema_primed. Pre-initialized so {profiler_schema}
-        # in profiler instructions resolves to an empty dict rather than a missing-key literal.
+        "structural_profiler_summary": {},
         "profiler_schema": {},
+        "validator_schema": {},
+        "relational_schema": {},
+        "fix_planner_schema": {},
+        "schema_rules": {},
+        "statistical_rules": {},
+        "structural_rules": {},
+        "relational_rules": {},
+        "fix_planner_rules": {},
+        "learned_rules": "",
+        "statistical_skip_reason": "",
         "last_reduced_findings": [],
         "_tool_calls_seen": {},
     }
