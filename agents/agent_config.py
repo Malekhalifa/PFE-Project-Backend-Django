@@ -223,8 +223,13 @@ STATISTICAL_AGENT_CONFIG = {
         "Read null_rate, outlier_flag, and cardinality directly from the profiler baseline — "
         "do NOT run SQL to re-confirm values the profiler already measured. "
         "Flag null_rate_high, outlier_distribution, and low_cardinality findings directly from profiler data "
-        "without any tool calls. Use run_query() only for checks the profiler cannot answer: "
-        "duplicate_values and categorical_drift. "
+        "without any tool calls. Use run_query() ONLY for: "
+        "(1) duplicate_values — ONLY on tables that have at least one column name matching "
+        "unique_column_patterns from domain_rules (e.g. email, msisdn, reference, *_code). "
+        "Skip tables with no matching column names entirely — they cannot produce duplicate findings. "
+        "(2) categorical_drift via check_categorical_drift — ONLY for columns where profiler baseline "
+        "shows cardinality between 2 and 50 AND total_rows > min_rows_for_cardinality from domain_rules. "
+        "Skip columns that meet neither condition. "
         "Do NOT call summarize_table() — it is not available in this agent.",
         "Only flag duplicate_values for columns whose names match unique_column_patterns in domain_rules "
         "(e.g. email, msisdn, reference, *_code). Never flag personal name fields for duplicate values.",
@@ -266,6 +271,7 @@ STRUCTURAL_AGENT_CONFIG = {
         # The structural agent needs column names and types for row checks but not FK/index metadata.
         "Schema snapshot: {validator_schema}",
         "Profiler baseline: {profiler_summary}",
+        "{learned_rules}",
         "Use targeted WHERE-clause queries only. Never scan full tables when a predicate can isolate violations.",
         # ── Deterministic table ordering ──────────────────────────────────
         "Read row_count per table directly from the Profiler baseline above — do NOT call summarize_table() or "
@@ -299,7 +305,13 @@ STRUCTURAL_AGENT_CONFIG = {
             "The bounds are always CURRENT_DATE ± fixed interval — never set from MIN/MAX of the data."
         ),
         "Stay within row-level data conformance. Do not report cross-row aggregates, "
-        "relational integrity issues, or schema definition issues.",
+        "relational integrity issues, or schema definition issues. "
+        "ADDITIONALLY: for each entry in domain_rules.custom_rules that targets a specific table, "
+        "run ONE COUNT(*) query to count violating rows (use the rule as a WHERE predicate). "
+        "Emit rule='custom_rule_violation' only when violation_count >= 1 AND "
+        "violation_count / total_rows >= max_violation_row_pct from domain_rules. "
+        "This is the correct place to enforce cross-column logical constraints such as "
+        "'status=shipped implies shipped_at is not null' or domain-specific value coexistence rules.",
         "Return validator='structural' and cite entity as table or table.column only. "
         "Order findings by severity descending (critical → high → medium → low).",
         "Populate metadata: tables_scanned = integer COUNT of tables processed (not a list of names), "
@@ -334,7 +346,12 @@ RELATIONAL_AGENT_CONFIG = {
         "Schema snapshot: {relational_schema}",
         "Profiler baseline: {profiler_summary}",
         "Stay within cross-row and cross-table relational analysis only. "
-        "Do not report single-column statistical anomalies or schema definition issues.",
+        "CRITICAL: NEVER report null_rate_high, null_ratio_high, outlier_distribution, "
+        "low_cardinality, or categorical_drift — those rules belong to the statistical validator. "
+        "Even if profiler_summary shows a high null rate for a column, do NOT create a finding for it. "
+        "Valid rules for this agent: duplicate_values, orphaned_fk_reference, "
+        "functional_dependency_violation, temporal_inconsistency, referential_constraint_violation. "
+        "Do not report schema definition issues.",
         "Use describe_table(), describe_constraints(), run_query(), and relational helper tools "
         "to verify every reported anomaly. Prefer aggregation queries with FILTER over multiple queries.",
         # ── Deterministic duplicate threshold ─────────────────────────────
@@ -394,7 +411,9 @@ RELATIONAL_AGENT_CONFIG = {
             "Skip detect_fd() for any column covered by a composite unique constraint. "
             "Phase 2 is where most real findings come from — always execute it even if Phase 1 found nothing."
         ),
-        "Return validator='relational' and cite entity as table or table.column only. "
+        "CRITICAL: The 'validator' field in your JSON output MUST be the exact string 'relational' — "
+        "not 'column', not 'relational_validator', just the word 'relational'. "
+        "Cite entity as table name alone (table-level findings) or table.column (column-level findings). "
         "CRITICAL: Order findings in the output list by severity descending (critical → high → medium → low). "
         "This ensures the most important findings survive if the response is truncated.",
         "Populate metadata: tables_scanned = integer COUNT of tables processed (not a list of names), "

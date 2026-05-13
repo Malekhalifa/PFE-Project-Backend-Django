@@ -135,6 +135,9 @@ def _initial_session_state(
         "relational_schema": {},  # adds foreign_keys + PK fields, strips index metadata (relational agent)
         "fix_planner_schema": {}, # columns + column_details + PK + unique_constraints, no FK/indexes (fix planner)
         "last_reduced_findings": [],
+        # Formatted learned rules string injected into the structural agent prompt via {learned_rules}.
+        # Populated by orchestrator_workflow from LearnedRule DB rows before the workflow runs.
+        "learned_rules": "",
         # Legacy shared keys kept for backward compat; per-agent keys (_tool_calls_seen_<id>)
         # are the primary dedup store since Fix 1. These are no longer written by qualitylab_tool_hook.
         "_tool_calls_seen": {},
@@ -668,6 +671,10 @@ _RULE_ALIASES: dict[str, str] = {
     # Statistical: high null rate
     "null_rate_high": "null_rate_high",
     "null_ratio_high": "null_rate_high",
+    # Structural: cross-column logical constraint violations (driven by domain_rules.custom_rules)
+    "custom_rule_violation": "custom_rule_violation",
+    "business_rule_violation": "custom_rule_violation",
+    "logical_inconsistency": "custom_rule_violation",
 }
 
 
@@ -1713,6 +1720,9 @@ def orchestrator_workflow(
     database_id = derive_database_id(connection_string)
     run_timestamp = started_at.isoformat().replace("+00:00", "Z")
 
+    from .learned_rules import format_for_prompt, load_learned_rules, prune_learned_rules, save_learned_rules
+    _active_learned = load_learned_rules(database_id)
+
     merged_domain_rules = _merge_domain_rules(domain_rules)
     dependencies = _workflow_dependencies(merged_domain_rules)
     session_state = _initial_session_state(
@@ -1721,6 +1731,7 @@ def orchestrator_workflow(
         job_id=job_id,
         learned_patterns=learned_patterns,
     )
+    session_state["learned_rules"] = format_for_prompt(_active_learned)
 
     workflow, members = build_validation_workflow(
         resolved_model_id=resolved_model_id,
@@ -1782,6 +1793,21 @@ def orchestrator_workflow(
         started_at=started_at,
         pipeline_t0=pipeline_t0,
     )
+
+    # Persist structural findings as regression guards for future runs.
+    # Convert Finding objects → dicts for the learned_rules writer.
+    _structural_dicts = [
+        {
+            "rule": f.rule,
+            "table": f.entity.split(".")[0] if f.entity else "",
+            "column": f.entity.split(".")[1] if f.entity and "." in f.entity else None,
+            "evidence": f.evidence,
+            "remediation_hint": f.suggested_action,
+        }
+        for f in reports.structural.findings
+    ]
+    save_learned_rules(database_id, pipeline_run_id, _structural_dicts)
+    prune_learned_rules(database_id)
 
     return _assemble_final_payload(
         legacy,

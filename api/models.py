@@ -41,7 +41,7 @@ class Job(models.Model):
     status = models.CharField(max_length=64, default='starting', db_index=True)
     celery_task_id = models.CharField(max_length=128, null=True, blank=True, db_index=True)
     mode = models.CharField(max_length=64, default='normal')
-    llm_model = models.CharField(max_length=128, default='gemini-2.0-flash')
+    llm_model = models.CharField(max_length=128, default='gemini-2.5-flash')
 
     # Audit timestamps
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
@@ -202,6 +202,41 @@ class LearningPattern(models.Model):
 
     def __str__(self):
         return f'LearningPattern({self.user_id}, {self.rule_family}, {self.entity}, {self.decision})'
+
+
+# ──────────────────────────────────────────────
+# Learned rules (per-database regression guards)
+# ──────────────────────────────────────────────
+
+class LearnedRule(models.Model):
+    """
+    Stores a structural/logical violation found on a previous run as a
+    regression guard for future runs.
+
+    Keyed on (database_id, table_name, rule_text) — one row per unique
+    business constraint discovered per database.
+
+    consecutive_clean_runs: incremented each run where the rule finds 0
+    violations. Pruned automatically at >= 3 clean runs (fix held).
+    """
+    database_id = models.CharField(max_length=255, db_index=True)
+    table_name = models.CharField(max_length=255)
+    rule_text = models.TextField()
+    rule_type = models.CharField(max_length=128)
+    consecutive_clean_runs = models.PositiveIntegerField(default=0)
+    last_violation_run_id = models.CharField(max_length=64, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'learned_rules'
+        unique_together = [('database_id', 'table_name', 'rule_text')]
+        indexes = [
+            models.Index(fields=['database_id', 'consecutive_clean_runs']),
+        ]
+
+    def __str__(self):
+        return f'LearnedRule({self.database_id}, {self.table_name})'
 
 
 def audit_log(

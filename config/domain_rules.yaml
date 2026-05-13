@@ -117,6 +117,12 @@ null_thresholds:
 # Free-form rules injected verbatim into agent instructions.
 # Each entry is a plain-English sentence the agents will enforce.
 custom_rules: []
-# Examples:
-#   - "Orders with status='shipped' must have a non-null shipped_at timestamp."
-#   - "The 'amount' column in the 'invoices' table must be > 0."
+# Examples — cross-column logical constraints (enforced by the Structural Validator):
+#   - "In table 'orders': rows where status = 'shipped' must have shipped_at IS NOT NULL."
+#   - "In table 'orders': shipped_at must not be earlier than created_at."
+#   - "In table 'invoices': amount must be > 0."
+#   - "In table 'employees': end_date must be NULL or >= start_date."
+#
+# For general value-consistency checks (e.g. country→capital where many pairs exist),
+# use the Relational Validator's detect_fd tool instead — it catches functional-dependency
+# violations automatically without enumerating valid pairs.

@@ -1,0 +1,3632 @@
+{
+  "pipeline_run_id": "aa6e882a-9733-48f0-a7a0-42191316eb4b",
+  "database_id": "localhost_5432_ecommerce_test_db",
+  "llm_model": "gemini-2.5-flash",
+  "run_timestamp": "2026-05-13T00:48:09.321434Z",
+  "executive_summary": {
+    "verdict": "high_risk",
+    "top_issues": [
+      "[HIGH] null rate high on audit_logs (1 columns)",
+      "[HIGH] null rate high on support_tickets (3 columns)",
+      "[HIGH] null rate high on customers (1 columns)"
+    ],
+    "tables_scanned": 15,
+    "tables_profiled": 15,
+    "fixes_recommended": 32,
+    "critical_fix_count": 0,
+    "migration_risk": {
+      "score": 30,
+      "high_risk_cards": 0,
+      "blocked_cards": 2,
+      "destructive_cards": 0
+    }
+  },
+  "summary": {
+    "confidence_score": 88,
+    "data_quality_score": 56,
+    "final_fix_count": 32,
+    "confidence_explanation": {
+      "total_findings": 43,
+      "high_confidence_count": 10,
+      "medium_confidence_count": 33,
+      "low_confidence_count": 0,
+      "summary": "23% of findings have confidence ≥ 0.9 (10/43 high, 33 medium, 0 low). Deterministic (py_profiler) findings are 0.92–1.0; LLM findings vary."
+    },
+    "timing": {
+      "started_at": "2026-05-13T00:48:09.321434Z",
+      "ended_at": "2026-05-13T00:53:21.383845Z",
+      "total_duration_ms": 312069,
+      "total_duration_human": "312.1s",
+      "phases_ms": {
+        "schema_priming": 141,
+        "Python Profiler": 143,
+        "Reducer": 41,
+        "Schema Integrity Validator": 77286,
+        "Statistical Validator": 97666,
+        "Structural Validator": 61037,
+        "Relational Validator": 43820,
+        "Data Fix Planner": 136623
+      },
+      "bottleneck": "Data Fix Planner"
+    }
+  },
+  "migration_script": {
+    "sql": "BEGIN;\n\n-- Phase 1: Investigate (read-only — review before phases 2+)\n-- Investigate Negative or Zero Amounts in products.price, stock_quantity, weight\nSELECT product_id, price, stock_quantity, weight FROM products WHERE price <= 0 OR stock_quantity <= 0 OR weight <= 0;\n-- Investigate High Null Ratio in audit_logs.details, performed_by\nSELECT details, performed_by FROM audit_logs WHERE details IS NULL OR performed_by IS NULL;\n-- Investigate High Null Rate in customers.phone, notes, email\nSELECT phone, notes, email FROM customers WHERE phone IS NULL OR notes IS NULL OR email IS NULL;\n-- Investigate High Null Ratio in orders.shipping_address_id, employee_id, notes\nSELECT shipping_address_id, employee_id, notes FROM orders WHERE shipping_address_id IS NULL OR employee_id IS NULL OR notes IS NULL;\n-- Investigate High Null Ratio in reviews.review_text\nSELECT review_text FROM reviews WHERE review_text IS NULL;\n-- Investigate High Null Ratio in shipments.warehouse_id, tracking_number\nSELECT warehouse_id, tracking_number FROM shipments WHERE warehouse_id IS NULL OR tracking_number IS NULL;\n-- Investigate High Null Ratio in support_tickets.resolved_at, customer_id, assigned_employee_id, order_id\nSELECT resolved_at, customer_id, assigned_employee_id, order_id FROM support_tickets WHERE resolved_at IS NULL OR customer_id IS NULL OR assigned_employee_id IS NULL OR order_id IS NULL;\n-- Investigate High Null Ratio in warehouses.manager_name\nSELECT manager_name FROM warehouses WHERE manager_name IS NULL;\n-- Investigate Nullable Foreign Key addresses.customer_id\nSELECT customer_id FROM addresses WHERE customer_id IS NULL;\n-- Investigate Nullable Foreign Key categories.parent_category_id\nSELECT parent_category_id FROM categories WHERE parent_category_id IS NULL;\n-- Investigate Nullable Foreign Key employees.manager_id\nSELECT manager_id FROM employees WHERE manager_id IS NULL;\n-- Investigate Nullable Foreign Key inventory.warehouse_id\nSELECT warehouse_id FROM inventory WHERE warehouse_id IS NULL;\n-- Investigate Nullable Foreign Key order_items.order_id\nSELECT order_id FROM order_items WHERE order_id IS NULL;\n-- Investigate Nullable Foreign Key orders.employee_id\nSELECT employee_id FROM orders WHERE employee_id IS NULL;\n-- Investigate Nullable Foreign Key payments.order_id\nSELECT order_id FROM payments WHERE order_id IS NULL;\n-- Investigate Nullable Foreign Key products.category_id\nSELECT category_id FROM products WHERE category_id IS NULL;\n-- Investigate Nullable Foreign Key reviews.customer_id\nSELECT customer_id FROM reviews WHERE customer_id IS NULL;\n-- Investigate Nullable Foreign Key shipments.order_id\nSELECT order_id FROM shipments WHERE order_id IS NULL;\n-- Investigate Nullable Foreign Key support_tickets.customer_id\nSELECT customer_id FROM support_tickets WHERE customer_id IS NULL;\n\n-- Phase 3: Add indexes (query performance)\n-- Add Index on addresses.customer_id\nCREATE INDEX CONCURRENTLY IF NOT EXISTS idx_addresses_customer_id ON addresses (customer_id);\n-- Add Index on categories.parent_category_id\nCREATE INDEX CONCURRENTLY IF NOT EXISTS idx_categories_parent_category_id ON categories (parent_category_id);\n-- Add Index on inventory.warehouse_id\nCREATE INDEX CONCURRENTLY IF NOT EXISTS idx_inventory_warehouse_id ON inventory (warehouse_id);\n-- Add Index on order_items.order_id\nCREATE INDEX CONCURRENTLY IF NOT EXISTS idx_order_items_order_id ON order_items (order_id);\n-- Add Index on orders.employee_id\nCREATE INDEX CONCURRENTLY IF NOT EXISTS idx_orders_employee_id ON orders (employee_id);\n-- Add Index on reviews.customer_id\nCREATE INDEX CONCURRENTLY IF NOT EXISTS idx_reviews_customer_id ON reviews (customer_id);\n-- Add Index on shipments.order_id\nCREATE INDEX CONCURRENTLY IF NOT EXISTS idx_shipments_order_id ON shipments (order_id);\n-- Add Index on support_tickets.customer_id\nCREATE INDEX CONCURRENTLY IF NOT EXISTS idx_support_tickets_customer_id ON support_tickets (customer_id);\n\n-- Phase 4: Other DDL\n-- Add Unique Constraint to employees.email\nDO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'employees_email_key' AND conrelid = 'employees'::regclass) THEN ALTER TABLE employees ADD CONSTRAINT employees_email_key UNIQUE (email); END IF; END $$;\n-- Add Unique Constraint to payments.transaction_reference\nDO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'payments_transaction_reference_key' AND conrelid = 'payments'::regclass) THEN ALTER TABLE payments ADD CONSTRAINT payments_transaction_reference_key UNIQUE (transaction_reference); END IF; END $$;\n-- Add Unique Constraint to suppliers.email\nDO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'suppliers_email_key' AND conrelid = 'suppliers'::regclass) THEN ALTER TABLE suppliers ADD CONSTRAINT suppliers_email_key UNIQUE (email); END IF; END $$;\n\n-- Review EXPLAIN output before COMMIT.\nCOMMIT;",
+    "card_count": 32,
+    "phases": {
+      "investigate": 19,
+      "add_indexes": 8,
+      "other": 3
+    }
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "aa6e882a-9733-48f0-a7a0-42191316eb4b",
+      "database_id": "localhost_5432_ecommerce_test_db",
+      "run_timestamp": "2026-05-13T00:48:09.321434Z",
+      "agent": "Schema Integrity Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 15,
+        "items_passed": 0,
+        "items_flagged": 27,
+        "critical_issues": 0,
+        "high_issues": 22,
+        "medium_issues": 27,
+        "low_issues": 0,
+        "overall_quality_score": 35.2,
+        "overall_confidence": 0.8331,
+        "flagged_tables": [
+          "addresses",
+          "categories",
+          "customers",
+          "employees",
+          "inventory",
+          "order_items",
+          "orders",
+          "payments",
+          "products",
+          "reviews",
+          "shipments",
+          "suppliers",
+          "support_tickets"
+        ]
+      },
+      "metrics": {
+        "validator": "schema",
+        "findings_count": 73,
+        "deduped_finding_count": 49,
+        "grouped_finding_count": 27
+      },
+      "findings": [
+        {
+          "table": "categories",
+          "column": "parent_category_id",
+          "entity": "categories.parent_category_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.835,
+          "evidence": {
+            "table": "categories",
+            "column": "parent_category_id",
+            "is_nullable": "YES",
+            "foreign_table": "categories",
+            "foreign_column": "category_id"
+          },
+          "remediation_hint": "Consider making the 'parent_category_id' column NOT NULL if referential integrity is always required, or ensure application logic handles NULLs appropriately."
+        },
+        {
+          "table": "suppliers",
+          "column": "email",
+          "entity": "suppliers.email",
+          "rule": "missing_unique_constraint",
+          "severity": "high",
+          "confidence": 0.75,
+          "evidence": {
+            "table": "suppliers",
+            "column": "email",
+            "pattern_matched": "email"
+          },
+          "remediation_hint": "Add a unique constraint to the 'email' column in the 'suppliers' table."
+        },
+        {
+          "table": "employees",
+          "column": "manager_id",
+          "entity": "employees.manager_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.835,
+          "evidence": {
+            "table": "employees",
+            "column": "manager_id",
+            "is_nullable": "YES",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id"
+          },
+          "remediation_hint": "Consider making the 'manager_id' column NOT NULL if referential integrity is always required, or ensure application logic handles NULLs appropriately."
+        },
+        {
+          "table": "employees",
+          "column": null,
+          "entity": "employees",
+          "rule": "missing_unique_constraint",
+          "severity": "high",
+          "confidence": 0.75,
+          "evidence": {
+            "table": "employees",
+            "column": "email",
+            "pattern_matched": "email",
+            "columns_with_high_nulls": [
+              "email",
+              "manager_id"
+            ]
+          },
+          "remediation_hint": "Add a unique constraint to the 'email' column in the 'employees' table."
+        },
+        {
+          "table": "orders",
+          "column": null,
+          "entity": "orders",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.835,
+          "evidence": {
+            "table": "orders",
+            "column": "employee_id",
+            "is_nullable": "YES",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id",
+            "columns_with_high_nulls": [
+              "employee_id",
+              "shipping_address_id"
+            ]
+          },
+          "remediation_hint": "Consider making the 'employee_id' column NOT NULL if referential integrity is always required, or ensure application logic handles NULLs appropriately.",
+          "affected_columns": [
+            "shipping_address_id",
+            "employee_id"
+          ],
+          "count": 3
+        },
+        {
+          "table": "order_items",
+          "column": "order_id",
+          "entity": "order_items.order_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.835,
+          "evidence": {
+            "table": "order_items",
+            "column": "order_id",
+            "is_nullable": "YES",
+            "foreign_table": "orders",
+            "foreign_column": "order_id"
+          },
+          "remediation_hint": "Consider making the 'order_id' column NOT NULL if referential integrity is always required, or ensure application logic handles NULLs appropriately."
+        },
+        {
+          "table": "products",
+          "column": "category_id",
+          "entity": "products.category_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.835,
+          "evidence": {
+            "table": "products",
+            "column": "category_id",
+            "is_nullable": "YES",
+            "foreign_table": "categories",
+            "foreign_column": "category_id"
+          },
+          "remediation_hint": "Consider making the 'category_id' column NOT NULL if referential integrity is always required, or ensure application logic handles NULLs appropriately."
+        },
+        {
+          "table": "products",
+          "column": null,
+          "entity": "products",
+          "rule": "missing_unique_constraint",
+          "severity": "high",
+          "confidence": 0.75,
+          "evidence": {
+            "table": "products",
+            "column": "sku",
+            "pattern_matched": "*_code",
+            "columns_with_high_nulls": [
+              "sku",
+              "category_id"
+            ]
+          },
+          "remediation_hint": "Add a unique constraint to the 'sku' column in the 'products' table."
+        },
+        {
+          "table": "inventory",
+          "column": null,
+          "entity": "inventory",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.835,
+          "evidence": {
+            "table": "inventory",
+            "column": "warehouse_id",
+            "is_nullable": "YES",
+            "foreign_table": "warehouses",
+            "foreign_column": "warehouse_id",
+            "columns_with_high_nulls": [
+              "warehouse_id",
+              "product_id"
+            ]
+          },
+          "remediation_hint": "Consider making the 'warehouse_id' column NOT NULL if referential integrity is always required, or ensure application logic handles NULLs appropriately.",
+          "affected_columns": [
+            "product_id",
+            "warehouse_id"
+          ],
+          "count": 3
+        },
+        {
+          "table": "payments",
+          "column": "order_id",
+          "entity": "payments.order_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.835,
+          "evidence": {
+            "table": "payments",
+            "column": "order_id",
+            "is_nullable": "YES",
+            "foreign_table": "orders",
+            "foreign_column": "order_id"
+          },
+          "remediation_hint": "Consider making the 'order_id' column NOT NULL if referential integrity is always required, or ensure application logic handles NULLs appropriately."
+        },
+        {
+          "table": "payments",
+          "column": null,
+          "entity": "payments",
+          "rule": "missing_unique_constraint",
+          "severity": "high",
+          "confidence": 0.75,
+          "evidence": {
+            "table": "payments",
+            "column": "transaction_reference",
+            "pattern_matched": "reference",
+            "columns_with_high_nulls": [
+              "transaction_reference",
+              "order_id"
+            ]
+          },
+          "remediation_hint": "Add a unique constraint to the 'transaction_reference' column in the 'payments' table."
+        },
+        {
+          "table": "shipments",
+          "column": null,
+          "entity": "shipments",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.835,
+          "evidence": {
+            "table": "shipments",
+            "column": "order_id",
+            "is_nullable": "YES",
+            "foreign_table": "orders",
+            "foreign_column": "order_id",
+            "columns_with_high_nulls": [
+              "order_id",
+              "warehouse_id"
+            ]
+          },
+          "remediation_hint": "Consider making the 'order_id' column NOT NULL if referential integrity is always required, or ensure application logic handles NULLs appropriately.",
+          "affected_columns": [
+            "warehouse_id",
+            "order_id"
+          ],
+          "count": 3
+        },
+        {
+          "table": "reviews",
+          "column": null,
+          "entity": "reviews",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.835,
+          "evidence": {
+            "table": "reviews",
+            "column": "customer_id",
+            "is_nullable": "YES",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id",
+            "columns_with_high_nulls": [
+              "customer_id",
+              "product_id"
+            ]
+          },
+          "remediation_hint": "Consider making the 'customer_id' column NOT NULL if referential integrity is always required, or ensure application logic handles NULLs appropriately.",
+          "affected_columns": [
+            "product_id",
+            "customer_id"
+          ],
+          "count": 3
+        },
+        {
+          "table": "customers",
+          "column": "email",
+          "entity": "customers.email",
+          "rule": "missing_unique_constraint",
+          "severity": "high",
+          "confidence": 0.75,
+          "evidence": {
+            "table": "customers",
+            "column": "email",
+            "pattern_matched": "email"
+          },
+          "remediation_hint": "Add a unique constraint to the 'email' column in the 'customers' table."
+        },
+        {
+          "table": "addresses",
+          "column": "customer_id",
+          "entity": "addresses.customer_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.835,
+          "evidence": {
+            "table": "addresses",
+            "column": "customer_id",
+            "is_nullable": "YES",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id"
+          },
+          "remediation_hint": "Consider making the 'customer_id' column NOT NULL if referential integrity is always required, or ensure application logic handles NULLs appropriately."
+        },
+        {
+          "table": "support_tickets",
+          "column": null,
+          "entity": "support_tickets",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.835,
+          "evidence": {
+            "table": "support_tickets",
+            "column": "customer_id",
+            "is_nullable": "YES",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id",
+            "columns_with_high_nulls": [
+              "customer_id",
+              "assigned_employee_id",
+              "order_id"
+            ]
+          },
+          "remediation_hint": "Consider making the 'customer_id' column NOT NULL if referential integrity is always required, or ensure application logic handles NULLs appropriately.",
+          "affected_columns": [
+            "assigned_employee_id",
+            "order_id",
+            "customer_id"
+          ],
+          "count": 4
+        },
+        {
+          "table": "categories",
+          "column": "parent_category_id",
+          "entity": "categories.parent_category_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.85,
+          "evidence": {
+            "table": "categories",
+            "column": "parent_category_id",
+            "foreign_table": "categories",
+            "foreign_column": "category_id"
+          },
+          "remediation_hint": "Create an index on the 'parent_category_id' column in the 'categories' table."
+        },
+        {
+          "table": "employees",
+          "column": "manager_id",
+          "entity": "employees.manager_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.85,
+          "evidence": {
+            "table": "employees",
+            "column": "manager_id",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id"
+          },
+          "remediation_hint": "Create an index on the 'manager_id' column in the 'employees' table."
+        },
+        {
+          "table": "orders",
+          "column": null,
+          "entity": "orders.employee_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.85,
+          "evidence": {
+            "table": "orders",
+            "column": "employee_id",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id"
+          },
+          "remediation_hint": "Create an index on the 'employee_id' column in the 'orders' table.",
+          "affected_columns": [
+            "employee_id",
+            "shipping_address_id"
+          ],
+          "count": 3
+        },
+        {
+          "table": "order_items",
+          "column": "order_id",
+          "entity": "order_items.order_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.85,
+          "evidence": {
+            "table": "order_items",
+            "column": "order_id",
+            "foreign_table": "orders",
+            "foreign_column": "order_id"
+          },
+          "remediation_hint": "Create an index on the 'order_id' column in the 'order_items' table."
+        },
+        {
+          "table": "products",
+          "column": "category_id",
+          "entity": "products.category_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.85,
+          "evidence": {
+            "table": "products",
+            "column": "category_id",
+            "foreign_table": "categories",
+            "foreign_column": "category_id"
+          },
+          "remediation_hint": "Create an index on the 'category_id' column in the 'products' table."
+        },
+        {
+          "table": "inventory",
+          "column": null,
+          "entity": "inventory.warehouse_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.85,
+          "evidence": {
+            "table": "inventory",
+            "column": "warehouse_id",
+            "foreign_table": "warehouses",
+            "foreign_column": "warehouse_id"
+          },
+          "remediation_hint": "Create an index on the 'warehouse_id' column in the 'inventory' table.",
+          "affected_columns": [
+            "warehouse_id",
+            "product_id"
+          ],
+          "count": 3
+        },
+        {
+          "table": "payments",
+          "column": "order_id",
+          "entity": "payments.order_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.85,
+          "evidence": {
+            "table": "payments",
+            "column": "order_id",
+            "foreign_table": "orders",
+            "foreign_column": "order_id"
+          },
+          "remediation_hint": "Create an index on the 'order_id' column in the 'payments' table."
+        },
+        {
+          "table": "shipments",
+          "column": null,
+          "entity": "shipments.order_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.85,
+          "evidence": {
+            "table": "shipments",
+            "column": "order_id",
+            "foreign_table": "orders",
+            "foreign_column": "order_id"
+          },
+          "remediation_hint": "Create an index on the 'order_id' column in the 'shipments' table.",
+          "affected_columns": [
+            "order_id",
+            "warehouse_id"
+          ],
+          "count": 3
+        },
+        {
+          "table": "reviews",
+          "column": null,
+          "entity": "reviews.customer_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.85,
+          "evidence": {
+            "table": "reviews",
+            "column": "customer_id",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id"
+          },
+          "remediation_hint": "Create an index on the 'customer_id' column in the 'reviews' table.",
+          "affected_columns": [
+            "customer_id",
+            "product_id"
+          ],
+          "count": 3
+        },
+        {
+          "table": "addresses",
+          "column": "customer_id",
+          "entity": "addresses.customer_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.85,
+          "evidence": {
+            "table": "addresses",
+            "column": "customer_id",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id"
+          },
+          "remediation_hint": "Create an index on the 'customer_id' column in the 'addresses' table."
+        },
+        {
+          "table": "support_tickets",
+          "column": null,
+          "entity": "support_tickets.customer_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.85,
+          "evidence": {
+            "table": "support_tickets",
+            "column": "customer_id",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id"
+          },
+          "remediation_hint": "Create an index on the 'customer_id' column in the 'support_tickets' table.",
+          "affected_columns": [
+            "customer_id",
+            "assigned_employee_id",
+            "order_id"
+          ],
+          "count": 4
+        }
+      ]
+    },
+    "statistical_validator": {
+      "pipeline_run_id": "aa6e882a-9733-48f0-a7a0-42191316eb4b",
+      "database_id": "localhost_5432_ecommerce_test_db",
+      "run_timestamp": "2026-05-13T00:48:09.321434Z",
+      "agent": "Statistical Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 15,
+        "items_passed": 6,
+        "items_flagged": 9,
+        "critical_issues": 0,
+        "high_issues": 2,
+        "medium_issues": 14,
+        "low_issues": 0,
+        "overall_quality_score": 88.3,
+        "overall_confidence": 0.95,
+        "flagged_tables": [
+          "audit_logs",
+          "categories",
+          "customers",
+          "orders",
+          "payments",
+          "reviews",
+          "shipments",
+          "support_tickets",
+          "warehouses"
+        ]
+      },
+      "metrics": {
+        "validator": "statistical",
+        "findings_count": 16,
+        "deduped_finding_count": 16,
+        "grouped_finding_count": 9
+      },
+      "findings": [
+        {
+          "table": "warehouses",
+          "column": "manager_name",
+          "entity": "warehouses.manager_name",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 0.95,
+          "evidence": {
+            "null_ratio": 0.5333,
+            "total_rows": 15,
+            "threshold_used": 0.4
+          },
+          "remediation_hint": "Investigate why 'warehouses.manager_name' has 53% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "categories",
+          "column": "parent_category_id",
+          "entity": "categories.parent_category_id",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 0.95,
+          "evidence": {
+            "null_ratio": 0.25,
+            "total_rows": 20,
+            "threshold_used": 0.1
+          },
+          "remediation_hint": "Investigate why 'categories.parent_category_id' has 25% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "orders",
+          "column": null,
+          "entity": "orders",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 0.95,
+          "evidence": {
+            "null_ratio": 0.1993,
+            "total_rows": 3000,
+            "threshold_used": 0.1,
+            "columns_with_high_nulls": [
+              "shipping_address_id",
+              "employee_id",
+              "notes"
+            ]
+          },
+          "remediation_hint": "Investigate why 'orders.shipping_address_id' has 20% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "employee_id",
+            "notes"
+          ],
+          "count": 3
+        },
+        {
+          "table": "audit_logs",
+          "column": null,
+          "entity": "audit_logs",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "null_ratio": 0.843,
+            "total_rows": 2000,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "details",
+              "performed_by"
+            ]
+          },
+          "remediation_hint": "Investigate why 'audit_logs.details' has 84% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "performed_by"
+          ],
+          "count": 2
+        },
+        {
+          "table": "reviews",
+          "column": "review_text",
+          "entity": "reviews.review_text",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 0.95,
+          "evidence": {
+            "null_ratio": 0.512,
+            "total_rows": 1500,
+            "threshold_used": 0.4
+          },
+          "remediation_hint": "Investigate why 'reviews.review_text' has 51% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "support_tickets",
+          "column": null,
+          "entity": "support_tickets",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 1000,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "resolved_at",
+              "customer_id",
+              "assigned_employee_id",
+              "order_id"
+            ]
+          },
+          "remediation_hint": "Investigate why 'support_tickets.resolved_at' has 100% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "customer_id",
+            "assigned_employee_id",
+            "order_id"
+          ],
+          "count": 4
+        },
+        {
+          "table": "payments",
+          "column": "transaction_reference",
+          "entity": "payments.transaction_reference",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 0.95,
+          "evidence": {
+            "null_ratio": 0.402,
+            "total_rows": 3000,
+            "threshold_used": 0.4
+          },
+          "remediation_hint": "Investigate why 'payments.transaction_reference' has 40% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "shipments",
+          "column": null,
+          "entity": "shipments",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 0.95,
+          "evidence": {
+            "null_ratio": 0.1488,
+            "total_rows": 2500,
+            "threshold_used": 0.1,
+            "columns_with_high_nulls": [
+              "warehouse_id",
+              "tracking_number"
+            ]
+          },
+          "remediation_hint": "Investigate why 'shipments.warehouse_id' has 15% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "customers",
+          "column": null,
+          "entity": "customers.phone",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 0.95,
+          "evidence": {
+            "null_ratio": 0.5025,
+            "total_rows": 2000,
+            "threshold_used": 0.4
+          },
+          "remediation_hint": "Investigate why 'customers.phone' has 50% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "phone",
+            "notes"
+          ],
+          "count": 2
+        }
+      ]
+    },
+    "structural_validator": {
+      "pipeline_run_id": "aa6e882a-9733-48f0-a7a0-42191316eb4b",
+      "database_id": "localhost_5432_ecommerce_test_db",
+      "run_timestamp": "2026-05-13T00:48:09.321434Z",
+      "agent": "Structural Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 15,
+        "items_passed": 14,
+        "items_flagged": 1,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 1,
+        "low_issues": 0,
+        "overall_quality_score": 99.5,
+        "overall_confidence": 0.9,
+        "flagged_tables": [
+          "products"
+        ]
+      },
+      "metrics": {
+        "validator": "structural",
+        "findings_count": 1,
+        "deduped_finding_count": 1,
+        "grouped_finding_count": 1
+      },
+      "findings": [
+        {
+          "table": "products",
+          "column": null,
+          "entity": "products",
+          "rule": "negative_or_zero_amounts",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "violation_count": 13,
+            "violation_pct": 0.013,
+            "affected_columns": [
+              "price",
+              "stock_quantity",
+              "weight"
+            ]
+          },
+          "remediation_hint": null
+        }
+      ]
+    },
+    "relational_validator": {
+      "pipeline_run_id": "aa6e882a-9733-48f0-a7a0-42191316eb4b",
+      "database_id": "localhost_5432_ecommerce_test_db",
+      "run_timestamp": "2026-05-13T00:48:09.321434Z",
+      "agent": "Relational Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 15,
+        "items_passed": 9,
+        "items_flagged": 6,
+        "critical_issues": 0,
+        "high_issues": 1,
+        "medium_issues": 6,
+        "low_issues": 0,
+        "overall_quality_score": 94.7,
+        "overall_confidence": 0.8214,
+        "flagged_tables": [
+          "customers",
+          "employees",
+          "payments",
+          "products",
+          "shipments",
+          "suppliers"
+        ]
+      },
+      "metrics": {
+        "validator": "relational",
+        "findings_count": 7,
+        "deduped_finding_count": 7,
+        "grouped_finding_count": 6
+      },
+      "findings": [
+        {
+          "table": "customers",
+          "column": null,
+          "entity": "customers",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.85,
+          "evidence": {
+            "column_name": "phone",
+            "null_rate": 0.5025,
+            "max_null_pct_rule": 0.05,
+            "default_null_threshold": 0.4,
+            "columns_with_high_nulls": [
+              "phone",
+              "notes",
+              "email"
+            ]
+          },
+          "remediation_hint": "Investigate and address the high null rate in the 'phone' column.",
+          "affected_columns": [
+            "email"
+          ],
+          "count": 2
+        },
+        {
+          "table": "payments",
+          "column": "transaction_reference",
+          "entity": "payments.transaction_reference",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 0.85,
+          "evidence": {
+            "column_name": "transaction_reference",
+            "null_rate": 0.402,
+            "max_null_pct_rule": 0.05,
+            "default_null_threshold": 0.4
+          },
+          "remediation_hint": "Review and address the high null rate in the 'transaction_reference' column, considering its unique pattern."
+        },
+        {
+          "table": "employees",
+          "column": "email",
+          "entity": "employees.email",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "column_name": "email",
+            "null_rate": 0.37,
+            "max_null_pct_rule": 0.05
+          },
+          "remediation_hint": "Review and address the high null rate in the 'email' column, considering its unique pattern."
+        },
+        {
+          "table": "suppliers",
+          "column": "email",
+          "entity": "suppliers.email",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "column_name": "email",
+            "null_rate": 0.32,
+            "max_null_pct_rule": 0.05
+          },
+          "remediation_hint": "Review and address the high null rate in the 'email' column, considering its unique pattern."
+        },
+        {
+          "table": "shipments",
+          "column": "tracking_number",
+          "entity": "shipments.tracking_number",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "column_name": "tracking_number",
+            "null_rate": 0.2592,
+            "max_null_pct_rule": 0.05
+          },
+          "remediation_hint": "Investigate and address the high null rate in the 'tracking_number' column."
+        },
+        {
+          "table": "products",
+          "column": "sku",
+          "entity": "products.sku",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "column_name": "sku",
+            "null_rate": 0.206,
+            "max_null_pct_rule": 0.05
+          },
+          "remediation_hint": "Review and address the high null rate in the 'sku' column, considering its unique pattern."
+        }
+      ]
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "aa6e882a-9733-48f0-a7a0-42191316eb4b",
+      "database_id": "localhost_5432_ecommerce_test_db",
+      "run_timestamp": "2026-05-13T00:48:09.321434Z",
+      "agent": "Data Fix Planner",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 37,
+        "items_passed": 5,
+        "items_flagged": 32,
+        "critical_issues": 0,
+        "high_issues": 31,
+        "medium_issues": 1,
+        "low_issues": 0,
+        "overall_quality_score": 89.6,
+        "overall_confidence": 0.7906,
+        "flagged_tables": [
+          "addresses",
+          "audit_logs",
+          "categories",
+          "customers",
+          "employees",
+          "inventory",
+          "order_items",
+          "orders",
+          "payments",
+          "products",
+          "reviews",
+          "shipments",
+          "suppliers",
+          "support_tickets",
+          "warehouses"
+        ]
+      },
+      "metrics": {
+        "total_issues_received": 37,
+        "fixes_generated": 32
+      },
+      "findings": [
+        {
+          "id": "fix_001_customers",
+          "fix_id": "add-unique-constraint-customers-email",
+          "rows_affected_estimate": 2000,
+          "tables_touched": [
+            "customers"
+          ],
+          "depends_on": [],
+          "table": "customers",
+          "target_table": "customers",
+          "problem": "Add Unique Constraint to customers.email",
+          "fix": "[Pre-flight blocked: UNIQUE on (email) on table 'customers' would fail: 40 duplicate row(s) found] The 'email' column in the 'customers' table is identified as needing a unique constraint based on naming patterns. This will ensure data integrity by preventing duplicate email addresses. The DDL is idempotent. If duplicates exist, they must be resolved manually before applying this constraint.",
+          "severity": "high",
+          "confidence": 0.9,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "blocked",
+          "source_rule": "fill_nulls_blocked",
+          "source_type": "ai",
+          "evidence": {
+            "block_reason": "UNIQUE on (email) on table 'customers' would fail: 40 duplicate row(s) found",
+            "original_sql": "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'customers_email_key' AND conrelid = 'customers'::regclass) THEN ALTER TABLE customers ADD CONSTRAINT customers_email_key UNIQUE (email); END IF; END $$;"
+          },
+          "evidence_payload": {
+            "_type": "blocked",
+            "block_reason": "UNIQUE on (email) on table 'customers' would fail: 40 duplicate row(s) found",
+            "original_sql": "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'customers_email_key' AND conrelid = 'customers'::regclass) THEN ALTER TABLE customers ADD CONSTRAINT customers_email_key UNIQUE (email); END IF; END $$;"
+          },
+          "estimated_rows_affected": 2000,
+          "queries": [],
+          "explanation": "[Pre-flight blocked: UNIQUE on (email) on table 'customers' would fail: 40 duplicate row(s) found] The 'email' column in the 'customers' table is identified as needing a unique constraint based on naming patterns. This will ensure data integrity by preventing duplicate email addresses. The DDL is idempotent. If duplicates exist, they must be resolved manually before applying this constraint.",
+          "preconditions": [
+            "BLOCKED: UNIQUE on (email) on table 'customers' would fail: 40 duplicate row(s) found",
+            "Original SQL: DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'customers_email_key' AND conrelid = 'customers'::regclass) THEN ALTER TABLE customers ADD CONSTRAINT customers_email_key UNIQUE "
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'customers_email_key' AND conrelid = 'customers'::regclass;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE customers DROP CONSTRAINT IF EXISTS customers_email_key;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_002_employees",
+          "fix_id": "add-unique-constraint-employees-email",
+          "rows_affected_estimate": 100,
+          "tables_touched": [
+            "employees"
+          ],
+          "depends_on": [],
+          "table": "employees",
+          "target_table": "employees",
+          "problem": "Add Unique Constraint to employees.email",
+          "fix": "The 'email' column in the 'employees' table is identified as needing a unique constraint based on naming patterns. This will ensure data integrity by preventing duplicate email addresses. The DDL is idempotent. If duplicates exist, they must be resolved manually before applying this constraint.",
+          "severity": "high",
+          "confidence": 0.75,
+          "risk_level": "medium",
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "source_rule": "nullable_foreign_key",
+          "source_type": "deterministic",
+          "evidence": {
+            "table": "employees",
+            "column": "manager_id",
+            "is_nullable": "YES",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id"
+          },
+          "evidence_payload": {
+            "table": "employees",
+            "column": "manager_id",
+            "is_nullable": "YES",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id",
+            "_type": "generic",
+            "rule": "nullable_foreign_key",
+            "target": "employees",
+            "table_name": "employees"
+          },
+          "estimated_rows_affected": 100,
+          "queries": [
+            "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'employees_email_key' AND conrelid = 'employees'::regclass) THEN ALTER TABLE employees ADD CONSTRAINT employees_email_key UNIQUE (email);",
+            "END IF;",
+            "END $$;"
+          ],
+          "explanation": "The 'email' column in the 'employees' table is identified as needing a unique constraint based on naming patterns. This will ensure data integrity by preventing duplicate email addresses. The DDL is idempotent. If duplicates exist, they must be resolved manually before applying this constraint.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'employees_email_key' AND conrelid = 'employees'::regclass;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE employees DROP CONSTRAINT IF EXISTS employees_email_key;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_003_payments",
+          "fix_id": "add-unique-constraint-payments-transaction-reference",
+          "rows_affected_estimate": 3000,
+          "tables_touched": [
+            "payments"
+          ],
+          "depends_on": [],
+          "table": "payments",
+          "target_table": "payments",
+          "problem": "Add Unique Constraint to payments.transaction_reference",
+          "fix": "The 'transaction_reference' column in the 'payments' table is identified as needing a unique constraint based on naming patterns. This will ensure data integrity by preventing duplicate transaction references. The DDL is idempotent. If duplicates exist, they must be resolved manually before applying this constraint.",
+          "severity": "high",
+          "confidence": 0.75,
+          "risk_level": "medium",
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "source_rule": "nullable_foreign_key",
+          "source_type": "deterministic",
+          "evidence": {
+            "table": "payments",
+            "column": "order_id",
+            "is_nullable": "YES",
+            "foreign_table": "orders",
+            "foreign_column": "order_id"
+          },
+          "evidence_payload": {
+            "table": "payments",
+            "column": "order_id",
+            "is_nullable": "YES",
+            "foreign_table": "orders",
+            "foreign_column": "order_id",
+            "_type": "generic",
+            "rule": "nullable_foreign_key",
+            "target": "payments",
+            "table_name": "payments"
+          },
+          "estimated_rows_affected": 3000,
+          "queries": [
+            "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'payments_transaction_reference_key' AND conrelid = 'payments'::regclass) THEN ALTER TABLE payments ADD CONSTRAINT payments_transaction_reference_key UNIQUE (transaction_reference);",
+            "END IF;",
+            "END $$;"
+          ],
+          "explanation": "The 'transaction_reference' column in the 'payments' table is identified as needing a unique constraint based on naming patterns. This will ensure data integrity by preventing duplicate transaction references. The DDL is idempotent. If duplicates exist, they must be resolved manually before applying this constraint.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'payments_transaction_reference_key' AND conrelid = 'payments'::regclass;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_transaction_reference_key;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_004_products",
+          "fix_id": "add-unique-constraint-products-sku",
+          "rows_affected_estimate": 1000,
+          "tables_touched": [
+            "products"
+          ],
+          "depends_on": [],
+          "table": "products",
+          "target_table": "products",
+          "problem": "Add Unique Constraint to products.sku",
+          "fix": "[Pre-flight blocked: UNIQUE on (sku) on table 'products' would fail: 20 duplicate row(s) found] The 'sku' column in the 'products' table is identified as needing a unique constraint based on naming patterns. This will ensure data integrity by preventing duplicate SKUs. The DDL is idempotent. If duplicates exist, they must be resolved manually before applying this constraint.",
+          "severity": "high",
+          "confidence": 0.75,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "blocked",
+          "source_rule": "fill_nulls_blocked",
+          "source_type": "ai",
+          "evidence": {
+            "block_reason": "UNIQUE on (sku) on table 'products' would fail: 20 duplicate row(s) found",
+            "original_sql": "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'products_sku_key' AND conrelid = 'products'::regclass) THEN ALTER TABLE products ADD CONSTRAINT products_sku_key UNIQUE (sku); END IF; END $$;"
+          },
+          "evidence_payload": {
+            "_type": "blocked",
+            "block_reason": "UNIQUE on (sku) on table 'products' would fail: 20 duplicate row(s) found",
+            "original_sql": "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'products_sku_key' AND conrelid = 'products'::regclass) THEN ALTER TABLE products ADD CONSTRAINT products_sku_key UNIQUE (sku); END IF; END $$;"
+          },
+          "estimated_rows_affected": 1000,
+          "queries": [],
+          "explanation": "[Pre-flight blocked: UNIQUE on (sku) on table 'products' would fail: 20 duplicate row(s) found] The 'sku' column in the 'products' table is identified as needing a unique constraint based on naming patterns. This will ensure data integrity by preventing duplicate SKUs. The DDL is idempotent. If duplicates exist, they must be resolved manually before applying this constraint.",
+          "preconditions": [
+            "BLOCKED: UNIQUE on (sku) on table 'products' would fail: 20 duplicate row(s) found",
+            "Original SQL: DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'products_sku_key' AND conrelid = 'products'::regclass) THEN ALTER TABLE products ADD CONSTRAINT products_sku_key UNIQUE (sku); E"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'products_sku_key' AND conrelid = 'products'::regclass;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE products DROP CONSTRAINT IF EXISTS products_sku_key;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_005_suppliers",
+          "fix_id": "add-unique-constraint-suppliers-email",
+          "rows_affected_estimate": 50,
+          "tables_touched": [
+            "suppliers"
+          ],
+          "depends_on": [],
+          "table": "suppliers",
+          "target_table": "suppliers",
+          "problem": "Add Unique Constraint to suppliers.email",
+          "fix": "The 'email' column in the 'suppliers' table is identified as needing a unique constraint based on naming patterns. This will ensure data integrity by preventing duplicate email addresses. The DDL is idempotent. If duplicates exist, they must be resolved manually before applying this constraint.",
+          "severity": "high",
+          "confidence": 0.75,
+          "risk_level": "medium",
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "source_rule": "missing_unique_constraint",
+          "source_type": "deterministic",
+          "evidence": {
+            "table": "suppliers",
+            "column": "email",
+            "pattern_matched": "email"
+          },
+          "evidence_payload": {
+            "table": "suppliers",
+            "column": "email",
+            "pattern_matched": "email",
+            "_type": "generic",
+            "rule": "missing_unique_constraint",
+            "target": "suppliers",
+            "table_name": "suppliers"
+          },
+          "estimated_rows_affected": 50,
+          "queries": [
+            "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'suppliers_email_key' AND conrelid = 'suppliers'::regclass) THEN ALTER TABLE suppliers ADD CONSTRAINT suppliers_email_key UNIQUE (email);",
+            "END IF;",
+            "END $$;"
+          ],
+          "explanation": "The 'email' column in the 'suppliers' table is identified as needing a unique constraint based on naming patterns. This will ensure data integrity by preventing duplicate email addresses. The DDL is idempotent. If duplicates exist, they must be resolved manually before applying this constraint.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'suppliers_email_key' AND conrelid = 'suppliers'::regclass;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE suppliers DROP CONSTRAINT IF EXISTS suppliers_email_key;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_006_addresses",
+          "fix_id": "add-index-addresses-customer-id",
+          "rows_affected_estimate": 2500,
+          "tables_touched": [
+            "addresses"
+          ],
+          "depends_on": [],
+          "table": "addresses",
+          "target_table": "addresses",
+          "problem": "Add Index on addresses.customer_id",
+          "fix": "Adding an index on the 'customer_id' column in the 'addresses' table will improve the performance of queries involving this foreign key, especially JOINs and referential integrity checks. The index is created concurrently to minimize impact on concurrent operations.",
+          "severity": "high",
+          "confidence": 0.75,
+          "risk_level": "medium",
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "source_rule": "nullable_foreign_key",
+          "source_type": "deterministic",
+          "evidence": {
+            "table": "addresses",
+            "column": "customer_id",
+            "is_nullable": "YES",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id"
+          },
+          "evidence_payload": {
+            "table": "addresses",
+            "column": "customer_id",
+            "is_nullable": "YES",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id",
+            "_type": "generic",
+            "rule": "nullable_foreign_key",
+            "target": "addresses",
+            "table_name": "addresses"
+          },
+          "estimated_rows_affected": 2500,
+          "queries": [
+            "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_addresses_customer_id ON addresses (customer_id);"
+          ],
+          "explanation": "Adding an index on the 'customer_id' column in the 'addresses' table will improve the performance of queries involving this foreign key, especially JOINs and referential integrity checks. The index is created concurrently to minimize impact on concurrent operations.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'addresses' AND indexname = 'idx_addresses_customer_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_addresses_customer_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_007_categories",
+          "fix_id": "add-index-categories-parent-category-id",
+          "rows_affected_estimate": 20,
+          "tables_touched": [
+            "categories"
+          ],
+          "depends_on": [],
+          "table": "categories",
+          "target_table": "categories",
+          "problem": "Add Index on categories.parent_category_id",
+          "fix": "Adding an index on the 'parent_category_id' column in the 'categories' table will improve the performance of queries involving this foreign key, especially JOINs and referential integrity checks. The index is created concurrently to minimize impact on concurrent operations.",
+          "severity": "high",
+          "confidence": 0.75,
+          "risk_level": "medium",
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "source_rule": "nullable_foreign_key",
+          "source_type": "deterministic",
+          "evidence": {
+            "table": "categories",
+            "column": "parent_category_id",
+            "is_nullable": "YES",
+            "foreign_table": "categories",
+            "foreign_column": "category_id"
+          },
+          "evidence_payload": {
+            "table": "categories",
+            "column": "parent_category_id",
+            "is_nullable": "YES",
+            "foreign_table": "categories",
+            "foreign_column": "category_id",
+            "_type": "generic",
+            "rule": "nullable_foreign_key",
+            "target": "categories",
+            "table_name": "categories"
+          },
+          "estimated_rows_affected": 20,
+          "queries": [
+            "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_categories_parent_category_id ON categories (parent_category_id);"
+          ],
+          "explanation": "Adding an index on the 'parent_category_id' column in the 'categories' table will improve the performance of queries involving this foreign key, especially JOINs and referential integrity checks. The index is created concurrently to minimize impact on concurrent operations.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'categories' AND indexname = 'idx_categories_parent_category_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_categories_parent_category_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_008_inventory",
+          "fix_id": "add-index-inventory-warehouse-id",
+          "rows_affected_estimate": 2000,
+          "tables_touched": [
+            "inventory"
+          ],
+          "depends_on": [],
+          "table": "inventory",
+          "target_table": "inventory",
+          "problem": "Add Index on inventory.warehouse_id",
+          "fix": "Adding an index on the 'warehouse_id' column in the 'inventory' table will improve the performance of queries involving this foreign key, especially JOINs and referential integrity checks. The index is created concurrently to minimize impact on concurrent operations.",
+          "severity": "high",
+          "confidence": 0.75,
+          "risk_level": "medium",
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "source_rule": "nullable_foreign_key",
+          "source_type": "deterministic",
+          "evidence": {
+            "table": "inventory",
+            "column": "warehouse_id",
+            "is_nullable": "YES",
+            "foreign_table": "warehouses",
+            "foreign_column": "warehouse_id",
+            "columns_with_high_nulls": [
+              "warehouse_id",
+              "product_id"
+            ]
+          },
+          "evidence_payload": {
+            "table": "inventory",
+            "column": "warehouse_id",
+            "is_nullable": "YES",
+            "foreign_table": "warehouses",
+            "foreign_column": "warehouse_id",
+            "columns_with_high_nulls": [
+              "warehouse_id",
+              "product_id"
+            ],
+            "_type": "generic",
+            "rule": "nullable_foreign_key",
+            "target": "inventory",
+            "table_name": "inventory"
+          },
+          "estimated_rows_affected": 2000,
+          "queries": [
+            "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_inventory_warehouse_id ON inventory (warehouse_id);"
+          ],
+          "explanation": "Adding an index on the 'warehouse_id' column in the 'inventory' table will improve the performance of queries involving this foreign key, especially JOINs and referential integrity checks. The index is created concurrently to minimize impact on concurrent operations.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'inventory' AND indexname = 'idx_inventory_warehouse_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_inventory_warehouse_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_009_order_items",
+          "fix_id": "add-index-order-items-order-id",
+          "rows_affected_estimate": 6000,
+          "tables_touched": [
+            "order_items"
+          ],
+          "depends_on": [],
+          "table": "order_items",
+          "target_table": "order_items",
+          "problem": "Add Index on order_items.order_id",
+          "fix": "Adding an index on the 'order_id' column in the 'order_items' table will improve the performance of queries involving this foreign key, especially JOINs and referential integrity checks. The index is created concurrently to minimize impact on concurrent operations.",
+          "severity": "high",
+          "confidence": 0.75,
+          "risk_level": "medium",
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "source_rule": "nullable_foreign_key",
+          "source_type": "deterministic",
+          "evidence": {
+            "table": "order_items",
+            "column": "order_id",
+            "is_nullable": "YES",
+            "foreign_table": "orders",
+            "foreign_column": "order_id"
+          },
+          "evidence_payload": {
+            "table": "order_items",
+            "column": "order_id",
+            "is_nullable": "YES",
+            "foreign_table": "orders",
+            "foreign_column": "order_id",
+            "_type": "generic",
+            "rule": "nullable_foreign_key",
+            "target": "order_items",
+            "table_name": "order_items"
+          },
+          "estimated_rows_affected": 6000,
+          "queries": [
+            "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_order_items_order_id ON order_items (order_id);"
+          ],
+          "explanation": "Adding an index on the 'order_id' column in the 'order_items' table will improve the performance of queries involving this foreign key, especially JOINs and referential integrity checks. The index is created concurrently to minimize impact on concurrent operations.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'order_items' AND indexname = 'idx_order_items_order_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_order_items_order_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_010_orders",
+          "fix_id": "add-index-orders-employee-id",
+          "rows_affected_estimate": 3000,
+          "tables_touched": [
+            "orders"
+          ],
+          "depends_on": [],
+          "table": "orders",
+          "target_table": "orders",
+          "problem": "Add Index on orders.employee_id",
+          "fix": "Adding an index on the 'employee_id' column in the 'orders' table will improve the performance of queries involving this foreign key, especially JOINs and referential integrity checks. The index is created concurrently to minimize impact on concurrent operations.",
+          "severity": "high",
+          "confidence": 0.75,
+          "risk_level": "medium",
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "source_rule": "nullable_foreign_key",
+          "source_type": "deterministic",
+          "evidence": {
+            "table": "orders",
+            "column": "employee_id",
+            "is_nullable": "YES",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id",
+            "columns_with_high_nulls": [
+              "employee_id",
+              "shipping_address_id"
+            ]
+          },
+          "evidence_payload": {
+            "table": "orders",
+            "column": "employee_id",
+            "is_nullable": "YES",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id",
+            "columns_with_high_nulls": [
+              "employee_id",
+              "shipping_address_id"
+            ],
+            "_type": "generic",
+            "rule": "nullable_foreign_key",
+            "target": "orders",
+            "table_name": "orders"
+          },
+          "estimated_rows_affected": 3000,
+          "queries": [
+            "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_orders_employee_id ON orders (employee_id);"
+          ],
+          "explanation": "Adding an index on the 'employee_id' column in the 'orders' table will improve the performance of queries involving this foreign key, especially JOINs and referential integrity checks. The index is created concurrently to minimize impact on concurrent operations.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'orders' AND indexname = 'idx_orders_employee_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_orders_employee_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_011_reviews",
+          "fix_id": "add-index-reviews-customer-id",
+          "rows_affected_estimate": 1500,
+          "tables_touched": [
+            "reviews"
+          ],
+          "depends_on": [],
+          "table": "reviews",
+          "target_table": "reviews",
+          "problem": "Add Index on reviews.customer_id",
+          "fix": "Adding an index on the 'customer_id' column in the 'reviews' table will improve the performance of queries involving this foreign key, especially JOINs and referential integrity checks. The index is created concurrently to minimize impact on concurrent operations.",
+          "severity": "high",
+          "confidence": 0.75,
+          "risk_level": "medium",
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "source_rule": "nullable_foreign_key",
+          "source_type": "deterministic",
+          "evidence": {
+            "table": "reviews",
+            "column": "customer_id",
+            "is_nullable": "YES",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id",
+            "columns_with_high_nulls": [
+              "customer_id",
+              "product_id"
+            ]
+          },
+          "evidence_payload": {
+            "table": "reviews",
+            "column": "customer_id",
+            "is_nullable": "YES",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id",
+            "columns_with_high_nulls": [
+              "customer_id",
+              "product_id"
+            ],
+            "_type": "generic",
+            "rule": "nullable_foreign_key",
+            "target": "reviews",
+            "table_name": "reviews"
+          },
+          "estimated_rows_affected": 1500,
+          "queries": [
+            "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_reviews_customer_id ON reviews (customer_id);"
+          ],
+          "explanation": "Adding an index on the 'customer_id' column in the 'reviews' table will improve the performance of queries involving this foreign key, especially JOINs and referential integrity checks. The index is created concurrently to minimize impact on concurrent operations.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'reviews' AND indexname = 'idx_reviews_customer_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_reviews_customer_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_012_shipments",
+          "fix_id": "add-index-shipments-order-id",
+          "rows_affected_estimate": 2500,
+          "tables_touched": [
+            "shipments"
+          ],
+          "depends_on": [],
+          "table": "shipments",
+          "target_table": "shipments",
+          "problem": "Add Index on shipments.order_id",
+          "fix": "Adding an index on the 'order_id' column in the 'shipments' table will improve the performance of queries involving this foreign key, especially JOINs and referential integrity checks. The index is created concurrently to minimize impact on concurrent operations.",
+          "severity": "high",
+          "confidence": 0.75,
+          "risk_level": "medium",
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "source_rule": "nullable_foreign_key",
+          "source_type": "deterministic",
+          "evidence": {
+            "table": "shipments",
+            "column": "order_id",
+            "is_nullable": "YES",
+            "foreign_table": "orders",
+            "foreign_column": "order_id",
+            "columns_with_high_nulls": [
+              "order_id",
+              "warehouse_id"
+            ]
+          },
+          "evidence_payload": {
+            "table": "shipments",
+            "column": "order_id",
+            "is_nullable": "YES",
+            "foreign_table": "orders",
+            "foreign_column": "order_id",
+            "columns_with_high_nulls": [
+              "order_id",
+              "warehouse_id"
+            ],
+            "_type": "generic",
+            "rule": "nullable_foreign_key",
+            "target": "shipments",
+            "table_name": "shipments"
+          },
+          "estimated_rows_affected": 2500,
+          "queries": [
+            "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_shipments_order_id ON shipments (order_id);"
+          ],
+          "explanation": "Adding an index on the 'order_id' column in the 'shipments' table will improve the performance of queries involving this foreign key, especially JOINs and referential integrity checks. The index is created concurrently to minimize impact on concurrent operations.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'shipments' AND indexname = 'idx_shipments_order_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_shipments_order_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_013_support_tickets",
+          "fix_id": "add-index-support-tickets-customer-id",
+          "rows_affected_estimate": 1000,
+          "tables_touched": [
+            "support_tickets"
+          ],
+          "depends_on": [],
+          "table": "support_tickets",
+          "target_table": "support_tickets",
+          "problem": "Add Index on support_tickets.customer_id",
+          "fix": "Adding an index on the 'customer_id' column in the 'support_tickets' table will improve the performance of queries involving this foreign key, especially JOINs and referential integrity checks. The index is created concurrently to minimize impact on concurrent operations.",
+          "severity": "high",
+          "confidence": 0.95,
+          "risk_level": "medium",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "null_ratio_high",
+          "source_type": "ai",
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 1000,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "resolved_at",
+              "customer_id",
+              "assigned_employee_id",
+              "order_id"
+            ]
+          },
+          "evidence_payload": {
+            "null_ratio": 1.0,
+            "total_rows": 1000,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "resolved_at",
+              "customer_id",
+              "assigned_employee_id",
+              "order_id"
+            ],
+            "_type": "nullability",
+            "rule": "null_ratio_high",
+            "target": "support_tickets",
+            "table_name": "support_tickets"
+          },
+          "estimated_rows_affected": 1000,
+          "queries": [
+            "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_support_tickets_customer_id ON support_tickets (customer_id);"
+          ],
+          "explanation": "Adding an index on the 'customer_id' column in the 'support_tickets' table will improve the performance of queries involving this foreign key, especially JOINs and referential integrity checks. The index is created concurrently to minimize impact on concurrent operations.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'support_tickets' AND indexname = 'idx_support_tickets_customer_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_support_tickets_customer_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_014_products",
+          "fix_id": "investigate-negative-zero-products-price-stock-quantity-weight",
+          "rows_affected_estimate": 13,
+          "tables_touched": [
+            "products"
+          ],
+          "depends_on": [],
+          "table": "products",
+          "target_table": "products",
+          "problem": "Investigate Negative or Zero Amounts in products.price, stock_quantity, weight",
+          "fix": "The 'products' table contains rows where 'price', 'stock_quantity', or 'weight' are zero or negative, which violates business rules. This query identifies these rows for review. Manual intervention is required to correct these values.",
+          "severity": "high",
+          "confidence": 0.75,
+          "risk_level": "low",
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "source_rule": "nullable_foreign_key",
+          "source_type": "deterministic",
+          "evidence": {
+            "table": "products",
+            "column": "category_id",
+            "is_nullable": "YES",
+            "foreign_table": "categories",
+            "foreign_column": "category_id"
+          },
+          "evidence_payload": {
+            "table": "products",
+            "column": "category_id",
+            "is_nullable": "YES",
+            "foreign_table": "categories",
+            "foreign_column": "category_id",
+            "_type": "generic",
+            "rule": "nullable_foreign_key",
+            "target": "products",
+            "table_name": "products"
+          },
+          "estimated_rows_affected": 13,
+          "queries": [
+            "SELECT product_id, price, stock_quantity, weight FROM products WHERE price <= 0 OR stock_quantity <= 0 OR weight <= 0;"
+          ],
+          "explanation": "The 'products' table contains rows where 'price', 'stock_quantity', or 'weight' are zero or negative, which violates business rules. This query identifies these rows for review. Manual intervention is required to correct these values.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM products WHERE price <= 0 OR stock_quantity <= 0 OR weight <= 0;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_015_audit_logs",
+          "fix_id": "investigate-null-audit-logs-details-performed-by",
+          "rows_affected_estimate": 1847,
+          "tables_touched": [
+            "audit_logs"
+          ],
+          "depends_on": [],
+          "table": "audit_logs",
+          "target_table": "audit_logs",
+          "problem": "Investigate High Null Ratio in audit_logs.details, performed_by",
+          "fix": "The columns 'details' and 'performed_by' in the 'audit_logs' table have a high percentage of NULL values (84.3%). This query helps identify these rows for further investigation. Consider updating these columns with meaningful data or enforcing NOT NULL constraints if they are always required.",
+          "severity": "high",
+          "confidence": 0.95,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "null_ratio_high",
+          "source_type": "ai",
+          "evidence": {
+            "null_ratio": 0.843,
+            "total_rows": 2000,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "details",
+              "performed_by"
+            ]
+          },
+          "evidence_payload": {
+            "null_ratio": 0.843,
+            "total_rows": 2000,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "details",
+              "performed_by"
+            ],
+            "_type": "nullability",
+            "rule": "null_ratio_high",
+            "target": "audit_logs",
+            "table_name": "audit_logs"
+          },
+          "estimated_rows_affected": 1847,
+          "queries": [
+            "SELECT details, performed_by FROM audit_logs WHERE details IS NULL OR performed_by IS NULL;"
+          ],
+          "explanation": "The columns 'details' and 'performed_by' in the 'audit_logs' table have a high percentage of NULL values (84.3%). This query helps identify these rows for further investigation. Consider updating these columns with meaningful data or enforcing NOT NULL constraints if they are always required.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM audit_logs WHERE details IS NULL OR performed_by IS NULL;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_016_customers",
+          "fix_id": "investigate-null-customers-phone-notes-email",
+          "rows_affected_estimate": 1739,
+          "tables_touched": [
+            "customers"
+          ],
+          "depends_on": [],
+          "table": "customers",
+          "target_table": "customers",
+          "problem": "Investigate High Null Rate in customers.phone, notes, email",
+          "fix": "The columns 'phone', 'notes', and 'email' in the 'customers' table have a high percentage of NULL values (up to 50.25%). This query helps identify these rows for further investigation. Consider updating these columns with meaningful data or enforcing NOT NULL constraints if they are always required.",
+          "severity": "high",
+          "confidence": 0.9,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "null_rate_high",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "phone",
+            "null_rate": 0.5025,
+            "max_null_pct_rule": 0.05,
+            "default_null_threshold": 0.4,
+            "columns_with_high_nulls": [
+              "phone",
+              "notes",
+              "email"
+            ]
+          },
+          "evidence_payload": {
+            "column_name": "phone",
+            "null_rate": 0.5025,
+            "max_null_pct_rule": 0.05,
+            "default_null_threshold": 0.4,
+            "columns_with_high_nulls": [
+              "phone",
+              "notes",
+              "email"
+            ],
+            "_type": "nullability",
+            "rule": "null_rate_high",
+            "target": "customers",
+            "table_name": "customers"
+          },
+          "estimated_rows_affected": 1739,
+          "queries": [
+            "SELECT phone, notes, email FROM customers WHERE phone IS NULL OR notes IS NULL OR email IS NULL;"
+          ],
+          "explanation": "The columns 'phone', 'notes', and 'email' in the 'customers' table have a high percentage of NULL values (up to 50.25%). This query helps identify these rows for further investigation. Consider updating these columns with meaningful data or enforcing NOT NULL constraints if they are always required.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM customers WHERE phone IS NULL OR notes IS NULL OR email IS NULL;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_017_orders",
+          "fix_id": "investigate-null-orders-shipping-address-id-employee-id-notes",
+          "rows_affected_estimate": 2594,
+          "tables_touched": [
+            "orders"
+          ],
+          "depends_on": [],
+          "table": "orders",
+          "target_table": "orders",
+          "problem": "Investigate High Null Ratio in orders.shipping_address_id, employee_id, notes",
+          "fix": "The columns 'shipping_address_id', 'employee_id', and 'notes' in the 'orders' table have a high percentage of NULL values (up to 19.93%). This query helps identify these rows for further investigation. Consider updating these columns with meaningful data or enforcing NOT NULL constraints if they are always required.",
+          "severity": "high",
+          "confidence": 0.75,
+          "risk_level": "low",
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "source_rule": "nullable_foreign_key",
+          "source_type": "deterministic",
+          "evidence": {
+            "table": "orders",
+            "column": "employee_id",
+            "is_nullable": "YES",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id",
+            "columns_with_high_nulls": [
+              "employee_id",
+              "shipping_address_id"
+            ]
+          },
+          "evidence_payload": {
+            "table": "orders",
+            "column": "employee_id",
+            "is_nullable": "YES",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id",
+            "columns_with_high_nulls": [
+              "employee_id",
+              "shipping_address_id"
+            ],
+            "_type": "generic",
+            "rule": "nullable_foreign_key",
+            "target": "orders",
+            "table_name": "orders"
+          },
+          "estimated_rows_affected": 2594,
+          "queries": [
+            "SELECT shipping_address_id, employee_id, notes FROM orders WHERE shipping_address_id IS NULL OR employee_id IS NULL OR notes IS NULL;"
+          ],
+          "explanation": "The columns 'shipping_address_id', 'employee_id', and 'notes' in the 'orders' table have a high percentage of NULL values (up to 19.93%). This query helps identify these rows for further investigation. Consider updating these columns with meaningful data or enforcing NOT NULL constraints if they are always required.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM orders WHERE shipping_address_id IS NULL OR employee_id IS NULL OR notes IS NULL;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_018_reviews",
+          "fix_id": "investigate-null-reviews-review-text",
+          "rows_affected_estimate": 768,
+          "tables_touched": [
+            "reviews"
+          ],
+          "depends_on": [],
+          "table": "reviews",
+          "target_table": "reviews",
+          "problem": "Investigate High Null Ratio in reviews.review_text",
+          "fix": "The column 'review_text' in the 'reviews' table has a high percentage of NULL values (51.2%). This query helps identify these rows for further investigation. Consider updating this column with meaningful data or enforcing a NOT NULL constraint if it is always required.",
+          "severity": "high",
+          "confidence": 0.75,
+          "risk_level": "low",
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "source_rule": "nullable_foreign_key",
+          "source_type": "deterministic",
+          "evidence": {
+            "table": "reviews",
+            "column": "customer_id",
+            "is_nullable": "YES",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id",
+            "columns_with_high_nulls": [
+              "customer_id",
+              "product_id"
+            ]
+          },
+          "evidence_payload": {
+            "table": "reviews",
+            "column": "customer_id",
+            "is_nullable": "YES",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id",
+            "columns_with_high_nulls": [
+              "customer_id",
+              "product_id"
+            ],
+            "_type": "generic",
+            "rule": "nullable_foreign_key",
+            "target": "reviews",
+            "table_name": "reviews"
+          },
+          "estimated_rows_affected": 768,
+          "queries": [
+            "SELECT review_text FROM reviews WHERE review_text IS NULL;"
+          ],
+          "explanation": "The column 'review_text' in the 'reviews' table has a high percentage of NULL values (51.2%). This query helps identify these rows for further investigation. Consider updating this column with meaningful data or enforcing a NOT NULL constraint if it is always required.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM reviews WHERE review_text IS NULL;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_019_shipments",
+          "fix_id": "investigate-null-shipments-warehouse-id-tracking-number",
+          "rows_affected_estimate": 926,
+          "tables_touched": [
+            "shipments"
+          ],
+          "depends_on": [],
+          "table": "shipments",
+          "target_table": "shipments",
+          "problem": "Investigate High Null Ratio in shipments.warehouse_id, tracking_number",
+          "fix": "The columns 'warehouse_id' and 'tracking_number' in the 'shipments' table have a high percentage of NULL values (up to 14.88%). This query helps identify these rows for further investigation. Consider updating these columns with meaningful data or enforcing NOT NULL constraints if they are always required.",
+          "severity": "high",
+          "confidence": 0.75,
+          "risk_level": "low",
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "source_rule": "nullable_foreign_key",
+          "source_type": "deterministic",
+          "evidence": {
+            "table": "shipments",
+            "column": "order_id",
+            "is_nullable": "YES",
+            "foreign_table": "orders",
+            "foreign_column": "order_id",
+            "columns_with_high_nulls": [
+              "order_id",
+              "warehouse_id"
+            ]
+          },
+          "evidence_payload": {
+            "table": "shipments",
+            "column": "order_id",
+            "is_nullable": "YES",
+            "foreign_table": "orders",
+            "foreign_column": "order_id",
+            "columns_with_high_nulls": [
+              "order_id",
+              "warehouse_id"
+            ],
+            "_type": "generic",
+            "rule": "nullable_foreign_key",
+            "target": "shipments",
+            "table_name": "shipments"
+          },
+          "estimated_rows_affected": 926,
+          "queries": [
+            "SELECT warehouse_id, tracking_number FROM shipments WHERE warehouse_id IS NULL OR tracking_number IS NULL;"
+          ],
+          "explanation": "The columns 'warehouse_id' and 'tracking_number' in the 'shipments' table have a high percentage of NULL values (up to 14.88%). This query helps identify these rows for further investigation. Consider updating these columns with meaningful data or enforcing NOT NULL constraints if they are always required.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM shipments WHERE warehouse_id IS NULL OR tracking_number IS NULL;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_020_support_tickets",
+          "fix_id": "investigate-null-support-tickets-resolved-at-customer-id-assigned-employee-id-order-id",
+          "rows_affected_estimate": 1000,
+          "tables_touched": [
+            "support_tickets"
+          ],
+          "depends_on": [],
+          "table": "support_tickets",
+          "target_table": "support_tickets",
+          "problem": "Investigate High Null Ratio in support_tickets.resolved_at, customer_id, assigned_employee_id, order_id",
+          "fix": "The columns 'resolved_at', 'customer_id', 'assigned_employee_id', and 'order_id' in the 'support_tickets' table have a high percentage of NULL values (up to 100%). This query helps identify these rows for further investigation. Consider updating these columns with meaningful data or enforcing NOT NULL constraints if they are always required.",
+          "severity": "high",
+          "confidence": 0.95,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "null_ratio_high",
+          "source_type": "ai",
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 1000,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "resolved_at",
+              "customer_id",
+              "assigned_employee_id",
+              "order_id"
+            ]
+          },
+          "evidence_payload": {
+            "null_ratio": 1.0,
+            "total_rows": 1000,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "resolved_at",
+              "customer_id",
+              "assigned_employee_id",
+              "order_id"
+            ],
+            "_type": "nullability",
+            "rule": "null_ratio_high",
+            "target": "support_tickets",
+            "table_name": "support_tickets"
+          },
+          "estimated_rows_affected": 1000,
+          "queries": [
+            "SELECT resolved_at, customer_id, assigned_employee_id, order_id FROM support_tickets WHERE resolved_at IS NULL OR customer_id IS NULL OR assigned_employee_id IS NULL OR order_id IS NULL;"
+          ],
+          "explanation": "The columns 'resolved_at', 'customer_id', 'assigned_employee_id', and 'order_id' in the 'support_tickets' table have a high percentage of NULL values (up to 100%). This query helps identify these rows for further investigation. Consider updating these columns with meaningful data or enforcing NOT NULL constraints if they are always required.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM support_tickets WHERE resolved_at IS NULL OR customer_id IS NULL OR assigned_employee_id IS NULL OR order_id IS NULL;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_021_warehouses",
+          "fix_id": "investigate-null-warehouses-manager-name",
+          "rows_affected_estimate": 8,
+          "tables_touched": [
+            "warehouses"
+          ],
+          "depends_on": [],
+          "table": "warehouses",
+          "target_table": "warehouses",
+          "problem": "Investigate High Null Ratio in warehouses.manager_name",
+          "fix": "The column 'manager_name' in the 'warehouses' table has a high percentage of NULL values (53.33%). This query helps identify these rows for further investigation. Consider updating this column with meaningful data or enforcing a NOT NULL constraint if it is always required.",
+          "severity": "medium",
+          "confidence": 0.95,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "null_ratio_high",
+          "source_type": "ai",
+          "evidence": {
+            "null_ratio": 0.5333,
+            "total_rows": 15,
+            "threshold_used": 0.4
+          },
+          "evidence_payload": {
+            "null_ratio": 0.5333,
+            "total_rows": 15,
+            "threshold_used": 0.4,
+            "_type": "nullability",
+            "rule": "null_ratio_high",
+            "target": "warehouses",
+            "table_name": "warehouses"
+          },
+          "estimated_rows_affected": 8,
+          "queries": [
+            "SELECT manager_name FROM warehouses WHERE manager_name IS NULL;"
+          ],
+          "explanation": "The column 'manager_name' in the 'warehouses' table has a high percentage of NULL values (53.33%). This query helps identify these rows for further investigation. Consider updating this column with meaningful data or enforcing a NOT NULL constraint if it is always required.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM warehouses WHERE manager_name IS NULL;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_022_addresses",
+          "fix_id": "investigate-nullable-fk-addresses-customer-id",
+          "rows_affected_estimate": 250,
+          "tables_touched": [
+            "addresses"
+          ],
+          "depends_on": [],
+          "table": "addresses",
+          "target_table": "addresses",
+          "problem": "Investigate Nullable Foreign Key addresses.customer_id",
+          "fix": "The foreign key column 'customer_id' in the 'addresses' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "severity": "high",
+          "confidence": 0.75,
+          "risk_level": "low",
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "source_rule": "nullable_foreign_key",
+          "source_type": "deterministic",
+          "evidence": {
+            "table": "addresses",
+            "column": "customer_id",
+            "is_nullable": "YES",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id"
+          },
+          "evidence_payload": {
+            "table": "addresses",
+            "column": "customer_id",
+            "is_nullable": "YES",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id",
+            "_type": "generic",
+            "rule": "nullable_foreign_key",
+            "target": "addresses",
+            "table_name": "addresses"
+          },
+          "estimated_rows_affected": 250,
+          "queries": [
+            "SELECT customer_id FROM addresses WHERE customer_id IS NULL;"
+          ],
+          "explanation": "The foreign key column 'customer_id' in the 'addresses' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM addresses WHERE customer_id IS NULL;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_023_categories",
+          "fix_id": "investigate-nullable-fk-categories-parent-category-id",
+          "rows_affected_estimate": 5,
+          "tables_touched": [
+            "categories"
+          ],
+          "depends_on": [],
+          "table": "categories",
+          "target_table": "categories",
+          "problem": "Investigate Nullable Foreign Key categories.parent_category_id",
+          "fix": "The foreign key column 'parent_category_id' in the 'categories' table is nullable and has a high null ratio (25%). This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "severity": "high",
+          "confidence": 0.75,
+          "risk_level": "low",
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "source_rule": "nullable_foreign_key",
+          "source_type": "deterministic",
+          "evidence": {
+            "table": "categories",
+            "column": "parent_category_id",
+            "is_nullable": "YES",
+            "foreign_table": "categories",
+            "foreign_column": "category_id"
+          },
+          "evidence_payload": {
+            "table": "categories",
+            "column": "parent_category_id",
+            "is_nullable": "YES",
+            "foreign_table": "categories",
+            "foreign_column": "category_id",
+            "_type": "generic",
+            "rule": "nullable_foreign_key",
+            "target": "categories",
+            "table_name": "categories"
+          },
+          "estimated_rows_affected": 5,
+          "queries": [
+            "SELECT parent_category_id FROM categories WHERE parent_category_id IS NULL;"
+          ],
+          "explanation": "The foreign key column 'parent_category_id' in the 'categories' table is nullable and has a high null ratio (25%). This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM categories WHERE parent_category_id IS NULL;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_024_employees",
+          "fix_id": "investigate-nullable-fk-employees-manager-id",
+          "rows_affected_estimate": 5,
+          "tables_touched": [
+            "employees"
+          ],
+          "depends_on": [],
+          "table": "employees",
+          "target_table": "employees",
+          "problem": "Investigate Nullable Foreign Key employees.manager_id",
+          "fix": "The foreign key column 'manager_id' in the 'employees' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "severity": "high",
+          "confidence": 0.75,
+          "risk_level": "low",
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "source_rule": "nullable_foreign_key",
+          "source_type": "deterministic",
+          "evidence": {
+            "table": "employees",
+            "column": "manager_id",
+            "is_nullable": "YES",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id"
+          },
+          "evidence_payload": {
+            "table": "employees",
+            "column": "manager_id",
+            "is_nullable": "YES",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id",
+            "_type": "generic",
+            "rule": "nullable_foreign_key",
+            "target": "employees",
+            "table_name": "employees"
+          },
+          "estimated_rows_affected": 5,
+          "queries": [
+            "SELECT manager_id FROM employees WHERE manager_id IS NULL;"
+          ],
+          "explanation": "The foreign key column 'manager_id' in the 'employees' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM employees WHERE manager_id IS NULL;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_025_inventory",
+          "fix_id": "investigate-nullable-fk-inventory-warehouse-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "inventory"
+          ],
+          "depends_on": [],
+          "table": "inventory",
+          "target_table": "inventory",
+          "problem": "Investigate Nullable Foreign Key inventory.warehouse_id",
+          "fix": "The foreign key column 'warehouse_id' in the 'inventory' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "severity": "high",
+          "confidence": 0.75,
+          "risk_level": "low",
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "source_rule": "nullable_foreign_key",
+          "source_type": "deterministic",
+          "evidence": {
+            "table": "inventory",
+            "column": "warehouse_id",
+            "is_nullable": "YES",
+            "foreign_table": "warehouses",
+            "foreign_column": "warehouse_id",
+            "columns_with_high_nulls": [
+              "warehouse_id",
+              "product_id"
+            ]
+          },
+          "evidence_payload": {
+            "table": "inventory",
+            "column": "warehouse_id",
+            "is_nullable": "YES",
+            "foreign_table": "warehouses",
+            "foreign_column": "warehouse_id",
+            "columns_with_high_nulls": [
+              "warehouse_id",
+              "product_id"
+            ],
+            "_type": "generic",
+            "rule": "nullable_foreign_key",
+            "target": "inventory",
+            "table_name": "inventory"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT warehouse_id FROM inventory WHERE warehouse_id IS NULL;"
+          ],
+          "explanation": "The foreign key column 'warehouse_id' in the 'inventory' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM inventory WHERE warehouse_id IS NULL;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_026_order_items",
+          "fix_id": "investigate-nullable-fk-order-items-order-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "order_items"
+          ],
+          "depends_on": [],
+          "table": "order_items",
+          "target_table": "order_items",
+          "problem": "Investigate Nullable Foreign Key order_items.order_id",
+          "fix": "The foreign key column 'order_id' in the 'order_items' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "severity": "high",
+          "confidence": 0.75,
+          "risk_level": "low",
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "source_rule": "nullable_foreign_key",
+          "source_type": "deterministic",
+          "evidence": {
+            "table": "order_items",
+            "column": "order_id",
+            "is_nullable": "YES",
+            "foreign_table": "orders",
+            "foreign_column": "order_id"
+          },
+          "evidence_payload": {
+            "table": "order_items",
+            "column": "order_id",
+            "is_nullable": "YES",
+            "foreign_table": "orders",
+            "foreign_column": "order_id",
+            "_type": "generic",
+            "rule": "nullable_foreign_key",
+            "target": "order_items",
+            "table_name": "order_items"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT order_id FROM order_items WHERE order_id IS NULL;"
+          ],
+          "explanation": "The foreign key column 'order_id' in the 'order_items' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM order_items WHERE order_id IS NULL;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_027_orders",
+          "fix_id": "investigate-nullable-fk-orders-employee-id",
+          "rows_affected_estimate": 887,
+          "tables_touched": [
+            "orders"
+          ],
+          "depends_on": [],
+          "table": "orders",
+          "target_table": "orders",
+          "problem": "Investigate Nullable Foreign Key orders.employee_id",
+          "fix": "The foreign key column 'employee_id' in the 'orders' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "severity": "high",
+          "confidence": 0.75,
+          "risk_level": "low",
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "source_rule": "nullable_foreign_key",
+          "source_type": "deterministic",
+          "evidence": {
+            "table": "orders",
+            "column": "employee_id",
+            "is_nullable": "YES",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id",
+            "columns_with_high_nulls": [
+              "employee_id",
+              "shipping_address_id"
+            ]
+          },
+          "evidence_payload": {
+            "table": "orders",
+            "column": "employee_id",
+            "is_nullable": "YES",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id",
+            "columns_with_high_nulls": [
+              "employee_id",
+              "shipping_address_id"
+            ],
+            "_type": "generic",
+            "rule": "nullable_foreign_key",
+            "target": "orders",
+            "table_name": "orders"
+          },
+          "estimated_rows_affected": 887,
+          "queries": [
+            "SELECT employee_id FROM orders WHERE employee_id IS NULL;"
+          ],
+          "explanation": "The foreign key column 'employee_id' in the 'orders' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM orders WHERE employee_id IS NULL;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_028_payments",
+          "fix_id": "investigate-nullable-fk-payments-order-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "payments"
+          ],
+          "depends_on": [],
+          "table": "payments",
+          "target_table": "payments",
+          "problem": "Investigate Nullable Foreign Key payments.order_id",
+          "fix": "The foreign key column 'order_id' in the 'payments' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "severity": "high",
+          "confidence": 0.75,
+          "risk_level": "low",
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "source_rule": "nullable_foreign_key",
+          "source_type": "deterministic",
+          "evidence": {
+            "table": "payments",
+            "column": "order_id",
+            "is_nullable": "YES",
+            "foreign_table": "orders",
+            "foreign_column": "order_id"
+          },
+          "evidence_payload": {
+            "table": "payments",
+            "column": "order_id",
+            "is_nullable": "YES",
+            "foreign_table": "orders",
+            "foreign_column": "order_id",
+            "_type": "generic",
+            "rule": "nullable_foreign_key",
+            "target": "payments",
+            "table_name": "payments"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT order_id FROM payments WHERE order_id IS NULL;"
+          ],
+          "explanation": "The foreign key column 'order_id' in the 'payments' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM payments WHERE order_id IS NULL;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_029_products",
+          "fix_id": "investigate-nullable-fk-products-category-id",
+          "rows_affected_estimate": 16,
+          "tables_touched": [
+            "products"
+          ],
+          "depends_on": [],
+          "table": "products",
+          "target_table": "products",
+          "problem": "Investigate Nullable Foreign Key products.category_id",
+          "fix": "The foreign key column 'category_id' in the 'products' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "severity": "high",
+          "confidence": 0.75,
+          "risk_level": "low",
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "source_rule": "nullable_foreign_key",
+          "source_type": "deterministic",
+          "evidence": {
+            "table": "products",
+            "column": "category_id",
+            "is_nullable": "YES",
+            "foreign_table": "categories",
+            "foreign_column": "category_id"
+          },
+          "evidence_payload": {
+            "table": "products",
+            "column": "category_id",
+            "is_nullable": "YES",
+            "foreign_table": "categories",
+            "foreign_column": "category_id",
+            "_type": "generic",
+            "rule": "nullable_foreign_key",
+            "target": "products",
+            "table_name": "products"
+          },
+          "estimated_rows_affected": 16,
+          "queries": [
+            "SELECT category_id FROM products WHERE category_id IS NULL;"
+          ],
+          "explanation": "The foreign key column 'category_id' in the 'products' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM products WHERE category_id IS NULL;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_030_reviews",
+          "fix_id": "investigate-nullable-fk-reviews-customer-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "reviews"
+          ],
+          "depends_on": [],
+          "table": "reviews",
+          "target_table": "reviews",
+          "problem": "Investigate Nullable Foreign Key reviews.customer_id",
+          "fix": "The foreign key column 'customer_id' in the 'reviews' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "severity": "high",
+          "confidence": 0.75,
+          "risk_level": "low",
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "source_rule": "nullable_foreign_key",
+          "source_type": "deterministic",
+          "evidence": {
+            "table": "reviews",
+            "column": "customer_id",
+            "is_nullable": "YES",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id",
+            "columns_with_high_nulls": [
+              "customer_id",
+              "product_id"
+            ]
+          },
+          "evidence_payload": {
+            "table": "reviews",
+            "column": "customer_id",
+            "is_nullable": "YES",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id",
+            "columns_with_high_nulls": [
+              "customer_id",
+              "product_id"
+            ],
+            "_type": "generic",
+            "rule": "nullable_foreign_key",
+            "target": "reviews",
+            "table_name": "reviews"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT customer_id FROM reviews WHERE customer_id IS NULL;"
+          ],
+          "explanation": "The foreign key column 'customer_id' in the 'reviews' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM reviews WHERE customer_id IS NULL;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_031_shipments",
+          "fix_id": "investigate-nullable-fk-shipments-order-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "shipments"
+          ],
+          "depends_on": [],
+          "table": "shipments",
+          "target_table": "shipments",
+          "problem": "Investigate Nullable Foreign Key shipments.order_id",
+          "fix": "The foreign key column 'order_id' in the 'shipments' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "severity": "high",
+          "confidence": 0.75,
+          "risk_level": "low",
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "source_rule": "nullable_foreign_key",
+          "source_type": "deterministic",
+          "evidence": {
+            "table": "shipments",
+            "column": "order_id",
+            "is_nullable": "YES",
+            "foreign_table": "orders",
+            "foreign_column": "order_id",
+            "columns_with_high_nulls": [
+              "order_id",
+              "warehouse_id"
+            ]
+          },
+          "evidence_payload": {
+            "table": "shipments",
+            "column": "order_id",
+            "is_nullable": "YES",
+            "foreign_table": "orders",
+            "foreign_column": "order_id",
+            "columns_with_high_nulls": [
+              "order_id",
+              "warehouse_id"
+            ],
+            "_type": "generic",
+            "rule": "nullable_foreign_key",
+            "target": "shipments",
+            "table_name": "shipments"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT order_id FROM shipments WHERE order_id IS NULL;"
+          ],
+          "explanation": "The foreign key column 'order_id' in the 'shipments' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM shipments WHERE order_id IS NULL;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_032_support_tickets",
+          "fix_id": "investigate-nullable-fk-support-tickets-customer-id",
+          "rows_affected_estimate": 124,
+          "tables_touched": [
+            "support_tickets"
+          ],
+          "depends_on": [],
+          "table": "support_tickets",
+          "target_table": "support_tickets",
+          "problem": "Investigate Nullable Foreign Key support_tickets.customer_id",
+          "fix": "The foreign key column 'customer_id' in the 'support_tickets' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "severity": "high",
+          "confidence": 0.95,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "null_ratio_high",
+          "source_type": "ai",
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 1000,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "resolved_at",
+              "customer_id",
+              "assigned_employee_id",
+              "order_id"
+            ]
+          },
+          "evidence_payload": {
+            "null_ratio": 1.0,
+            "total_rows": 1000,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "resolved_at",
+              "customer_id",
+              "assigned_employee_id",
+              "order_id"
+            ],
+            "_type": "nullability",
+            "rule": "null_ratio_high",
+            "target": "support_tickets",
+            "table_name": "support_tickets"
+          },
+          "estimated_rows_affected": 124,
+          "queries": [
+            "SELECT customer_id FROM support_tickets WHERE customer_id IS NULL;"
+          ],
+          "explanation": "The foreign key column 'customer_id' in the 'support_tickets' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM support_tickets WHERE customer_id IS NULL;"
+          ],
+          "rollback_queries": [],
+          "explain_summary": null
+        }
+      ],
+      "cards": [
+        {
+          "fix_id": "add-unique-constraint-customers-email",
+          "title": "Add Unique Constraint to customers.email",
+          "target": "customers",
+          "rationale": "[Pre-flight blocked: UNIQUE on (email) on table 'customers' would fail: 40 duplicate row(s) found] The 'email' column in the 'customers' table is identified as needing a unique constraint based on naming patterns. This will ensure data integrity by preventing duplicate email addresses. The DDL is idempotent. If duplicates exist, they must be resolved manually before applying this constraint.",
+          "risk_level": "medium",
+          "sql": "",
+          "explain_summary": null,
+          "preconditions": [
+            "BLOCKED: UNIQUE on (email) on table 'customers' would fail: 40 duplicate row(s) found",
+            "Original SQL: DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'customers_email_key' AND conrelid = 'customers'::regclass) THEN ALTER TABLE customers ADD CONSTRAINT customers_email_key UNIQUE "
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'customers_email_key' AND conrelid = 'customers'::regclass;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE customers DROP CONSTRAINT IF EXISTS customers_email_key;"
+          ],
+          "rows_affected_estimate": 2000,
+          "tables_touched": [
+            "customers"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "blocked",
+          "evidence": {
+            "block_reason": "UNIQUE on (email) on table 'customers' would fail: 40 duplicate row(s) found",
+            "original_sql": "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'customers_email_key' AND conrelid = 'customers'::regclass) THEN ALTER TABLE customers ADD CONSTRAINT customers_email_key UNIQUE (email); END IF; END $$;"
+          },
+          "evidence_payload": {
+            "_type": "blocked",
+            "block_reason": "UNIQUE on (email) on table 'customers' would fail: 40 duplicate row(s) found",
+            "original_sql": "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'customers_email_key' AND conrelid = 'customers'::regclass) THEN ALTER TABLE customers ADD CONSTRAINT customers_email_key UNIQUE (email); END IF; END $$;"
+          },
+          "source_rule": "fill_nulls_blocked",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "add-unique-constraint-employees-email",
+          "title": "Add Unique Constraint to employees.email",
+          "target": "employees",
+          "rationale": "The 'email' column in the 'employees' table is identified as needing a unique constraint based on naming patterns. This will ensure data integrity by preventing duplicate email addresses. The DDL is idempotent. If duplicates exist, they must be resolved manually before applying this constraint.",
+          "risk_level": "medium",
+          "sql": "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'employees_email_key' AND conrelid = 'employees'::regclass) THEN ALTER TABLE employees ADD CONSTRAINT employees_email_key UNIQUE (email); END IF; END $$;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'employees_email_key' AND conrelid = 'employees'::regclass;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE employees DROP CONSTRAINT IF EXISTS employees_email_key;"
+          ],
+          "rows_affected_estimate": 100,
+          "tables_touched": [
+            "employees"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "add-unique-constraint-payments-transaction-reference",
+          "title": "Add Unique Constraint to payments.transaction_reference",
+          "target": "payments",
+          "rationale": "The 'transaction_reference' column in the 'payments' table is identified as needing a unique constraint based on naming patterns. This will ensure data integrity by preventing duplicate transaction references. The DDL is idempotent. If duplicates exist, they must be resolved manually before applying this constraint.",
+          "risk_level": "medium",
+          "sql": "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'payments_transaction_reference_key' AND conrelid = 'payments'::regclass) THEN ALTER TABLE payments ADD CONSTRAINT payments_transaction_reference_key UNIQUE (transaction_reference); END IF; END $$;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'payments_transaction_reference_key' AND conrelid = 'payments'::regclass;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_transaction_reference_key;"
+          ],
+          "rows_affected_estimate": 3000,
+          "tables_touched": [
+            "payments"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "add-unique-constraint-products-sku",
+          "title": "Add Unique Constraint to products.sku",
+          "target": "products",
+          "rationale": "[Pre-flight blocked: UNIQUE on (sku) on table 'products' would fail: 20 duplicate row(s) found] The 'sku' column in the 'products' table is identified as needing a unique constraint based on naming patterns. This will ensure data integrity by preventing duplicate SKUs. The DDL is idempotent. If duplicates exist, they must be resolved manually before applying this constraint.",
+          "risk_level": "medium",
+          "sql": "",
+          "explain_summary": null,
+          "preconditions": [
+            "BLOCKED: UNIQUE on (sku) on table 'products' would fail: 20 duplicate row(s) found",
+            "Original SQL: DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'products_sku_key' AND conrelid = 'products'::regclass) THEN ALTER TABLE products ADD CONSTRAINT products_sku_key UNIQUE (sku); E"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'products_sku_key' AND conrelid = 'products'::regclass;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE products DROP CONSTRAINT IF EXISTS products_sku_key;"
+          ],
+          "rows_affected_estimate": 1000,
+          "tables_touched": [
+            "products"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "blocked",
+          "evidence": {
+            "block_reason": "UNIQUE on (sku) on table 'products' would fail: 20 duplicate row(s) found",
+            "original_sql": "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'products_sku_key' AND conrelid = 'products'::regclass) THEN ALTER TABLE products ADD CONSTRAINT products_sku_key UNIQUE (sku); END IF; END $$;"
+          },
+          "evidence_payload": {
+            "_type": "blocked",
+            "block_reason": "UNIQUE on (sku) on table 'products' would fail: 20 duplicate row(s) found",
+            "original_sql": "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'products_sku_key' AND conrelid = 'products'::regclass) THEN ALTER TABLE products ADD CONSTRAINT products_sku_key UNIQUE (sku); END IF; END $$;"
+          },
+          "source_rule": "fill_nulls_blocked",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "add-unique-constraint-suppliers-email",
+          "title": "Add Unique Constraint to suppliers.email",
+          "target": "suppliers",
+          "rationale": "The 'email' column in the 'suppliers' table is identified as needing a unique constraint based on naming patterns. This will ensure data integrity by preventing duplicate email addresses. The DDL is idempotent. If duplicates exist, they must be resolved manually before applying this constraint.",
+          "risk_level": "medium",
+          "sql": "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'suppliers_email_key' AND conrelid = 'suppliers'::regclass) THEN ALTER TABLE suppliers ADD CONSTRAINT suppliers_email_key UNIQUE (email); END IF; END $$;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'suppliers_email_key' AND conrelid = 'suppliers'::regclass;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE suppliers DROP CONSTRAINT IF EXISTS suppliers_email_key;"
+          ],
+          "rows_affected_estimate": 50,
+          "tables_touched": [
+            "suppliers"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "add-index-addresses-customer-id",
+          "title": "Add Index on addresses.customer_id",
+          "target": "addresses",
+          "rationale": "Adding an index on the 'customer_id' column in the 'addresses' table will improve the performance of queries involving this foreign key, especially JOINs and referential integrity checks. The index is created concurrently to minimize impact on concurrent operations.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_addresses_customer_id ON addresses (customer_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'addresses' AND indexname = 'idx_addresses_customer_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_addresses_customer_id;"
+          ],
+          "rows_affected_estimate": 2500,
+          "tables_touched": [
+            "addresses"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "add-index-categories-parent-category-id",
+          "title": "Add Index on categories.parent_category_id",
+          "target": "categories",
+          "rationale": "Adding an index on the 'parent_category_id' column in the 'categories' table will improve the performance of queries involving this foreign key, especially JOINs and referential integrity checks. The index is created concurrently to minimize impact on concurrent operations.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_categories_parent_category_id ON categories (parent_category_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'categories' AND indexname = 'idx_categories_parent_category_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_categories_parent_category_id;"
+          ],
+          "rows_affected_estimate": 20,
+          "tables_touched": [
+            "categories"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "add-index-inventory-warehouse-id",
+          "title": "Add Index on inventory.warehouse_id",
+          "target": "inventory",
+          "rationale": "Adding an index on the 'warehouse_id' column in the 'inventory' table will improve the performance of queries involving this foreign key, especially JOINs and referential integrity checks. The index is created concurrently to minimize impact on concurrent operations.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_inventory_warehouse_id ON inventory (warehouse_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'inventory' AND indexname = 'idx_inventory_warehouse_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_inventory_warehouse_id;"
+          ],
+          "rows_affected_estimate": 2000,
+          "tables_touched": [
+            "inventory"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "add-index-order-items-order-id",
+          "title": "Add Index on order_items.order_id",
+          "target": "order_items",
+          "rationale": "Adding an index on the 'order_id' column in the 'order_items' table will improve the performance of queries involving this foreign key, especially JOINs and referential integrity checks. The index is created concurrently to minimize impact on concurrent operations.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_order_items_order_id ON order_items (order_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'order_items' AND indexname = 'idx_order_items_order_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_order_items_order_id;"
+          ],
+          "rows_affected_estimate": 6000,
+          "tables_touched": [
+            "order_items"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "add-index-orders-employee-id",
+          "title": "Add Index on orders.employee_id",
+          "target": "orders",
+          "rationale": "Adding an index on the 'employee_id' column in the 'orders' table will improve the performance of queries involving this foreign key, especially JOINs and referential integrity checks. The index is created concurrently to minimize impact on concurrent operations.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_orders_employee_id ON orders (employee_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'orders' AND indexname = 'idx_orders_employee_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_orders_employee_id;"
+          ],
+          "rows_affected_estimate": 3000,
+          "tables_touched": [
+            "orders"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "add-index-reviews-customer-id",
+          "title": "Add Index on reviews.customer_id",
+          "target": "reviews",
+          "rationale": "Adding an index on the 'customer_id' column in the 'reviews' table will improve the performance of queries involving this foreign key, especially JOINs and referential integrity checks. The index is created concurrently to minimize impact on concurrent operations.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_reviews_customer_id ON reviews (customer_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'reviews' AND indexname = 'idx_reviews_customer_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_reviews_customer_id;"
+          ],
+          "rows_affected_estimate": 1500,
+          "tables_touched": [
+            "reviews"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "add-index-shipments-order-id",
+          "title": "Add Index on shipments.order_id",
+          "target": "shipments",
+          "rationale": "Adding an index on the 'order_id' column in the 'shipments' table will improve the performance of queries involving this foreign key, especially JOINs and referential integrity checks. The index is created concurrently to minimize impact on concurrent operations.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_shipments_order_id ON shipments (order_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'shipments' AND indexname = 'idx_shipments_order_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_shipments_order_id;"
+          ],
+          "rows_affected_estimate": 2500,
+          "tables_touched": [
+            "shipments"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "add-index-support-tickets-customer-id",
+          "title": "Add Index on support_tickets.customer_id",
+          "target": "support_tickets",
+          "rationale": "Adding an index on the 'customer_id' column in the 'support_tickets' table will improve the performance of queries involving this foreign key, especially JOINs and referential integrity checks. The index is created concurrently to minimize impact on concurrent operations.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_support_tickets_customer_id ON support_tickets (customer_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'support_tickets' AND indexname = 'idx_support_tickets_customer_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_support_tickets_customer_id;"
+          ],
+          "rows_affected_estimate": 1000,
+          "tables_touched": [
+            "support_tickets"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "investigate-negative-zero-products-price-stock-quantity-weight",
+          "title": "Investigate Negative or Zero Amounts in products.price, stock_quantity, weight",
+          "target": "products",
+          "rationale": "The 'products' table contains rows where 'price', 'stock_quantity', or 'weight' are zero or negative, which violates business rules. This query identifies these rows for review. Manual intervention is required to correct these values.",
+          "risk_level": "low",
+          "sql": "SELECT product_id, price, stock_quantity, weight FROM products WHERE price <= 0 OR stock_quantity <= 0 OR weight <= 0;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM products WHERE price <= 0 OR stock_quantity <= 0 OR weight <= 0;"
+          ],
+          "rollback_queries": [],
+          "rows_affected_estimate": 13,
+          "tables_touched": [
+            "products"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "investigate-null-audit-logs-details-performed-by",
+          "title": "Investigate High Null Ratio in audit_logs.details, performed_by",
+          "target": "audit_logs",
+          "rationale": "The columns 'details' and 'performed_by' in the 'audit_logs' table have a high percentage of NULL values (84.3%). This query helps identify these rows for further investigation. Consider updating these columns with meaningful data or enforcing NOT NULL constraints if they are always required.",
+          "risk_level": "low",
+          "sql": "SELECT details, performed_by FROM audit_logs WHERE details IS NULL OR performed_by IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM audit_logs WHERE details IS NULL OR performed_by IS NULL;"
+          ],
+          "rollback_queries": [],
+          "rows_affected_estimate": 1847,
+          "tables_touched": [
+            "audit_logs"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "investigate-null-customers-phone-notes-email",
+          "title": "Investigate High Null Rate in customers.phone, notes, email",
+          "target": "customers",
+          "rationale": "The columns 'phone', 'notes', and 'email' in the 'customers' table have a high percentage of NULL values (up to 50.25%). This query helps identify these rows for further investigation. Consider updating these columns with meaningful data or enforcing NOT NULL constraints if they are always required.",
+          "risk_level": "low",
+          "sql": "SELECT phone, notes, email FROM customers WHERE phone IS NULL OR notes IS NULL OR email IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM customers WHERE phone IS NULL OR notes IS NULL OR email IS NULL;"
+          ],
+          "rollback_queries": [],
+          "rows_affected_estimate": 1739,
+          "tables_touched": [
+            "customers"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "investigate-null-orders-shipping-address-id-employee-id-notes",
+          "title": "Investigate High Null Ratio in orders.shipping_address_id, employee_id, notes",
+          "target": "orders",
+          "rationale": "The columns 'shipping_address_id', 'employee_id', and 'notes' in the 'orders' table have a high percentage of NULL values (up to 19.93%). This query helps identify these rows for further investigation. Consider updating these columns with meaningful data or enforcing NOT NULL constraints if they are always required.",
+          "risk_level": "low",
+          "sql": "SELECT shipping_address_id, employee_id, notes FROM orders WHERE shipping_address_id IS NULL OR employee_id IS NULL OR notes IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM orders WHERE shipping_address_id IS NULL OR employee_id IS NULL OR notes IS NULL;"
+          ],
+          "rollback_queries": [],
+          "rows_affected_estimate": 2594,
+          "tables_touched": [
+            "orders"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "investigate-null-reviews-review-text",
+          "title": "Investigate High Null Ratio in reviews.review_text",
+          "target": "reviews",
+          "rationale": "The column 'review_text' in the 'reviews' table has a high percentage of NULL values (51.2%). This query helps identify these rows for further investigation. Consider updating this column with meaningful data or enforcing a NOT NULL constraint if it is always required.",
+          "risk_level": "low",
+          "sql": "SELECT review_text FROM reviews WHERE review_text IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM reviews WHERE review_text IS NULL;"
+          ],
+          "rollback_queries": [],
+          "rows_affected_estimate": 768,
+          "tables_touched": [
+            "reviews"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "investigate-null-shipments-warehouse-id-tracking-number",
+          "title": "Investigate High Null Ratio in shipments.warehouse_id, tracking_number",
+          "target": "shipments",
+          "rationale": "The columns 'warehouse_id' and 'tracking_number' in the 'shipments' table have a high percentage of NULL values (up to 14.88%). This query helps identify these rows for further investigation. Consider updating these columns with meaningful data or enforcing NOT NULL constraints if they are always required.",
+          "risk_level": "low",
+          "sql": "SELECT warehouse_id, tracking_number FROM shipments WHERE warehouse_id IS NULL OR tracking_number IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM shipments WHERE warehouse_id IS NULL OR tracking_number IS NULL;"
+          ],
+          "rollback_queries": [],
+          "rows_affected_estimate": 926,
+          "tables_touched": [
+            "shipments"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "investigate-null-support-tickets-resolved-at-customer-id-assigned-employee-id-order-id",
+          "title": "Investigate High Null Ratio in support_tickets.resolved_at, customer_id, assigned_employee_id, order_id",
+          "target": "support_tickets",
+          "rationale": "The columns 'resolved_at', 'customer_id', 'assigned_employee_id', and 'order_id' in the 'support_tickets' table have a high percentage of NULL values (up to 100%). This query helps identify these rows for further investigation. Consider updating these columns with meaningful data or enforcing NOT NULL constraints if they are always required.",
+          "risk_level": "low",
+          "sql": "SELECT resolved_at, customer_id, assigned_employee_id, order_id FROM support_tickets WHERE resolved_at IS NULL OR customer_id IS NULL OR assigned_employee_id IS NULL OR order_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM support_tickets WHERE resolved_at IS NULL OR customer_id IS NULL OR assigned_employee_id IS NULL OR order_id IS NULL;"
+          ],
+          "rollback_queries": [],
+          "rows_affected_estimate": 1000,
+          "tables_touched": [
+            "support_tickets"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "investigate-null-warehouses-manager-name",
+          "title": "Investigate High Null Ratio in warehouses.manager_name",
+          "target": "warehouses",
+          "rationale": "The column 'manager_name' in the 'warehouses' table has a high percentage of NULL values (53.33%). This query helps identify these rows for further investigation. Consider updating this column with meaningful data or enforcing a NOT NULL constraint if it is always required.",
+          "risk_level": "low",
+          "sql": "SELECT manager_name FROM warehouses WHERE manager_name IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM warehouses WHERE manager_name IS NULL;"
+          ],
+          "rollback_queries": [],
+          "rows_affected_estimate": 8,
+          "tables_touched": [
+            "warehouses"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "investigate-nullable-fk-addresses-customer-id",
+          "title": "Investigate Nullable Foreign Key addresses.customer_id",
+          "target": "addresses",
+          "rationale": "The foreign key column 'customer_id' in the 'addresses' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "risk_level": "low",
+          "sql": "SELECT customer_id FROM addresses WHERE customer_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM addresses WHERE customer_id IS NULL;"
+          ],
+          "rollback_queries": [],
+          "rows_affected_estimate": 250,
+          "tables_touched": [
+            "addresses"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "investigate-nullable-fk-categories-parent-category-id",
+          "title": "Investigate Nullable Foreign Key categories.parent_category_id",
+          "target": "categories",
+          "rationale": "The foreign key column 'parent_category_id' in the 'categories' table is nullable and has a high null ratio (25%). This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "risk_level": "low",
+          "sql": "SELECT parent_category_id FROM categories WHERE parent_category_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM categories WHERE parent_category_id IS NULL;"
+          ],
+          "rollback_queries": [],
+          "rows_affected_estimate": 5,
+          "tables_touched": [
+            "categories"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "investigate-nullable-fk-employees-manager-id",
+          "title": "Investigate Nullable Foreign Key employees.manager_id",
+          "target": "employees",
+          "rationale": "The foreign key column 'manager_id' in the 'employees' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "risk_level": "low",
+          "sql": "SELECT manager_id FROM employees WHERE manager_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM employees WHERE manager_id IS NULL;"
+          ],
+          "rollback_queries": [],
+          "rows_affected_estimate": 5,
+          "tables_touched": [
+            "employees"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "investigate-nullable-fk-inventory-warehouse-id",
+          "title": "Investigate Nullable Foreign Key inventory.warehouse_id",
+          "target": "inventory",
+          "rationale": "The foreign key column 'warehouse_id' in the 'inventory' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "risk_level": "low",
+          "sql": "SELECT warehouse_id FROM inventory WHERE warehouse_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM inventory WHERE warehouse_id IS NULL;"
+          ],
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "inventory"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "investigate-nullable-fk-order-items-order-id",
+          "title": "Investigate Nullable Foreign Key order_items.order_id",
+          "target": "order_items",
+          "rationale": "The foreign key column 'order_id' in the 'order_items' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "risk_level": "low",
+          "sql": "SELECT order_id FROM order_items WHERE order_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM order_items WHERE order_id IS NULL;"
+          ],
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "order_items"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "investigate-nullable-fk-orders-employee-id",
+          "title": "Investigate Nullable Foreign Key orders.employee_id",
+          "target": "orders",
+          "rationale": "The foreign key column 'employee_id' in the 'orders' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "risk_level": "low",
+          "sql": "SELECT employee_id FROM orders WHERE employee_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM orders WHERE employee_id IS NULL;"
+          ],
+          "rollback_queries": [],
+          "rows_affected_estimate": 887,
+          "tables_touched": [
+            "orders"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "investigate-nullable-fk-payments-order-id",
+          "title": "Investigate Nullable Foreign Key payments.order_id",
+          "target": "payments",
+          "rationale": "The foreign key column 'order_id' in the 'payments' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "risk_level": "low",
+          "sql": "SELECT order_id FROM payments WHERE order_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM payments WHERE order_id IS NULL;"
+          ],
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "payments"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "investigate-nullable-fk-products-category-id",
+          "title": "Investigate Nullable Foreign Key products.category_id",
+          "target": "products",
+          "rationale": "The foreign key column 'category_id' in the 'products' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "risk_level": "low",
+          "sql": "SELECT category_id FROM products WHERE category_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM products WHERE category_id IS NULL;"
+          ],
+          "rollback_queries": [],
+          "rows_affected_estimate": 16,
+          "tables_touched": [
+            "products"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "investigate-nullable-fk-reviews-customer-id",
+          "title": "Investigate Nullable Foreign Key reviews.customer_id",
+          "target": "reviews",
+          "rationale": "The foreign key column 'customer_id' in the 'reviews' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "risk_level": "low",
+          "sql": "SELECT customer_id FROM reviews WHERE customer_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM reviews WHERE customer_id IS NULL;"
+          ],
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "reviews"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "investigate-nullable-fk-shipments-order-id",
+          "title": "Investigate Nullable Foreign Key shipments.order_id",
+          "target": "shipments",
+          "rationale": "The foreign key column 'order_id' in the 'shipments' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "risk_level": "low",
+          "sql": "SELECT order_id FROM shipments WHERE order_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM shipments WHERE order_id IS NULL;"
+          ],
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "shipments"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "investigate-nullable-fk-support-tickets-customer-id",
+          "title": "Investigate Nullable Foreign Key support_tickets.customer_id",
+          "target": "support_tickets",
+          "rationale": "The foreign key column 'customer_id' in the 'support_tickets' table is nullable. This query identifies rows where this column is NULL. Consider if this column should be NOT NULL to enforce referential integrity, or ensure application logic handles NULLs appropriately.",
+          "risk_level": "low",
+          "sql": "SELECT customer_id FROM support_tickets WHERE customer_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM support_tickets WHERE customer_id IS NULL;"
+          ],
+          "rollback_queries": [],
+          "rows_affected_estimate": 124,
+          "tables_touched": [
+            "support_tickets"
+          ],
+          "depends_on": [],
+          "card_family": "unknown",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        }
+      ]
+    }
+  }
+}
