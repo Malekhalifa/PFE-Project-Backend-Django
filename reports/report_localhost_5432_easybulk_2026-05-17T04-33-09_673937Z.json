@@ -1,0 +1,1683 @@
+{
+  "pipeline_run_id": "1a6b11ba-92e2-4a42-ad9b-df25cbe1fb5e",
+  "database_id": "localhost_5432_easybulk",
+  "llm_model": "gemini-2.5-flash",
+  "run_timestamp": "2026-05-17T04:33:09.673937Z",
+  "executive_summary": {
+    "verdict": "medium_risk",
+    "top_issues": [
+      "[CRITICAL] missing primary key on campagne_contacts",
+      "[CRITICAL] missing primary key on expediteur_groupe",
+      "[CRITICAL] missing primary key on campagne_tags"
+    ],
+    "tables_scanned": 30,
+    "tables_profiled": 30,
+    "fixes_recommended": 0,
+    "critical_fix_count": 0,
+    "migration_risk": {
+      "score": 0,
+      "high_risk_cards": 0,
+      "blocked_cards": 0,
+      "destructive_cards": 0
+    }
+  },
+  "summary": {
+    "confidence_score": 100,
+    "data_quality_score": 50,
+    "final_fix_count": 0,
+    "confidence_explanation": {
+      "total_findings": 52,
+      "high_confidence_count": 34,
+      "medium_confidence_count": 18,
+      "low_confidence_count": 0,
+      "summary": "65% of findings have confidence ≥ 0.9 (34/52 high, 18 medium, 0 low). Deterministic (py_profiler) findings are 0.92–1.0; LLM findings vary."
+    },
+    "timing": {
+      "started_at": "2026-05-17T04:33:09.673937Z",
+      "ended_at": "2026-05-17T04:40:10.900138Z",
+      "total_duration_ms": 421222,
+      "total_duration_human": "421.2s",
+      "phases_ms": {
+        "schema_priming": 415,
+        "Python Profiler": 205,
+        "Reducer": 34,
+        "Schema Integrity Validator": 109722,
+        "Statistical Validator": 183558,
+        "Structural Validator": 14405,
+        "Relational Validator": 39230,
+        "Data Fix Planner": 127231
+      },
+      "bottleneck": "Statistical Validator"
+    },
+    "entity_hallucinations": {
+      "total_stripped": 2,
+      "breakdown": {
+        "non_existent_entities": 2,
+        "inferred_fk_rules": 0,
+        "outside_profiler_coverage": 0,
+        "fix_cards": 0
+      }
+    }
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "1a6b11ba-92e2-4a42-ad9b-df25cbe1fb5e",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-17T04:33:09.673937Z",
+      "agent": "Schema Integrity Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 0,
+        "items_flagged": 40,
+        "critical_issues": 4,
+        "high_issues": 23,
+        "medium_issues": 32,
+        "low_issues": 0,
+        "overall_quality_score": 53.2,
+        "overall_confidence": 0.9059,
+        "flagged_tables": [
+          "budget_history",
+          "campagne",
+          "campagne_contacts",
+          "campagne_tags",
+          "expediteur",
+          "expediteur_groupe",
+          "groupe",
+          "membership",
+          "mention",
+          "modele",
+          "request_api",
+          "smsc_routing_rule",
+          "tags",
+          "user_contact",
+          "user_contact_tags",
+          "user_keys",
+          "user_mission"
+        ]
+      },
+      "metrics": {
+        "validator": "schema",
+        "findings_count": 76,
+        "deduped_finding_count": 59,
+        "grouped_finding_count": 40
+      },
+      "findings": [
+        {
+          "table": "campagne_contacts",
+          "column": null,
+          "entity": "campagne_contacts",
+          "rule": "missing_primary_key",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campagne_contacts",
+            "reason": "Table does not have a primary key defined."
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "expediteur_groupe",
+          "column": null,
+          "entity": "expediteur_groupe",
+          "rule": "missing_primary_key",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "expediteur_groupe",
+            "reason": "Table does not have a primary key defined."
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "campagne_tags",
+          "column": null,
+          "entity": "campagne_tags",
+          "rule": "missing_primary_key",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campagne_tags",
+            "reason": "Table does not have a primary key defined."
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "user_contact_tags",
+          "column": null,
+          "entity": "user_contact_tags",
+          "rule": "missing_primary_key",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "user_contact_tags",
+            "reason": "Table does not have a primary key defined."
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "groupe",
+          "column": null,
+          "entity": "groupe.admin_id",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "table_name": "groupe",
+            "column_name": "admin_id",
+            "reason": "Foreign key column \"admin_id\" is not indexed.",
+            "columns_with_high_nulls": [
+              "admin_id",
+              "status_id"
+            ]
+          },
+          "remediation_hint": null,
+          "affected_columns": [
+            "admin_id",
+            "status_id"
+          ],
+          "count": 2
+        },
+        {
+          "table": "expediteur",
+          "column": "organization_id",
+          "entity": "expediteur.organization_id",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "table_name": "expediteur",
+            "column_name": "organization_id",
+            "reason": "Foreign key column \"organization_id\" is not indexed."
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "campagne_contacts",
+          "column": null,
+          "entity": "campagne_contacts.campagne_id",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "table_name": "campagne_contacts",
+            "column_name": "campagne_id",
+            "reason": "Foreign key column \"campagne_id\" is not indexed.",
+            "columns_with_high_nulls": [
+              "campagne_id",
+              "contact_id"
+            ]
+          },
+          "remediation_hint": null,
+          "affected_columns": [
+            "campagne_id",
+            "contact_id"
+          ],
+          "count": 2
+        },
+        {
+          "table": "membership",
+          "column": "status_id",
+          "entity": "membership.status_id",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "table_name": "membership",
+            "column_name": "status_id",
+            "reason": "Foreign key column \"status_id\" is not indexed."
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "expediteur_groupe",
+          "column": null,
+          "entity": "expediteur_groupe.expediteur_id",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "table_name": "expediteur_groupe",
+            "column_name": "expediteur_id",
+            "reason": "Foreign key column \"expediteur_id\" is not indexed.",
+            "columns_with_high_nulls": [
+              "expediteur_id",
+              "groupe_id"
+            ]
+          },
+          "remediation_hint": null,
+          "affected_columns": [
+            "expediteur_id",
+            "groupe_id"
+          ],
+          "count": 2
+        },
+        {
+          "table": "campagne_tags",
+          "column": null,
+          "entity": "campagne_tags.campagne_id",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "table_name": "campagne_tags",
+            "column_name": "campagne_id",
+            "reason": "Foreign key column \"campagne_id\" is not indexed.",
+            "columns_with_high_nulls": [
+              "campagne_id",
+              "tag_name"
+            ]
+          },
+          "remediation_hint": null,
+          "affected_columns": [
+            "campagne_id",
+            "tag_name"
+          ],
+          "count": 2
+        },
+        {
+          "table": "mention",
+          "column": "modele_id",
+          "entity": "mention.modele_id",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "table_name": "mention",
+            "column_name": "modele_id",
+            "reason": "Foreign key column \"modele_id\" is not indexed."
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "smsc_routing_rule",
+          "column": "target_smsc_org_id",
+          "entity": "smsc_routing_rule.target_smsc_org_id",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "table_name": "smsc_routing_rule",
+            "column_name": "target_smsc_org_id",
+            "reason": "Foreign key column \"target_smsc_org_id\" is not indexed."
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "campagne",
+          "column": null,
+          "entity": "campagne.user_id",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "table_name": "campagne",
+            "column_name": "user_id",
+            "reason": "Foreign key column \"user_id\" is not indexed.",
+            "columns_with_high_nulls": [
+              "user_id",
+              "expediteur_id",
+              "modele_id",
+              "status_id",
+              "campaign_type_permission_id",
+              "schedule_id"
+            ]
+          },
+          "remediation_hint": null,
+          "affected_columns": [
+            "user_id",
+            "expediteur_id",
+            "modele_id",
+            "status_id",
+            "campaign_type_permission_id",
+            "schedule_id"
+          ],
+          "count": 6
+        },
+        {
+          "table": "modele",
+          "column": "campaign_type",
+          "entity": "modele.campaign_type",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "table_name": "modele",
+            "column_name": "campaign_type",
+            "reason": "Foreign key column \"campaign_type\" is not indexed."
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "budget_history",
+          "column": "groupe_id",
+          "entity": "budget_history.groupe_id",
+          "rule": "nullable_foreign_key_style_column",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "budget_history",
+            "column_name": "groupe_id",
+            "reason": "Foreign key column \"groupe_id\" is nullable and not marked as nullable by design."
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "entity": "groupe.admin_id",
+          "rule": "nullable_foreign_key_style_column",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "groupe",
+            "column_name": "admin_id",
+            "reason": "Foreign key column \"admin_id\" is nullable and not marked as nullable by design."
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "campagne_contacts",
+          "column": "contact_id",
+          "entity": "campagne_contacts.contact_id",
+          "rule": "nullable_foreign_key_style_column",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "campagne_contacts",
+            "column_name": "contact_id",
+            "reason": "Foreign key column \"contact_id\" is nullable and not marked as nullable by design."
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "campagne_tags",
+          "column": "tag_name",
+          "entity": "campagne_tags.tag_name",
+          "rule": "nullable_foreign_key_style_column",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "campagne_tags",
+            "column_name": "tag_name",
+            "reason": "Foreign key column \"tag_name\" is nullable and not marked as nullable by design."
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "request_api",
+          "column": "membership_id",
+          "entity": "request_api.membership_id",
+          "rule": "nullable_foreign_key_style_column",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "request_api",
+            "column_name": "membership_id",
+            "reason": "Foreign key column \"membership_id\" is nullable and not marked as nullable by design."
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "smsc_routing_rule",
+          "column": null,
+          "entity": "smsc_routing_rule.groupe_id",
+          "rule": "nullable_foreign_key_style_column",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "smsc_routing_rule",
+            "column_name": "groupe_id",
+            "reason": "Foreign key column \"groupe_id\" is nullable and not marked as nullable by design."
+          },
+          "remediation_hint": null,
+          "affected_columns": [
+            "groupe_id",
+            "expediteur_id"
+          ],
+          "count": 2
+        },
+        {
+          "table": "user_contact",
+          "column": "membership_id",
+          "entity": "user_contact.membership_id",
+          "rule": "nullable_foreign_key_style_column",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "user_contact",
+            "column_name": "membership_id",
+            "reason": "Foreign key column \"membership_id\" is nullable and not marked as nullable by design."
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "tags",
+          "column": "membership_id",
+          "entity": "tags.membership_id",
+          "rule": "nullable_foreign_key_style_column",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "tags",
+            "column_name": "membership_id",
+            "reason": "Foreign key column \"membership_id\" is nullable and not marked as nullable by design."
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "user_keys",
+          "column": "membership_id",
+          "entity": "user_keys.membership_id",
+          "rule": "nullable_foreign_key_style_column",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "user_keys",
+            "column_name": "membership_id",
+            "reason": "Foreign key column \"membership_id\" is nullable and not marked as nullable by design."
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "user_mission",
+          "column": "groupe_id",
+          "entity": "user_mission.groupe_id",
+          "rule": "nullable_foreign_key_style_column",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "user_mission",
+            "column_name": "groupe_id",
+            "reason": "Foreign key column \"groupe_id\" is nullable and not marked as nullable by design."
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "campagne",
+          "column": null,
+          "entity": "campagne.user_id",
+          "rule": "nullable_foreign_key_style_column",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "campagne",
+            "column_name": "user_id",
+            "reason": "Foreign key column \"user_id\" is nullable and not marked as nullable by design."
+          },
+          "remediation_hint": null,
+          "affected_columns": [
+            "user_id",
+            "expediteur_id",
+            "modele_id",
+            "campaign_type_permission_id",
+            "schedule_id"
+          ],
+          "count": 5
+        },
+        {
+          "table": "modele",
+          "column": "membership_id",
+          "entity": "modele.membership_id",
+          "rule": "nullable_foreign_key_style_column",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table_name": "modele",
+            "column_name": "membership_id",
+            "reason": "Foreign key column \"membership_id\" is nullable and not marked as nullable by design."
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "budget_history",
+          "column": "groupe_id",
+          "entity": "budget_history.groupe_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true
+          },
+          "remediation_hint": "'budget_history.groupe_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record."
+        },
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "entity": "groupe.admin_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true
+          },
+          "remediation_hint": "'groupe.admin_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record."
+        },
+        {
+          "table": "campagne_contacts",
+          "column": null,
+          "entity": "campagne_contacts",
+          "rule": "missing_pk",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "has_primary_key": false
+          },
+          "remediation_hint": "Add a PRIMARY KEY to 'campagne_contacts'."
+        },
+        {
+          "table": "expediteur_groupe",
+          "column": null,
+          "entity": "expediteur_groupe",
+          "rule": "missing_pk",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "has_primary_key": false
+          },
+          "remediation_hint": "Add a PRIMARY KEY to 'expediteur_groupe'."
+        },
+        {
+          "table": "campagne_tags",
+          "column": null,
+          "entity": "campagne_tags",
+          "rule": "missing_pk",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "has_primary_key": false
+          },
+          "remediation_hint": "Add a PRIMARY KEY to 'campagne_tags'."
+        },
+        {
+          "table": "request_api",
+          "column": "membership_id",
+          "entity": "request_api.membership_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true
+          },
+          "remediation_hint": "'request_api.membership_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record."
+        },
+        {
+          "table": "smsc_routing_rule",
+          "column": null,
+          "entity": "smsc_routing_rule.expediteur_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true,
+            "columns_with_high_nulls": [
+              "expediteur_id",
+              "groupe_id"
+            ]
+          },
+          "remediation_hint": "'smsc_routing_rule.expediteur_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record.",
+          "affected_columns": [
+            "expediteur_id",
+            "groupe_id"
+          ],
+          "count": 2
+        },
+        {
+          "table": "user_contact",
+          "column": "membership_id",
+          "entity": "user_contact.membership_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true
+          },
+          "remediation_hint": "'user_contact.membership_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record."
+        },
+        {
+          "table": "user_contact_tags",
+          "column": null,
+          "entity": "user_contact_tags",
+          "rule": "missing_pk",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "has_primary_key": false
+          },
+          "remediation_hint": "Add a PRIMARY KEY to 'user_contact_tags'."
+        },
+        {
+          "table": "tags",
+          "column": "membership_id",
+          "entity": "tags.membership_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true
+          },
+          "remediation_hint": "'tags.membership_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record."
+        },
+        {
+          "table": "user_keys",
+          "column": "membership_id",
+          "entity": "user_keys.membership_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true
+          },
+          "remediation_hint": "'user_keys.membership_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record."
+        },
+        {
+          "table": "user_mission",
+          "column": "groupe_id",
+          "entity": "user_mission.groupe_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true
+          },
+          "remediation_hint": "'user_mission.groupe_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record."
+        },
+        {
+          "table": "campagne",
+          "column": null,
+          "entity": "campagne.schedule_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true,
+            "columns_with_high_nulls": [
+              "schedule_id",
+              "campaign_type_permission_id",
+              "expediteur_id",
+              "modele_id",
+              "user_id"
+            ]
+          },
+          "remediation_hint": "'campagne.schedule_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record.",
+          "affected_columns": [
+            "schedule_id",
+            "campaign_type_permission_id",
+            "expediteur_id",
+            "modele_id",
+            "user_id"
+          ],
+          "count": 5
+        },
+        {
+          "table": "modele",
+          "column": "membership_id",
+          "entity": "modele.membership_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true
+          },
+          "remediation_hint": "'modele.membership_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record."
+        }
+      ]
+    },
+    "statistical_validator": {
+      "pipeline_run_id": "1a6b11ba-92e2-4a42-ad9b-df25cbe1fb5e",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-17T04:33:09.673937Z",
+      "agent": "Statistical Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 19,
+        "items_flagged": 11,
+        "critical_issues": 0,
+        "high_issues": 11,
+        "medium_issues": 2,
+        "low_issues": 5,
+        "overall_quality_score": 86.6,
+        "overall_confidence": 0.8722,
+        "flagged_tables": [
+          "contacts",
+          "groupe",
+          "prm_organization",
+          "prm_status",
+          "smsc_routing_rule",
+          "user_contact",
+          "user_contact_tags",
+          "user_keys",
+          "user_mission"
+        ]
+      },
+      "metrics": {
+        "validator": "statistical",
+        "findings_count": 18,
+        "deduped_finding_count": 18,
+        "grouped_finding_count": 11
+      },
+      "findings": [
+        {
+          "table": "prm_status",
+          "column": null,
+          "entity": "prm_status",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.925,
+          "evidence": {
+            "affected_columns": [
+              "updated_at"
+            ],
+            "current_null_rate": {
+              "updated_at": 1.0
+            },
+            "baseline_null_rate": {
+              "updated_at": 1.0
+            },
+            "threshold": 0.8
+          },
+          "remediation_hint": null,
+          "affected_columns": [
+            "updated_at"
+          ],
+          "count": 2
+        },
+        {
+          "table": "user_keys",
+          "column": null,
+          "entity": "user_keys",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.9333,
+          "evidence": {
+            "affected_columns": [
+              "expiration_date",
+              "last_time_used_date"
+            ],
+            "current_null_rate": {
+              "expiration_date": 1.0,
+              "last_time_used_date": 1.0
+            },
+            "baseline_null_rate": {
+              "expiration_date": 1.0,
+              "last_time_used_date": 1.0
+            },
+            "threshold": 0.8
+          },
+          "remediation_hint": null,
+          "affected_columns": [
+            "expiration_date",
+            "last_time_used_date"
+          ],
+          "count": 3
+        },
+        {
+          "table": "groupe",
+          "column": null,
+          "entity": "groupe",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.925,
+          "evidence": {
+            "affected_columns": [
+              "admin_id"
+            ],
+            "current_null_rate": {
+              "admin_id": 0.8888888888888888
+            },
+            "baseline_null_rate": {
+              "admin_id": 0.8888888888888888
+            },
+            "threshold": 0.4
+          },
+          "remediation_hint": null,
+          "affected_columns": [
+            "admin_id"
+          ],
+          "count": 2
+        },
+        {
+          "table": "smsc_routing_rule",
+          "column": null,
+          "entity": "smsc_routing_rule",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.9333,
+          "evidence": {
+            "affected_columns": [
+              "expediteur_id",
+              "groupe_id"
+            ],
+            "current_null_rate": {
+              "expediteur_id": 0.8571428571428571,
+              "groupe_id": 0.8571428571428571
+            },
+            "baseline_null_rate": {
+              "expediteur_id": 0.8571428571428571,
+              "groupe_id": 0.8571428571428571
+            },
+            "threshold": 0.4
+          },
+          "remediation_hint": null,
+          "affected_columns": [
+            "expediteur_id",
+            "groupe_id"
+          ],
+          "count": 3
+        },
+        {
+          "table": "user_mission",
+          "column": null,
+          "entity": "user_mission",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.925,
+          "evidence": {
+            "affected_columns": [
+              "groupe_id"
+            ],
+            "current_null_rate": {
+              "groupe_id": 0.5
+            },
+            "baseline_null_rate": {
+              "groupe_id": 0.5
+            },
+            "threshold": 0.4
+          },
+          "remediation_hint": null,
+          "affected_columns": [
+            "groupe_id"
+          ],
+          "count": 2
+        },
+        {
+          "table": "prm_organization",
+          "column": null,
+          "entity": "prm_organization",
+          "rule": "duplicate_values",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "affected_columns": [
+              "code"
+            ],
+            "duplicate_count": 3,
+            "total_rows": 17,
+            "duplicate_ratio": 0.17647058823529413,
+            "threshold": 0.05
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "user_contact_tags",
+          "column": null,
+          "entity": "user_contact_tags",
+          "rule": "low_cardinality",
+          "severity": "low",
+          "confidence": 0.75,
+          "evidence": {
+            "affected_columns": [
+              "tag_id"
+            ],
+            "current_cardinality": {
+              "tag_id": 7
+            },
+            "total_rows": 20051,
+            "cardinality_ratio": 0.0003491097601117151
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "user_contact_tags",
+          "column": null,
+          "entity": "user_contact_tags",
+          "rule": "categorical_drift",
+          "severity": "low",
+          "confidence": 0.75,
+          "evidence": {
+            "affected_columns": [
+              "tag_id"
+            ],
+            "low_frequency_categories": [
+              {
+                "category": "4",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "2",
+                "percentage": "0.0100"
+              },
+              {
+                "category": "7",
+                "percentage": "0.0199"
+              },
+              {
+                "category": "3",
+                "percentage": "0.0549"
+              },
+              {
+                "category": "6",
+                "percentage": "0.1646"
+              }
+            ]
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "contacts",
+          "column": null,
+          "entity": "contacts",
+          "rule": "categorical_drift",
+          "severity": "low",
+          "confidence": 0.75,
+          "evidence": {
+            "affected_columns": [
+              "country_code"
+            ],
+            "low_frequency_categories": [
+              {
+                "category": "61",
+                "percentage": "0.0100"
+              },
+              {
+                "category": "86",
+                "percentage": "0.0199"
+              },
+              {
+                "category": "39",
+                "percentage": "0.0199"
+              },
+              {
+                "category": "49",
+                "percentage": "0.0199"
+              },
+              {
+                "category": "91",
+                "percentage": "0.0199"
+              },
+              {
+                "category": "27",
+                "percentage": "0.0199"
+              },
+              {
+                "category": "971",
+                "percentage": "0.0199"
+              },
+              {
+                "category": "212",
+                "percentage": "0.0299"
+              },
+              {
+                "category": "44",
+                "percentage": "0.0299"
+              },
+              {
+                "category": "81",
+                "percentage": "0.0299"
+              },
+              {
+                "category": "55",
+                "percentage": "0.0299"
+              },
+              {
+                "category": "34",
+                "percentage": "0.0398"
+              },
+              {
+                "category": "33",
+                "percentage": "0.0498"
+              }
+            ]
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "user_contact",
+          "column": null,
+          "entity": "user_contact",
+          "rule": "low_cardinality",
+          "severity": "low",
+          "confidence": 0.75,
+          "evidence": {
+            "affected_columns": [
+              "attribute1",
+              "attribute2",
+              "attribute3",
+              "date_created",
+              "date_modified",
+              "membership_id"
+            ],
+            "current_cardinality": {
+              "attribute1": 37,
+              "attribute2": 36,
+              "attribute3": 34,
+              "date_created": 10,
+              "date_modified": 10,
+              "membership_id": 4
+            },
+            "total_rows": 20042,
+            "cardinality_ratio": {
+              "attribute1": 0.0018461231414030536,
+              "attribute2": 0.0017962279213651331,
+              "attribute3": 0.0016964374812892926,
+              "date_created": 0.0004989521005887637,
+              "date_modified": 0.0004989521005887637,
+              "membership_id": 0.00019958087017263746
+            }
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "user_contact",
+          "column": null,
+          "entity": "user_contact",
+          "rule": "categorical_drift",
+          "severity": "low",
+          "confidence": 0.75,
+          "evidence": {
+            "affected_columns": [
+              "attribute1",
+              "attribute2",
+              "attribute3",
+              "date_created",
+              "date_modified",
+              "membership_id"
+            ],
+            "low_frequency_categories": {
+              "attribute1": [
+                {
+                  "category": "Mariana",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Ahmed",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Martin",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Rahul",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Wei",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Lukas",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Naledi",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Silva",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Lucia",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Omar",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "nom",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Giulia",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "ElAmrani",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "yy",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Amelia",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Haruto",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Carlos",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Priya",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Schneider",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Keiko",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Aisha",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Diego",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Rossi",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Tanaka",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "nom1",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Pedro",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Julien",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Camille",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "nom2",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Li",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Lucas",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Fatima",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Gomez",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Thabo",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Oliver",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Emily",
+                  "percentage": "0.0100"
+                }
+              ],
+              "attribute2": [
+                {
+                  "category": "ElAmrani",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Benali",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "prenom",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Yuki",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Ana",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Mokoena",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Marco",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Leroy",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Zhang",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "AlMansoori",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Ahmed",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Martin",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Taylor",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Costa",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Clark",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Patel",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Carlos",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Fernandez",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Chen",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Johnson",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Nakamura",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Sharma",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Santos",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Navarro",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Anna",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Bianchi",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Sato",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Lucas",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Muller",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Moreau",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Gomez",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Kgosi",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "Brown",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "AlNuaimi",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "prenom1",
+                  "percentage": "0.0100"
+                }
+              ],
+              "attribute3": [
+                {
+                  "category": "camille.leroy@example.fr",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "email@example.com",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "li.chen@example.cn",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "pedro.santos@example.br",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "keiko.nakamura@example.jp",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "marco.rossi@example.it",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "ana.silva@example.br",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "emily.johnson@example.co.uk",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "priya.patel@example.in",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "aisha.almansoori@example.ae",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "diego.fernandez@example.es",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "lukas.muller@example.de",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "rahul.sharma@example.in",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "prenomemail@exemple.com",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "julien.moreau@example.fr",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "wei.zhang@example.cn",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "mariana.costa@example.br",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "anna.schneider@example.de",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "yuki.tanaka@example.jp",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "naledi.kgosi@example.za",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "lucia.navarro@example.es",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "oliver.brown@example.co.uk",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "thabo.mokoena@example.za",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "giulia.bianchi@example.it",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "fatima.benali@example.ma",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "emily.taylor@example.au",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "omar.alnuaimi@example.ae",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "haruto.sato@example.jp",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "amelia.clark@example.co.uk",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "nom@yopmail.com",
+                  "percentage": "0.0100"
+                },
+                {
+                  "category": "ahmed.elamrani@example.ma",
+                  "percentage": "0.0100"
+                },
+                {
+                  "category": "lucas.martin@example.fr",
+                  "percentage": "0.0100"
+                },
+                {
+                  "category": "carlos.gomez@example.es",
+                  "percentage": "0.0100"
+                }
+              ],
+              "date_created": [
+                {
+                  "category": "2026-02-16 17:05:33.330845",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "2026-02-18 11:01:33.004525",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "2026-02-17 09:38:38.16577",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "2026-02-16 17:05:22.340587",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "2026-02-16 17:00:33.602797",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "2026-02-16 16:58:59.662358",
+                  "percentage": "0.0100"
+                }
+              ],
+              "date_modified": [
+                {
+                  "category": "2026-02-18 11:01:33.004551",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "2026-02-16 17:00:33.602823",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "2026-02-16 17:05:33.330872",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "2026-02-16 17:05:22.340609",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "2026-02-17 09:38:38.165844",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "2026-02-16 16:58:59.662358",
+                  "percentage": "0.0100"
+                }
+              ],
+              "membership_id": [
+                {
+                  "category": "4",
+                  "percentage": "0.0050"
+                },
+                {
+                  "category": "3",
+                  "percentage": "0.0100"
+                }
+              ]
+            }
+          },
+          "remediation_hint": null
+        }
+      ]
+    },
+    "structural_validator": {
+      "pipeline_run_id": "1a6b11ba-92e2-4a42-ad9b-df25cbe1fb5e",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-17T04:33:09.673937Z",
+      "agent": "Structural Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 29,
+        "items_flagged": 1,
+        "critical_issues": 0,
+        "high_issues": 1,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 98.8,
+        "overall_confidence": 0.95,
+        "flagged_tables": [
+          "users"
+        ]
+      },
+      "metrics": {
+        "validator": "structural",
+        "findings_count": 1,
+        "deduped_finding_count": 1,
+        "grouped_finding_count": 1
+      },
+      "findings": [
+        {
+          "table": "users",
+          "column": "email",
+          "entity": "users.email",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "null_count": 1500,
+            "total_rows": 5000,
+            "null_ratio": 0.3
+          },
+          "remediation_hint": "Investigate why the 'email' column has a high null ratio. Consider making it a required field if it's critical for user identification."
+        }
+      ]
+    },
+    "relational_validator": {
+      "pipeline_run_id": "1a6b11ba-92e2-4a42-ad9b-df25cbe1fb5e",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-17T04:33:09.673937Z",
+      "agent": "Relational Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 30,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "relational",
+        "findings_count": 0,
+        "deduped_finding_count": 0,
+        "grouped_finding_count": 0
+      },
+      "findings": []
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "1a6b11ba-92e2-4a42-ad9b-df25cbe1fb5e",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-17T04:33:09.673937Z",
+      "agent": "Data Fix Planner",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 44,
+        "items_passed": 44,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "total_issues_received": 44,
+        "fixes_generated": 0
+      },
+      "findings": [],
+      "cards": []
+    }
+  }
+}

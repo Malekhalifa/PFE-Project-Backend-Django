@@ -180,6 +180,15 @@ _DUPLICATE_RULES = frozenset({
 _AI_INVESTIGATIVE_RULES = frozenset({
     "uncertain_pattern", "semantic_anomaly", "fraud_indicator",
 })
+# Schema-catalog rules are binary facts (the constraint either exists or doesn't).
+# Regardless of the LLM's self-reported confidence, these always score 1.0 so they
+# are never filtered by min_confidence and always reach the Fix Planner.
+_SCHEMA_STRUCTURAL_RULES = frozenset({
+    "missing_pk", "missing_primary_key", "missing_fk_index", "missing_index",
+    "unindexed_fk", "nullable_fk", "nullable_fk_column", "nullable_foreign_key",
+    "orphaned_fk", "missing_not_null", "missing_unique_constraint",
+    "missing_index_fk_column",
+})
 
 
 def _recompute_finding_confidence(f: Finding, profiler_summary: dict) -> float:
@@ -192,6 +201,13 @@ def _recompute_finding_confidence(f: Finding, profiler_summary: dict) -> float:
     AI-investigative rules (no SQL anchor possible): 0.40 base
     """
     if f.confidence >= 0.92:  # py_profiler and schema snapshot findings
+        return 1.0
+
+    # Schema-catalog facts are binary: the constraint either exists or it doesn't.
+    # The LLM typically self-reports 0.9 for these, which would fall below the
+    # 0.92 threshold above and then score 0.5 (no matching profiler signal),
+    # causing them to be filtered by min_confidence. Force them to 1.0.
+    if f.rule in _SCHEMA_STRUCTURAL_RULES:
         return 1.0
 
     score = 0.5

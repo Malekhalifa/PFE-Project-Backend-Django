@@ -25,6 +25,7 @@ from .reducer import _try_recover_partial, reduce_signals
 from .reporting import aggregate_pipeline_scores, confidence_breakdown, derive_database_id, report_to_markdown
 from .rule_family_map import build_evidence_payload, classify_fix
 from .rules import common_rules
+from .fix_verifier import enrich_fix_plan
 from .schemas import Finding, FixCard, FixDependencyGraph, FixPlan, ProfilerReport, ReducedFindings, ValidationReport
 from .team import build_members, resolve_model_id
 
@@ -659,6 +660,15 @@ def _as_fix_plan(value: Any) -> FixPlan:
     return FixPlan(cards=[])
 
 
+def _warn_empty_fix_plan(fix_plan: FixPlan, findings_count: int) -> None:
+    if findings_count > 0 and not fix_plan.cards:
+        logger.warning(
+            "Fix Planner returned 0 cards for %d finding(s) — "
+            "LLM may have exceeded tool call budget or misinterpreted prompt constraints.",
+            findings_count,
+        )
+
+
 def _split_entity(entity: str) -> tuple[str, str | None]:
     if "." in entity:
         table, column = entity.split(".", 1)
@@ -757,40 +767,77 @@ def _quality_score(findings: list[Finding], total_tables: int) -> float:
     return round(max(0.0, 100.0 - min(100.0, normalized)), 1)
 
 
-def compute_dqs(findings: list[Finding], profiler: ProfilerReport) -> float:
-    """Entity health ratio — pipeline-level Data Quality Score.
+def compute_dqs(
+    findings: list[Finding],
+    profiler: ProfilerReport,
+    schema: dict | None = None,
+) -> float:
+    """Weighted table health ratio — pipeline-level Data Quality Score.
 
-    Scores each schema entity (table or column) individually instead of
-    summing global penalties divided by an arbitrary table constant.
-    A critical finding on one column hurts that entity only, not the whole schema.
+    Each table receives a composite importance weight from three equal dimensions:
+      w(t) = (1/3)·norm_rows(t) + (1/3)·norm_cols(t) + (1/3)·norm_fanin(t)
+
+    where:
+      norm_rows  = rows(t) / max_rows   — data volume at risk
+      norm_cols  = cols(t) / max_cols   — schema complexity
+      norm_fanin = (fanin(t)+1) / (max_fanin+1) — referential centrality
+                   (+1 Laplace floor so isolated tables keep nonzero fanin weight)
+
+    Equal 1/3 split: no empirical evidence privileges any one dimension.
+    Weights are normalised so they sum to 1 across all tables.
+
+    Per-table penalty uses sum-capped accumulation:
+      penalty(t) = min(1.0, Σ severity_hit(f)·confidence(f) for f in findings(t))
+    Multiple findings on the same table accumulate — a comprehensively broken
+    table reaches full damage faster than one with a single issue.
 
     severity_hit: critical=1.0, high=0.6, medium=0.25, low=0.05
-    penalty(f) = severity_hit × confidence   — expected damage, not worst-case
-    Per entity: health = 1 - max(penalty) across findings (no stacking)
-    DQS = mean(health) over all profiler-known entities × 100
-
-    Confidence weighting: a deterministic critical finding (confidence=1.0)
-    fully breaks the entity (penalty=1.0); an SQL-confirmed high finding
-    (confidence=0.75) yields penalty=0.45, health=0.55 — the entity is
-    probably damaged but we are not certain.
+    DQS = Σ w(t)·(1 − penalty(t)) × 100
     """
-    all_entities: set[str] = set()
-    for table in profiler.tables:
-        all_entities.add(table.table_name)
-        for col in table.column_stats:
-            all_entities.add(f"{table.table_name}.{col.column_name}")
-
-    if not all_entities:
+    table_map: dict[str, Any] = {t.table_name: t for t in profiler.tables}
+    if not table_map:
         return 100.0
 
-    severity_hit = {"critical": 1.0, "high": 0.6, "medium": 0.25, "low": 0.05}
-    entity_penalty: dict[str, float] = {}
-    for f in findings:
-        hit = severity_hit.get(f.severity, 0.0) * max(0.0, min(1.0, f.confidence))
-        entity_penalty[f.entity] = max(entity_penalty.get(f.entity, 0.0), hit)
+    # ── Signal 1: row count (data volume) ─────────────────────────────────────
+    rows = {t: max(tab.row_count or 0, 1) for t, tab in table_map.items()}
+    max_rows = max(rows.values())
+    norm_rows = {t: rows[t] / max_rows for t in table_map}
 
-    health_sum = sum(1.0 - entity_penalty.get(e, 0.0) for e in all_entities)
-    return round(health_sum / len(all_entities) * 100, 1)
+    # ── Signal 2: column count (schema complexity) ─────────────────────────────
+    cols = {t: max(len(tab.column_stats), 1) for t, tab in table_map.items()}
+    max_cols = max(cols.values())
+    norm_cols = {t: cols[t] / max_cols for t in table_map}
+
+    # ── Signal 3: FK fan-in (referential centrality) ───────────────────────────
+    # Count how many other tables have a FK column pointing TO each table.
+    fanin: dict[str, int] = {t: 0 for t in table_map}
+    if schema:
+        for tdata in schema.values():
+            for fk in tdata.get("foreign_keys", []):
+                target = fk.get("foreign_table") or fk.get("references_table")
+                if target in fanin:
+                    fanin[target] += 1
+    max_fanin = max(fanin.values()) if any(v > 0 for v in fanin.values()) else 0
+    # +1 Laplace floor: tables with 0 fan-in keep a small but nonzero third-dimension weight.
+    norm_fanin = {t: (fanin[t] + 1) / (max_fanin + 1) for t in table_map}
+
+    # ── Composite weight: equal 1/3 per dimension, normalised to sum=1 ─────────
+    raw_w = {t: (norm_rows[t] + norm_cols[t] + norm_fanin[t]) / 3.0 for t in table_map}
+    total_w = sum(raw_w.values())
+    w = {t: raw_w[t] / total_w for t in table_map}
+
+    # ── Sum-capped penalty per table ──────────────────────────────────────────
+    severity_hit = {"critical": 1.0, "high": 0.6, "medium": 0.25, "low": 0.05}
+    table_penalty: dict[str, float] = {}
+    for f in findings:
+        table = f.entity.split(".")[0]
+        if table not in table_map:
+            continue
+        hit = severity_hit.get(f.severity, 0.0) * max(0.0, min(1.0, f.confidence))
+        table_penalty[table] = min(1.0, table_penalty.get(table, 0.0) + hit)
+
+    health = sum(w[t] * (1.0 - table_penalty.get(t, 0.0)) for t in table_map)
+    return round(health * 100, 1)
 
 
 def _legacy_validation_finding(finding: Finding) -> dict[str, Any]:
@@ -921,12 +968,6 @@ def _legacy_fix_entry(card: FixCard, index: int, reduced_findings: ReducedFindin
     table_name, _ = _split_entity(card.target)
     queries = _split_sql_statements(card.sql)
     source_rule = card.source_rule or (matched.rule if matched else "")
-    if not source_rule:
-        logger.warning(
-            "FixCard '%s' empty source_rule → classification fallback to unknown. "
-            "target=%s card_family=%s",
-            card.fix_id or card.title, card.target, card.card_family,
-        )
     severity = matched.severity if matched else card.severity
     confidence = matched.confidence if matched else card.confidence
     evidence = dict(card.evidence or (matched.evidence if matched else {}))
@@ -936,6 +977,12 @@ def _legacy_fix_entry(card: FixCard, index: int, reduced_findings: ReducedFindin
         source_type = card.source_type
     else:
         family, interaction_model, source_type = classify_fix(source_rule, matched.validator)
+        if not source_rule:
+            logger.warning(
+                "FixCard '%s' empty source_rule → classify_fix fallback to unknown. "
+                "target=%s",
+                card.fix_id or card.title, card.target,
+            )
     evidence_payload = card.evidence_payload or build_evidence_payload(
         family=family,
         rule=source_rule,
@@ -1515,7 +1562,11 @@ def _build_summary_artifacts(
     validator_dicts = [legacy.schema, legacy.statistical, legacy.structural, legacy.relational]
 
     # Entity health ratio DQS — uses post-reduction findings over profiler entity set.
-    data_quality_score = int(compute_dqs(reports.reduced.findings, reports.profiler))
+    data_quality_score = int(compute_dqs(
+        reports.reduced.findings,
+        reports.profiler,
+        schema=session_state.get("schema"),
+    ))
 
     # Deterministic confidence — mean of per-finding scores over reduced findings.
     from .reducer import _recompute_finding_confidence
@@ -1571,6 +1622,21 @@ def _build_summary_artifacts(
     )
 
 
+def _build_hallucination_metric(session_state: dict[str, Any] | None) -> dict[str, Any]:
+    """Read accumulated entity-strip counts from session_state and compute summary metric."""
+    counts = (session_state or {}).get("_hallucination_counts") or {}
+    total = sum(counts.values())
+    return {
+        "total_stripped": total,
+        "breakdown": {
+            "non_existent_entities": counts.get("entities_stripped", 0),
+            "inferred_fk_rules": counts.get("fk_rules_stripped", 0),
+            "outside_profiler_coverage": counts.get("statistical_coverage_stripped", 0),
+            "fix_cards": counts.get("fix_cards_stripped", 0),
+        },
+    }
+
+
 def _assemble_final_payload(
     legacy: _LegacyReports,
     summary: _SummaryArtifacts,
@@ -1580,6 +1646,7 @@ def _assemble_final_payload(
     database_id: str,
     resolved_model_id: str,
     run_timestamp: str,
+    session_state: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build the final response dict and persist the bundle to disk.
 
@@ -1634,6 +1701,7 @@ def _assemble_final_payload(
             "final_fix_count": len(legacy.legacy_fixes),
             "confidence_explanation": summary.confidence_info,
             "timing": summary.timing_info,
+            "entity_hallucinations": _build_hallucination_metric(session_state),
         },
         "reports": saved_reports,
     }
@@ -1684,6 +1752,7 @@ def _assemble_final_payload(
         "confidence_explanation": summary.confidence_info,
         "confidence_score": summary.confidence_score,
         "data_quality_score": summary.data_quality_score,
+        "entity_hallucinations": _build_hallucination_metric(session_state),
         "findings_capped": reports.reduced.findings_capped,
         **report_artifact,
     }
@@ -1775,6 +1844,15 @@ def orchestrator_workflow(
             database_id=database_id,
         )
 
+        # Fix Planner post-processor: run verification queries, detect contradictions,
+        # repair DELETE overlap dependencies, and backfill missing source_rule fields.
+        enrich_fix_plan(
+            reports.fix_plan,
+            findings=reports.reduced.findings,
+            connection_string=session_state["connection_string"],
+        )
+        _warn_empty_fix_plan(reports.fix_plan, len(reports.reduced.findings))
+
         total_tables = len(session_state.get("schema") or {})
         legacy = _build_legacy_reports(
             reports,
@@ -1823,6 +1901,7 @@ def orchestrator_workflow(
             database_id=database_id,
             resolved_model_id=resolved_model_id,
             run_timestamp=run_timestamp,
+            session_state=session_state,
         )
     except Exception:
         finish_pipeline_trace(error="pipeline failed — see Django logs")

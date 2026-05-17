@@ -744,11 +744,20 @@ def validate_findings_entities(run_output: RunOutput, run_context: RunContext) -
     def _valid(entity: str) -> bool:
         return entity in valid_tables or entity in valid_pairs
 
+    # Accumulate strip counts across all agent runs into session_state for metric export.
+    _hc: dict = (run_context.session_state or {}).setdefault("_hallucination_counts", {
+        "entities_stripped": 0,
+        "fk_rules_stripped": 0,
+        "statistical_coverage_stripped": 0,
+        "fix_cards_stripped": 0,
+    })
+
     if isinstance(content, ValidationReport):
         before = len(content.findings)
         content.findings = [f for f in content.findings if _valid(f.entity)]
         dropped = before - len(content.findings)
         if dropped:
+            _hc["entities_stripped"] += dropped
             logger.warning(
                 "validate_findings_entities: stripped %d finding(s) with non-existent entities",
                 dropped,
@@ -774,6 +783,7 @@ def validate_findings_entities(run_output: RunOutput, run_context: RunContext) -
             content.findings = [f for f in content.findings if _column_is_actual_fk(f)]
             dropped_fk = before_fk - len(content.findings)
             if dropped_fk:
+                _hc["fk_rules_stripped"] += dropped_fk
                 logger.warning(
                     "validate_findings_entities: stripped %d FK-rule finding(s) for non-FK columns",
                     dropped_fk,
@@ -793,6 +803,7 @@ def validate_findings_entities(run_output: RunOutput, run_context: RunContext) -
             ]
             dropped_cov = before_cov - len(content.findings)
             if dropped_cov:
+                _hc["statistical_coverage_stripped"] += dropped_cov
                 logger.warning(
                     "validate_findings_entities: stripped %d statistical finding(s) "
                     "for tables outside profiler coverage",
@@ -803,6 +814,7 @@ def validate_findings_entities(run_output: RunOutput, run_context: RunContext) -
         content.cards = [c for c in content.cards if _valid(c.target)]
         dropped = before - len(content.cards)
         if dropped:
+            _hc["fix_cards_stripped"] += dropped
             logger.warning(
                 "validate_findings_entities: stripped %d fix card(s) with non-existent entities",
                 dropped,

@@ -1,0 +1,3522 @@
+{
+  "pipeline_run_id": "28b7091b-dc73-4701-89c9-52a31ec6ff77",
+  "database_id": "localhost_5432_easybulk",
+  "llm_model": "gemini-2.5-flash",
+  "run_timestamp": "2026-05-17T13:11:52.813645Z",
+  "executive_summary": {
+    "verdict": "medium_risk",
+    "top_issues": [
+      "[CRITICAL] missing pk on campagne_contacts",
+      "[CRITICAL] missing pk on expediteur_groupe",
+      "[CRITICAL] missing pk on campagne_tags"
+    ],
+    "tables_scanned": 30,
+    "tables_profiled": 30,
+    "fixes_recommended": 31,
+    "critical_fix_count": 5,
+    "migration_risk": {
+      "score": 0,
+      "high_risk_cards": 0,
+      "blocked_cards": 0,
+      "destructive_cards": 0
+    }
+  },
+  "summary": {
+    "confidence_score": 99,
+    "data_quality_score": 50,
+    "final_fix_count": 31,
+    "confidence_explanation": {
+      "total_findings": 33,
+      "high_confidence_count": 30,
+      "medium_confidence_count": 3,
+      "low_confidence_count": 0,
+      "summary": "91% of findings have confidence ≥ 0.9 (30/33 high, 3 medium, 0 low). Deterministic (py_profiler) findings are 0.92–1.0; LLM findings vary."
+    },
+    "timing": {
+      "started_at": "2026-05-17T13:11:52.813645Z",
+      "ended_at": "2026-05-17T13:16:56.867053Z",
+      "total_duration_ms": 304053,
+      "total_duration_human": "304.1s",
+      "phases_ms": {
+        "schema_priming": 315,
+        "Python Profiler": 217,
+        "Reducer": 9,
+        "Schema Integrity Validator": 69318,
+        "Statistical Validator": 82717,
+        "Structural Validator": 76881,
+        "Relational Validator": 80302,
+        "Data Fix Planner": 151232
+      },
+      "bottleneck": "Data Fix Planner"
+    },
+    "entity_hallucinations": {
+      "total_stripped": 0,
+      "breakdown": {
+        "non_existent_entities": 0,
+        "inferred_fk_rules": 0,
+        "outside_profiler_coverage": 0,
+        "fix_cards": 0
+      }
+    }
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "28b7091b-dc73-4701-89c9-52a31ec6ff77",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-17T13:11:52.813645Z",
+      "agent": "Schema Integrity Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 5,
+        "items_flagged": 25,
+        "critical_issues": 4,
+        "high_issues": 16,
+        "medium_issues": 18,
+        "low_issues": 0,
+        "overall_quality_score": 64.8,
+        "overall_confidence": 0.9717,
+        "flagged_tables": [
+          "budget_history",
+          "campagne",
+          "campagne_contacts",
+          "campagne_tags",
+          "expediteur",
+          "expediteur_groupe",
+          "groupe",
+          "membership",
+          "mention",
+          "modele",
+          "request_api",
+          "smsc_routing_rule",
+          "tags",
+          "user_contact",
+          "user_contact_tags",
+          "user_keys",
+          "user_mission"
+        ]
+      },
+      "metrics": {
+        "validator": "schema",
+        "findings_count": 68,
+        "deduped_finding_count": 38,
+        "grouped_finding_count": 25
+      },
+      "findings": [
+        {
+          "table": "campagne_contacts",
+          "column": null,
+          "entity": "campagne_contacts",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campagne_contacts"
+          },
+          "remediation_hint": "Table 'campagne_contacts' is missing a primary key. All tables should have a primary key for data integrity and performance."
+        },
+        {
+          "table": "expediteur_groupe",
+          "column": null,
+          "entity": "expediteur_groupe",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "expediteur_groupe"
+          },
+          "remediation_hint": "Table 'expediteur_groupe' is missing a primary key. All tables should have a primary key for data integrity and performance."
+        },
+        {
+          "table": "campagne_tags",
+          "column": null,
+          "entity": "campagne_tags",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campagne_tags"
+          },
+          "remediation_hint": "Table 'campagne_tags' is missing a primary key. All tables should have a primary key for data integrity and performance."
+        },
+        {
+          "table": "user_contact_tags",
+          "column": null,
+          "entity": "user_contact_tags",
+          "rule": "missing_pk",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "user_contact_tags"
+          },
+          "remediation_hint": "Table 'user_contact_tags' is missing a primary key. All tables should have a primary key for data integrity and performance."
+        },
+        {
+          "table": "budget_history",
+          "column": "groupe_id",
+          "entity": "budget_history.groupe_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.96,
+          "evidence": {
+            "table_name": "budget_history",
+            "column_name": "groupe_id",
+            "foreign_table": "groupe",
+            "foreign_column": "id"
+          },
+          "remediation_hint": "Foreign key column 'groupe_id' in table 'budget_history' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable."
+        },
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "entity": "groupe.admin_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.96,
+          "evidence": {
+            "table_name": "groupe",
+            "column_name": "admin_id",
+            "foreign_table": "users",
+            "foreign_column": "id"
+          },
+          "remediation_hint": "Foreign key column 'admin_id' in table 'groupe' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable."
+        },
+        {
+          "table": "campagne_contacts",
+          "column": "contact_id",
+          "entity": "campagne_contacts.contact_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "table_name": "campagne_contacts",
+            "column_name": "contact_id",
+            "foreign_table": "contacts",
+            "foreign_column": "msisdn"
+          },
+          "remediation_hint": "Foreign key column 'contact_id' in table 'campagne_contacts' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable."
+        },
+        {
+          "table": "request_api",
+          "column": "membership_id",
+          "entity": "request_api.membership_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.96,
+          "evidence": {
+            "table_name": "request_api",
+            "column_name": "membership_id",
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "remediation_hint": "Foreign key column 'membership_id' in table 'request_api' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable."
+        },
+        {
+          "table": "smsc_routing_rule",
+          "column": null,
+          "entity": "smsc_routing_rule.groupe_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.96,
+          "evidence": {
+            "table_name": "smsc_routing_rule",
+            "column_name": "groupe_id",
+            "foreign_table": "groupe",
+            "foreign_column": "id",
+            "columns_with_high_nulls": [
+              "groupe_id",
+              "expediteur_id"
+            ]
+          },
+          "remediation_hint": "Foreign key column 'groupe_id' in table 'smsc_routing_rule' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable.",
+          "affected_columns": [
+            "groupe_id",
+            "expediteur_id"
+          ],
+          "count": 2
+        },
+        {
+          "table": "user_contact",
+          "column": "membership_id",
+          "entity": "user_contact.membership_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.96,
+          "evidence": {
+            "table_name": "user_contact",
+            "column_name": "membership_id",
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "remediation_hint": "Foreign key column 'membership_id' in table 'user_contact' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable."
+        },
+        {
+          "table": "tags",
+          "column": "membership_id",
+          "entity": "tags.membership_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.96,
+          "evidence": {
+            "table_name": "tags",
+            "column_name": "membership_id",
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "remediation_hint": "Foreign key column 'membership_id' in table 'tags' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable."
+        },
+        {
+          "table": "user_keys",
+          "column": "membership_id",
+          "entity": "user_keys.membership_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.96,
+          "evidence": {
+            "table_name": "user_keys",
+            "column_name": "membership_id",
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "remediation_hint": "Foreign key column 'membership_id' in table 'user_keys' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable."
+        },
+        {
+          "table": "user_mission",
+          "column": "groupe_id",
+          "entity": "user_mission.groupe_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.96,
+          "evidence": {
+            "table_name": "user_mission",
+            "column_name": "groupe_id",
+            "foreign_table": "groupe",
+            "foreign_column": "id"
+          },
+          "remediation_hint": "Foreign key column 'groupe_id' in table 'user_mission' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable."
+        },
+        {
+          "table": "campagne",
+          "column": null,
+          "entity": "campagne.user_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.96,
+          "evidence": {
+            "table_name": "campagne",
+            "column_name": "user_id",
+            "foreign_table": "users",
+            "foreign_column": "id",
+            "columns_with_high_nulls": [
+              "user_id",
+              "expediteur_id",
+              "modele_id",
+              "campaign_type_permission_id",
+              "schedule_id"
+            ]
+          },
+          "remediation_hint": "Foreign key column 'user_id' in table 'campagne' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable.",
+          "affected_columns": [
+            "user_id",
+            "expediteur_id",
+            "modele_id",
+            "campaign_type_permission_id",
+            "schedule_id"
+          ],
+          "count": 5
+        },
+        {
+          "table": "modele",
+          "column": "membership_id",
+          "entity": "modele.membership_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.96,
+          "evidence": {
+            "table_name": "modele",
+            "column_name": "membership_id",
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "remediation_hint": "Foreign key column 'membership_id' in table 'modele' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable."
+        },
+        {
+          "table": "groupe",
+          "column": null,
+          "entity": "groupe.admin_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.975,
+          "evidence": {
+            "table_name": "groupe",
+            "column_name": "admin_id",
+            "columns_with_high_nulls": [
+              "admin_id",
+              "status_id"
+            ]
+          },
+          "remediation_hint": "Foreign key column 'admin_id' in table 'groupe' is not indexed. This can lead to performance issues on join operations.",
+          "affected_columns": [
+            "admin_id",
+            "status_id"
+          ],
+          "count": 2
+        },
+        {
+          "table": "expediteur",
+          "column": "organization_id",
+          "entity": "expediteur.organization_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.975,
+          "evidence": {
+            "table_name": "expediteur",
+            "column_name": "organization_id"
+          },
+          "remediation_hint": "Foreign key column 'organization_id' in table 'expediteur' is not indexed. This can lead to performance issues on join operations."
+        },
+        {
+          "table": "campagne_contacts",
+          "column": null,
+          "entity": "campagne_contacts.campagne_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.9875,
+          "evidence": {
+            "table_name": "campagne_contacts",
+            "column_name": "campagne_id",
+            "columns_with_high_nulls": [
+              "campagne_id",
+              "contact_id"
+            ]
+          },
+          "remediation_hint": "Foreign key column 'campagne_id' in table 'campagne_contacts' is not indexed. This can lead to performance issues on join operations.",
+          "affected_columns": [
+            "campagne_id",
+            "contact_id"
+          ],
+          "count": 2
+        },
+        {
+          "table": "membership",
+          "column": "status_id",
+          "entity": "membership.status_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.975,
+          "evidence": {
+            "table_name": "membership",
+            "column_name": "status_id"
+          },
+          "remediation_hint": "Foreign key column 'status_id' in table 'membership' is not indexed. This can lead to performance issues on join operations."
+        },
+        {
+          "table": "expediteur_groupe",
+          "column": null,
+          "entity": "expediteur_groupe.expediteur_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.975,
+          "evidence": {
+            "table_name": "expediteur_groupe",
+            "column_name": "expediteur_id",
+            "columns_with_high_nulls": [
+              "expediteur_id",
+              "groupe_id"
+            ]
+          },
+          "remediation_hint": "Foreign key column 'expediteur_id' in table 'expediteur_groupe' is not indexed. This can lead to performance issues on join operations.",
+          "affected_columns": [
+            "expediteur_id",
+            "groupe_id"
+          ],
+          "count": 2
+        },
+        {
+          "table": "campagne_tags",
+          "column": "campagne_id",
+          "entity": "campagne_tags.campagne_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.975,
+          "evidence": {
+            "table_name": "campagne_tags",
+            "column_name": "campagne_id"
+          },
+          "remediation_hint": "Foreign key column 'campagne_id' in table 'campagne_tags' is not indexed. This can lead to performance issues on join operations."
+        },
+        {
+          "table": "mention",
+          "column": "modele_id",
+          "entity": "mention.modele_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.975,
+          "evidence": {
+            "table_name": "mention",
+            "column_name": "modele_id"
+          },
+          "remediation_hint": "Foreign key column 'modele_id' in table 'mention' is not indexed. This can lead to performance issues on join operations."
+        },
+        {
+          "table": "campagne",
+          "column": null,
+          "entity": "campagne.user_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.975,
+          "evidence": {
+            "table_name": "campagne",
+            "column_name": "user_id",
+            "columns_with_high_nulls": [
+              "user_id",
+              "expediteur_id",
+              "modele_id",
+              "status_id",
+              "campaign_type_permission_id",
+              "schedule_id"
+            ]
+          },
+          "remediation_hint": "Foreign key column 'user_id' in table 'campagne' is not indexed. This can lead to performance issues on join operations.",
+          "affected_columns": [
+            "user_id",
+            "expediteur_id",
+            "modele_id",
+            "status_id",
+            "campaign_type_permission_id",
+            "schedule_id"
+          ],
+          "count": 6
+        },
+        {
+          "table": "smsc_routing_rule",
+          "column": "target_smsc_org_id",
+          "entity": "smsc_routing_rule.target_smsc_org_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.95,
+          "evidence": {
+            "foreign_table": "smsc_organization",
+            "foreign_column": "id"
+          },
+          "remediation_hint": "Add an index on 'smsc_routing_rule.target_smsc_org_id' (FK → smsc_organization.id) to speed up JOIN and orphan-check queries."
+        },
+        {
+          "table": "modele",
+          "column": "campaign_type",
+          "entity": "modele.campaign_type",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.95,
+          "evidence": {
+            "foreign_table": "prm_campaign_type",
+            "foreign_column": "code"
+          },
+          "remediation_hint": "Add an index on 'modele.campaign_type' (FK → prm_campaign_type.code) to speed up JOIN and orphan-check queries."
+        }
+      ]
+    },
+    "statistical_validator": {
+      "pipeline_run_id": "28b7091b-dc73-4701-89c9-52a31ec6ff77",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-17T13:11:52.813645Z",
+      "agent": "Statistical Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 22,
+        "items_flagged": 8,
+        "critical_issues": 0,
+        "high_issues": 6,
+        "medium_issues": 9,
+        "low_issues": 0,
+        "overall_quality_score": 90.8,
+        "overall_confidence": 0.8433,
+        "flagged_tables": [
+          "contacts",
+          "groupe",
+          "prm_status",
+          "smsc_routing_rule",
+          "user_contact",
+          "user_contact_tags",
+          "user_keys",
+          "user_mission"
+        ]
+      },
+      "metrics": {
+        "validator": "statistical",
+        "findings_count": 15,
+        "deduped_finding_count": 15,
+        "grouped_finding_count": 8
+      },
+      "findings": [
+        {
+          "table": "user_contact",
+          "column": null,
+          "entity": "user_contact.attribute1",
+          "rule": "categorical_drift",
+          "severity": "medium",
+          "confidence": 0.75,
+          "evidence": {
+            "current_low_frequency_categories": [
+              {
+                "category": "Mariana",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Ahmed",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Martin",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Rahul",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Wei",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Lukas",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Naledi",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Silva",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Lucia",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Omar",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "nom",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Giulia",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "ElAmrani",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "yy",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Amelia",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Haruto",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Carlos",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Priya",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Schneider",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Keiko",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Aisha",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Diego",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Rossi",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Tanaka",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "nom1",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Pedro",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Julien",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Camille",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "nom2",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Li",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Lucas",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Fatima",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Gomez",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Thabo",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Oliver",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "Emily",
+                "percentage": "0.0100"
+              }
+            ],
+            "dominant_category": {
+              "category": "",
+              "percentage": "99.8154"
+            }
+          },
+          "remediation_hint": null,
+          "affected_columns": [
+            "attribute1",
+            "attribute2",
+            "attribute3",
+            "date_created",
+            "date_modified",
+            "membership_id"
+          ],
+          "count": 6
+        },
+        {
+          "table": "user_contact_tags",
+          "column": "tag_id",
+          "entity": "user_contact_tags.tag_id",
+          "rule": "categorical_drift",
+          "severity": "medium",
+          "confidence": 0.75,
+          "evidence": {
+            "current_low_frequency_categories": [
+              {
+                "category": "4",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "2",
+                "percentage": "0.0100"
+              },
+              {
+                "category": "7",
+                "percentage": "0.0199"
+              },
+              {
+                "category": "3",
+                "percentage": "0.0549"
+              },
+              {
+                "category": "6",
+                "percentage": "0.1646"
+              }
+            ],
+            "dominant_categories": [
+              {
+                "category": "5",
+                "percentage": "49.8728"
+              },
+              {
+                "category": "1",
+                "percentage": "49.8728"
+              }
+            ]
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "contacts",
+          "column": "country_code",
+          "entity": "contacts.country_code",
+          "rule": "categorical_drift",
+          "severity": "medium",
+          "confidence": 0.75,
+          "evidence": {
+            "current_low_frequency_categories": [
+              {
+                "category": "61",
+                "percentage": "0.0100"
+              },
+              {
+                "category": "86",
+                "percentage": "0.0199"
+              },
+              {
+                "category": "39",
+                "percentage": "0.0199"
+              },
+              {
+                "category": "49",
+                "percentage": "0.0199"
+              },
+              {
+                "category": "91",
+                "percentage": "0.0199"
+              },
+              {
+                "category": "27",
+                "percentage": "0.0199"
+              },
+              {
+                "category": "971",
+                "percentage": "0.0199"
+              },
+              {
+                "category": "212",
+                "percentage": "0.0299"
+              },
+              {
+                "category": "44",
+                "percentage": "0.0299"
+              },
+              {
+                "category": "81",
+                "percentage": "0.0299"
+              },
+              {
+                "category": "55",
+                "percentage": "0.0299"
+              },
+              {
+                "category": "34",
+                "percentage": "0.0398"
+              },
+              {
+                "category": "33",
+                "percentage": "0.0498"
+              }
+            ],
+            "dominant_category": {
+              "category": "216",
+              "percentage": "99.6615"
+            }
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "groupe",
+          "column": "admin_id",
+          "entity": "groupe.admin_id",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "null_ratio": 0.8889,
+            "total_rows": 9,
+            "threshold_used": 0.1
+          },
+          "remediation_hint": "Investigate why 'groupe.admin_id' has 89% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "prm_status",
+          "column": "updated_at",
+          "entity": "prm_status.updated_at",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 25,
+            "threshold_used": 0.8
+          },
+          "remediation_hint": "Investigate why 'prm_status.updated_at' has 100% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "user_keys",
+          "column": null,
+          "entity": "user_keys.expiration_date",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 1,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "expiration_date",
+              "last_time_used_date"
+            ]
+          },
+          "remediation_hint": "Investigate why 'user_keys.expiration_date' has 100% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "expiration_date",
+            "last_time_used_date"
+          ],
+          "count": 2
+        },
+        {
+          "table": "smsc_routing_rule",
+          "column": null,
+          "entity": "smsc_routing_rule.expediteur_id",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "null_ratio": 0.8571,
+            "total_rows": 7,
+            "threshold_used": 0.1,
+            "columns_with_high_nulls": [
+              "expediteur_id",
+              "groupe_id"
+            ]
+          },
+          "remediation_hint": "Investigate why 'smsc_routing_rule.expediteur_id' has 86% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "expediteur_id",
+            "groupe_id"
+          ],
+          "count": 2
+        },
+        {
+          "table": "user_mission",
+          "column": "groupe_id",
+          "entity": "user_mission.groupe_id",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 0.95,
+          "evidence": {
+            "null_ratio": 0.5,
+            "total_rows": 8,
+            "threshold_used": 0.1
+          },
+          "remediation_hint": "Investigate why 'user_mission.groupe_id' has 50% null values. Consider enforcing NOT NULL if this column is required."
+        }
+      ]
+    },
+    "structural_validator": {
+      "pipeline_run_id": "28b7091b-dc73-4701-89c9-52a31ec6ff77",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-17T13:11:52.813645Z",
+      "agent": "Structural Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 30,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "structural",
+        "findings_count": 0,
+        "deduped_finding_count": 0,
+        "grouped_finding_count": 0
+      },
+      "findings": []
+    },
+    "relational_validator": {
+      "pipeline_run_id": "28b7091b-dc73-4701-89c9-52a31ec6ff77",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-17T13:11:52.813645Z",
+      "agent": "Relational Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 30,
+        "items_passed": 30,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "relational",
+        "findings_count": 0,
+        "deduped_finding_count": 0,
+        "grouped_finding_count": 0
+      },
+      "findings": []
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "28b7091b-dc73-4701-89c9-52a31ec6ff77",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-17T13:11:52.813645Z",
+      "agent": "Data Fix Planner",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 39,
+        "items_passed": 8,
+        "items_flagged": 31,
+        "critical_issues": 5,
+        "high_issues": 19,
+        "medium_issues": 7,
+        "low_issues": 0,
+        "overall_quality_score": 91.6,
+        "overall_confidence": 1.0,
+        "flagged_tables": [
+          "budget_history",
+          "campagne",
+          "campagne_contacts",
+          "campagne_tags",
+          "expediteur",
+          "expediteur_groupe",
+          "groupe",
+          "membership",
+          "mention",
+          "modele",
+          "prm_status",
+          "request_api",
+          "smsc_routing_rule",
+          "tags",
+          "user_contact",
+          "user_contact_tags",
+          "user_keys",
+          "user_mission"
+        ]
+      },
+      "metrics": {
+        "total_issues_received": 39,
+        "fixes_generated": 31
+      },
+      "findings": [
+        {
+          "id": "fix_001_campagne_contacts",
+          "fix_id": "add-pk-campagne-contacts",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": [],
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "Add Primary Key to campagne_contacts",
+          "fix": "Table 'campagne_contacts' is missing a primary key. Adding a composite primary key on 'campagne_id' and 'contact_id' will ensure data integrity and improve query performance.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "source_rule": "missing_index",
+          "source_type": "deterministic",
+          "evidence": {
+            "table_name": "campagne_contacts"
+          },
+          "evidence_payload": {
+            "table_name": "campagne_contacts"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE campagne_contacts ADD PRIMARY KEY (campagne_id, contact_id);"
+          ],
+          "explanation": "Table 'campagne_contacts' is missing a primary key. Adding a composite primary key on 'campagne_id' and 'contact_id' will ensure data integrity and improve query performance.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'campagne_contacts_pkey';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_contacts DROP CONSTRAINT campagne_contacts_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_002_expediteur_groupe",
+          "fix_id": "add-pk-expediteur-groupe",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "expediteur_groupe"
+          ],
+          "depends_on": [],
+          "table": "expediteur_groupe",
+          "target_table": "expediteur_groupe",
+          "problem": "Add Primary Key to expediteur_groupe",
+          "fix": "Table 'expediteur_groupe' is missing a primary key. Adding a composite primary key on 'groupe_id' and 'expediteur_id' will ensure data integrity and improve query performance.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "evidence": {
+            "table_name": "expediteur_groupe"
+          },
+          "evidence_payload": {
+            "table_name": "expediteur_groupe"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE expediteur_groupe ADD PRIMARY KEY (groupe_id, expediteur_id);"
+          ],
+          "explanation": "Table 'expediteur_groupe' is missing a primary key. Adding a composite primary key on 'groupe_id' and 'expediteur_id' will ensure data integrity and improve query performance.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'expediteur_groupe_pkey';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE expediteur_groupe DROP CONSTRAINT expediteur_groupe_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_003_campagne_tags",
+          "fix_id": "add-pk-campagne-tags",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_tags"
+          ],
+          "depends_on": [],
+          "table": "campagne_tags",
+          "target_table": "campagne_tags",
+          "problem": "Add Primary Key to campagne_tags",
+          "fix": "Table 'campagne_tags' is missing a primary key. Adding a composite primary key on 'campagne_id' and 'tag_name' will ensure data integrity and improve query performance. Note: 'tag_name' is currently nullable, which is unusual for a primary key component. If 'tag_name' can legitimately be NULL, a different primary key strategy may be required.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "source_rule": "missing_pk",
+          "source_type": "deterministic",
+          "evidence": {
+            "table_name": "campagne_tags"
+          },
+          "evidence_payload": {
+            "table_name": "campagne_tags"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE campagne_tags ADD PRIMARY KEY (campagne_id, tag_name);"
+          ],
+          "explanation": "Table 'campagne_tags' is missing a primary key. Adding a composite primary key on 'campagne_id' and 'tag_name' will ensure data integrity and improve query performance. Note: 'tag_name' is currently nullable, which is unusual for a primary key component. If 'tag_name' can legitimately be NULL, a different primary key strategy may be required.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'campagne_tags_pkey';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE campagne_tags DROP CONSTRAINT campagne_tags_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_004_user_contact_tags",
+          "fix_id": "add-pk-user-contact-tags",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_contact_tags"
+          ],
+          "depends_on": [],
+          "table": "user_contact_tags",
+          "target_table": "user_contact_tags",
+          "problem": "Add Primary Key to user_contact_tags",
+          "fix": "Table 'user_contact_tags' is missing a primary key. Adding a composite primary key on 'user_contact_id' and 'tag_id' will ensure data integrity and improve query performance.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "source_rule": "missing_pk",
+          "source_type": "deterministic",
+          "evidence": {
+            "table_name": "user_contact_tags"
+          },
+          "evidence_payload": {
+            "table_name": "user_contact_tags"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "ALTER TABLE user_contact_tags ADD PRIMARY KEY (user_contact_id, tag_id);"
+          ],
+          "explanation": "Table 'user_contact_tags' is missing a primary key. Adding a composite primary key on 'user_contact_id' and 'tag_id' will ensure data integrity and improve query performance.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'user_contact_tags_pkey';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE user_contact_tags DROP CONSTRAINT user_contact_tags_pkey;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_005_budget_history_groupe_id",
+          "fix_id": "advise-nullable-fk-budget-history-groupe-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "budget_history"
+          ],
+          "depends_on": [],
+          "table": "budget_history",
+          "target_table": "budget_history",
+          "problem": "Foreign Key 'budget_history.groupe_id' is Nullable",
+          "fix": "Foreign key column 'groupe_id' in table 'budget_history' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "evidence": {
+            "table_name": "budget_history",
+            "column_name": "groupe_id",
+            "foreign_table": "groupe",
+            "foreign_column": "id"
+          },
+          "evidence_payload": {
+            "table_name": "budget_history",
+            "column_name": "groupe_id",
+            "foreign_table": "groupe",
+            "foreign_column": "id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT groupe_id FROM budget_history WHERE groupe_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "Foreign key column 'groupe_id' in table 'budget_history' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_006_groupe_admin_id",
+          "fix_id": "advise-nullable-fk-groupe-admin-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": [],
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "Foreign Key 'groupe.admin_id' is Nullable",
+          "fix": "Foreign key column 'admin_id' in table 'groupe' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "null_ratio_high",
+          "source_type": "deterministic",
+          "evidence": {
+            "table_name": "groupe",
+            "column_name": "admin_id",
+            "foreign_table": "users",
+            "foreign_column": "id"
+          },
+          "evidence_payload": {
+            "table_name": "groupe",
+            "column_name": "admin_id",
+            "foreign_table": "users",
+            "foreign_column": "id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT admin_id FROM groupe WHERE admin_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "Foreign key column 'admin_id' in table 'groupe' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_007_campagne_contacts_contact_id",
+          "fix_id": "advise-nullable-fk-campagne-contacts-contact-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": [],
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "Foreign Key 'campagne_contacts.contact_id' is Nullable",
+          "fix": "Foreign key column 'contact_id' in table 'campagne_contacts' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "evidence": {
+            "table_name": "campagne_contacts",
+            "column_name": "contact_id",
+            "foreign_table": "contacts",
+            "foreign_column": "msisdn"
+          },
+          "evidence_payload": {
+            "table_name": "campagne_contacts",
+            "column_name": "contact_id",
+            "foreign_table": "contacts",
+            "foreign_column": "msisdn"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT contact_id FROM campagne_contacts WHERE contact_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "Foreign key column 'contact_id' in table 'campagne_contacts' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_008_request_api_membership_id",
+          "fix_id": "advise-nullable-fk-request-api-membership-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "request_api"
+          ],
+          "depends_on": [],
+          "table": "request_api",
+          "target_table": "request_api",
+          "problem": "Foreign Key 'request_api.membership_id' is Nullable",
+          "fix": "Foreign key column 'membership_id' in table 'request_api' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "evidence": {
+            "table_name": "request_api",
+            "column_name": "membership_id",
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "evidence_payload": {
+            "table_name": "request_api",
+            "column_name": "membership_id",
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT membership_id FROM request_api WHERE membership_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "Foreign key column 'membership_id' in table 'request_api' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_009_smsc_routing_rule",
+          "fix_id": "advise-nullable-fk-smsc-routing-rule-groupe-expediteur-ids",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "smsc_routing_rule"
+          ],
+          "depends_on": [],
+          "table": "smsc_routing_rule",
+          "target_table": "smsc_routing_rule",
+          "problem": "Foreign Keys 'smsc_routing_rule.groupe_id, expediteur_id' are Nullable",
+          "fix": "Foreign key columns 'groupe_id' and 'expediteur_id' in table 'smsc_routing_rule' are nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "null_ratio_high",
+          "source_type": "deterministic",
+          "evidence": {
+            "table_name": "smsc_routing_rule",
+            "column_name": "groupe_id",
+            "foreign_table": "groupe",
+            "foreign_column": "id",
+            "columns_with_high_nulls": [
+              "groupe_id",
+              "expediteur_id"
+            ]
+          },
+          "evidence_payload": {
+            "table_name": "smsc_routing_rule",
+            "column_name": "groupe_id",
+            "foreign_table": "groupe",
+            "foreign_column": "id",
+            "columns_with_high_nulls": [
+              "groupe_id",
+              "expediteur_id"
+            ]
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT groupe_id, expediteur_id FROM smsc_routing_rule WHERE groupe_id IS NULL OR expediteur_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "Foreign key columns 'groupe_id' and 'expediteur_id' in table 'smsc_routing_rule' are nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_010_user_contact_membership_id",
+          "fix_id": "advise-nullable-fk-user-contact-membership-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_contact"
+          ],
+          "depends_on": [],
+          "table": "user_contact",
+          "target_table": "user_contact",
+          "problem": "Foreign Key 'user_contact.membership_id' is Nullable",
+          "fix": "Foreign key column 'membership_id' in table 'user_contact' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "evidence": {
+            "table_name": "user_contact",
+            "column_name": "membership_id",
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "evidence_payload": {
+            "table_name": "user_contact",
+            "column_name": "membership_id",
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT membership_id FROM user_contact WHERE membership_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "Foreign key column 'membership_id' in table 'user_contact' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_011_tags_membership_id",
+          "fix_id": "advise-nullable-fk-tags-membership-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "tags"
+          ],
+          "depends_on": [],
+          "table": "tags",
+          "target_table": "tags",
+          "problem": "Foreign Key 'tags.membership_id' is Nullable",
+          "fix": "Foreign key column 'membership_id' in table 'tags' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "evidence": {
+            "table_name": "tags",
+            "column_name": "membership_id",
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "evidence_payload": {
+            "table_name": "tags",
+            "column_name": "membership_id",
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT membership_id FROM tags WHERE membership_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "Foreign key column 'membership_id' in table 'tags' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_012_user_keys_membership_id",
+          "fix_id": "advise-nullable-fk-user-keys-membership-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_keys"
+          ],
+          "depends_on": [],
+          "table": "user_keys",
+          "target_table": "user_keys",
+          "problem": "Foreign Key 'user_keys.membership_id' is Nullable",
+          "fix": "Foreign key column 'membership_id' in table 'user_keys' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "evidence": {
+            "table_name": "user_keys",
+            "column_name": "membership_id",
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "evidence_payload": {
+            "table_name": "user_keys",
+            "column_name": "membership_id",
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT membership_id FROM user_keys WHERE membership_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "Foreign key column 'membership_id' in table 'user_keys' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_013_user_mission_groupe_id",
+          "fix_id": "advise-nullable-fk-user-mission-groupe-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_mission"
+          ],
+          "depends_on": [],
+          "table": "user_mission",
+          "target_table": "user_mission",
+          "problem": "Foreign Key 'user_mission.groupe_id' is Nullable",
+          "fix": "Foreign key column 'groupe_id' in table 'user_mission' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "null_ratio_high",
+          "source_type": "deterministic",
+          "evidence": {
+            "table_name": "user_mission",
+            "column_name": "groupe_id",
+            "foreign_table": "groupe",
+            "foreign_column": "id"
+          },
+          "evidence_payload": {
+            "table_name": "user_mission",
+            "column_name": "groupe_id",
+            "foreign_table": "groupe",
+            "foreign_column": "id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT groupe_id FROM user_mission WHERE groupe_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "Foreign key column 'groupe_id' in table 'user_mission' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_014_campagne",
+          "fix_id": "advise-nullable-fk-campagne-multiple-ids",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne"
+          ],
+          "depends_on": [],
+          "table": "campagne",
+          "target_table": "campagne",
+          "problem": "Foreign Keys in 'campagne' are Nullable",
+          "fix": "Foreign key columns 'user_id', 'expediteur_id', 'modele_id', 'campaign_type_permission_id', and 'schedule_id' in table 'campagne' are nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "evidence": {
+            "table_name": "campagne",
+            "column_name": "user_id",
+            "foreign_table": "users",
+            "foreign_column": "id",
+            "columns_with_high_nulls": [
+              "user_id",
+              "expediteur_id",
+              "modele_id",
+              "campaign_type_permission_id",
+              "schedule_id"
+            ]
+          },
+          "evidence_payload": {
+            "table_name": "campagne",
+            "column_name": "user_id",
+            "foreign_table": "users",
+            "foreign_column": "id",
+            "columns_with_high_nulls": [
+              "user_id",
+              "expediteur_id",
+              "modele_id",
+              "campaign_type_permission_id",
+              "schedule_id"
+            ]
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT user_id, expediteur_id, modele_id, campaign_type_permission_id, schedule_id FROM campagne WHERE user_id IS NULL OR expediteur_id IS NULL OR modele_id IS NULL OR campaign_type_permission_id IS NULL OR schedule_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "Foreign key columns 'user_id', 'expediteur_id', 'modele_id', 'campaign_type_permission_id', and 'schedule_id' in table 'campagne' are nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_015_modele_membership_id",
+          "fix_id": "advise-nullable-fk-modele-membership-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "modele"
+          ],
+          "depends_on": [],
+          "table": "modele",
+          "target_table": "modele",
+          "problem": "Foreign Key 'modele.membership_id' is Nullable",
+          "fix": "Foreign key column 'membership_id' in table 'modele' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "evidence": {
+            "table_name": "modele",
+            "column_name": "membership_id",
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "evidence_payload": {
+            "table_name": "modele",
+            "column_name": "membership_id",
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT membership_id FROM modele WHERE membership_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "Foreign key column 'membership_id' in table 'modele' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_016_groupe_admin_id",
+          "fix_id": "investigate-high-null-ratio-groupe-admin-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": [],
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "High Null Ratio in 'groupe.admin_id'",
+          "fix": "Column 'admin_id' in table 'groupe' has a high null ratio (89%). This suggests that the column might not be consistently populated or its nullability needs to be re-evaluated. Investigate the reason for the high null count and consider enforcing NOT NULL if the column is required.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "source_rule": "null_ratio_high",
+          "source_type": "deterministic",
+          "evidence": {
+            "table_name": "groupe",
+            "column_name": "admin_id",
+            "foreign_table": "users",
+            "foreign_column": "id"
+          },
+          "evidence_payload": {
+            "null_ratio": 0.8889,
+            "total_rows": 9,
+            "threshold_used": 0.1
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT admin_id FROM groupe WHERE admin_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "Column 'admin_id' in table 'groupe' has a high null ratio (89%). This suggests that the column might not be consistently populated or its nullability needs to be re-evaluated. Investigate the reason for the high null count and consider enforcing NOT NULL if the column is required.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_017_prm_status_updated_at",
+          "fix_id": "investigate-high-null-ratio-prm-status-updated-at",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "prm_status"
+          ],
+          "depends_on": [],
+          "table": "prm_status",
+          "target_table": "prm_status",
+          "problem": "High Null Ratio in 'prm_status.updated_at'",
+          "fix": "Column 'updated_at' in table 'prm_status' has a high null ratio (100%). This suggests that the column might not be consistently populated or its nullability needs to be re-evaluated. Investigate the reason for the high null count and consider enforcing NOT NULL if the column is required.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "source_rule": "null_ratio_high",
+          "source_type": "deterministic",
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 25,
+            "threshold_used": 0.8
+          },
+          "evidence_payload": {
+            "null_ratio": 1.0,
+            "total_rows": 25,
+            "threshold_used": 0.8
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT updated_at FROM prm_status WHERE updated_at IS NULL LIMIT 10;"
+          ],
+          "explanation": "Column 'updated_at' in table 'prm_status' has a high null ratio (100%). This suggests that the column might not be consistently populated or its nullability needs to be re-evaluated. Investigate the reason for the high null count and consider enforcing NOT NULL if the column is required.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_018_user_keys",
+          "fix_id": "investigate-high-null-ratio-user-keys-expiration-last-used-date",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_keys"
+          ],
+          "depends_on": [],
+          "table": "user_keys",
+          "target_table": "user_keys",
+          "problem": "High Null Ratio in 'user_keys.expiration_date, last_time_used_date'",
+          "fix": "Columns 'expiration_date' and 'last_time_used_date' in table 'user_keys' have a high null ratio (100%). This suggests that these columns might not be consistently populated or their nullability needs to be re-evaluated. Investigate the reason for the high null count and consider enforcing NOT NULL if the columns are required.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "source_rule": "null_ratio_high",
+          "source_type": "deterministic",
+          "evidence": {
+            "table_name": "user_keys",
+            "column_name": "membership_id",
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "evidence_payload": {
+            "null_ratio": 1.0,
+            "total_rows": 1,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "expiration_date",
+              "last_time_used_date"
+            ]
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT expiration_date, last_time_used_date FROM user_keys WHERE expiration_date IS NULL OR last_time_used_date IS NULL LIMIT 10;"
+          ],
+          "explanation": "Columns 'expiration_date' and 'last_time_used_date' in table 'user_keys' have a high null ratio (100%). This suggests that these columns might not be consistently populated or their nullability needs to be re-evaluated. Investigate the reason for the high null count and consider enforcing NOT NULL if the columns are required.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_019_smsc_routing_rule",
+          "fix_id": "investigate-high-null-ratio-smsc-routing-rule-expediteur-groupe-ids",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "smsc_routing_rule"
+          ],
+          "depends_on": [],
+          "table": "smsc_routing_rule",
+          "target_table": "smsc_routing_rule",
+          "problem": "High Null Ratio in 'smsc_routing_rule.expediteur_id, groupe_id'",
+          "fix": "Columns 'expediteur_id' and 'groupe_id' in table 'smsc_routing_rule' have a high null ratio (86%). This suggests that these columns might not be consistently populated or their nullability needs to be re-evaluated. Investigate the reason for the high null count and consider enforcing NOT NULL if the columns are required.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "source_rule": "null_ratio_high",
+          "source_type": "deterministic",
+          "evidence": {
+            "table_name": "smsc_routing_rule",
+            "column_name": "groupe_id",
+            "foreign_table": "groupe",
+            "foreign_column": "id",
+            "columns_with_high_nulls": [
+              "groupe_id",
+              "expediteur_id"
+            ]
+          },
+          "evidence_payload": {
+            "null_ratio": 0.8571,
+            "total_rows": 7,
+            "threshold_used": 0.1,
+            "columns_with_high_nulls": [
+              "expediteur_id",
+              "groupe_id"
+            ]
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT expediteur_id, groupe_id FROM smsc_routing_rule WHERE expediteur_id IS NULL OR groupe_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "Columns 'expediteur_id' and 'groupe_id' in table 'smsc_routing_rule' have a high null ratio (86%). This suggests that these columns might not be consistently populated or their nullability needs to be re-evaluated. Investigate the reason for the high null count and consider enforcing NOT NULL if the columns are required.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_020_groupe_admin_id",
+          "fix_id": "add-index-groupe-admin-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": [],
+          "table": "groupe",
+          "target_table": "groupe",
+          "problem": "Add Index to 'groupe.admin_id'",
+          "fix": "Foreign key column 'admin_id' in table 'groupe' is not indexed. Adding an index will improve the performance of join operations and foreign key checks involving this column.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "source_rule": "null_ratio_high",
+          "source_type": "deterministic",
+          "evidence": {
+            "table_name": "groupe",
+            "column_name": "admin_id",
+            "foreign_table": "users",
+            "foreign_column": "id"
+          },
+          "evidence_payload": {
+            "table_name": "groupe",
+            "column_name": "admin_id",
+            "columns_with_high_nulls": [
+              "admin_id",
+              "status_id"
+            ]
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS ix_groupe_admin_id ON groupe (admin_id);"
+          ],
+          "explanation": "Foreign key column 'admin_id' in table 'groupe' is not indexed. Adding an index will improve the performance of join operations and foreign key checks involving this column.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'groupe' AND indexname = 'ix_groupe_admin_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS ix_groupe_admin_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_021_expediteur_organization_id",
+          "fix_id": "add-index-expediteur-organization-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "expediteur"
+          ],
+          "depends_on": [],
+          "table": "expediteur",
+          "target_table": "expediteur",
+          "problem": "Add Index to 'expediteur.organization_id'",
+          "fix": "Foreign key column 'organization_id' in table 'expediteur' is not indexed. Adding an index will improve the performance of join operations and foreign key checks involving this column.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "evidence": {
+            "table_name": "expediteur",
+            "column_name": "organization_id"
+          },
+          "evidence_payload": {
+            "table_name": "expediteur",
+            "column_name": "organization_id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS ix_expediteur_organization_id ON expediteur (organization_id);"
+          ],
+          "explanation": "Foreign key column 'organization_id' in table 'expediteur' is not indexed. Adding an index will improve the performance of join operations and foreign key checks involving this column.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'expediteur' AND indexname = 'ix_expediteur_organization_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS ix_expediteur_organization_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_022_campagne_contacts_campagne_id",
+          "fix_id": "add-index-campagne-contacts-campagne-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": [],
+          "table": "campagne_contacts",
+          "target_table": "campagne_contacts",
+          "problem": "Add Index to 'campagne_contacts.campagne_id'",
+          "fix": "Foreign key column 'campagne_id' in table 'campagne_contacts' is not indexed. Adding an index will improve the performance of join operations and foreign key checks involving this column.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "evidence": {
+            "foreign_table": "campagne",
+            "foreign_column": "id"
+          },
+          "evidence_payload": {
+            "table_name": "campagne_contacts",
+            "column_name": "campagne_id",
+            "columns_with_high_nulls": [
+              "campagne_id",
+              "contact_id"
+            ]
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS ix_campagne_contacts_campagne_id ON campagne_contacts (campagne_id);"
+          ],
+          "explanation": "Foreign key column 'campagne_id' in table 'campagne_contacts' is not indexed. Adding an index will improve the performance of join operations and foreign key checks involving this column.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'campagne_contacts' AND indexname = 'ix_campagne_contacts_campagne_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS ix_campagne_contacts_campagne_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_023_membership_status_id",
+          "fix_id": "add-index-membership-status-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "membership"
+          ],
+          "depends_on": [],
+          "table": "membership",
+          "target_table": "membership",
+          "problem": "Add Index to 'membership.status_id'",
+          "fix": "Foreign key column 'status_id' in table 'membership' is not indexed. Adding an index will improve the performance of join operations and foreign key checks involving this column.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "evidence": {
+            "table_name": "membership",
+            "column_name": "status_id"
+          },
+          "evidence_payload": {
+            "table_name": "membership",
+            "column_name": "status_id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS ix_membership_status_id ON membership (status_id);"
+          ],
+          "explanation": "Foreign key column 'status_id' in table 'membership' is not indexed. Adding an index will improve the performance of join operations and foreign key checks involving this column.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'membership' AND indexname = 'ix_membership_status_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS ix_membership_status_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_024_expediteur_groupe_expediteur_id",
+          "fix_id": "add-index-expediteur-groupe-expediteur-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "expediteur_groupe"
+          ],
+          "depends_on": [],
+          "table": "expediteur_groupe",
+          "target_table": "expediteur_groupe",
+          "problem": "Add Index to 'expediteur_groupe.expediteur_id'",
+          "fix": "Foreign key column 'expediteur_id' in table 'expediteur_groupe' is not indexed. Adding an index will improve the performance of join operations and foreign key checks involving this column.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "source_rule": "missing_pk",
+          "source_type": "deterministic",
+          "evidence": {},
+          "evidence_payload": {
+            "table_name": "expediteur_groupe",
+            "column_name": "expediteur_id",
+            "columns_with_high_nulls": [
+              "expediteur_id",
+              "groupe_id"
+            ]
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS ix_expediteur_groupe_expediteur_id ON expediteur_groupe (expediteur_id);"
+          ],
+          "explanation": "Foreign key column 'expediteur_id' in table 'expediteur_groupe' is not indexed. Adding an index will improve the performance of join operations and foreign key checks involving this column.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'expediteur_groupe' AND indexname = 'ix_expediteur_groupe_expediteur_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS ix_expediteur_groupe_expediteur_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_025_campagne_tags_campagne_id",
+          "fix_id": "add-index-campagne-tags-campagne-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_tags"
+          ],
+          "depends_on": [],
+          "table": "campagne_tags",
+          "target_table": "campagne_tags",
+          "problem": "Add Index to 'campagne_tags.campagne_id'",
+          "fix": "Foreign key column 'campagne_id' in table 'campagne_tags' is not indexed. Adding an index will improve the performance of join operations and foreign key checks involving this column.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "evidence": {
+            "table_name": "campagne_tags",
+            "column_name": "campagne_id"
+          },
+          "evidence_payload": {
+            "table_name": "campagne_tags",
+            "column_name": "campagne_id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS ix_campagne_tags_campagne_id ON campagne_tags (campagne_id);"
+          ],
+          "explanation": "Foreign key column 'campagne_id' in table 'campagne_tags' is not indexed. Adding an index will improve the performance of join operations and foreign key checks involving this column.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'campagne_tags' AND indexname = 'ix_campagne_tags_campagne_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS ix_campagne_tags_campagne_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_026_mention_modele_id",
+          "fix_id": "add-index-mention-modele-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "mention"
+          ],
+          "depends_on": [],
+          "table": "mention",
+          "target_table": "mention",
+          "problem": "Add Index to 'mention.modele_id'",
+          "fix": "Foreign key column 'modele_id' in table 'mention' is not indexed. Adding an index will improve the performance of join operations and foreign key checks involving this column.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "evidence": {
+            "table_name": "mention",
+            "column_name": "modele_id"
+          },
+          "evidence_payload": {
+            "table_name": "mention",
+            "column_name": "modele_id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS ix_mention_modele_id ON mention (modele_id);"
+          ],
+          "explanation": "Foreign key column 'modele_id' in table 'mention' is not indexed. Adding an index will improve the performance of join operations and foreign key checks involving this column.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'mention' AND indexname = 'ix_mention_modele_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS ix_mention_modele_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_027_campagne_user_id",
+          "fix_id": "add-index-campagne-user-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne"
+          ],
+          "depends_on": [],
+          "table": "campagne",
+          "target_table": "campagne",
+          "problem": "Add Index to 'campagne.user_id'",
+          "fix": "Foreign key column 'user_id' in table 'campagne' is not indexed. Adding an index will improve the performance of join operations and foreign key checks involving this column.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "evidence": {},
+          "evidence_payload": {
+            "table_name": "campagne",
+            "column_name": "user_id",
+            "columns_with_high_nulls": [
+              "user_id",
+              "expediteur_id",
+              "modele_id",
+              "status_id",
+              "campaign_type_permission_id",
+              "schedule_id"
+            ]
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS ix_campagne_user_id ON campagne (user_id);"
+          ],
+          "explanation": "Foreign key column 'user_id' in table 'campagne' is not indexed. Adding an index will improve the performance of join operations and foreign key checks involving this column.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'campagne' AND indexname = 'ix_campagne_user_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS ix_campagne_user_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_028_smsc_routing_rule_target_smsc_org_id",
+          "fix_id": "add-index-smsc-routing-rule-target-smsc-org-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "smsc_routing_rule"
+          ],
+          "depends_on": [],
+          "table": "smsc_routing_rule",
+          "target_table": "smsc_routing_rule",
+          "problem": "Add Index to 'smsc_routing_rule.target_smsc_org_id'",
+          "fix": "Adding an index on 'smsc_routing_rule.target_smsc_org_id' (foreign key to smsc_organization.id) will speed up JOIN and orphan-check queries, improving database performance.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "evidence": {
+            "foreign_table": "smsc_organization",
+            "foreign_column": "id"
+          },
+          "evidence_payload": {
+            "foreign_table": "smsc_organization",
+            "foreign_column": "id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS ix_smsc_routing_rule_target_smsc_org_id ON smsc_routing_rule (target_smsc_org_id);"
+          ],
+          "explanation": "Adding an index on 'smsc_routing_rule.target_smsc_org_id' (foreign key to smsc_organization.id) will speed up JOIN and orphan-check queries, improving database performance.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'smsc_routing_rule' AND indexname = 'ix_smsc_routing_rule_target_smsc_org_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS ix_smsc_routing_rule_target_smsc_org_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_029_modele_campaign_type",
+          "fix_id": "add-index-modele-campaign-type",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "modele"
+          ],
+          "depends_on": [],
+          "table": "modele",
+          "target_table": "modele",
+          "problem": "Add Index to 'modele.campaign_type'",
+          "fix": "Adding an index on 'modele.campaign_type' (foreign key to prm_campaign_type.code) will speed up JOIN and orphan-check queries, improving database performance.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "evidence": {
+            "foreign_table": "prm_campaign_type",
+            "foreign_column": "code"
+          },
+          "evidence_payload": {
+            "foreign_table": "prm_campaign_type",
+            "foreign_column": "code"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS ix_modele_campaign_type ON modele (campaign_type);"
+          ],
+          "explanation": "Adding an index on 'modele.campaign_type' (foreign key to prm_campaign_type.code) will speed up JOIN and orphan-check queries, improving database performance.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'modele' AND indexname = 'ix_modele_campaign_type';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS ix_modele_campaign_type;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_030_user_mission_groupe_id",
+          "fix_id": "investigate-high-null-ratio-user-mission-groupe-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_mission"
+          ],
+          "depends_on": [],
+          "table": "user_mission",
+          "target_table": "user_mission",
+          "problem": "High Null Ratio in 'user_mission.groupe_id'",
+          "fix": "Column 'groupe_id' in table 'user_mission' has a high null ratio (50%). This suggests that the column might not be consistently populated or its nullability needs to be re-evaluated. Investigate the reason for the high null count and consider enforcing NOT NULL if the column is required.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "source_rule": "null_ratio_high",
+          "source_type": "deterministic",
+          "evidence": {
+            "table_name": "user_mission",
+            "column_name": "groupe_id",
+            "foreign_table": "groupe",
+            "foreign_column": "id"
+          },
+          "evidence_payload": {
+            "null_ratio": 0.5,
+            "total_rows": 8,
+            "threshold_used": 0.1
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT groupe_id FROM user_mission WHERE groupe_id IS NULL LIMIT 10;"
+          ],
+          "explanation": "Column 'groupe_id' in table 'user_mission' has a high null ratio (50%). This suggests that the column might not be consistently populated or its nullability needs to be re-evaluated. Investigate the reason for the high null count and consider enforcing NOT NULL if the column is required.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_031_user_contact",
+          "fix_id": "investigate-categorical-drift-user-contact",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_contact"
+          ],
+          "depends_on": [],
+          "table": "user_contact",
+          "target_table": "user_contact",
+          "problem": "Categorical Drift Detected in 'user_contact'",
+          "fix": "The 'user_contact' table shows categorical drift in columns 'date_created' and 'date_modified'. This indicates a significant change in the distribution of values for these columns, which might be due to data entry issues, application changes, or unexpected data patterns. Further investigation is needed to understand the cause and impact of this drift.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "statistical",
+          "interaction_model": "investigate",
+          "source_rule": "categorical_drift",
+          "source_type": "ai",
+          "evidence": {
+            "table_name": "user_contact",
+            "column_name": "membership_id",
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "evidence_payload": {
+            "current_low_frequency_categories": [
+              {
+                "category": "2026-02-16 17:05:33.330845",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "2026-02-18 11:01:33.004525",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "2026-02-17 09:38:38.16577",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "2026-02-16 17:05:22.340587",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "2026-02-16 17:00:33.602797",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "2026-02-16 16:58:59.662358",
+                "percentage": "0.0100"
+              },
+              {
+                "category": "2026-02-16 16:59:35.102",
+                "percentage": "0.0549"
+              },
+              {
+                "category": "2026-02-17 07:49:52.808366",
+                "percentage": "0.1647"
+              }
+            ],
+            "dominant_categories": [
+              {
+                "category": "2026-02-16 17:02:33.254741",
+                "percentage": "49.8503"
+              },
+              {
+                "category": "2026-02-16 16:55:49.808715",
+                "percentage": "49.8952"
+              }
+            ],
+            "columns_with_high_nulls": [
+              "date_created",
+              "date_modified"
+            ]
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT date_created AS category, COUNT(*) AS count, (COUNT(*)*100.0 / (SELECT COUNT(*) FROM user_contact)) AS percentage FROM user_contact GROUP BY date_created ORDER BY count DESC LIMIT 10;"
+          ],
+          "explanation": "The 'user_contact' table shows categorical drift in columns 'date_created' and 'date_modified'. This indicates a significant change in the distribution of values for these columns, which might be due to data entry issues, application changes, or unexpected data patterns. Further investigation is needed to understand the cause and impact of this drift.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        }
+      ],
+      "cards": [
+        {
+          "fix_id": "add-pk-campagne-contacts",
+          "title": "Add Primary Key to campagne_contacts",
+          "target": "campagne_contacts",
+          "rationale": "Table 'campagne_contacts' is missing a primary key. Adding a composite primary key on 'campagne_id' and 'contact_id' will ensure data integrity and improve query performance.",
+          "risk_level": "medium",
+          "sql": "ALTER TABLE campagne_contacts ADD PRIMARY KEY (campagne_id, contact_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'campagne_contacts_pkey';"
+          ],
+          "verification_results": {
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'campagne_contacts_pkey';": [
+              {
+                "count": 0
+              }
+            ]
+          },
+          "rollback_queries": [
+            "ALTER TABLE campagne_contacts DROP CONSTRAINT campagne_contacts_pkey;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "evidence": {},
+          "evidence_payload": {
+            "table_name": "campagne_contacts"
+          },
+          "source_rule": "missing_index",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "critical"
+        },
+        {
+          "fix_id": "add-pk-expediteur-groupe",
+          "title": "Add Primary Key to expediteur_groupe",
+          "target": "expediteur_groupe",
+          "rationale": "Table 'expediteur_groupe' is missing a primary key. Adding a composite primary key on 'groupe_id' and 'expediteur_id' will ensure data integrity and improve query performance.",
+          "risk_level": "medium",
+          "sql": "ALTER TABLE expediteur_groupe ADD PRIMARY KEY (groupe_id, expediteur_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'expediteur_groupe_pkey';"
+          ],
+          "verification_results": {
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'expediteur_groupe_pkey';": [
+              {
+                "count": 0
+              }
+            ]
+          },
+          "rollback_queries": [
+            "ALTER TABLE expediteur_groupe DROP CONSTRAINT expediteur_groupe_pkey;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "expediteur_groupe"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "evidence": {},
+          "evidence_payload": {
+            "table_name": "expediteur_groupe"
+          },
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "critical"
+        },
+        {
+          "fix_id": "add-pk-campagne-tags",
+          "title": "Add Primary Key to campagne_tags",
+          "target": "campagne_tags",
+          "rationale": "Table 'campagne_tags' is missing a primary key. Adding a composite primary key on 'campagne_id' and 'tag_name' will ensure data integrity and improve query performance. Note: 'tag_name' is currently nullable, which is unusual for a primary key component. If 'tag_name' can legitimately be NULL, a different primary key strategy may be required.",
+          "risk_level": "medium",
+          "sql": "ALTER TABLE campagne_tags ADD PRIMARY KEY (campagne_id, tag_name);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'campagne_tags_pkey';"
+          ],
+          "verification_results": {
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'campagne_tags_pkey';": [
+              {
+                "count": 0
+              }
+            ]
+          },
+          "rollback_queries": [
+            "ALTER TABLE campagne_tags DROP CONSTRAINT campagne_tags_pkey;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_tags"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "evidence": {},
+          "evidence_payload": {
+            "table_name": "campagne_tags"
+          },
+          "source_rule": "missing_pk",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "critical"
+        },
+        {
+          "fix_id": "add-pk-user-contact-tags",
+          "title": "Add Primary Key to user_contact_tags",
+          "target": "user_contact_tags",
+          "rationale": "Table 'user_contact_tags' is missing a primary key. Adding a composite primary key on 'user_contact_id' and 'tag_id' will ensure data integrity and improve query performance.",
+          "risk_level": "medium",
+          "sql": "ALTER TABLE user_contact_tags ADD PRIMARY KEY (user_contact_id, tag_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'user_contact_tags_pkey';"
+          ],
+          "verification_results": {
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'user_contact_tags_pkey';": [
+              {
+                "count": 0
+              }
+            ]
+          },
+          "rollback_queries": [
+            "ALTER TABLE user_contact_tags DROP CONSTRAINT user_contact_tags_pkey;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_contact_tags"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "evidence": {},
+          "evidence_payload": {
+            "table_name": "user_contact_tags"
+          },
+          "source_rule": "missing_pk",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "critical"
+        },
+        {
+          "fix_id": "advise-nullable-fk-budget-history-groupe-id",
+          "title": "Foreign Key 'budget_history.groupe_id' is Nullable",
+          "target": "budget_history.groupe_id",
+          "rationale": "Foreign key column 'groupe_id' in table 'budget_history' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "risk_level": "low",
+          "sql": "SELECT groupe_id FROM budget_history WHERE groupe_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "budget_history"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "table_name": "budget_history",
+            "column_name": "groupe_id",
+            "foreign_table": "groupe",
+            "foreign_column": "id"
+          },
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "advise-nullable-fk-groupe-admin-id",
+          "title": "Foreign Key 'groupe.admin_id' is Nullable",
+          "target": "groupe.admin_id",
+          "rationale": "Foreign key column 'admin_id' in table 'groupe' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "risk_level": "low",
+          "sql": "SELECT admin_id FROM groupe WHERE admin_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "table_name": "groupe",
+            "column_name": "admin_id",
+            "foreign_table": "users",
+            "foreign_column": "id"
+          },
+          "source_rule": "null_ratio_high",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "advise-nullable-fk-campagne-contacts-contact-id",
+          "title": "Foreign Key 'campagne_contacts.contact_id' is Nullable",
+          "target": "campagne_contacts.contact_id",
+          "rationale": "Foreign key column 'contact_id' in table 'campagne_contacts' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "risk_level": "low",
+          "sql": "SELECT contact_id FROM campagne_contacts WHERE contact_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "table_name": "campagne_contacts",
+            "column_name": "contact_id",
+            "foreign_table": "contacts",
+            "foreign_column": "msisdn"
+          },
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "advise-nullable-fk-request-api-membership-id",
+          "title": "Foreign Key 'request_api.membership_id' is Nullable",
+          "target": "request_api.membership_id",
+          "rationale": "Foreign key column 'membership_id' in table 'request_api' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "risk_level": "low",
+          "sql": "SELECT membership_id FROM request_api WHERE membership_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "request_api"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "table_name": "request_api",
+            "column_name": "membership_id",
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "advise-nullable-fk-smsc-routing-rule-groupe-expediteur-ids",
+          "title": "Foreign Keys 'smsc_routing_rule.groupe_id, expediteur_id' are Nullable",
+          "target": "smsc_routing_rule",
+          "rationale": "Foreign key columns 'groupe_id' and 'expediteur_id' in table 'smsc_routing_rule' are nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "risk_level": "low",
+          "sql": "SELECT groupe_id, expediteur_id FROM smsc_routing_rule WHERE groupe_id IS NULL OR expediteur_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "smsc_routing_rule"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "table_name": "smsc_routing_rule",
+            "column_name": "groupe_id",
+            "foreign_table": "groupe",
+            "foreign_column": "id",
+            "columns_with_high_nulls": [
+              "groupe_id",
+              "expediteur_id"
+            ]
+          },
+          "source_rule": "null_ratio_high",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "advise-nullable-fk-user-contact-membership-id",
+          "title": "Foreign Key 'user_contact.membership_id' is Nullable",
+          "target": "user_contact.membership_id",
+          "rationale": "Foreign key column 'membership_id' in table 'user_contact' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "risk_level": "low",
+          "sql": "SELECT membership_id FROM user_contact WHERE membership_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_contact"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "table_name": "user_contact",
+            "column_name": "membership_id",
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "advise-nullable-fk-tags-membership-id",
+          "title": "Foreign Key 'tags.membership_id' is Nullable",
+          "target": "tags.membership_id",
+          "rationale": "Foreign key column 'membership_id' in table 'tags' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "risk_level": "low",
+          "sql": "SELECT membership_id FROM tags WHERE membership_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "tags"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "table_name": "tags",
+            "column_name": "membership_id",
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "advise-nullable-fk-user-keys-membership-id",
+          "title": "Foreign Key 'user_keys.membership_id' is Nullable",
+          "target": "user_keys.membership_id",
+          "rationale": "Foreign key column 'membership_id' in table 'user_keys' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "risk_level": "low",
+          "sql": "SELECT membership_id FROM user_keys WHERE membership_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_keys"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "table_name": "user_keys",
+            "column_name": "membership_id",
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "advise-nullable-fk-user-mission-groupe-id",
+          "title": "Foreign Key 'user_mission.groupe_id' is Nullable",
+          "target": "user_mission.groupe_id",
+          "rationale": "Foreign key column 'groupe_id' in table 'user_mission' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "risk_level": "low",
+          "sql": "SELECT groupe_id FROM user_mission WHERE groupe_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_mission"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "table_name": "user_mission",
+            "column_name": "groupe_id",
+            "foreign_table": "groupe",
+            "foreign_column": "id"
+          },
+          "source_rule": "null_ratio_high",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "advise-nullable-fk-campagne-multiple-ids",
+          "title": "Foreign Keys in 'campagne' are Nullable",
+          "target": "campagne",
+          "rationale": "Foreign key columns 'user_id', 'expediteur_id', 'modele_id', 'campaign_type_permission_id', and 'schedule_id' in table 'campagne' are nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "risk_level": "low",
+          "sql": "SELECT user_id, expediteur_id, modele_id, campaign_type_permission_id, schedule_id FROM campagne WHERE user_id IS NULL OR expediteur_id IS NULL OR modele_id IS NULL OR campaign_type_permission_id IS NULL OR schedule_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "table_name": "campagne",
+            "column_name": "user_id",
+            "foreign_table": "users",
+            "foreign_column": "id",
+            "columns_with_high_nulls": [
+              "user_id",
+              "expediteur_id",
+              "modele_id",
+              "campaign_type_permission_id",
+              "schedule_id"
+            ]
+          },
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "advise-nullable-fk-modele-membership-id",
+          "title": "Foreign Key 'modele.membership_id' is Nullable",
+          "target": "modele.membership_id",
+          "rationale": "Foreign key column 'membership_id' in table 'modele' is nullable. This can lead to orphaned records or inconsistent data if not explicitly designed to be nullable. Investigate if this nullability is intentional.",
+          "risk_level": "low",
+          "sql": "SELECT membership_id FROM modele WHERE membership_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "modele"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "table_name": "modele",
+            "column_name": "membership_id",
+            "foreign_table": "membership",
+            "foreign_column": "id"
+          },
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "investigate-high-null-ratio-groupe-admin-id",
+          "title": "High Null Ratio in 'groupe.admin_id'",
+          "target": "groupe.admin_id",
+          "rationale": "Column 'admin_id' in table 'groupe' has a high null ratio (89%). This suggests that the column might not be consistently populated or its nullability needs to be re-evaluated. Investigate the reason for the high null count and consider enforcing NOT NULL if the column is required.",
+          "risk_level": "low",
+          "sql": "SELECT admin_id FROM groupe WHERE admin_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "null_ratio": 0.8889,
+            "total_rows": 9,
+            "threshold_used": 0.1
+          },
+          "source_rule": "null_ratio_high",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "investigate-high-null-ratio-prm-status-updated-at",
+          "title": "High Null Ratio in 'prm_status.updated_at'",
+          "target": "prm_status.updated_at",
+          "rationale": "Column 'updated_at' in table 'prm_status' has a high null ratio (100%). This suggests that the column might not be consistently populated or its nullability needs to be re-evaluated. Investigate the reason for the high null count and consider enforcing NOT NULL if the column is required.",
+          "risk_level": "low",
+          "sql": "SELECT updated_at FROM prm_status WHERE updated_at IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "prm_status"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "null_ratio": 1.0,
+            "total_rows": 25,
+            "threshold_used": 0.8
+          },
+          "source_rule": "null_ratio_high",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "investigate-high-null-ratio-user-keys-expiration-last-used-date",
+          "title": "High Null Ratio in 'user_keys.expiration_date, last_time_used_date'",
+          "target": "user_keys",
+          "rationale": "Columns 'expiration_date' and 'last_time_used_date' in table 'user_keys' have a high null ratio (100%). This suggests that these columns might not be consistently populated or their nullability needs to be re-evaluated. Investigate the reason for the high null count and consider enforcing NOT NULL if the columns are required.",
+          "risk_level": "low",
+          "sql": "SELECT expiration_date, last_time_used_date FROM user_keys WHERE expiration_date IS NULL OR last_time_used_date IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_keys"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "null_ratio": 1.0,
+            "total_rows": 1,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "expiration_date",
+              "last_time_used_date"
+            ]
+          },
+          "source_rule": "null_ratio_high",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "investigate-high-null-ratio-smsc-routing-rule-expediteur-groupe-ids",
+          "title": "High Null Ratio in 'smsc_routing_rule.expediteur_id, groupe_id'",
+          "target": "smsc_routing_rule",
+          "rationale": "Columns 'expediteur_id' and 'groupe_id' in table 'smsc_routing_rule' have a high null ratio (86%). This suggests that these columns might not be consistently populated or their nullability needs to be re-evaluated. Investigate the reason for the high null count and consider enforcing NOT NULL if the columns are required.",
+          "risk_level": "low",
+          "sql": "SELECT expediteur_id, groupe_id FROM smsc_routing_rule WHERE expediteur_id IS NULL OR groupe_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "smsc_routing_rule"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "null_ratio": 0.8571,
+            "total_rows": 7,
+            "threshold_used": 0.1,
+            "columns_with_high_nulls": [
+              "expediteur_id",
+              "groupe_id"
+            ]
+          },
+          "source_rule": "null_ratio_high",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "add-index-groupe-admin-id",
+          "title": "Add Index to 'groupe.admin_id'",
+          "target": "groupe.admin_id",
+          "rationale": "Foreign key column 'admin_id' in table 'groupe' is not indexed. Adding an index will improve the performance of join operations and foreign key checks involving this column.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS ix_groupe_admin_id ON groupe (admin_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'groupe' AND indexname = 'ix_groupe_admin_id';"
+          ],
+          "verification_results": {
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'groupe' AND indexname = 'ix_groupe_admin_id';": [
+              {
+                "count": 0
+              }
+            ]
+          },
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS ix_groupe_admin_id;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "groupe"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "evidence": {},
+          "evidence_payload": {
+            "table_name": "groupe",
+            "column_name": "admin_id",
+            "columns_with_high_nulls": [
+              "admin_id",
+              "status_id"
+            ]
+          },
+          "source_rule": "null_ratio_high",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "add-index-expediteur-organization-id",
+          "title": "Add Index to 'expediteur.organization_id'",
+          "target": "expediteur.organization_id",
+          "rationale": "Foreign key column 'organization_id' in table 'expediteur' is not indexed. Adding an index will improve the performance of join operations and foreign key checks involving this column.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS ix_expediteur_organization_id ON expediteur (organization_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'expediteur' AND indexname = 'ix_expediteur_organization_id';"
+          ],
+          "verification_results": {
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'expediteur' AND indexname = 'ix_expediteur_organization_id';": [
+              {
+                "count": 0
+              }
+            ]
+          },
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS ix_expediteur_organization_id;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "expediteur"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "evidence": {},
+          "evidence_payload": {
+            "table_name": "expediteur",
+            "column_name": "organization_id"
+          },
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "add-index-campagne-contacts-campagne-id",
+          "title": "Add Index to 'campagne_contacts.campagne_id'",
+          "target": "campagne_contacts.campagne_id",
+          "rationale": "Foreign key column 'campagne_id' in table 'campagne_contacts' is not indexed. Adding an index will improve the performance of join operations and foreign key checks involving this column.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS ix_campagne_contacts_campagne_id ON campagne_contacts (campagne_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'campagne_contacts' AND indexname = 'ix_campagne_contacts_campagne_id';"
+          ],
+          "verification_results": {
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'campagne_contacts' AND indexname = 'ix_campagne_contacts_campagne_id';": [
+              {
+                "count": 0
+              }
+            ]
+          },
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS ix_campagne_contacts_campagne_id;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_contacts"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "evidence": {},
+          "evidence_payload": {
+            "table_name": "campagne_contacts",
+            "column_name": "campagne_id",
+            "columns_with_high_nulls": [
+              "campagne_id",
+              "contact_id"
+            ]
+          },
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "add-index-membership-status-id",
+          "title": "Add Index to 'membership.status_id'",
+          "target": "membership.status_id",
+          "rationale": "Foreign key column 'status_id' in table 'membership' is not indexed. Adding an index will improve the performance of join operations and foreign key checks involving this column.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS ix_membership_status_id ON membership (status_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'membership' AND indexname = 'ix_membership_status_id';"
+          ],
+          "verification_results": {
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'membership' AND indexname = 'ix_membership_status_id';": [
+              {
+                "count": 0
+              }
+            ]
+          },
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS ix_membership_status_id;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "membership"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "evidence": {},
+          "evidence_payload": {
+            "table_name": "membership",
+            "column_name": "status_id"
+          },
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "add-index-expediteur-groupe-expediteur-id",
+          "title": "Add Index to 'expediteur_groupe.expediteur_id'",
+          "target": "expediteur_groupe.expediteur_id",
+          "rationale": "Foreign key column 'expediteur_id' in table 'expediteur_groupe' is not indexed. Adding an index will improve the performance of join operations and foreign key checks involving this column.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS ix_expediteur_groupe_expediteur_id ON expediteur_groupe (expediteur_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'expediteur_groupe' AND indexname = 'ix_expediteur_groupe_expediteur_id';"
+          ],
+          "verification_results": {
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'expediteur_groupe' AND indexname = 'ix_expediteur_groupe_expediteur_id';": [
+              {
+                "count": 0
+              }
+            ]
+          },
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS ix_expediteur_groupe_expediteur_id;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "expediteur_groupe"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "evidence": {},
+          "evidence_payload": {
+            "table_name": "expediteur_groupe",
+            "column_name": "expediteur_id",
+            "columns_with_high_nulls": [
+              "expediteur_id",
+              "groupe_id"
+            ]
+          },
+          "source_rule": "missing_pk",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "critical"
+        },
+        {
+          "fix_id": "add-index-campagne-tags-campagne-id",
+          "title": "Add Index to 'campagne_tags.campagne_id'",
+          "target": "campagne_tags.campagne_id",
+          "rationale": "Foreign key column 'campagne_id' in table 'campagne_tags' is not indexed. Adding an index will improve the performance of join operations and foreign key checks involving this column.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS ix_campagne_tags_campagne_id ON campagne_tags (campagne_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'campagne_tags' AND indexname = 'ix_campagne_tags_campagne_id';"
+          ],
+          "verification_results": {
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'campagne_tags' AND indexname = 'ix_campagne_tags_campagne_id';": [
+              {
+                "count": 0
+              }
+            ]
+          },
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS ix_campagne_tags_campagne_id;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne_tags"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "evidence": {},
+          "evidence_payload": {
+            "table_name": "campagne_tags",
+            "column_name": "campagne_id"
+          },
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "add-index-mention-modele-id",
+          "title": "Add Index to 'mention.modele_id'",
+          "target": "mention.modele_id",
+          "rationale": "Foreign key column 'modele_id' in table 'mention' is not indexed. Adding an index will improve the performance of join operations and foreign key checks involving this column.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS ix_mention_modele_id ON mention (modele_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'mention' AND indexname = 'ix_mention_modele_id';"
+          ],
+          "verification_results": {
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'mention' AND indexname = 'ix_mention_modele_id';": [
+              {
+                "count": 0
+              }
+            ]
+          },
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS ix_mention_modele_id;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "mention"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "evidence": {},
+          "evidence_payload": {
+            "table_name": "mention",
+            "column_name": "modele_id"
+          },
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "add-index-campagne-user-id",
+          "title": "Add Index to 'campagne.user_id'",
+          "target": "campagne.user_id",
+          "rationale": "Foreign key column 'user_id' in table 'campagne' is not indexed. Adding an index will improve the performance of join operations and foreign key checks involving this column.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS ix_campagne_user_id ON campagne (user_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'campagne' AND indexname = 'ix_campagne_user_id';"
+          ],
+          "verification_results": {
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'campagne' AND indexname = 'ix_campagne_user_id';": [
+              {
+                "count": 0
+              }
+            ]
+          },
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS ix_campagne_user_id;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "campagne"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "evidence": {},
+          "evidence_payload": {
+            "table_name": "campagne",
+            "column_name": "user_id",
+            "columns_with_high_nulls": [
+              "user_id",
+              "expediteur_id",
+              "modele_id",
+              "status_id",
+              "campaign_type_permission_id",
+              "schedule_id"
+            ]
+          },
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "add-index-smsc-routing-rule-target-smsc-org-id",
+          "title": "Add Index to 'smsc_routing_rule.target_smsc_org_id'",
+          "target": "smsc_routing_rule.target_smsc_org_id",
+          "rationale": "Adding an index on 'smsc_routing_rule.target_smsc_org_id' (foreign key to smsc_organization.id) will speed up JOIN and orphan-check queries, improving database performance.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS ix_smsc_routing_rule_target_smsc_org_id ON smsc_routing_rule (target_smsc_org_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'smsc_routing_rule' AND indexname = 'ix_smsc_routing_rule_target_smsc_org_id';"
+          ],
+          "verification_results": {
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'smsc_routing_rule' AND indexname = 'ix_smsc_routing_rule_target_smsc_org_id';": [
+              {
+                "count": 0
+              }
+            ]
+          },
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS ix_smsc_routing_rule_target_smsc_org_id;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "smsc_routing_rule"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "evidence": {},
+          "evidence_payload": {
+            "foreign_table": "smsc_organization",
+            "foreign_column": "id"
+          },
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "add-index-modele-campaign-type",
+          "title": "Add Index to 'modele.campaign_type'",
+          "target": "modele.campaign_type",
+          "rationale": "Adding an index on 'modele.campaign_type' (foreign key to prm_campaign_type.code) will speed up JOIN and orphan-check queries, improving database performance.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS ix_modele_campaign_type ON modele (campaign_type);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'modele' AND indexname = 'ix_modele_campaign_type';"
+          ],
+          "verification_results": {
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'modele' AND indexname = 'ix_modele_campaign_type';": [
+              {
+                "count": 0
+              }
+            ]
+          },
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS ix_modele_campaign_type;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "modele"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "evidence": {},
+          "evidence_payload": {
+            "foreign_table": "prm_campaign_type",
+            "foreign_column": "code"
+          },
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "investigate-high-null-ratio-user-mission-groupe-id",
+          "title": "High Null Ratio in 'user_mission.groupe_id'",
+          "target": "user_mission.groupe_id",
+          "rationale": "Column 'groupe_id' in table 'user_mission' has a high null ratio (50%). This suggests that the column might not be consistently populated or its nullability needs to be re-evaluated. Investigate the reason for the high null count and consider enforcing NOT NULL if the column is required.",
+          "risk_level": "low",
+          "sql": "SELECT groupe_id FROM user_mission WHERE groupe_id IS NULL LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_mission"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "null_ratio": 0.5,
+            "total_rows": 8,
+            "threshold_used": 0.1
+          },
+          "source_rule": "null_ratio_high",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "investigate-categorical-drift-user-contact",
+          "title": "Categorical Drift Detected in 'user_contact'",
+          "target": "user_contact",
+          "rationale": "The 'user_contact' table shows categorical drift in columns 'date_created' and 'date_modified'. This indicates a significant change in the distribution of values for these columns, which might be due to data entry issues, application changes, or unexpected data patterns. Further investigation is needed to understand the cause and impact of this drift.",
+          "risk_level": "low",
+          "sql": "SELECT date_created AS category, COUNT(*) AS count, (COUNT(*)*100.0 / (SELECT COUNT(*) FROM user_contact)) AS percentage FROM user_contact GROUP BY date_created ORDER BY count DESC LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_contact"
+          ],
+          "depends_on": [],
+          "card_family": "statistical",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "current_low_frequency_categories": [
+              {
+                "category": "2026-02-16 17:05:33.330845",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "2026-02-18 11:01:33.004525",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "2026-02-17 09:38:38.16577",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "2026-02-16 17:05:22.340587",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "2026-02-16 17:00:33.602797",
+                "percentage": "0.0050"
+              },
+              {
+                "category": "2026-02-16 16:58:59.662358",
+                "percentage": "0.0100"
+              },
+              {
+                "category": "2026-02-16 16:59:35.102",
+                "percentage": "0.0549"
+              },
+              {
+                "category": "2026-02-17 07:49:52.808366",
+                "percentage": "0.1647"
+              }
+            ],
+            "dominant_categories": [
+              {
+                "category": "2026-02-16 17:02:33.254741",
+                "percentage": "49.8503"
+              },
+              {
+                "category": "2026-02-16 16:55:49.808715",
+                "percentage": "49.8952"
+              }
+            ],
+            "columns_with_high_nulls": [
+              "date_created",
+              "date_modified"
+            ]
+          },
+          "source_rule": "categorical_drift",
+          "source_type": "ai",
+          "confidence": 0.85,
+          "severity": "medium"
+        }
+      ]
+    }
+  }
+}

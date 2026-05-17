@@ -79,6 +79,32 @@ _SEVERITY_RANK: dict[str, int] = {
     "critical": 4,
 }
 
+# Deterministic rule → card_family mapping used as fallback when LLM omits card_family.
+_RULE_TO_FAMILY: dict[str, str] = {
+    "missing_primary_key":    "schema_design",
+    "missing_pk":             "schema_design",
+    "missing_fk_index":       "schema_design",
+    "missing_index":          "schema_design",
+    "unindexed_fk":           "schema_design",
+    "nullable_fk":            "nullability",
+    "null_rate_high":         "nullability",
+    "null_ratio_high":        "nullability",
+    "nullable_foreign_key":   "nullability",
+    "duplicate_values":       "duplicates",
+    "duplicate_rows":         "duplicates",
+    "orphaned_fk":            "referential",
+    "orphaned_row":           "referential",
+    "referential_integrity":  "referential",
+    "type_mismatch":          "type_integrity",
+    "categorical_drift":      "statistical",
+    "outlier_detected":       "statistical",
+    "distribution_anomaly":   "statistical",
+    "temporal_inconsistency": "temporal",
+    "stale_timestamp":        "temporal",
+    "naming_convention":      "schema_design",
+    "missing_not_null":       "nullability",
+}
+
 
 # ---------------------------------------------------------------------------
 # Core finding — emitted by every validator agent
@@ -272,6 +298,10 @@ class FixCard(BaseModel):
     )
     preconditions: list[str] = Field(default_factory=list)
     verification_queries: list[str] = Field(default_factory=list)
+    verification_results: Optional[dict] = Field(
+        default=None,
+        description="Populated by FixVerifier post-processor after the LLM agent completes. Never written by the LLM.",
+    )
     rollback_queries: list[str] = Field(default_factory=list)
     # Dry-run impact preview (populated by Fix Planner, shown in UI before user decides)
     rows_affected_estimate: Optional[int] = Field(
@@ -292,7 +322,14 @@ class FixCard(BaseModel):
     )
     interaction_model: InteractionModel = Field(
         default="investigate",
-        description="User interaction model: execute, decide, advisory, blocked, or investigate.",
+        description=(
+            "User interaction model — controls the UI action gate. "
+            "execute_ddl: safe reversible DDL (ADD PK, CREATE INDEX, ADD CONSTRAINT) — shows Execute button. "
+            "human_decision: irreversible DML (DELETE, UPDATE, DROP) — requires explicit human approval. "
+            "advisory: diagnostic SELECT only, no DML. "
+            "investigate: manual inspection needed. "
+            "blocked: fix depends on unresolved prerequisite."
+        ),
     )
     evidence: dict = Field(default_factory=dict)
     evidence_payload: Optional[dict] = Field(
@@ -314,6 +351,12 @@ class FixCard(BaseModel):
 
     @model_validator(mode="after")
     def infer_risk_level(self) -> "FixCard":
+        # Auto-derive card_family from source_rule when LLM leaves it as "unknown".
+        if self.card_family == "unknown" and self.source_rule:
+            derived = _RULE_TO_FAMILY.get(self.source_rule.lower())
+            if derived:
+                self.card_family = derived  # type: ignore[assignment]
+
         if self.interaction_model == "blocked" and self.sql:
             self.sql = ""
         if self.interaction_model == "blocked":
