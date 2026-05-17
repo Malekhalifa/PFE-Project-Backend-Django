@@ -333,7 +333,13 @@ def build_validation_workflow(
 _MAX_RELATIONAL_RETRIES = 2
 _RELATIONAL_RETRY_DELAY_S = 5
 
-_TRANSIENT_MARKERS = ("504", "DEADLINE_EXCEEDED", "timed out", "timeout", "UNAVAILABLE", "RESOURCE_EXHAUSTED")
+_TRANSIENT_MARKERS = (
+    "502", "503", "504",
+    "Bad Gateway", "Service Unavailable",
+    "DEADLINE_EXCEEDED", "timed out", "timeout",
+    "UNAVAILABLE", "RESOURCE_EXHAUSTED",
+    "Server Error", "Error 502", "Error 503", "Error 504",
+)
 _QUOTA_MARKERS = ("RESOURCE_EXHAUSTED", "429", "quota")
 _QUOTA_RETRY_DELAY_S = 60
 
@@ -1311,6 +1317,58 @@ def _merge_schema_auto_findings_into(
         )
 
 
+def _maybe_retry_fix_planner(
+    reports: Any,
+    raw_fix_plan_content: Any,
+    *,
+    members: Any,
+    session_state: dict[str, Any],
+    database_id: str,
+) -> None:
+    """Retry the Fix Planner when the initial run returned a transient error.
+
+    Trigger: ``reports.fix_plan.cards`` is empty AND the raw step content
+    matches a transient error marker (502, 503, 504, UNAVAILABLE, etc.).
+    Common case: Gemini returns an HTML 502 page that Agno tries to parse as
+    a ``FixPlan``, falling back to an empty list with a "Failed to parse"
+    warning. We detect this and re-issue the run after a short delay.
+
+    Mutates ``reports.fix_plan`` in place on success.
+    """
+    if reports.fix_plan.cards:
+        return
+    if not reports.reduced.findings:
+        return  # nothing to plan for
+    if not _is_transient_error(raw_fix_plan_content):
+        return
+
+    import time as _time
+    delay = _QUOTA_RETRY_DELAY_S if _is_quota_error(raw_fix_plan_content) else _RELATIONAL_RETRY_DELAY_S
+    for attempt in range(1, _MAX_RELATIONAL_RETRIES + 1):
+        logger.warning(
+            "Fix Planner transient failure — retry %d/%d in %ds (marker matched)",
+            attempt, _MAX_RELATIONAL_RETRIES, delay,
+        )
+        _time.sleep(delay)
+        new_plan = _rerun_fix_planner(
+            fix_planner=members.fix_planner,
+            reduced_findings=reports.reduced,
+            session_state=session_state,
+            database_id=database_id,
+        )
+        if new_plan is not None and new_plan.cards:
+            reports.fix_plan = new_plan
+            logger.info(
+                "Fix Planner retry %d/%d succeeded — %d card(s) generated.",
+                attempt, _MAX_RELATIONAL_RETRIES, len(new_plan.cards),
+            )
+            return
+    logger.error(
+        "Fix Planner retry exhausted (%d attempts) — pipeline continues with empty plan.",
+        _MAX_RELATIONAL_RETRIES,
+    )
+
+
 def _maybe_retry_relational(
     relational_report: ValidationReport,
     raw_relational_content: Any,
@@ -1844,12 +1902,26 @@ def orchestrator_workflow(
             database_id=database_id,
         )
 
+        # Fix Planner transient retry — when Gemini returns 5xx mid-Fix-Planner,
+        # Agno parses the HTML error page as a FixPlan and silently returns an
+        # empty cards list. Detect the error marker on the raw step content and
+        # re-issue the run before post-processing.
+        raw_fix_plan_content = getattr(step_outputs.get("fix_plan"), "content", "")
+        _maybe_retry_fix_planner(
+            reports,
+            raw_fix_plan_content,
+            members=members,
+            session_state=session_state,
+            database_id=database_id,
+        )
+
         # Fix Planner post-processor: run verification queries, detect contradictions,
         # repair DELETE overlap dependencies, and backfill missing source_rule fields.
         enrich_fix_plan(
             reports.fix_plan,
             findings=reports.reduced.findings,
             connection_string=session_state["connection_string"],
+            job_id=session_state.get("job_id"),
         )
         _warn_empty_fix_plan(reports.fix_plan, len(reports.reduced.findings))
 

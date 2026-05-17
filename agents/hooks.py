@@ -871,17 +871,45 @@ _AGENT_STEP_STATUS: dict[str, str] = {
     "fix-planner":           "running_fix_planner",
 }
 
+# Fallback lookup by human-readable name when agent.id isn't surfaced on the
+# run_context (Agno wraps agents in workflow steps in newer versions and the
+# run_context.agent reference may resolve to a Step/Team wrapper rather than
+# the underlying Agent).
+_AGENT_NAME_STATUS: dict[str, str] = {
+    "Schema Integrity Validator": "running_schema",
+    "Database Profiler":          "running_profiler",
+    "Statistical Validator":      "running_statistical",
+    "Structural Validator":       "running_structural",
+    "Relational Validator":       "running_relational",
+    "Data Fix Planner":           "running_fix_planner",
+}
 
-def emit_pipeline_status(run_input: RunInput, run_context: RunContext) -> None:
+
+def emit_pipeline_status(run_input: RunInput, agent=None, run_context: RunContext = None) -> None:
     """Before each pipeline agent runs, push the matching job status to the DB.
 
     The loading screen polls /api/status/:jobId every 5 s and advances the
     step indicator when the status changes.  Requires job_id in session_state
     (set by orchestrator_workflow via _initial_session_state).
+
+    Agno injects the underlying ``agent`` directly into the hook signature.
+    Reading from ``run_context.agent`` returns the workflow Step / Team wrapper
+    instead, which does not expose the original agent's ``id`` or ``name``.
     """
-    agent_id = getattr(getattr(run_context, "agent", None), "id", "") or ""
-    step_status = _AGENT_STEP_STATUS.get(agent_id)
+    # Prefer the directly-injected agent over run_context.agent (which is the
+    # wrapper, not the underlying agent).
+    target_agent = agent if agent is not None else getattr(run_context, "agent", None)
+    agent_id = (getattr(target_agent, "id", "") or "")
+    agent_name = (getattr(target_agent, "name", "") or "")
+    step_status = (
+        _AGENT_STEP_STATUS.get(agent_id)
+        or _AGENT_NAME_STATUS.get(agent_name)
+    )
     if not step_status:
+        logger.debug(
+            "emit_pipeline_status: no status mapping for agent_id='%s' name='%s'",
+            agent_id, agent_name,
+        )
         return
 
     job_id = (run_context.session_state or {}).get("job_id")
@@ -919,10 +947,15 @@ _AGENT_ID_TO_PHASE = {
 }
 
 
-def log_run_metrics(run_output: RunOutput, run_context: RunContext) -> None:
-    state = run_context.session_state or {}
+def log_run_metrics(run_output: RunOutput, agent=None, run_context: RunContext = None) -> None:
+    state = (run_context.session_state if run_context is not None else None) or {}
     elapsed_ms = (time.time() - state.get("_run_start", time.time())) * 1000
-    aid = _agent_id(run_context)
+
+    # Resolve the agent the same way as emit_pipeline_status: prefer the hook's
+    # directly-injected ``agent`` parameter over run_context.agent (which holds
+    # the workflow Step/Team wrapper in current Agno versions).
+    target_agent = agent if agent is not None else getattr(run_context, "agent", None)
+    aid = (getattr(target_agent, "id", "") or "") or "global"
     tool_calls = len(state.get(f"_tool_calls_seen_{aid}", {}))
 
     findings_count = 0
@@ -931,10 +964,9 @@ def log_run_metrics(run_output: RunOutput, run_context: RunContext) -> None:
     elif isinstance(run_output.content, FixPlan):
         findings_count = len(run_output.content.cards)
 
-    agent = getattr(run_context, "agent", None)
     phase_name = (
         _AGENT_ID_TO_PHASE.get(aid)
-        or getattr(agent, "name", None)
+        or getattr(target_agent, "name", None)
         or "team"
     )
 

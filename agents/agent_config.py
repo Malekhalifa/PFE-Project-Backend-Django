@@ -43,6 +43,7 @@ def _make_parser_model() -> Gemini:
         id=os.environ.get("GEMINI_PARSER_MODEL", "gemini-2.5-flash"),
         api_key=os.environ.get("GEMINI_API_KEY", ""),
         temperature=0,
+        seed=7,
         timeout=float(os.environ.get("GEMINI_TIMEOUT", "300")),
         generation_config={"max_output_tokens": int(os.environ.get("GEMINI_MAX_OUTPUT_TOKENS", "65536"))},
         # Raise the AFC cap from the SDK default of 10 to 64.

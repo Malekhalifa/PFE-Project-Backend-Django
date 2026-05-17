@@ -347,16 +347,55 @@ def _sync_severity_from_findings(cards: list[FixCard], findings: list[Finding]) 
 # Public entry point
 # ---------------------------------------------------------------------------
 
+def _push_running_fix_verifier(job_id: str | None) -> None:
+    """Push the running_fix_verifier status to the DB + WebSocket channel.
+
+    Mirrors the manual emission pattern used by reducer.py and py_profiler.py
+    for steps that run outside Agno's agent pre_hook chain. Never raises.
+    """
+    if not job_id:
+        return
+    try:
+        from api.db import update_job_status
+        update_job_status(job_id, "running_fix_verifier")
+        logger.info(
+            "pipeline_status: running_fix_verifier job=%s source=fix_verifier_start",
+            job_id,
+        )
+    except Exception as exc:
+        logger.warning("fix_verifier: DB status push failed: %s", exc)
+    try:
+        from asgiref.sync import async_to_sync
+        from channels.layers import get_channel_layer
+        channel_layer = get_channel_layer()
+        if channel_layer is not None:
+            async_to_sync(channel_layer.group_send)(
+                f"job_{job_id}",
+                {"type": "job.status", "status": "running_fix_verifier"},
+            )
+    except Exception as exc:
+        logger.debug("fix_verifier: WebSocket push skipped: %s", exc)
+
+
 def enrich_fix_plan(
     fix_plan: FixPlan,
     findings: list[Finding],
     connection_string: str,
+    *,
+    job_id: str | None = None,
 ) -> FixPlan:
     """Run all six post-processing passes over the Fix Planner output.
 
     Mutates fix_plan.cards in-place and returns the same FixPlan object.
     Never raises — errors in individual passes are logged and skipped.
+
+    When ``job_id`` is provided, pushes a ``running_fix_verifier`` pipeline
+    status so the frontend loading diagram can advance past the Fix Planner
+    and show the post-processor as the active stage.
     """
+    # Push status first so the UI advances even on an empty plan.
+    _push_running_fix_verifier(job_id)
+
     if not fix_plan.cards:
         return fix_plan
 

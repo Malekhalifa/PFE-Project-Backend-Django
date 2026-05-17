@@ -30,6 +30,30 @@ _logger = logging.getLogger(__name__)
 
 _DEFAULT_POSTGRES_LLM_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-2.5-flash')
 
+
+def _set_job_status(job_id: str, status: str) -> None:
+    """Atomic helper: update DB status AND push the same status over the
+    Django Channels WebSocket so connected clients are notified in real time.
+
+    The DB path serves polling fallbacks; the WS path serves clients that have
+    a healthy WebSocket. Without the WS push, terminal statuses (``completed``,
+    ``failed``) only reach clients that are still actively polling — clients
+    whose polling shut off after WS proved healthy stay stuck on the last
+    intermediate status.
+    """
+    update_job_status(job_id, status)
+    try:
+        from asgiref.sync import async_to_sync
+        from channels.layers import get_channel_layer
+        layer = get_channel_layer()
+        if layer is not None:
+            async_to_sync(layer.group_send)(
+                f"job_{job_id}",
+                {"type": "job.status", "status": status},
+            )
+    except Exception as exc:
+        _logger.debug("celery task WS push skipped (status=%s): %s", status, exc)
+
 _WORKFLOW_DB_DIR = Path(__file__).resolve().parent.parent / "tmp"
 
 
@@ -102,7 +126,7 @@ def analyze_postgres_task(
     """
     close_old_connections()
 
-    update_job_status(job_id, 'running')
+    _set_job_status(job_id, 'running')
     _logger.info("pipeline_status: running job=%s source=celery_task_start", job_id)
     if str((get_job(job_id) or {}).get('status') or '').upper() == 'CANCELLED':
         audit_log(job_id, 'DB_ANALYSIS_CANCELLED_BEFORE_START', {'status_code': 200})
@@ -200,7 +224,7 @@ def analyze_postgres_task(
             analysis_type="postgres_agentic",
         )
 
-        update_job_status(job_id, 'completed')
+        _set_job_status(job_id, 'completed')
         _logger.info("pipeline_status: completed job=%s source=celery_task_end", job_id)
         update_job_celery_task_id(job_id, None)
         audit_log(job_id, 'DB_ANALYSIS_COMPLETED', {
@@ -224,7 +248,7 @@ def analyze_postgres_task(
         except Exception:
             _logger.exception('Failed to resolve failed pipeline step for job %s', job_id)
 
-        update_job_status(job_id, 'failed')
+        _set_job_status(job_id, 'failed')
         _logger.info("pipeline_status: failed job=%s source=celery_task_exception", job_id)
         update_job_celery_task_id(job_id, None)
         audit_log(job_id, 'DB_ANALYSIS_FAILED', {
