@@ -333,6 +333,8 @@ _MAX_RELATIONAL_RETRIES = 2
 _RELATIONAL_RETRY_DELAY_S = 5
 
 _TRANSIENT_MARKERS = ("504", "DEADLINE_EXCEEDED", "timed out", "timeout", "UNAVAILABLE", "RESOURCE_EXHAUSTED")
+_QUOTA_MARKERS = ("RESOURCE_EXHAUSTED", "429", "quota")
+_QUOTA_RETRY_DELAY_S = 60
 
 
 def _is_transient_error(content: Any) -> bool:
@@ -342,17 +344,26 @@ def _is_transient_error(content: Any) -> bool:
     return any(m.lower() in lower for m in _TRANSIENT_MARKERS)
 
 
+def _is_quota_error(content: Any) -> bool:
+    if not isinstance(content, str):
+        return False
+    lower = content.lower()
+    return any(m.lower() in lower for m in _QUOTA_MARKERS)
+
+
 def _run_relational_standalone(
     *,
     relational_validator: Any,
     session_state: dict[str, Any],
     database_id: str,
+    error_hint: Any = None,
 ) -> ValidationReport:
     import time as _time
+    delay = _QUOTA_RETRY_DELAY_S if _is_quota_error(error_hint) else _RELATIONAL_RETRY_DELAY_S
     for attempt in range(1, _MAX_RELATIONAL_RETRIES + 1):
         logger.warning("Relational agent transient failure — retry %d/%d in %ds",
-                       attempt, _MAX_RELATIONAL_RETRIES, _RELATIONAL_RETRY_DELAY_S)
-        _time.sleep(_RELATIONAL_RETRY_DELAY_S)
+                       attempt, _MAX_RELATIONAL_RETRIES, delay)
+        _time.sleep(delay)
         try:
             response = relational_validator.run(
                 input=(
@@ -734,21 +745,52 @@ def _dedup_findings_by_alias(findings: list[Finding]) -> list[Finding]:
 
 
 def _quality_score(findings: list[Finding], total_tables: int) -> float:
-    """
-    Severity-weighted score normalized by table count.
+    """Legacy per-validator quality score — kept for individual validator reports only.
 
-    weights:    critical=18, high=7, medium=1.5, low=0.1
-    denominator: max(1, total_tables // 5)   — 30-table schema → 6
-    score      = max(0, 100 - min(100, total_penalty / denominator))
-
-    Calibration: 4 critical PK violations alone on a 30-table schema score ~88
-    (4*18=72, 72/6=12 → 88). Pre-dedup bloat no longer hides serious issues.
+    The pipeline-level Data Quality Score is now computed by compute_dqs()
+    over the post-reduction finding set using the entity health ratio approach.
     """
     weights = {"critical": 18.0, "high": 7.0, "medium": 1.5, "low": 0.1}
     penalty = sum(weights.get(f.severity, 0) for f in findings)
     denom = max(1.0, total_tables / 5.0)
     normalized = penalty / denom
     return round(max(0.0, 100.0 - min(100.0, normalized)), 1)
+
+
+def compute_dqs(findings: list[Finding], profiler: ProfilerReport) -> float:
+    """Entity health ratio — pipeline-level Data Quality Score.
+
+    Scores each schema entity (table or column) individually instead of
+    summing global penalties divided by an arbitrary table constant.
+    A critical finding on one column hurts that entity only, not the whole schema.
+
+    severity_hit: critical=1.0, high=0.6, medium=0.25, low=0.05
+    penalty(f) = severity_hit × confidence   — expected damage, not worst-case
+    Per entity: health = 1 - max(penalty) across findings (no stacking)
+    DQS = mean(health) over all profiler-known entities × 100
+
+    Confidence weighting: a deterministic critical finding (confidence=1.0)
+    fully breaks the entity (penalty=1.0); an SQL-confirmed high finding
+    (confidence=0.75) yields penalty=0.45, health=0.55 — the entity is
+    probably damaged but we are not certain.
+    """
+    all_entities: set[str] = set()
+    for table in profiler.tables:
+        all_entities.add(table.table_name)
+        for col in table.column_stats:
+            all_entities.add(f"{table.table_name}.{col.column_name}")
+
+    if not all_entities:
+        return 100.0
+
+    severity_hit = {"critical": 1.0, "high": 0.6, "medium": 0.25, "low": 0.05}
+    entity_penalty: dict[str, float] = {}
+    for f in findings:
+        hit = severity_hit.get(f.severity, 0.0) * max(0.0, min(1.0, f.confidence))
+        entity_penalty[f.entity] = max(entity_penalty.get(f.entity, 0.0), hit)
+
+    health_sum = sum(1.0 - entity_penalty.get(e, 0.0) for e in all_entities)
+    return round(health_sum / len(all_entities) * 100, 1)
 
 
 def _legacy_validation_finding(finding: Finding) -> dict[str, Any]:
@@ -1248,6 +1290,7 @@ def _maybe_retry_relational(
         relational_validator=members.relational_validator,
         session_state=session_state,
         database_id=database_id,
+        error_hint=raw_relational_content,
     )
 
 
@@ -1470,7 +1513,20 @@ def _build_summary_artifacts(
     import time as _time
 
     validator_dicts = [legacy.schema, legacy.statistical, legacy.structural, legacy.relational]
-    confidence_score, data_quality_score = aggregate_pipeline_scores(validator_dicts)
+
+    # Entity health ratio DQS — uses post-reduction findings over profiler entity set.
+    data_quality_score = int(compute_dqs(reports.reduced.findings, reports.profiler))
+
+    # Deterministic confidence — mean of per-finding scores over reduced findings.
+    from .reducer import _recompute_finding_confidence
+    _profiler_summary = session_state.get("profiler_summary") or {}
+    _reduced = reports.reduced.findings
+    if _reduced:
+        _scores = [_recompute_finding_confidence(f, _profiler_summary) for f in _reduced]
+        confidence_score = int(round(sum(_scores) / len(_scores) * 100))
+    else:
+        confidence_score = 100
+
     confidence_info = confidence_breakdown(validator_dicts)
 
     total_tables = len(session_state.get("schema") or {})
@@ -1628,6 +1684,7 @@ def _assemble_final_payload(
         "confidence_explanation": summary.confidence_info,
         "confidence_score": summary.confidence_score,
         "data_quality_score": summary.data_quality_score,
+        "findings_capped": reports.reduced.findings_capped,
         **report_artifact,
     }
 

@@ -100,7 +100,7 @@ def create_agent_span(
             obs = pipeline_span.start_observation(
                 name=agent_name,
                 as_type="generation",
-                model=model_id or os.environ.get("GEMINI_MODEL", "gemini-2.0-flash"),
+                model=model_id or os.environ.get("GEMINI_MODEL", "gemini-2.5-flash"),
                 usage_details={
                     "input": input_tokens or 0,
                     "output": output_tokens or 0,

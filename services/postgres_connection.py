@@ -1,3 +1,5 @@
+import fnmatch
+import os
 import re
 from dataclasses import dataclass
 from urllib.parse import urlparse
@@ -60,6 +62,13 @@ def redact_postgres_dsn(connection_string: str) -> str:
         return "postgresql://***:***@?/ ?"
 
 
+def _get_allowed_db_hosts() -> list[str] | None:
+    raw = os.environ.get("QUALITYLAB_ALLOWED_DB_HOSTS", "").strip()
+    if not raw:
+        return None
+    return [h.strip() for h in raw.split(",") if h.strip()]
+
+
 def assert_valid_postgres_dsn(connection_string: str) -> None:
     if not looks_like_postgres_dsn(connection_string):
         raise ValueError(
@@ -73,6 +82,14 @@ def assert_valid_postgres_dsn(connection_string: str) -> None:
         raise ValueError(
             "Invalid PostgreSQL connection string. Host and database are required."
         )
+    allowed = _get_allowed_db_hosts()
+    if allowed is not None:
+        host = info.host or ""
+        if not any(fnmatch.fnmatch(host, pattern) for pattern in allowed):
+            raise ValueError(
+                f"Database host '{host}' is not in the allowed hosts list. "
+                "Set QUALITYLAB_ALLOWED_DB_HOSTS to include this host."
+            )
 
 
 def test_postgres_connection(connection_string: str, *, timeout_s: int = 3) -> None:

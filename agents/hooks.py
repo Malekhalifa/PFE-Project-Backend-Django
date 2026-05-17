@@ -709,6 +709,14 @@ def inject_domain_rules(run_input: RunInput, run_context: RunContext) -> None:
         state["relational_rules"]  = {k: rules[k] for k in _RELATIONAL_RULES_KEYS  if k in rules}
         state["fix_planner_rules"] = {k: rules[k] for k in _FIX_PLANNER_RULES_KEYS if k in rules}
 
+        custom = rules.get("custom_rules") or []
+        if custom:
+            logger.info(
+                "inject_domain_rules: %d custom rule(s) active (visible to Structural Validator only): %s",
+                len(custom),
+                [str(r)[:80] for r in custom],
+            )
+
 
 def validate_findings_entities(run_output: RunOutput, run_context: RunContext) -> None:
     """Strip findings/cards that reference non-existent schema entities.

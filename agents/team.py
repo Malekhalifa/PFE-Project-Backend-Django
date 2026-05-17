@@ -14,6 +14,7 @@ from typing import Any
 
 from agno.agent import Agent
 from agno.db.base import BaseDb
+from agno.db.postgres import PostgresDb
 from agno.db.sqlite import SqliteDb
 from agno.guardrails.pii import PIIDetectionGuardrail
 from agno.guardrails.prompt_injection import PromptInjectionGuardrail
@@ -47,8 +48,22 @@ from .rules import common_rules, domain_rules
 from .tool_factories import fixplanner_tools, profiler_tools, relational_tools, schema_tools, statistical_tools, structural_tools
 
 _BASE_DIR = Path(__file__).resolve().parent.parent
-_AGENTOS_DB = SqliteDb(db_file=str(Path(__file__).resolve().parent / "tmp" / "agentos_sessions.db"))
-_DEFAULT_MODEL_ID = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
+
+
+def _build_agentos_db() -> BaseDb:
+    pg_user = os.environ.get("PG_USER", "").strip()
+    if pg_user:
+        pg_pass = os.environ.get("PG_PASSWORD", "")
+        pg_host = os.environ.get("PG_HOST", "localhost")
+        pg_port = os.environ.get("PG_PORT", "5432")
+        pg_db = os.environ.get("PG_DB", "qualitylab")
+        db_url = f"postgresql://{pg_user}:{pg_pass}@{pg_host}:{pg_port}/{pg_db}"
+        return PostgresDb(db_url=db_url)
+    return SqliteDb(db_file=str(Path(__file__).resolve().parent / "tmp" / "agentos_sessions.db"))
+
+
+_AGENTOS_DB = _build_agentos_db()
+_DEFAULT_MODEL_ID = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 _GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 _MAX_OUTPUT_TOKENS = int(os.environ.get("GEMINI_MAX_OUTPUT_TOKENS", "65536"))
 

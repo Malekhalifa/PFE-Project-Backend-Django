@@ -1,0 +1,4018 @@
+{
+  "pipeline_run_id": "c614e290-c020-45b5-b34c-884406f65ca5",
+  "database_id": "localhost_5432_ecommerce_test_db",
+  "llm_model": "gemini-2.5-flash",
+  "run_timestamp": "2026-05-13T13:12:13.975610Z",
+  "executive_summary": {
+    "verdict": "high_risk",
+    "top_issues": [
+      "[CRITICAL] duplicate pk on products.product_id",
+      "[CRITICAL] temporal inconsistency on shipments",
+      "[HIGH] orphaned fk on order_items.product_id"
+    ],
+    "tables_scanned": 15,
+    "tables_profiled": 15,
+    "fixes_recommended": 39,
+    "critical_fix_count": 5,
+    "migration_risk": {
+      "score": 97,
+      "high_risk_cards": 5,
+      "blocked_cards": 1,
+      "destructive_cards": 4
+    }
+  },
+  "summary": {
+    "confidence_score": 91,
+    "data_quality_score": 70,
+    "final_fix_count": 39,
+    "confidence_explanation": {
+      "total_findings": 44,
+      "high_confidence_count": 24,
+      "medium_confidence_count": 20,
+      "low_confidence_count": 0,
+      "summary": "55% of findings have confidence ≥ 0.9 (24/44 high, 20 medium, 0 low). Deterministic (py_profiler) findings are 0.92–1.0; LLM findings vary."
+    },
+    "timing": {
+      "started_at": "2026-05-13T13:12:13.975610Z",
+      "ended_at": "2026-05-13T13:17:07.039691Z",
+      "total_duration_ms": 293068,
+      "total_duration_human": "293.1s",
+      "phases_ms": {
+        "schema_priming": 989,
+        "Python Profiler": 986,
+        "Reducer": 157,
+        "Schema Integrity Validator": 41065,
+        "Statistical Validator": 91379,
+        "Structural Validator": 86007,
+        "Relational Validator": 39274,
+        "Data Fix Planner": 158854
+      },
+      "bottleneck": "Data Fix Planner"
+    }
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "c614e290-c020-45b5-b34c-884406f65ca5",
+      "database_id": "localhost_5432_ecommerce_test_db",
+      "run_timestamp": "2026-05-13T13:12:13.975610Z",
+      "agent": "Schema Integrity Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 15,
+        "items_passed": 1,
+        "items_flagged": 14,
+        "critical_issues": 0,
+        "high_issues": 8,
+        "medium_issues": 10,
+        "low_issues": 0,
+        "overall_quality_score": 76.3,
+        "overall_confidence": 0.9175,
+        "flagged_tables": [
+          "addresses",
+          "categories",
+          "employees",
+          "orders",
+          "payments",
+          "reviews",
+          "support_tickets"
+        ]
+      },
+      "metrics": {
+        "validator": "schema",
+        "findings_count": 32,
+        "deduped_finding_count": 18,
+        "grouped_finding_count": 14
+      },
+      "findings": [
+        {
+          "table": "categories",
+          "column": "parent_category_id",
+          "entity": "categories.parent_category_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.91,
+          "evidence": {
+            "column_name": "parent_category_id",
+            "is_nullable": "YES",
+            "foreign_table": "categories",
+            "foreign_column": "category_id"
+          },
+          "remediation_hint": "Consider making the foreign key column 'parent_category_id' in 'categories' non-nullable if orphaned records are not desired, or document the intentional design."
+        },
+        {
+          "table": "employees",
+          "column": "manager_id",
+          "entity": "employees.manager_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.91,
+          "evidence": {
+            "column_name": "manager_id",
+            "is_nullable": "YES",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id"
+          },
+          "remediation_hint": "Consider making the foreign key column 'manager_id' in 'employees' non-nullable if orphaned records are not desired, or document the intentional design."
+        },
+        {
+          "table": "orders",
+          "column": "customer_id",
+          "entity": "orders.customer_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.91,
+          "evidence": {
+            "column_name": "customer_id",
+            "is_nullable": "YES",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id"
+          },
+          "remediation_hint": "Consider making the foreign key column 'customer_id' in 'orders' non-nullable if orphaned records are not desired, or document the intentional design."
+        },
+        {
+          "table": "support_tickets",
+          "column": null,
+          "entity": "support_tickets",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.91,
+          "evidence": {
+            "column_name": "customer_id",
+            "is_nullable": "YES",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id",
+            "columns_with_high_nulls": [
+              "customer_id",
+              "order_id"
+            ]
+          },
+          "remediation_hint": "Consider making the foreign key column 'customer_id' in 'support_tickets' non-nullable if orphaned records are not desired, or document the intentional design.",
+          "affected_columns": [
+            "order_id",
+            "customer_id"
+          ],
+          "count": 3
+        },
+        {
+          "table": "payments",
+          "column": "order_id",
+          "entity": "payments.order_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.91,
+          "evidence": {
+            "column_name": "order_id",
+            "is_nullable": "YES",
+            "foreign_table": "orders",
+            "foreign_column": "order_id"
+          },
+          "remediation_hint": "Consider making the foreign key column 'order_id' in 'payments' non-nullable if orphaned records are not desired, or document the intentional design."
+        },
+        {
+          "table": "reviews",
+          "column": "product_id",
+          "entity": "reviews.product_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.91,
+          "evidence": {
+            "column_name": "product_id",
+            "is_nullable": "YES",
+            "foreign_table": "products",
+            "foreign_column": "product_id"
+          },
+          "remediation_hint": "Consider making the foreign key column 'product_id' in 'reviews' non-nullable if orphaned records are not desired, or document the intentional design."
+        },
+        {
+          "table": "addresses",
+          "column": "customer_id",
+          "entity": "addresses.customer_id",
+          "rule": "nullable_fk",
+          "severity": "high",
+          "confidence": 0.91,
+          "evidence": {
+            "column_name": "customer_id",
+            "is_nullable": "YES",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id"
+          },
+          "remediation_hint": "Consider making the foreign key column 'customer_id' in 'addresses' non-nullable if orphaned records are not desired, or document the intentional design."
+        },
+        {
+          "table": "categories",
+          "column": "parent_category_id",
+          "entity": "categories.parent_category_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.925,
+          "evidence": {
+            "column_name": "parent_category_id",
+            "indexed_columns": "['category_id']"
+          },
+          "remediation_hint": "Add an index to the foreign key column 'parent_category_id' in table 'categories' to improve join performance."
+        },
+        {
+          "table": "employees",
+          "column": "manager_id",
+          "entity": "employees.manager_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.925,
+          "evidence": {
+            "column_name": "manager_id",
+            "indexed_columns": "['employee_id']"
+          },
+          "remediation_hint": "Add an index to the foreign key column 'manager_id' in table 'employees' to improve join performance."
+        },
+        {
+          "table": "orders",
+          "column": "customer_id",
+          "entity": "orders.customer_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.925,
+          "evidence": {
+            "column_name": "customer_id",
+            "indexed_columns": "['order_id']"
+          },
+          "remediation_hint": "Add an index to the foreign key column 'customer_id' in table 'orders' to improve join performance."
+        },
+        {
+          "table": "support_tickets",
+          "column": null,
+          "entity": "support_tickets.customer_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.925,
+          "evidence": {
+            "column_name": "customer_id",
+            "indexed_columns": "['ticket_id']"
+          },
+          "remediation_hint": "Add an index to the foreign key column 'customer_id' in table 'support_tickets' to improve join performance.",
+          "affected_columns": [
+            "customer_id",
+            "order_id"
+          ],
+          "count": 3
+        },
+        {
+          "table": "payments",
+          "column": "order_id",
+          "entity": "payments.order_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.925,
+          "evidence": {
+            "column_name": "order_id",
+            "indexed_columns": "['payment_id']"
+          },
+          "remediation_hint": "Add an index to the foreign key column 'order_id' in table 'payments' to improve join performance."
+        },
+        {
+          "table": "reviews",
+          "column": "product_id",
+          "entity": "reviews.product_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.925,
+          "evidence": {
+            "column_name": "product_id",
+            "indexed_columns": "['review_id']"
+          },
+          "remediation_hint": "Add an index to the foreign key column 'product_id' in table 'reviews' to improve join performance."
+        },
+        {
+          "table": "addresses",
+          "column": "customer_id",
+          "entity": "addresses.customer_id",
+          "rule": "missing_fk_index",
+          "severity": "medium",
+          "confidence": 0.925,
+          "evidence": {
+            "column_name": "customer_id",
+            "indexed_columns": "['address_id']"
+          },
+          "remediation_hint": "Add an index to the foreign key column 'customer_id' in table 'addresses' to improve join performance."
+        }
+      ]
+    },
+    "statistical_validator": {
+      "pipeline_run_id": "c614e290-c020-45b5-b34c-884406f65ca5",
+      "database_id": "localhost_5432_ecommerce_test_db",
+      "run_timestamp": "2026-05-13T13:12:13.975610Z",
+      "agent": "Statistical Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 15,
+        "items_passed": 0,
+        "items_flagged": 23,
+        "critical_issues": 0,
+        "high_issues": 13,
+        "medium_issues": 19,
+        "low_issues": 0,
+        "overall_quality_score": 60.2,
+        "overall_confidence": 0.8125,
+        "flagged_tables": [
+          "addresses",
+          "audit_logs",
+          "categories",
+          "customers",
+          "employees",
+          "inventory",
+          "order_items",
+          "orders",
+          "payments",
+          "products",
+          "reviews",
+          "shipments",
+          "suppliers",
+          "support_tickets",
+          "warehouses"
+        ]
+      },
+      "metrics": {
+        "validator": "statistical",
+        "findings_count": 34,
+        "deduped_finding_count": 32,
+        "grouped_finding_count": 23
+      },
+      "findings": [
+        {
+          "table": "support_tickets",
+          "column": null,
+          "entity": "support_tickets",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.925,
+          "evidence": {
+            "affected_columns": [
+              "customer_id",
+              "assigned_employee_id",
+              "order_id",
+              "resolved_at"
+            ]
+          },
+          "remediation_hint": null,
+          "affected_columns": [
+            "customer_id",
+            "assigned_employee_id",
+            "order_id"
+          ],
+          "count": 4
+        },
+        {
+          "table": "orders",
+          "column": null,
+          "entity": "orders",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "affected_columns": [
+              "shipping_address_id",
+              "employee_id",
+              "notes"
+            ],
+            "columns_with_high_nulls": [
+              "shipping_address_id",
+              "employee_id",
+              "notes"
+            ]
+          },
+          "remediation_hint": null,
+          "affected_columns": [
+            "shipping_address_id",
+            "employee_id",
+            "notes"
+          ],
+          "count": 4
+        },
+        {
+          "table": "audit_logs",
+          "column": null,
+          "entity": "audit_logs",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "affected_columns": [
+              "performed_by",
+              "details"
+            ]
+          },
+          "remediation_hint": null,
+          "affected_columns": [
+            "performed_by"
+          ],
+          "count": 2
+        },
+        {
+          "table": "customers",
+          "column": null,
+          "entity": "customers",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.8833,
+          "evidence": {
+            "affected_columns": [
+              "phone",
+              "notes"
+            ],
+            "columns_with_high_nulls": [
+              "phone",
+              "notes"
+            ]
+          },
+          "remediation_hint": null,
+          "affected_columns": [
+            "phone",
+            "notes"
+          ],
+          "count": 3
+        },
+        {
+          "table": "employees",
+          "column": "salary",
+          "entity": "employees.salary",
+          "rule": "outlier_distribution",
+          "severity": "high",
+          "confidence": 0.75,
+          "evidence": {
+            "column_name": "salary",
+            "outlier_flag": true
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "employees",
+          "column": "email",
+          "entity": "employees.email",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.75,
+          "evidence": {
+            "column_name": "email",
+            "null_rate": 0.4,
+            "threshold": 0.4
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "reviews",
+          "column": "review_text",
+          "entity": "reviews.review_text",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.75,
+          "evidence": {
+            "column_name": "review_text",
+            "null_rate": 0.49466666666666664,
+            "threshold": 0.4
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "shipments",
+          "column": "warehouse_id",
+          "entity": "shipments.warehouse_id",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.75,
+          "evidence": {
+            "column_name": "warehouse_id",
+            "null_rate": 0.1432,
+            "threshold": 0.1
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "suppliers",
+          "column": "email",
+          "entity": "suppliers.email",
+          "rule": "duplicate_values",
+          "severity": "high",
+          "confidence": 0.75,
+          "evidence": {
+            "column_name": "email",
+            "duplicate_ratio": 0.1,
+            "threshold": 0.05
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "warehouses",
+          "column": "manager_name",
+          "entity": "warehouses.manager_name",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.75,
+          "evidence": {
+            "column_name": "manager_name",
+            "null_rate": 0.5333333333333333,
+            "threshold": 0.4
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "categories",
+          "column": "parent_category_id",
+          "entity": "categories.parent_category_id",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.75,
+          "evidence": {
+            "column_name": "parent_category_id",
+            "null_rate": 0.2,
+            "threshold": 0.1
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "order_items",
+          "column": "product_id",
+          "entity": "order_items.product_id",
+          "rule": "outlier_distribution",
+          "severity": "high",
+          "confidence": 0.75,
+          "evidence": {
+            "column_name": "product_id",
+            "outlier_flag": true
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "payments",
+          "column": "transaction_reference",
+          "entity": "payments.transaction_reference",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.75,
+          "evidence": {
+            "column_name": "transaction_reference",
+            "null_rate": 0.4023333333333333,
+            "threshold": 0.4
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "audit_logs",
+          "column": null,
+          "entity": "audit_logs",
+          "rule": "low_cardinality",
+          "severity": "medium",
+          "confidence": 0.75,
+          "evidence": {
+            "affected_columns": [
+              "table_name",
+              "action",
+              "details"
+            ]
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "products",
+          "column": null,
+          "entity": "products",
+          "rule": "low_cardinality",
+          "severity": "medium",
+          "confidence": 0.75,
+          "evidence": {
+            "affected_columns": [
+              "created_at",
+              "discontinued"
+            ]
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "customers",
+          "column": null,
+          "entity": "customers",
+          "rule": "low_cardinality",
+          "severity": "medium",
+          "confidence": 0.75,
+          "evidence": {
+            "affected_columns": [
+              "created_at",
+              "notes"
+            ]
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "addresses",
+          "column": "created_at",
+          "entity": "addresses.created_at",
+          "rule": "low_cardinality",
+          "severity": "medium",
+          "confidence": 0.75,
+          "evidence": {
+            "column_name": "created_at",
+            "cardinality_ratio": 0.0004,
+            "threshold": 0.05
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "addresses",
+          "column": "country",
+          "entity": "addresses.country",
+          "rule": "categorical_drift",
+          "severity": "medium",
+          "confidence": 0.75,
+          "evidence": {
+            "column_name": "country",
+            "drift_detected": true,
+            "low_frequency_categories": [
+              "Wakanda",
+              "Atlantis"
+            ]
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "shipments",
+          "column": "carrier",
+          "entity": "shipments.carrier",
+          "rule": "low_cardinality",
+          "severity": "medium",
+          "confidence": 0.75,
+          "evidence": {
+            "column_name": "carrier",
+            "cardinality_ratio": 0.0004,
+            "threshold": 0.05
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "shipments",
+          "column": "warehouse_id",
+          "entity": "shipments.warehouse_id",
+          "rule": "categorical_drift",
+          "severity": "medium",
+          "confidence": 0.75,
+          "evidence": {
+            "column_name": "warehouse_id",
+            "drift_detected": true,
+            "low_frequency_categories": [
+              "WH1",
+              "WH15"
+            ]
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "employees",
+          "column": "department",
+          "entity": "employees.department",
+          "rule": "categorical_drift",
+          "severity": "medium",
+          "confidence": 0.75,
+          "evidence": {
+            "column_name": "department",
+            "drift_detected": true,
+            "low_frequency_categories": [
+              "HR",
+              "IT"
+            ]
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "inventory",
+          "column": "warehouse_id",
+          "entity": "inventory.warehouse_id",
+          "rule": "categorical_drift",
+          "severity": "medium",
+          "confidence": 0.75,
+          "evidence": {
+            "column_name": "warehouse_id",
+            "drift_detected": true,
+            "low_frequency_categories": [
+              "WH1",
+              "WH16"
+            ]
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "reviews",
+          "column": "review_text",
+          "entity": "reviews.review_text",
+          "rule": "low_cardinality",
+          "severity": "medium",
+          "confidence": 0.75,
+          "evidence": {
+            "column_name": "review_text",
+            "cardinality_ratio": 0.0006666666666666666,
+            "threshold": 0.05
+          },
+          "remediation_hint": null
+        }
+      ]
+    },
+    "structural_validator": {
+      "pipeline_run_id": "c614e290-c020-45b5-b34c-884406f65ca5",
+      "database_id": "localhost_5432_ecommerce_test_db",
+      "run_timestamp": "2026-05-13T13:12:13.975610Z",
+      "agent": "Structural Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 15,
+        "items_passed": 13,
+        "items_flagged": 2,
+        "critical_issues": 1,
+        "high_issues": 1,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 91.7,
+        "overall_confidence": 0.99,
+        "flagged_tables": [
+          "order_items",
+          "products"
+        ]
+      },
+      "metrics": {
+        "validator": "structural",
+        "findings_count": 2,
+        "deduped_finding_count": 2,
+        "grouped_finding_count": 2
+      },
+      "findings": [
+        {
+          "table": "products",
+          "column": "product_id",
+          "entity": "products.product_id",
+          "rule": "duplicate_pk",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "duplicate_count": 5,
+            "sample_duplicates": [
+              "P001",
+              "P005",
+              "P010"
+            ]
+          },
+          "remediation_hint": "Identify and remove duplicate primary key entries in the 'products' table for 'product_id'. This indicates a severe data integrity issue that needs immediate resolution."
+        },
+        {
+          "table": "order_items",
+          "column": "product_id",
+          "entity": "order_items.product_id",
+          "rule": "orphaned_fk",
+          "severity": "high",
+          "confidence": 0.98,
+          "evidence": {
+            "orphaned_count": 50,
+            "sample_orphans": [
+              101,
+              105,
+              230
+            ]
+          },
+          "remediation_hint": "Investigate orphaned foreign keys in 'order_items.product_id'. Ensure all referenced products exist in the 'products' table or implement a proper referential integrity strategy (e.g., CASCADE DELETE, SET NULL)."
+        }
+      ]
+    },
+    "relational_validator": {
+      "pipeline_run_id": "c614e290-c020-45b5-b34c-884406f65ca5",
+      "database_id": "localhost_5432_ecommerce_test_db",
+      "run_timestamp": "2026-05-13T13:12:13.975610Z",
+      "agent": "Relational Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 15,
+        "items_passed": 10,
+        "items_flagged": 5,
+        "critical_issues": 1,
+        "high_issues": 2,
+        "medium_issues": 2,
+        "low_issues": 0,
+        "overall_quality_score": 88.3,
+        "overall_confidence": 0.92,
+        "flagged_tables": [
+          "customers",
+          "employees",
+          "payments",
+          "shipments",
+          "suppliers"
+        ]
+      },
+      "metrics": {
+        "validator": "relational",
+        "findings_count": 5,
+        "deduped_finding_count": 5,
+        "grouped_finding_count": 5
+      },
+      "findings": [
+        {
+          "table": "shipments",
+          "column": null,
+          "entity": "shipments",
+          "rule": "temporal_inconsistency",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "description": "874 records in the shipments table have a shipped_date that is after the delivered_date.",
+            "count_inconsistent_records": 874
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "customers",
+          "column": "email",
+          "entity": "customers.email",
+          "rule": "duplicate_values",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "column_name": "email",
+            "duplicate_count": 343,
+            "total_rows": 2000,
+            "duplication_rate": 0.1715
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "payments",
+          "column": "transaction_reference",
+          "entity": "payments.transaction_reference",
+          "rule": "duplicate_values",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "column_name": "transaction_reference",
+            "duplicate_count": 1207,
+            "total_rows": 3000,
+            "duplication_rate": 0.4023
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "employees",
+          "column": "email",
+          "entity": "employees.email",
+          "rule": "duplicate_values",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "column_name": "email",
+            "duplicate_count": 40,
+            "total_rows": 100,
+            "duplication_rate": 0.4
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "suppliers",
+          "column": "email",
+          "entity": "suppliers.email",
+          "rule": "duplicate_values",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "column_name": "email",
+            "duplicate_count": 15,
+            "total_rows": 50,
+            "duplication_rate": 0.3
+          },
+          "remediation_hint": null
+        }
+      ]
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "c614e290-c020-45b5-b34c-884406f65ca5",
+      "database_id": "localhost_5432_ecommerce_test_db",
+      "run_timestamp": "2026-05-13T13:12:13.975610Z",
+      "agent": "Data Fix Planner",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 39,
+        "items_passed": 0,
+        "items_flagged": 39,
+        "critical_issues": 5,
+        "high_issues": 34,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 84.3,
+        "overall_confidence": 0.9077,
+        "flagged_tables": [
+          "addresses",
+          "audit_logs",
+          "categories",
+          "customers",
+          "employees",
+          "order_items",
+          "orders",
+          "payments",
+          "products",
+          "reviews",
+          "shipments",
+          "suppliers",
+          "support_tickets",
+          "warehouses"
+        ]
+      },
+      "metrics": {
+        "total_issues_received": 39,
+        "fixes_generated": 39
+      },
+      "findings": [
+        {
+          "id": "fix_001_products",
+          "fix_id": "remove-dup-products-product-id",
+          "rows_affected_estimate": 5,
+          "tables_touched": [
+            "products"
+          ],
+          "depends_on": [],
+          "table": "products",
+          "target_table": "products",
+          "problem": "Remove duplicate primary key entries for `product_id` in `products`",
+          "fix": "Duplicate primary key values violate data integrity. This fix removes duplicate rows, keeping one arbitrary record for each `product_id`, and then adds a unique constraint to prevent future duplicates. Deleted rows cannot be rolled back.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "risk_level": "high",
+          "card_family": "duplicates",
+          "interaction_model": "human_decision",
+          "source_rule": "duplicate_pk",
+          "source_type": "ai",
+          "evidence": {
+            "duplicate_count": 5,
+            "sample_duplicates": [
+              "P001",
+              "P005",
+              "P010"
+            ]
+          },
+          "evidence_payload": {
+            "duplicate_count": 5,
+            "sample_duplicates": [
+              "P001",
+              "P005",
+              "P010"
+            ],
+            "_type": "duplicates",
+            "rule": "duplicate_pk",
+            "target": "products",
+            "table_name": "products"
+          },
+          "estimated_rows_affected": 5,
+          "queries": [
+            "DELETE FROM products\nWHERE product_id IN (\n    SELECT product_id\n    FROM products\n    GROUP BY product_id\n    HAVING COUNT(*) > 1\n) AND ctid NOT IN (\n    SELECT MIN(ctid)\n    FROM products\n    GROUP BY product_id\n    HAVING COUNT(*) > 1\n);",
+            "ALTER TABLE products ADD CONSTRAINT products_product_id_unique UNIQUE (product_id);"
+          ],
+          "explanation": "Duplicate primary key values violate data integrity. This fix removes duplicate rows, keeping one arbitrary record for each `product_id`, and then adds a unique constraint to prevent future duplicates. Deleted rows cannot be rolled back.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM products GROUP BY product_id HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE products DROP CONSTRAINT IF EXISTS products_product_id_unique;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_002_shipments",
+          "fix_id": "fix-shipments-temporal-inconsistency",
+          "rows_affected_estimate": 874,
+          "tables_touched": [
+            "shipments"
+          ],
+          "depends_on": [],
+          "table": "shipments",
+          "target_table": "shipments",
+          "problem": "Correct temporal inconsistencies in `shipments` where `shipped_date` is after `delivered_date`",
+          "fix": "Records in the `shipments` table show `shipped_date` occurring after `delivered_date`, which is logically inconsistent. This fix will swap the `shipped_date` and `delivered_date` for affected records.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "risk_level": "high",
+          "card_family": "temporal",
+          "interaction_model": "human_decision",
+          "source_rule": "temporal_inconsistency",
+          "source_type": "ai",
+          "evidence": {
+            "description": "874 records in the shipments table have a shipped_date that is after the delivered_date.",
+            "count_inconsistent_records": 874
+          },
+          "evidence_payload": {
+            "description": "874 records in the shipments table have a shipped_date that is after the delivered_date.",
+            "count_inconsistent_records": 874,
+            "_type": "temporal",
+            "rule": "temporal_inconsistency",
+            "target": "shipments",
+            "table_name": "shipments"
+          },
+          "estimated_rows_affected": 874,
+          "queries": [
+            "UPDATE shipments\nSET\n    shipped_date = delivered_date,\n    delivered_date = shipped_date\nWHERE shipped_date > delivered_date;"
+          ],
+          "explanation": "Records in the `shipments` table show `shipped_date` occurring after `delivered_date`, which is logically inconsistent. This fix will swap the `shipped_date` and `delivered_date` for affected records.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM shipments WHERE shipped_date > delivered_date;"
+          ],
+          "rollback_queries": [
+            "SELECT 'Manual rollback required: identify and revert swapped dates based on historical data if available.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_003_customers",
+          "fix_id": "remove-dup-customers-email",
+          "rows_affected_estimate": 343,
+          "tables_touched": [
+            "customers"
+          ],
+          "depends_on": [],
+          "table": "customers",
+          "target_table": "customers",
+          "problem": "Remove duplicate `email` entries in `customers` and add unique constraint",
+          "fix": "[Pre-flight blocked: UNIQUE on (email) on table 'customers' would fail: 40 duplicate row(s) found] Duplicate `email` values in the `customers` table violate data integrity and can lead to inconsistencies. This fix removes duplicate rows, keeping one arbitrary record for each `email`, and then adds a unique constraint to prevent future duplicates. Deleted rows cannot be rolled back.",
+          "severity": "high",
+          "confidence": 0.9,
+          "risk_level": "medium",
+          "card_family": "duplicates",
+          "interaction_model": "blocked",
+          "source_rule": "fill_nulls_blocked",
+          "source_type": "ai",
+          "evidence": {
+            "block_reason": "UNIQUE on (email) on table 'customers' would fail: 40 duplicate row(s) found",
+            "original_sql": "DELETE FROM customers\nWHERE email IN (\n    SELECT email\n    FROM customers\n    GROUP BY email\n    HAVING COUNT(*) > 1\n) AND ctid NOT IN (\n    SELECT MIN(ctid)\n    FROM customers\n    GROUP BY email\n    HAVING COUNT(*) > 1\n);\nALTER TABLE customers ADD CONSTRAINT customers_email_unique UNIQUE (email);"
+          },
+          "evidence_payload": {
+            "_type": "blocked",
+            "block_reason": "UNIQUE on (email) on table 'customers' would fail: 40 duplicate row(s) found",
+            "original_sql": "DELETE FROM customers\nWHERE email IN (\n    SELECT email\n    FROM customers\n    GROUP BY email\n    HAVING COUNT(*) > 1\n) AND ctid NOT IN (\n    SELECT MIN(ctid)\n    FROM customers\n    GROUP BY email\n    HAVING COUNT(*) > 1\n);\nALTER TABLE customers ADD CONSTRAINT customers_email_unique UNIQUE (email);"
+          },
+          "estimated_rows_affected": 343,
+          "queries": [],
+          "explanation": "[Pre-flight blocked: UNIQUE on (email) on table 'customers' would fail: 40 duplicate row(s) found] Duplicate `email` values in the `customers` table violate data integrity and can lead to inconsistencies. This fix removes duplicate rows, keeping one arbitrary record for each `email`, and then adds a unique constraint to prevent future duplicates. Deleted rows cannot be rolled back.",
+          "preconditions": [
+            "BLOCKED: UNIQUE on (email) on table 'customers' would fail: 40 duplicate row(s) found",
+            "Original SQL: DELETE FROM customers\nWHERE email IN (\n    SELECT email\n    FROM customers\n    GROUP BY email\n    HAVING COUNT(*) > 1\n) AND ctid NOT IN (\n    SELECT MIN(ctid)\n    FROM customers\n    GROUP BY email\n   "
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM customers GROUP BY email HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE customers DROP CONSTRAINT IF EXISTS customers_email_unique;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_004_payments",
+          "fix_id": "remove-dup-payments-transaction-reference",
+          "rows_affected_estimate": 1207,
+          "tables_touched": [
+            "payments"
+          ],
+          "depends_on": [],
+          "table": "payments",
+          "target_table": "payments",
+          "problem": "Remove duplicate `transaction_reference` entries in `payments` and add unique constraint",
+          "fix": "Duplicate `transaction_reference` values in the `payments` table violate data integrity and can lead to inconsistencies. This fix removes duplicate rows, keeping one arbitrary record for each `transaction_reference`, and then adds a unique constraint to prevent future duplicates. Deleted rows cannot be rolled back.",
+          "severity": "high",
+          "confidence": 0.9,
+          "risk_level": "high",
+          "card_family": "duplicates",
+          "interaction_model": "human_decision",
+          "source_rule": "nullable_fk",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "order_id",
+            "is_nullable": "YES",
+            "foreign_table": "orders",
+            "foreign_column": "order_id"
+          },
+          "evidence_payload": {
+            "column_name": "order_id",
+            "is_nullable": "YES",
+            "foreign_table": "orders",
+            "foreign_column": "order_id",
+            "_type": "duplicates",
+            "rule": "nullable_fk",
+            "target": "payments",
+            "table_name": "payments"
+          },
+          "estimated_rows_affected": 1207,
+          "queries": [
+            "DELETE FROM payments\nWHERE transaction_reference IN (\n    SELECT transaction_reference\n    FROM payments\n    GROUP BY transaction_reference\n    HAVING COUNT(*) > 1\n) AND ctid NOT IN (\n    SELECT MIN(ctid)\n    FROM payments\n    GROUP BY transaction_reference\n    HAVING COUNT(*) > 1\n);",
+            "ALTER TABLE payments ADD CONSTRAINT payments_transaction_reference_unique UNIQUE (transaction_reference);"
+          ],
+          "explanation": "Duplicate `transaction_reference` values in the `payments` table violate data integrity and can lead to inconsistencies. This fix removes duplicate rows, keeping one arbitrary record for each `transaction_reference`, and then adds a unique constraint to prevent future duplicates. Deleted rows cannot be rolled back.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM payments GROUP BY transaction_reference HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_transaction_reference_unique;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_005_suppliers",
+          "fix_id": "remove-dup-suppliers-email",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "suppliers"
+          ],
+          "depends_on": [],
+          "table": "suppliers",
+          "target_table": "suppliers",
+          "problem": "Remove duplicate `email` entries in `suppliers` and add unique constraint",
+          "fix": "Duplicate `email` values in the `suppliers` table violate data integrity and can lead to inconsistencies. This fix removes duplicate rows, keeping one arbitrary record for each `email`, and then adds a unique constraint to prevent future duplicates. Deleted rows cannot be rolled back.",
+          "severity": "high",
+          "confidence": 0.75,
+          "risk_level": "high",
+          "card_family": "duplicates",
+          "interaction_model": "human_decision",
+          "source_rule": "duplicate_values",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "email",
+            "duplicate_ratio": 0.1,
+            "threshold": 0.05
+          },
+          "evidence_payload": {
+            "column_name": "email",
+            "duplicate_ratio": 0.1,
+            "threshold": 0.05,
+            "_type": "duplicates",
+            "rule": "duplicate_values",
+            "target": "suppliers",
+            "table_name": "suppliers"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "DELETE FROM suppliers\nWHERE email IN (\n    SELECT email\n    FROM suppliers\n    GROUP BY email\n    HAVING COUNT(*) > 1\n) AND ctid NOT IN (\n    SELECT MIN(ctid)\n    FROM suppliers\n    GROUP BY email\n    HAVING COUNT(*) > 1\n);",
+            "ALTER TABLE suppliers ADD CONSTRAINT suppliers_email_unique UNIQUE (email);"
+          ],
+          "explanation": "Duplicate `email` values in the `suppliers` table violate data integrity and can lead to inconsistencies. This fix removes duplicate rows, keeping one arbitrary record for each `email`, and then adds a unique constraint to prevent future duplicates. Deleted rows cannot be rolled back.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM suppliers GROUP BY email HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE suppliers DROP CONSTRAINT IF EXISTS suppliers_email_unique;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_006_employees",
+          "fix_id": "remove-dup-employees-email",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "employees"
+          ],
+          "depends_on": [],
+          "table": "employees",
+          "target_table": "employees",
+          "problem": "Remove duplicate `email` entries in `employees` and add unique constraint",
+          "fix": "Duplicate `email` values in the `employees` table violate data integrity and can lead to inconsistencies. This fix removes duplicate rows, keeping one arbitrary record for each `email`, and then adds a unique constraint to prevent future duplicates. Deleted rows cannot be rolled back.",
+          "severity": "high",
+          "confidence": 0.9,
+          "risk_level": "high",
+          "card_family": "duplicates",
+          "interaction_model": "human_decision",
+          "source_rule": "nullable_fk",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "manager_id",
+            "is_nullable": "YES",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id"
+          },
+          "evidence_payload": {
+            "column_name": "manager_id",
+            "is_nullable": "YES",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id",
+            "_type": "duplicates",
+            "rule": "nullable_fk",
+            "target": "employees",
+            "table_name": "employees"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "DELETE FROM employees\nWHERE email IN (\n    SELECT email\n    FROM employees\n    GROUP BY email\n    HAVING COUNT(*) > 1\n) AND ctid NOT IN (\n    SELECT MIN(ctid)\n    FROM employees\n    GROUP BY email\n    HAVING COUNT(*) > 1\n);",
+            "ALTER TABLE employees ADD CONSTRAINT employees_email_unique UNIQUE (email);"
+          ],
+          "explanation": "Duplicate `email` values in the `employees` table violate data integrity and can lead to inconsistencies. This fix removes duplicate rows, keeping one arbitrary record for each `email`, and then adds a unique constraint to prevent future duplicates. Deleted rows cannot be rolled back.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM employees GROUP BY email HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE employees DROP CONSTRAINT IF EXISTS employees_email_unique;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_007_categories",
+          "fix_id": "add-index-categories-parent-category-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "categories"
+          ],
+          "depends_on": [],
+          "table": "categories",
+          "target_table": "categories",
+          "problem": "Add index on `categories.parent_category_id`",
+          "fix": "Adding an index on the foreign key column `parent_category_id` in the `categories` table will improve the performance of JOIN operations and foreign key constraint checks, especially for queries involving hierarchical category structures.",
+          "severity": "high",
+          "confidence": 0.9,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "source_rule": "nullable_fk",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "parent_category_id",
+            "is_nullable": "YES",
+            "foreign_table": "categories",
+            "foreign_column": "category_id"
+          },
+          "evidence_payload": {
+            "column_name": "parent_category_id",
+            "is_nullable": "YES",
+            "foreign_table": "categories",
+            "foreign_column": "category_id",
+            "_type": "schema_design",
+            "rule": "nullable_fk",
+            "target": "categories",
+            "table_name": "categories"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS idx_categories_parent_category_id ON categories (parent_category_id);"
+          ],
+          "explanation": "Adding an index on the foreign key column `parent_category_id` in the `categories` table will improve the performance of JOIN operations and foreign key constraint checks, especially for queries involving hierarchical category structures.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'categories' AND indexname = 'idx_categories_parent_category_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_categories_parent_category_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_008_employees",
+          "fix_id": "add-index-employees-manager-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "employees"
+          ],
+          "depends_on": [],
+          "table": "employees",
+          "target_table": "employees",
+          "problem": "Add index on `employees.manager_id`",
+          "fix": "Adding an index on the foreign key column `manager_id` in the `employees` table will improve the performance of JOIN operations and foreign key constraint checks, especially for queries involving employee hierarchies.",
+          "severity": "high",
+          "confidence": 0.9,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "source_rule": "nullable_fk",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "manager_id",
+            "is_nullable": "YES",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id"
+          },
+          "evidence_payload": {
+            "column_name": "manager_id",
+            "is_nullable": "YES",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id",
+            "_type": "schema_design",
+            "rule": "nullable_fk",
+            "target": "employees",
+            "table_name": "employees"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS idx_employees_manager_id ON employees (manager_id);"
+          ],
+          "explanation": "Adding an index on the foreign key column `manager_id` in the `employees` table will improve the performance of JOIN operations and foreign key constraint checks, especially for queries involving employee hierarchies.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'employees' AND indexname = 'idx_employees_manager_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_employees_manager_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_009_orders",
+          "fix_id": "add-index-orders-customer-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "orders"
+          ],
+          "depends_on": [],
+          "table": "orders",
+          "target_table": "orders",
+          "problem": "Add index on `orders.customer_id`",
+          "fix": "Adding an index on the foreign key column `customer_id` in the `orders` table will improve the performance of JOIN operations and foreign key constraint checks, especially for queries linking orders to customers.",
+          "severity": "high",
+          "confidence": 0.9,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "source_rule": "nullable_fk",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "customer_id",
+            "is_nullable": "YES",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id"
+          },
+          "evidence_payload": {
+            "column_name": "customer_id",
+            "is_nullable": "YES",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id",
+            "_type": "schema_design",
+            "rule": "nullable_fk",
+            "target": "orders",
+            "table_name": "orders"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders (customer_id);"
+          ],
+          "explanation": "Adding an index on the foreign key column `customer_id` in the `orders` table will improve the performance of JOIN operations and foreign key constraint checks, especially for queries linking orders to customers.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'orders' AND indexname = 'idx_orders_customer_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_orders_customer_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_010_support_tickets",
+          "fix_id": "add-index-support-tickets-customer-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "support_tickets"
+          ],
+          "depends_on": [],
+          "table": "support_tickets",
+          "target_table": "support_tickets",
+          "problem": "Add index on `support_tickets.customer_id`",
+          "fix": "Adding an index on the foreign key column `customer_id` in the `support_tickets` table will improve the performance of JOIN operations and foreign key constraint checks, especially for queries linking support tickets to customers.",
+          "severity": "high",
+          "confidence": 0.95,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "source_rule": "null_ratio_high",
+          "source_type": "ai",
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 1000,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "resolved_at",
+              "support_tickets",
+              "customer_id",
+              "assigned_employee_id",
+              "order_id"
+            ]
+          },
+          "evidence_payload": {
+            "null_ratio": 1.0,
+            "total_rows": 1000,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "resolved_at",
+              "support_tickets",
+              "customer_id",
+              "assigned_employee_id",
+              "order_id"
+            ],
+            "_type": "schema_design",
+            "rule": "null_ratio_high",
+            "target": "support_tickets",
+            "table_name": "support_tickets"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS idx_support_tickets_customer_id ON support_tickets (customer_id);"
+          ],
+          "explanation": "Adding an index on the foreign key column `customer_id` in the `support_tickets` table will improve the performance of JOIN operations and foreign key constraint checks, especially for queries linking support tickets to customers.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'support_tickets' AND indexname = 'idx_support_tickets_customer_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_support_tickets_customer_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_011_payments",
+          "fix_id": "add-index-payments-order-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "payments"
+          ],
+          "depends_on": [],
+          "table": "payments",
+          "target_table": "payments",
+          "problem": "Add index on `payments.order_id`",
+          "fix": "Adding an index on the foreign key column `order_id` in the `payments` table will improve the performance of JOIN operations and foreign key constraint checks, especially for queries linking payments to orders.",
+          "severity": "high",
+          "confidence": 0.9,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "source_rule": "nullable_fk",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "order_id",
+            "is_nullable": "YES",
+            "foreign_table": "orders",
+            "foreign_column": "order_id"
+          },
+          "evidence_payload": {
+            "column_name": "order_id",
+            "is_nullable": "YES",
+            "foreign_table": "orders",
+            "foreign_column": "order_id",
+            "_type": "schema_design",
+            "rule": "nullable_fk",
+            "target": "payments",
+            "table_name": "payments"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS idx_payments_order_id ON payments (order_id);"
+          ],
+          "explanation": "Adding an index on the foreign key column `order_id` in the `payments` table will improve the performance of JOIN operations and foreign key constraint checks, especially for queries linking payments to orders.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'payments' AND indexname = 'idx_payments_order_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_payments_order_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_012_reviews",
+          "fix_id": "add-index-reviews-product-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "reviews"
+          ],
+          "depends_on": [],
+          "table": "reviews",
+          "target_table": "reviews",
+          "problem": "Add index on `reviews.product_id`",
+          "fix": "Adding an index on the foreign key column `product_id` in the `reviews` table will improve the performance of JOIN operations and foreign key constraint checks, especially for queries linking reviews to products.",
+          "severity": "high",
+          "confidence": 0.9,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "source_rule": "nullable_fk",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "product_id",
+            "is_nullable": "YES",
+            "foreign_table": "products",
+            "foreign_column": "product_id"
+          },
+          "evidence_payload": {
+            "column_name": "product_id",
+            "is_nullable": "YES",
+            "foreign_table": "products",
+            "foreign_column": "product_id",
+            "_type": "schema_design",
+            "rule": "nullable_fk",
+            "target": "reviews",
+            "table_name": "reviews"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS idx_reviews_product_id ON reviews (product_id);"
+          ],
+          "explanation": "Adding an index on the foreign key column `product_id` in the `reviews` table will improve the performance of JOIN operations and foreign key constraint checks, especially for queries linking reviews to products.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'reviews' AND indexname = 'idx_reviews_product_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_reviews_product_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_013_addresses",
+          "fix_id": "add-index-addresses-customer-id",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "addresses"
+          ],
+          "depends_on": [],
+          "table": "addresses",
+          "target_table": "addresses",
+          "problem": "Add index on `addresses.customer_id`",
+          "fix": "Adding an index on the foreign key column `customer_id` in the `addresses` table will improve the performance of JOIN operations and foreign key constraint checks, especially for queries linking addresses to customers.",
+          "severity": "high",
+          "confidence": 0.9,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "source_rule": "nullable_fk",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "customer_id",
+            "is_nullable": "YES",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id"
+          },
+          "evidence_payload": {
+            "column_name": "customer_id",
+            "is_nullable": "YES",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id",
+            "_type": "schema_design",
+            "rule": "nullable_fk",
+            "target": "addresses",
+            "table_name": "addresses"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS idx_addresses_customer_id ON addresses (customer_id);"
+          ],
+          "explanation": "Adding an index on the foreign key column `customer_id` in the `addresses` table will improve the performance of JOIN operations and foreign key constraint checks, especially for queries linking addresses to customers.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'addresses' AND indexname = 'idx_addresses_customer_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_addresses_customer_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_014_support_tickets",
+          "fix_id": "advise-support-tickets-high-nulls",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "support_tickets"
+          ],
+          "depends_on": [],
+          "table": "support_tickets",
+          "target_table": "support_tickets",
+          "problem": "Investigate high null ratios in `support_tickets` columns",
+          "fix": "Several columns in the `support_tickets` table (`resolved_at`, `customer_id`, `assigned_employee_id`, `order_id`) have a high percentage of NULL values. This may indicate missing data, an optional field, or an issue with data ingestion. Human judgment is required to determine if these columns should be made NOT NULL or if the nulls are intentional.",
+          "severity": "high",
+          "confidence": 0.95,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "null_ratio_high",
+          "source_type": "ai",
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 1000,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "resolved_at",
+              "support_tickets",
+              "customer_id",
+              "assigned_employee_id",
+              "order_id"
+            ]
+          },
+          "evidence_payload": {
+            "null_ratio": 1.0,
+            "total_rows": 1000,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "resolved_at",
+              "support_tickets",
+              "customer_id",
+              "assigned_employee_id",
+              "order_id"
+            ],
+            "_type": "nullability",
+            "rule": "null_ratio_high",
+            "target": "support_tickets",
+            "table_name": "support_tickets"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT\n        COUNT(*) FILTER (WHERE resolved_at IS NULL) AS null_resolved_at,\n        COUNT(*) FILTER (WHERE customer_id IS NULL) AS null_customer_id,\n        COUNT(*) FILTER (WHERE assigned_employee_id IS NULL) AS null_assigned_employee_id,\n        COUNT(*) FILTER (WHERE order_id IS NULL) AS null_order_id,\n        COUNT(*) AS total_rows\n    FROM support_tickets;"
+          ],
+          "explanation": "Several columns in the `support_tickets` table (`resolved_at`, `customer_id`, `assigned_employee_id`, `order_id`) have a high percentage of NULL values. This may indicate missing data, an optional field, or an issue with data ingestion. Human judgment is required to determine if these columns should be made NOT NULL or if the nulls are intentional.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_015_audit_logs",
+          "fix_id": "advise-audit-logs-high-nulls",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "audit_logs"
+          ],
+          "depends_on": [],
+          "table": "audit_logs",
+          "target_table": "audit_logs",
+          "problem": "Investigate high null ratios in `audit_logs` columns",
+          "fix": "Columns `details` and `performed_by` in the `audit_logs` table have a high percentage of NULL values. This may indicate missing data, an optional field, or an issue with data ingestion. Human judgment is required to determine if these columns should be made NOT NULL or if the nulls are intentional.",
+          "severity": "high",
+          "confidence": 0.95,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "null_ratio_high",
+          "source_type": "ai",
+          "evidence": {
+            "null_ratio": 0.8495,
+            "total_rows": 2000,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "details",
+              "audit_logs",
+              "performed_by"
+            ]
+          },
+          "evidence_payload": {
+            "null_ratio": 0.8495,
+            "total_rows": 2000,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "details",
+              "audit_logs",
+              "performed_by"
+            ],
+            "_type": "nullability",
+            "rule": "null_ratio_high",
+            "target": "audit_logs",
+            "table_name": "audit_logs"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT\n        COUNT(*) FILTER (WHERE details IS NULL) AS null_details,\n        COUNT(*) FILTER (WHERE performed_by IS NULL) AS null_performed_by,\n        COUNT(*) AS total_rows\n    FROM audit_logs;"
+          ],
+          "explanation": "Columns `details` and `performed_by` in the `audit_logs` table have a high percentage of NULL values. This may indicate missing data, an optional field, or an issue with data ingestion. Human judgment is required to determine if these columns should be made NOT NULL or if the nulls are intentional.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_016_categories",
+          "fix_id": "advise-categories-parent-category-id-nullable-fk",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "categories"
+          ],
+          "depends_on": [],
+          "table": "categories",
+          "target_table": "categories",
+          "problem": "Review nullable foreign key `parent_category_id` in `categories`",
+          "fix": "The `parent_category_id` column in `categories` is a nullable foreign key referencing `categories.category_id`. While this allows for top-level categories, it's important to confirm if this nullability is intentional or if it indicates potential data integrity issues. If all categories should have a parent (except for a designated root), consider enforcing a `NOT NULL` constraint after filling existing nulls.",
+          "severity": "high",
+          "confidence": 0.9,
+          "risk_level": "low",
+          "card_family": "referential",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "parent_category_id",
+            "is_nullable": "YES",
+            "foreign_table": "categories",
+            "foreign_column": "category_id"
+          },
+          "evidence_payload": {
+            "column_name": "parent_category_id",
+            "is_nullable": "YES",
+            "foreign_table": "categories",
+            "foreign_column": "category_id",
+            "_type": "referential",
+            "rule": "nullable_fk",
+            "target": "categories",
+            "table_name": "categories"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT category_id, category_name FROM categories WHERE parent_category_id IS NULL;"
+          ],
+          "explanation": "The `parent_category_id` column in `categories` is a nullable foreign key referencing `categories.category_id`. While this allows for top-level categories, it's important to confirm if this nullability is intentional or if it indicates potential data integrity issues. If all categories should have a parent (except for a designated root), consider enforcing a `NOT NULL` constraint after filling existing nulls.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_017_employees",
+          "fix_id": "advise-employees-manager-id-nullable-fk",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "employees"
+          ],
+          "depends_on": [],
+          "table": "employees",
+          "target_table": "employees",
+          "problem": "Review nullable foreign key `manager_id` in `employees`",
+          "fix": "The `manager_id` column in `employees` is a nullable foreign key referencing `employees.employee_id`. This allows for employees without a manager (e.g., the CEO). Confirm if this nullability is intentional or if it indicates potential data integrity issues.",
+          "severity": "high",
+          "confidence": 0.9,
+          "risk_level": "low",
+          "card_family": "referential",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "manager_id",
+            "is_nullable": "YES",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id"
+          },
+          "evidence_payload": {
+            "column_name": "manager_id",
+            "is_nullable": "YES",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id",
+            "_type": "referential",
+            "rule": "nullable_fk",
+            "target": "employees",
+            "table_name": "employees"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT employee_id, first_name, last_name FROM employees WHERE manager_id IS NULL;"
+          ],
+          "explanation": "The `manager_id` column in `employees` is a nullable foreign key referencing `employees.employee_id`. This allows for employees without a manager (e.g., the CEO). Confirm if this nullability is intentional or if it indicates potential data integrity issues.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_018_orders",
+          "fix_id": "advise-orders-customer-id-nullable-fk",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "orders"
+          ],
+          "depends_on": [],
+          "table": "orders",
+          "target_table": "orders",
+          "problem": "Review nullable foreign key `customer_id` in `orders`",
+          "fix": "The `customer_id` column in `orders` is a nullable foreign key referencing `customers.customer_id`. This might allow for orders not associated with a customer. Confirm if this nullability is intentional or if it indicates potential data integrity issues.",
+          "severity": "high",
+          "confidence": 0.9,
+          "risk_level": "low",
+          "card_family": "referential",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "customer_id",
+            "is_nullable": "YES",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id"
+          },
+          "evidence_payload": {
+            "column_name": "customer_id",
+            "is_nullable": "YES",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id",
+            "_type": "referential",
+            "rule": "nullable_fk",
+            "target": "orders",
+            "table_name": "orders"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT order_id, total_amount FROM orders WHERE customer_id IS NULL;"
+          ],
+          "explanation": "The `customer_id` column in `orders` is a nullable foreign key referencing `customers.customer_id`. This might allow for orders not associated with a customer. Confirm if this nullability is intentional or if it indicates potential data integrity issues.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_019_support_tickets",
+          "fix_id": "advise-support-tickets-customer-id-nullable-fk",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "support_tickets"
+          ],
+          "depends_on": [],
+          "table": "support_tickets",
+          "target_table": "support_tickets",
+          "problem": "Review nullable foreign key `customer_id` in `support_tickets`",
+          "fix": "The `customer_id` column in `support_tickets` is a nullable foreign key referencing `customers.customer_id`. This might allow for support tickets not associated with a customer. Confirm if this nullability is intentional or if it indicates potential data integrity issues.",
+          "severity": "high",
+          "confidence": 0.95,
+          "risk_level": "low",
+          "card_family": "referential",
+          "interaction_model": "advisory",
+          "source_rule": "null_ratio_high",
+          "source_type": "ai",
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 1000,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "resolved_at",
+              "support_tickets",
+              "customer_id",
+              "assigned_employee_id",
+              "order_id"
+            ]
+          },
+          "evidence_payload": {
+            "null_ratio": 1.0,
+            "total_rows": 1000,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "resolved_at",
+              "support_tickets",
+              "customer_id",
+              "assigned_employee_id",
+              "order_id"
+            ],
+            "_type": "referential",
+            "rule": "null_ratio_high",
+            "target": "support_tickets",
+            "table_name": "support_tickets"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT ticket_id, issue_type FROM support_tickets WHERE customer_id IS NULL;"
+          ],
+          "explanation": "The `customer_id` column in `support_tickets` is a nullable foreign key referencing `customers.customer_id`. This might allow for support tickets not associated with a customer. Confirm if this nullability is intentional or if it indicates potential data integrity issues.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_020_payments",
+          "fix_id": "advise-payments-order-id-nullable-fk",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "payments"
+          ],
+          "depends_on": [],
+          "table": "payments",
+          "target_table": "payments",
+          "problem": "Review nullable foreign key `order_id` in `payments`",
+          "fix": "The `order_id` column in `payments` is a nullable foreign key referencing `orders.order_id`. This might allow for payments not associated with an order. Confirm if this nullability is intentional or if it indicates potential data integrity issues.",
+          "severity": "high",
+          "confidence": 0.9,
+          "risk_level": "low",
+          "card_family": "referential",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "order_id",
+            "is_nullable": "YES",
+            "foreign_table": "orders",
+            "foreign_column": "order_id"
+          },
+          "evidence_payload": {
+            "column_name": "order_id",
+            "is_nullable": "YES",
+            "foreign_table": "orders",
+            "foreign_column": "order_id",
+            "_type": "referential",
+            "rule": "nullable_fk",
+            "target": "payments",
+            "table_name": "payments"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT payment_id, amount FROM payments WHERE order_id IS NULL;"
+          ],
+          "explanation": "The `order_id` column in `payments` is a nullable foreign key referencing `orders.order_id`. This might allow for payments not associated with an order. Confirm if this nullability is intentional or if it indicates potential data integrity issues.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_021_reviews",
+          "fix_id": "advise-reviews-product-id-nullable-fk",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "reviews"
+          ],
+          "depends_on": [],
+          "table": "reviews",
+          "target_table": "reviews",
+          "problem": "Review nullable foreign key `product_id` in `reviews`",
+          "fix": "The `product_id` column in `reviews` is a nullable foreign key referencing `products.product_id`. This might allow for reviews not associated with a product. Confirm if this nullability is intentional or if it indicates potential data integrity issues.",
+          "severity": "high",
+          "confidence": 0.9,
+          "risk_level": "low",
+          "card_family": "referential",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "product_id",
+            "is_nullable": "YES",
+            "foreign_table": "products",
+            "foreign_column": "product_id"
+          },
+          "evidence_payload": {
+            "column_name": "product_id",
+            "is_nullable": "YES",
+            "foreign_table": "products",
+            "foreign_column": "product_id",
+            "_type": "referential",
+            "rule": "nullable_fk",
+            "target": "reviews",
+            "table_name": "reviews"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT review_id, rating FROM reviews WHERE product_id IS NULL;"
+          ],
+          "explanation": "The `product_id` column in `reviews` is a nullable foreign key referencing `products.product_id`. This might allow for reviews not associated with a product. Confirm if this nullability is intentional or if it indicates potential data integrity issues.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_022_addresses",
+          "fix_id": "advise-addresses-customer-id-nullable-fk",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "addresses"
+          ],
+          "depends_on": [],
+          "table": "addresses",
+          "target_table": "addresses",
+          "problem": "Review nullable foreign key `customer_id` in `addresses`",
+          "fix": "The `customer_id` column in `addresses` is a nullable foreign key referencing `customers.customer_id`. This might allow for addresses not associated with a customer. Confirm if this nullability is intentional or if it indicates potential data integrity issues.",
+          "severity": "high",
+          "confidence": 0.9,
+          "risk_level": "low",
+          "card_family": "referential",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "customer_id",
+            "is_nullable": "YES",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id"
+          },
+          "evidence_payload": {
+            "column_name": "customer_id",
+            "is_nullable": "YES",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id",
+            "_type": "referential",
+            "rule": "nullable_fk",
+            "target": "addresses",
+            "table_name": "addresses"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT address_id, address_line FROM addresses WHERE customer_id IS NULL;"
+          ],
+          "explanation": "The `customer_id` column in `addresses` is a nullable foreign key referencing `customers.customer_id`. This might allow for addresses not associated with a customer. Confirm if this nullability is intentional or if it indicates potential data integrity issues.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_023_orders",
+          "fix_id": "advise-orders-high-nulls",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "orders"
+          ],
+          "depends_on": [],
+          "table": "orders",
+          "target_table": "orders",
+          "problem": "Investigate high null ratios in `orders` columns",
+          "fix": "Several columns in the `orders` table (`shipping_address_id`, `employee_id`, `notes`) have a high percentage of NULL values. This may indicate missing data, an optional field, or an issue with data ingestion. Human judgment is required to determine if these columns should be made NOT NULL or if the nulls are intentional.",
+          "severity": "high",
+          "confidence": 0.9,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "customer_id",
+            "is_nullable": "YES",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id"
+          },
+          "evidence_payload": {
+            "column_name": "customer_id",
+            "is_nullable": "YES",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id",
+            "_type": "nullability",
+            "rule": "nullable_fk",
+            "target": "orders",
+            "table_name": "orders"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT\n        COUNT(*) FILTER (WHERE shipping_address_id IS NULL) AS null_shipping_address_id,\n        COUNT(*) FILTER (WHERE employee_id IS NULL) AS null_employee_id,\n        COUNT(*) FILTER (WHERE notes IS NULL) AS null_notes,\n        COUNT(*) AS total_rows\n    FROM orders;"
+          ],
+          "explanation": "Several columns in the `orders` table (`shipping_address_id`, `employee_id`, `notes`) have a high percentage of NULL values. This may indicate missing data, an optional field, or an issue with data ingestion. Human judgment is required to determine if these columns should be made NOT NULL or if the nulls are intentional.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_024_customers",
+          "fix_id": "advise-customers-high-nulls",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "customers"
+          ],
+          "depends_on": [],
+          "table": "customers",
+          "target_table": "customers",
+          "problem": "Investigate high null ratios in `customers` columns",
+          "fix": "Several columns in the `customers` table (`phone`, `notes`) have a high percentage of NULL values. This may indicate missing data, an optional field, or an issue with data ingestion. Human judgment is required to determine if these columns should be made NOT NULL or if the nulls are intentional.",
+          "severity": "high",
+          "confidence": 0.9,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "duplicate_values",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "email",
+            "duplicate_count": 343,
+            "total_rows": 2000,
+            "duplication_rate": 0.1715
+          },
+          "evidence_payload": {
+            "column_name": "email",
+            "duplicate_count": 343,
+            "total_rows": 2000,
+            "duplication_rate": 0.1715,
+            "_type": "nullability",
+            "rule": "duplicate_values",
+            "target": "customers",
+            "table_name": "customers"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT\n        COUNT(*) FILTER (WHERE phone IS NULL) AS null_phone,\n        COUNT(*) FILTER (WHERE notes IS NULL) AS null_notes,\n        COUNT(*) AS total_rows\n    FROM customers;"
+          ],
+          "explanation": "Several columns in the `customers` table (`phone`, `notes`) have a high percentage of NULL values. This may indicate missing data, an optional field, or an issue with data ingestion. Human judgment is required to determine if these columns should be made NOT NULL or if the nulls are intentional.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_025_employees",
+          "fix_id": "advise-employees-salary-outlier",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "employees"
+          ],
+          "depends_on": [],
+          "table": "employees",
+          "target_table": "employees",
+          "problem": "Investigate outlier distribution in `employees.salary`",
+          "fix": "The `salary` column in the `employees` table shows an outlier distribution. This could indicate data entry errors, unusual compensation packages, or a need for further segmentation in analysis. Human judgment is required to determine if these values are valid or require correction.",
+          "severity": "high",
+          "confidence": 0.9,
+          "risk_level": "low",
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "manager_id",
+            "is_nullable": "YES",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id"
+          },
+          "evidence_payload": {
+            "column_name": "manager_id",
+            "is_nullable": "YES",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id",
+            "_type": "statistical",
+            "rule": "nullable_fk",
+            "target": "employees",
+            "table_name": "employees"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT employee_id, first_name, last_name, salary FROM employees ORDER BY salary DESC LIMIT 10;"
+          ],
+          "explanation": "The `salary` column in the `employees` table shows an outlier distribution. This could indicate data entry errors, unusual compensation packages, or a need for further segmentation in analysis. Human judgment is required to determine if these values are valid or require correction.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_026_employees",
+          "fix_id": "advise-employees-email-high-nulls",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "employees"
+          ],
+          "depends_on": [],
+          "table": "employees",
+          "target_table": "employees",
+          "problem": "Investigate high null ratio in `employees.email`",
+          "fix": "The `email` column in the `employees` table has a high percentage of NULL values. This may indicate missing data, an optional field, or an issue with data ingestion. Human judgment is required to determine if this column should be made NOT NULL or if the nulls are intentional.",
+          "severity": "high",
+          "confidence": 0.9,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "manager_id",
+            "is_nullable": "YES",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id"
+          },
+          "evidence_payload": {
+            "column_name": "manager_id",
+            "is_nullable": "YES",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id",
+            "_type": "nullability",
+            "rule": "nullable_fk",
+            "target": "employees",
+            "table_name": "employees"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) FILTER (WHERE email IS NULL) AS null_emails, COUNT(*) AS total_rows FROM employees;"
+          ],
+          "explanation": "The `email` column in the `employees` table has a high percentage of NULL values. This may indicate missing data, an optional field, or an issue with data ingestion. Human judgment is required to determine if this column should be made NOT NULL or if the nulls are intentional.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_027_reviews",
+          "fix_id": "advise-reviews-review-text-high-nulls",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "reviews"
+          ],
+          "depends_on": [],
+          "table": "reviews",
+          "target_table": "reviews",
+          "problem": "Investigate high null ratio in `reviews.review_text`",
+          "fix": "The `review_text` column in the `reviews` table has a high percentage of NULL values. This may indicate missing data, an optional field, or an issue with data ingestion. Human judgment is required to determine if this column should be made NOT NULL or if the nulls are intentional.",
+          "severity": "high",
+          "confidence": 0.9,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "product_id",
+            "is_nullable": "YES",
+            "foreign_table": "products",
+            "foreign_column": "product_id"
+          },
+          "evidence_payload": {
+            "column_name": "product_id",
+            "is_nullable": "YES",
+            "foreign_table": "products",
+            "foreign_column": "product_id",
+            "_type": "nullability",
+            "rule": "nullable_fk",
+            "target": "reviews",
+            "table_name": "reviews"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) FILTER (WHERE review_text IS NULL) AS null_review_text, COUNT(*) AS total_rows FROM reviews;"
+          ],
+          "explanation": "The `review_text` column in the `reviews` table has a high percentage of NULL values. This may indicate missing data, an optional field, or an issue with data ingestion. Human judgment is required to determine if this column should be made NOT NULL or if the nulls are intentional.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_028_shipments",
+          "fix_id": "advise-shipments-warehouse-id-high-nulls",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "shipments"
+          ],
+          "depends_on": [],
+          "table": "shipments",
+          "target_table": "shipments",
+          "problem": "Investigate high null ratio in `shipments.warehouse_id`",
+          "fix": "The `warehouse_id` column in the `shipments` table has a high percentage of NULL values. This may indicate missing data, an optional field, or an issue with data ingestion. Human judgment is required to determine if this column should be made NOT NULL or if the nulls are intentional.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "temporal_inconsistency",
+          "source_type": "ai",
+          "evidence": {
+            "description": "874 records in the shipments table have a shipped_date that is after the delivered_date.",
+            "count_inconsistent_records": 874
+          },
+          "evidence_payload": {
+            "description": "874 records in the shipments table have a shipped_date that is after the delivered_date.",
+            "count_inconsistent_records": 874,
+            "_type": "nullability",
+            "rule": "temporal_inconsistency",
+            "target": "shipments",
+            "table_name": "shipments"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) FILTER (WHERE warehouse_id IS NULL) AS null_warehouse_id, COUNT(*) AS total_rows FROM shipments;"
+          ],
+          "explanation": "The `warehouse_id` column in the `shipments` table has a high percentage of NULL values. This may indicate missing data, an optional field, or an issue with data ingestion. Human judgment is required to determine if this column should be made NOT NULL or if the nulls are intentional.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_029_warehouses",
+          "fix_id": "advise-warehouses-manager-name-high-nulls",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "warehouses"
+          ],
+          "depends_on": [],
+          "table": "warehouses",
+          "target_table": "warehouses",
+          "problem": "Investigate high null ratio in `warehouses.manager_name`",
+          "fix": "The `manager_name` column in the `warehouses` table has a high percentage of NULL values. This may indicate missing data, an optional field, or an issue with data ingestion. Human judgment is required to determine if this column should be made NOT NULL or if the nulls are intentional.",
+          "severity": "high",
+          "confidence": 0.75,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "null_ratio_high",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "manager_name",
+            "null_rate": 0.5333333333333333,
+            "threshold": 0.4
+          },
+          "evidence_payload": {
+            "column_name": "manager_name",
+            "null_rate": 0.5333333333333333,
+            "threshold": 0.4,
+            "_type": "nullability",
+            "rule": "null_ratio_high",
+            "target": "warehouses",
+            "table_name": "warehouses"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) FILTER (WHERE manager_name IS NULL) AS null_manager_name, COUNT(*) AS total_rows FROM warehouses;"
+          ],
+          "explanation": "The `manager_name` column in the `warehouses` table has a high percentage of NULL values. This may indicate missing data, an optional field, or an issue with data ingestion. Human judgment is required to determine if this column should be made NOT NULL or if the nulls are intentional.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_030_categories",
+          "fix_id": "advise-categories-parent-category-id-high-nulls",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "categories"
+          ],
+          "depends_on": [],
+          "table": "categories",
+          "target_table": "categories",
+          "problem": "Investigate high null ratio in `categories.parent_category_id`",
+          "fix": "The `parent_category_id` column in the `categories` table has a high percentage of NULL values. This may indicate missing data, an optional field (for top-level categories), or an issue with data ingestion. Human judgment is required to determine if this column should be made NOT NULL or if the nulls are intentional.",
+          "severity": "high",
+          "confidence": 0.9,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "parent_category_id",
+            "is_nullable": "YES",
+            "foreign_table": "categories",
+            "foreign_column": "category_id"
+          },
+          "evidence_payload": {
+            "column_name": "parent_category_id",
+            "is_nullable": "YES",
+            "foreign_table": "categories",
+            "foreign_column": "category_id",
+            "_type": "nullability",
+            "rule": "nullable_fk",
+            "target": "categories",
+            "table_name": "categories"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) FILTER (WHERE parent_category_id IS NULL) AS null_parent_category_id, COUNT(*) AS total_rows FROM categories;"
+          ],
+          "explanation": "The `parent_category_id` column in the `categories` table has a high percentage of NULL values. This may indicate missing data, an optional field (for top-level categories), or an issue with data ingestion. Human judgment is required to determine if this column should be made NOT NULL or if the nulls are intentional.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_031_order_items",
+          "fix_id": "advise-order-items-product-id-outlier",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "order_items"
+          ],
+          "depends_on": [],
+          "table": "order_items",
+          "target_table": "order_items",
+          "problem": "Investigate outlier distribution in `order_items.product_id`",
+          "fix": "The `product_id` column in the `order_items` table shows an outlier distribution. This could indicate data entry errors, unusual product IDs, or a need for further investigation into product sales patterns. Human judgment is required to determine if these values are valid or require correction.",
+          "severity": "high",
+          "confidence": 0.75,
+          "risk_level": "low",
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "source_rule": "outlier_distribution",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "product_id",
+            "outlier_flag": true
+          },
+          "evidence_payload": {
+            "column_name": "product_id",
+            "outlier_flag": true,
+            "_type": "statistical",
+            "rule": "outlier_distribution",
+            "target": "order_items",
+            "table_name": "order_items"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT product_id, COUNT(*) FROM order_items GROUP BY product_id ORDER BY COUNT(*) DESC LIMIT 10;"
+          ],
+          "explanation": "The `product_id` column in the `order_items` table shows an outlier distribution. This could indicate data entry errors, unusual product IDs, or a need for further investigation into product sales patterns. Human judgment is required to determine if these values are valid or require correction.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_032_payments",
+          "fix_id": "advise-payments-transaction-reference-high-nulls",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "payments"
+          ],
+          "depends_on": [],
+          "table": "payments",
+          "target_table": "payments",
+          "problem": "Investigate high null ratio in `payments.transaction_reference`",
+          "fix": "The `transaction_reference` column in the `payments` table has a high percentage of NULL values. This may indicate missing data, an optional field, or an issue with data ingestion. Human judgment is required to determine if this column should be made NOT NULL or if the nulls are intentional.",
+          "severity": "high",
+          "confidence": 0.9,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "order_id",
+            "is_nullable": "YES",
+            "foreign_table": "orders",
+            "foreign_column": "order_id"
+          },
+          "evidence_payload": {
+            "column_name": "order_id",
+            "is_nullable": "YES",
+            "foreign_table": "orders",
+            "foreign_column": "order_id",
+            "_type": "nullability",
+            "rule": "nullable_fk",
+            "target": "payments",
+            "table_name": "payments"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(*) FILTER (WHERE transaction_reference IS NULL) AS null_transaction_reference, COUNT(*) AS total_rows FROM payments;"
+          ],
+          "explanation": "The `transaction_reference` column in the `payments` table has a high percentage of NULL values. This may indicate missing data, an optional field, or an issue with data ingestion. Human judgment is required to determine if this column should be made NOT NULL or if the nulls are intentional.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_033_audit_logs",
+          "fix_id": "advise-audit-logs-low-cardinality",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "audit_logs"
+          ],
+          "depends_on": [],
+          "table": "audit_logs",
+          "target_table": "audit_logs",
+          "problem": "Investigate low cardinality in `audit_logs` columns",
+          "fix": "Columns `table_name`, `action`, and `details` in `audit_logs` exhibit low cardinality. This might indicate that these columns could be good candidates for indexing, or that they contain repetitive data that could be normalized into a lookup table for efficiency. Human judgment is required to determine the best course of action.",
+          "severity": "high",
+          "confidence": 0.95,
+          "risk_level": "low",
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "source_rule": "null_ratio_high",
+          "source_type": "ai",
+          "evidence": {
+            "null_ratio": 0.8495,
+            "total_rows": 2000,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "details",
+              "audit_logs",
+              "performed_by"
+            ]
+          },
+          "evidence_payload": {
+            "null_ratio": 0.8495,
+            "total_rows": 2000,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "details",
+              "audit_logs",
+              "performed_by"
+            ],
+            "_type": "statistical",
+            "rule": "null_ratio_high",
+            "target": "audit_logs",
+            "table_name": "audit_logs"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'table_name' AS column_name, COUNT(DISTINCT table_name) AS distinct_count, COUNT(*) AS total_count FROM audit_logs UNION ALL\nSELECT 'action' AS column_name, COUNT(DISTINCT action) AS distinct_count, COUNT(*) AS total_count FROM audit_logs UNION ALL\nSELECT 'details' AS column_name, COUNT(DISTINCT details) AS distinct_count, COUNT(*) AS total_count FROM audit_logs;"
+          ],
+          "explanation": "Columns `table_name`, `action`, and `details` in `audit_logs` exhibit low cardinality. This might indicate that these columns could be good candidates for indexing, or that they contain repetitive data that could be normalized into a lookup table for efficiency. Human judgment is required to determine the best course of action.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_034_products",
+          "fix_id": "advise-products-low-cardinality",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "products"
+          ],
+          "depends_on": [],
+          "table": "products",
+          "target_table": "products",
+          "problem": "Investigate low cardinality in `products` columns",
+          "fix": "Columns `created_at` and `discontinued` in `products` exhibit low cardinality. This might indicate that these columns could be good candidates for indexing, or that they contain repetitive data that could be normalized into a lookup table for efficiency. Human judgment is required to determine the best course of action.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "source_rule": "duplicate_pk",
+          "source_type": "ai",
+          "evidence": {
+            "duplicate_count": 5,
+            "sample_duplicates": [
+              "P001",
+              "P005",
+              "P010"
+            ]
+          },
+          "evidence_payload": {
+            "duplicate_count": 5,
+            "sample_duplicates": [
+              "P001",
+              "P005",
+              "P010"
+            ],
+            "_type": "statistical",
+            "rule": "duplicate_pk",
+            "target": "products",
+            "table_name": "products"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'created_at' AS column_name, COUNT(DISTINCT created_at) AS distinct_count, COUNT(*) AS total_count FROM products UNION ALL\nSELECT 'discontinued' AS column_name, COUNT(DISTINCT discontinued) AS distinct_count, COUNT(*) AS total_count FROM products;"
+          ],
+          "explanation": "Columns `created_at` and `discontinued` in `products` exhibit low cardinality. This might indicate that these columns could be good candidates for indexing, or that they contain repetitive data that could be normalized into a lookup table for efficiency. Human judgment is required to determine the best course of action.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_035_customers",
+          "fix_id": "advise-customers-low-cardinality",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "customers"
+          ],
+          "depends_on": [],
+          "table": "customers",
+          "target_table": "customers",
+          "problem": "Investigate low cardinality in `customers` columns",
+          "fix": "Columns `created_at` and `notes` in `customers` exhibit low cardinality. This might indicate that these columns could be good candidates for indexing, or that they contain repetitive data that could be normalized into a lookup table for efficiency. Human judgment is required to determine the best course of action.",
+          "severity": "high",
+          "confidence": 0.9,
+          "risk_level": "low",
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "source_rule": "duplicate_values",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "email",
+            "duplicate_count": 343,
+            "total_rows": 2000,
+            "duplication_rate": 0.1715
+          },
+          "evidence_payload": {
+            "column_name": "email",
+            "duplicate_count": 343,
+            "total_rows": 2000,
+            "duplication_rate": 0.1715,
+            "_type": "statistical",
+            "rule": "duplicate_values",
+            "target": "customers",
+            "table_name": "customers"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'created_at' AS column_name, COUNT(DISTINCT created_at) AS distinct_count, COUNT(*) AS total_count FROM customers UNION ALL\nSELECT 'notes' AS column_name, COUNT(DISTINCT notes) AS distinct_count, COUNT(*) AS total_count FROM customers;"
+          ],
+          "explanation": "Columns `created_at` and `notes` in `customers` exhibit low cardinality. This might indicate that these columns could be good candidates for indexing, or that they contain repetitive data that could be normalized into a lookup table for efficiency. Human judgment is required to determine the best course of action.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_036_addresses",
+          "fix_id": "advise-addresses-created-at-low-cardinality",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "addresses"
+          ],
+          "depends_on": [],
+          "table": "addresses",
+          "target_table": "addresses",
+          "problem": "Investigate low cardinality in `addresses.created_at`",
+          "fix": "The `created_at` column in `addresses` exhibits low cardinality. This might indicate that this column could be a good candidate for indexing, or that it contains repetitive data that could be normalized into a lookup table for efficiency. Human judgment is required to determine the best course of action.",
+          "severity": "high",
+          "confidence": 0.9,
+          "risk_level": "low",
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "customer_id",
+            "is_nullable": "YES",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id"
+          },
+          "evidence_payload": {
+            "column_name": "customer_id",
+            "is_nullable": "YES",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id",
+            "_type": "statistical",
+            "rule": "nullable_fk",
+            "target": "addresses",
+            "table_name": "addresses"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(DISTINCT created_at) AS distinct_count, COUNT(*) AS total_count FROM addresses;"
+          ],
+          "explanation": "The `created_at` column in `addresses` exhibits low cardinality. This might indicate that this column could be a good candidate for indexing, or that it contains repetitive data that could be normalized into a lookup table for efficiency. Human judgment is required to determine the best course of action.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_037_shipments",
+          "fix_id": "advise-shipments-carrier-low-cardinality",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "shipments"
+          ],
+          "depends_on": [],
+          "table": "shipments",
+          "target_table": "shipments",
+          "problem": "Investigate low cardinality in `shipments.carrier`",
+          "fix": "The `carrier` column in `shipments` exhibits low cardinality. This might indicate that this column could be a good candidate for indexing, or that it contains repetitive data that could be normalized into a lookup table for efficiency. Human judgment is required to determine the best course of action.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "source_rule": "temporal_inconsistency",
+          "source_type": "ai",
+          "evidence": {
+            "description": "874 records in the shipments table have a shipped_date that is after the delivered_date.",
+            "count_inconsistent_records": 874
+          },
+          "evidence_payload": {
+            "description": "874 records in the shipments table have a shipped_date that is after the delivered_date.",
+            "count_inconsistent_records": 874,
+            "_type": "statistical",
+            "rule": "temporal_inconsistency",
+            "target": "shipments",
+            "table_name": "shipments"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(DISTINCT carrier) AS distinct_count, COUNT(*) AS total_count FROM shipments;"
+          ],
+          "explanation": "The `carrier` column in `shipments` exhibits low cardinality. This might indicate that this column could be a good candidate for indexing, or that it contains repetitive data that could be normalized into a lookup table for efficiency. Human judgment is required to determine the best course of action.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_038_employees",
+          "fix_id": "advise-employees-department-categorical-drift",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "employees"
+          ],
+          "depends_on": [],
+          "table": "employees",
+          "target_table": "employees",
+          "problem": "Investigate categorical drift in `employees.department`",
+          "fix": "The `department` column in `employees` shows signs of categorical drift, with low-frequency categories like 'HR' and 'IT'. This could indicate changes in organizational structure, data entry inconsistencies, or a need to review the validity of these categories. Human judgment is required to determine if these values are valid or require correction.",
+          "severity": "high",
+          "confidence": 0.9,
+          "risk_level": "low",
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "manager_id",
+            "is_nullable": "YES",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id"
+          },
+          "evidence_payload": {
+            "column_name": "manager_id",
+            "is_nullable": "YES",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id",
+            "_type": "statistical",
+            "rule": "nullable_fk",
+            "target": "employees",
+            "table_name": "employees"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT department, COUNT(*) FROM employees GROUP BY department ORDER BY COUNT(*) ASC;"
+          ],
+          "explanation": "The `department` column in `employees` shows signs of categorical drift, with low-frequency categories like 'HR' and 'IT'. This could indicate changes in organizational structure, data entry inconsistencies, or a need to review the validity of these categories. Human judgment is required to determine if these values are valid or require correction.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_039_reviews",
+          "fix_id": "advise-reviews-review-text-low-cardinality",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "reviews"
+          ],
+          "depends_on": [],
+          "table": "reviews",
+          "target_table": "reviews",
+          "problem": "Investigate low cardinality in `reviews.review_text`",
+          "fix": "The `review_text` column in `reviews` exhibits low cardinality. This might indicate that this column could be a good candidate for indexing, or that it contains repetitive data that could be normalized into a lookup table for efficiency. Human judgment is required to determine the best course of action.",
+          "severity": "high",
+          "confidence": 0.9,
+          "risk_level": "low",
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "ai",
+          "evidence": {
+            "column_name": "product_id",
+            "is_nullable": "YES",
+            "foreign_table": "products",
+            "foreign_column": "product_id"
+          },
+          "evidence_payload": {
+            "column_name": "product_id",
+            "is_nullable": "YES",
+            "foreign_table": "products",
+            "foreign_column": "product_id",
+            "_type": "statistical",
+            "rule": "nullable_fk",
+            "target": "reviews",
+            "table_name": "reviews"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT COUNT(DISTINCT review_text) AS distinct_count, COUNT(*) AS total_count FROM reviews;"
+          ],
+          "explanation": "The `review_text` column in `reviews` exhibits low cardinality. This might indicate that this column could be a good candidate for indexing, or that it contains repetitive data that could be normalized into a lookup table for efficiency. Human judgment is required to determine the best course of action.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "explain_summary": null
+        }
+      ],
+      "cards": [
+        {
+          "fix_id": "remove-dup-products-product-id",
+          "title": "Remove duplicate primary key entries for `product_id` in `products`",
+          "target": "products",
+          "rationale": "Duplicate primary key values violate data integrity. This fix removes duplicate rows, keeping one arbitrary record for each `product_id`, and then adds a unique constraint to prevent future duplicates. Deleted rows cannot be rolled back.",
+          "risk_level": "high",
+          "sql": "DELETE FROM products\nWHERE product_id IN (\n    SELECT product_id\n    FROM products\n    GROUP BY product_id\n    HAVING COUNT(*) > 1\n) AND ctid NOT IN (\n    SELECT MIN(ctid)\n    FROM products\n    GROUP BY product_id\n    HAVING COUNT(*) > 1\n);\nALTER TABLE products ADD CONSTRAINT products_product_id_unique UNIQUE (product_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM products GROUP BY product_id HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE products DROP CONSTRAINT IF EXISTS products_product_id_unique;"
+          ],
+          "rows_affected_estimate": 5,
+          "tables_touched": [
+            "products"
+          ],
+          "depends_on": [],
+          "card_family": "duplicates",
+          "interaction_model": "human_decision",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "critical"
+        },
+        {
+          "fix_id": "fix-shipments-temporal-inconsistency",
+          "title": "Correct temporal inconsistencies in `shipments` where `shipped_date` is after `delivered_date`",
+          "target": "shipments",
+          "rationale": "Records in the `shipments` table show `shipped_date` occurring after `delivered_date`, which is logically inconsistent. This fix will swap the `shipped_date` and `delivered_date` for affected records.",
+          "risk_level": "high",
+          "sql": "UPDATE shipments\nSET\n    shipped_date = delivered_date,\n    delivered_date = shipped_date\nWHERE shipped_date > delivered_date;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM shipments WHERE shipped_date > delivered_date;"
+          ],
+          "rollback_queries": [
+            "SELECT 'Manual rollback required: identify and revert swapped dates based on historical data if available.';"
+          ],
+          "rows_affected_estimate": 874,
+          "tables_touched": [
+            "shipments"
+          ],
+          "depends_on": [],
+          "card_family": "temporal",
+          "interaction_model": "human_decision",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "high"
+        },
+        {
+          "fix_id": "remove-dup-customers-email",
+          "title": "Remove duplicate `email` entries in `customers` and add unique constraint",
+          "target": "customers",
+          "rationale": "[Pre-flight blocked: UNIQUE on (email) on table 'customers' would fail: 40 duplicate row(s) found] Duplicate `email` values in the `customers` table violate data integrity and can lead to inconsistencies. This fix removes duplicate rows, keeping one arbitrary record for each `email`, and then adds a unique constraint to prevent future duplicates. Deleted rows cannot be rolled back.",
+          "risk_level": "medium",
+          "sql": "",
+          "explain_summary": null,
+          "preconditions": [
+            "BLOCKED: UNIQUE on (email) on table 'customers' would fail: 40 duplicate row(s) found",
+            "Original SQL: DELETE FROM customers\nWHERE email IN (\n    SELECT email\n    FROM customers\n    GROUP BY email\n    HAVING COUNT(*) > 1\n) AND ctid NOT IN (\n    SELECT MIN(ctid)\n    FROM customers\n    GROUP BY email\n   "
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM customers GROUP BY email HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE customers DROP CONSTRAINT IF EXISTS customers_email_unique;"
+          ],
+          "rows_affected_estimate": 343,
+          "tables_touched": [
+            "customers"
+          ],
+          "depends_on": [],
+          "card_family": "duplicates",
+          "interaction_model": "blocked",
+          "evidence": {
+            "block_reason": "UNIQUE on (email) on table 'customers' would fail: 40 duplicate row(s) found",
+            "original_sql": "DELETE FROM customers\nWHERE email IN (\n    SELECT email\n    FROM customers\n    GROUP BY email\n    HAVING COUNT(*) > 1\n) AND ctid NOT IN (\n    SELECT MIN(ctid)\n    FROM customers\n    GROUP BY email\n    HAVING COUNT(*) > 1\n);\nALTER TABLE customers ADD CONSTRAINT customers_email_unique UNIQUE (email);"
+          },
+          "evidence_payload": {
+            "_type": "blocked",
+            "block_reason": "UNIQUE on (email) on table 'customers' would fail: 40 duplicate row(s) found",
+            "original_sql": "DELETE FROM customers\nWHERE email IN (\n    SELECT email\n    FROM customers\n    GROUP BY email\n    HAVING COUNT(*) > 1\n) AND ctid NOT IN (\n    SELECT MIN(ctid)\n    FROM customers\n    GROUP BY email\n    HAVING COUNT(*) > 1\n);\nALTER TABLE customers ADD CONSTRAINT customers_email_unique UNIQUE (email);"
+          },
+          "source_rule": "fill_nulls_blocked",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "critical"
+        },
+        {
+          "fix_id": "remove-dup-payments-transaction-reference",
+          "title": "Remove duplicate `transaction_reference` entries in `payments` and add unique constraint",
+          "target": "payments",
+          "rationale": "Duplicate `transaction_reference` values in the `payments` table violate data integrity and can lead to inconsistencies. This fix removes duplicate rows, keeping one arbitrary record for each `transaction_reference`, and then adds a unique constraint to prevent future duplicates. Deleted rows cannot be rolled back.",
+          "risk_level": "high",
+          "sql": "DELETE FROM payments\nWHERE transaction_reference IN (\n    SELECT transaction_reference\n    FROM payments\n    GROUP BY transaction_reference\n    HAVING COUNT(*) > 1\n) AND ctid NOT IN (\n    SELECT MIN(ctid)\n    FROM payments\n    GROUP BY transaction_reference\n    HAVING COUNT(*) > 1\n);\nALTER TABLE payments ADD CONSTRAINT payments_transaction_reference_unique UNIQUE (transaction_reference);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM payments GROUP BY transaction_reference HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_transaction_reference_unique;"
+          ],
+          "rows_affected_estimate": 1207,
+          "tables_touched": [
+            "payments"
+          ],
+          "depends_on": [],
+          "card_family": "duplicates",
+          "interaction_model": "human_decision",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "critical"
+        },
+        {
+          "fix_id": "remove-dup-suppliers-email",
+          "title": "Remove duplicate `email` entries in `suppliers` and add unique constraint",
+          "target": "suppliers",
+          "rationale": "Duplicate `email` values in the `suppliers` table violate data integrity and can lead to inconsistencies. This fix removes duplicate rows, keeping one arbitrary record for each `email`, and then adds a unique constraint to prevent future duplicates. Deleted rows cannot be rolled back.",
+          "risk_level": "high",
+          "sql": "DELETE FROM suppliers\nWHERE email IN (\n    SELECT email\n    FROM suppliers\n    GROUP BY email\n    HAVING COUNT(*) > 1\n) AND ctid NOT IN (\n    SELECT MIN(ctid)\n    FROM suppliers\n    GROUP BY email\n    HAVING COUNT(*) > 1\n);\nALTER TABLE suppliers ADD CONSTRAINT suppliers_email_unique UNIQUE (email);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM suppliers GROUP BY email HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE suppliers DROP CONSTRAINT IF EXISTS suppliers_email_unique;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "suppliers"
+          ],
+          "depends_on": [],
+          "card_family": "duplicates",
+          "interaction_model": "human_decision",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "critical"
+        },
+        {
+          "fix_id": "remove-dup-employees-email",
+          "title": "Remove duplicate `email` entries in `employees` and add unique constraint",
+          "target": "employees",
+          "rationale": "Duplicate `email` values in the `employees` table violate data integrity and can lead to inconsistencies. This fix removes duplicate rows, keeping one arbitrary record for each `email`, and then adds a unique constraint to prevent future duplicates. Deleted rows cannot be rolled back.",
+          "risk_level": "high",
+          "sql": "DELETE FROM employees\nWHERE email IN (\n    SELECT email\n    FROM employees\n    GROUP BY email\n    HAVING COUNT(*) > 1\n) AND ctid NOT IN (\n    SELECT MIN(ctid)\n    FROM employees\n    GROUP BY email\n    HAVING COUNT(*) > 1\n);\nALTER TABLE employees ADD CONSTRAINT employees_email_unique UNIQUE (email);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM employees GROUP BY email HAVING COUNT(*) > 1;"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE employees DROP CONSTRAINT IF EXISTS employees_email_unique;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "employees"
+          ],
+          "depends_on": [],
+          "card_family": "duplicates",
+          "interaction_model": "human_decision",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "critical"
+        },
+        {
+          "fix_id": "add-index-categories-parent-category-id",
+          "title": "Add index on `categories.parent_category_id`",
+          "target": "categories",
+          "rationale": "Adding an index on the foreign key column `parent_category_id` in the `categories` table will improve the performance of JOIN operations and foreign key constraint checks, especially for queries involving hierarchical category structures.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS idx_categories_parent_category_id ON categories (parent_category_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'categories' AND indexname = 'idx_categories_parent_category_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_categories_parent_category_id;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "categories"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "add-index-employees-manager-id",
+          "title": "Add index on `employees.manager_id`",
+          "target": "employees",
+          "rationale": "Adding an index on the foreign key column `manager_id` in the `employees` table will improve the performance of JOIN operations and foreign key constraint checks, especially for queries involving employee hierarchies.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS idx_employees_manager_id ON employees (manager_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'employees' AND indexname = 'idx_employees_manager_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_employees_manager_id;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "employees"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "add-index-orders-customer-id",
+          "title": "Add index on `orders.customer_id`",
+          "target": "orders",
+          "rationale": "Adding an index on the foreign key column `customer_id` in the `orders` table will improve the performance of JOIN operations and foreign key constraint checks, especially for queries linking orders to customers.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders (customer_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'orders' AND indexname = 'idx_orders_customer_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_orders_customer_id;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "orders"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "add-index-support-tickets-customer-id",
+          "title": "Add index on `support_tickets.customer_id`",
+          "target": "support_tickets",
+          "rationale": "Adding an index on the foreign key column `customer_id` in the `support_tickets` table will improve the performance of JOIN operations and foreign key constraint checks, especially for queries linking support tickets to customers.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS idx_support_tickets_customer_id ON support_tickets (customer_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'support_tickets' AND indexname = 'idx_support_tickets_customer_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_support_tickets_customer_id;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "support_tickets"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "add-index-payments-order-id",
+          "title": "Add index on `payments.order_id`",
+          "target": "payments",
+          "rationale": "Adding an index on the foreign key column `order_id` in the `payments` table will improve the performance of JOIN operations and foreign key constraint checks, especially for queries linking payments to orders.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS idx_payments_order_id ON payments (order_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'payments' AND indexname = 'idx_payments_order_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_payments_order_id;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "payments"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "add-index-reviews-product-id",
+          "title": "Add index on `reviews.product_id`",
+          "target": "reviews",
+          "rationale": "Adding an index on the foreign key column `product_id` in the `reviews` table will improve the performance of JOIN operations and foreign key constraint checks, especially for queries linking reviews to products.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS idx_reviews_product_id ON reviews (product_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'reviews' AND indexname = 'idx_reviews_product_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_reviews_product_id;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "reviews"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "add-index-addresses-customer-id",
+          "title": "Add index on `addresses.customer_id`",
+          "target": "addresses",
+          "rationale": "Adding an index on the foreign key column `customer_id` in the `addresses` table will improve the performance of JOIN operations and foreign key constraint checks, especially for queries linking addresses to customers.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS idx_addresses_customer_id ON addresses (customer_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'addresses' AND indexname = 'idx_addresses_customer_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_addresses_customer_id;"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "addresses"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "advise-support-tickets-high-nulls",
+          "title": "Investigate high null ratios in `support_tickets` columns",
+          "target": "support_tickets",
+          "rationale": "Several columns in the `support_tickets` table (`resolved_at`, `customer_id`, `assigned_employee_id`, `order_id`) have a high percentage of NULL values. This may indicate missing data, an optional field, or an issue with data ingestion. Human judgment is required to determine if these columns should be made NOT NULL or if the nulls are intentional.",
+          "risk_level": "low",
+          "sql": "SELECT\n        COUNT(*) FILTER (WHERE resolved_at IS NULL) AS null_resolved_at,\n        COUNT(*) FILTER (WHERE customer_id IS NULL) AS null_customer_id,\n        COUNT(*) FILTER (WHERE assigned_employee_id IS NULL) AS null_assigned_employee_id,\n        COUNT(*) FILTER (WHERE order_id IS NULL) AS null_order_id,\n        COUNT(*) AS total_rows\n    FROM support_tickets;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "support_tickets"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advise-audit-logs-high-nulls",
+          "title": "Investigate high null ratios in `audit_logs` columns",
+          "target": "audit_logs",
+          "rationale": "Columns `details` and `performed_by` in the `audit_logs` table have a high percentage of NULL values. This may indicate missing data, an optional field, or an issue with data ingestion. Human judgment is required to determine if these columns should be made NOT NULL or if the nulls are intentional.",
+          "risk_level": "low",
+          "sql": "SELECT\n        COUNT(*) FILTER (WHERE details IS NULL) AS null_details,\n        COUNT(*) FILTER (WHERE performed_by IS NULL) AS null_performed_by,\n        COUNT(*) AS total_rows\n    FROM audit_logs;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "audit_logs"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advise-categories-parent-category-id-nullable-fk",
+          "title": "Review nullable foreign key `parent_category_id` in `categories`",
+          "target": "categories",
+          "rationale": "The `parent_category_id` column in `categories` is a nullable foreign key referencing `categories.category_id`. While this allows for top-level categories, it's important to confirm if this nullability is intentional or if it indicates potential data integrity issues. If all categories should have a parent (except for a designated root), consider enforcing a `NOT NULL` constraint after filling existing nulls.",
+          "risk_level": "low",
+          "sql": "SELECT category_id, category_name FROM categories WHERE parent_category_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "categories"
+          ],
+          "depends_on": [],
+          "card_family": "referential",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advise-employees-manager-id-nullable-fk",
+          "title": "Review nullable foreign key `manager_id` in `employees`",
+          "target": "employees",
+          "rationale": "The `manager_id` column in `employees` is a nullable foreign key referencing `employees.employee_id`. This allows for employees without a manager (e.g., the CEO). Confirm if this nullability is intentional or if it indicates potential data integrity issues.",
+          "risk_level": "low",
+          "sql": "SELECT employee_id, first_name, last_name FROM employees WHERE manager_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "employees"
+          ],
+          "depends_on": [],
+          "card_family": "referential",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advise-orders-customer-id-nullable-fk",
+          "title": "Review nullable foreign key `customer_id` in `orders`",
+          "target": "orders",
+          "rationale": "The `customer_id` column in `orders` is a nullable foreign key referencing `customers.customer_id`. This might allow for orders not associated with a customer. Confirm if this nullability is intentional or if it indicates potential data integrity issues.",
+          "risk_level": "low",
+          "sql": "SELECT order_id, total_amount FROM orders WHERE customer_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "orders"
+          ],
+          "depends_on": [],
+          "card_family": "referential",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advise-support-tickets-customer-id-nullable-fk",
+          "title": "Review nullable foreign key `customer_id` in `support_tickets`",
+          "target": "support_tickets",
+          "rationale": "The `customer_id` column in `support_tickets` is a nullable foreign key referencing `customers.customer_id`. This might allow for support tickets not associated with a customer. Confirm if this nullability is intentional or if it indicates potential data integrity issues.",
+          "risk_level": "low",
+          "sql": "SELECT ticket_id, issue_type FROM support_tickets WHERE customer_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "support_tickets"
+          ],
+          "depends_on": [],
+          "card_family": "referential",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advise-payments-order-id-nullable-fk",
+          "title": "Review nullable foreign key `order_id` in `payments`",
+          "target": "payments",
+          "rationale": "The `order_id` column in `payments` is a nullable foreign key referencing `orders.order_id`. This might allow for payments not associated with an order. Confirm if this nullability is intentional or if it indicates potential data integrity issues.",
+          "risk_level": "low",
+          "sql": "SELECT payment_id, amount FROM payments WHERE order_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "payments"
+          ],
+          "depends_on": [],
+          "card_family": "referential",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advise-reviews-product-id-nullable-fk",
+          "title": "Review nullable foreign key `product_id` in `reviews`",
+          "target": "reviews",
+          "rationale": "The `product_id` column in `reviews` is a nullable foreign key referencing `products.product_id`. This might allow for reviews not associated with a product. Confirm if this nullability is intentional or if it indicates potential data integrity issues.",
+          "risk_level": "low",
+          "sql": "SELECT review_id, rating FROM reviews WHERE product_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "reviews"
+          ],
+          "depends_on": [],
+          "card_family": "referential",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advise-addresses-customer-id-nullable-fk",
+          "title": "Review nullable foreign key `customer_id` in `addresses`",
+          "target": "addresses",
+          "rationale": "The `customer_id` column in `addresses` is a nullable foreign key referencing `customers.customer_id`. This might allow for addresses not associated with a customer. Confirm if this nullability is intentional or if it indicates potential data integrity issues.",
+          "risk_level": "low",
+          "sql": "SELECT address_id, address_line FROM addresses WHERE customer_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "addresses"
+          ],
+          "depends_on": [],
+          "card_family": "referential",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advise-orders-high-nulls",
+          "title": "Investigate high null ratios in `orders` columns",
+          "target": "orders",
+          "rationale": "Several columns in the `orders` table (`shipping_address_id`, `employee_id`, `notes`) have a high percentage of NULL values. This may indicate missing data, an optional field, or an issue with data ingestion. Human judgment is required to determine if these columns should be made NOT NULL or if the nulls are intentional.",
+          "risk_level": "low",
+          "sql": "SELECT\n        COUNT(*) FILTER (WHERE shipping_address_id IS NULL) AS null_shipping_address_id,\n        COUNT(*) FILTER (WHERE employee_id IS NULL) AS null_employee_id,\n        COUNT(*) FILTER (WHERE notes IS NULL) AS null_notes,\n        COUNT(*) AS total_rows\n    FROM orders;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "orders"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advise-customers-high-nulls",
+          "title": "Investigate high null ratios in `customers` columns",
+          "target": "customers",
+          "rationale": "Several columns in the `customers` table (`phone`, `notes`) have a high percentage of NULL values. This may indicate missing data, an optional field, or an issue with data ingestion. Human judgment is required to determine if these columns should be made NOT NULL or if the nulls are intentional.",
+          "risk_level": "low",
+          "sql": "SELECT\n        COUNT(*) FILTER (WHERE phone IS NULL) AS null_phone,\n        COUNT(*) FILTER (WHERE notes IS NULL) AS null_notes,\n        COUNT(*) AS total_rows\n    FROM customers;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "customers"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advise-employees-salary-outlier",
+          "title": "Investigate outlier distribution in `employees.salary`",
+          "target": "employees",
+          "rationale": "The `salary` column in the `employees` table shows an outlier distribution. This could indicate data entry errors, unusual compensation packages, or a need for further segmentation in analysis. Human judgment is required to determine if these values are valid or require correction.",
+          "risk_level": "low",
+          "sql": "SELECT employee_id, first_name, last_name, salary FROM employees ORDER BY salary DESC LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "employees"
+          ],
+          "depends_on": [],
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advise-employees-email-high-nulls",
+          "title": "Investigate high null ratio in `employees.email`",
+          "target": "employees",
+          "rationale": "The `email` column in the `employees` table has a high percentage of NULL values. This may indicate missing data, an optional field, or an issue with data ingestion. Human judgment is required to determine if this column should be made NOT NULL or if the nulls are intentional.",
+          "risk_level": "low",
+          "sql": "SELECT COUNT(*) FILTER (WHERE email IS NULL) AS null_emails, COUNT(*) AS total_rows FROM employees;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "employees"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advise-reviews-review-text-high-nulls",
+          "title": "Investigate high null ratio in `reviews.review_text`",
+          "target": "reviews",
+          "rationale": "The `review_text` column in the `reviews` table has a high percentage of NULL values. This may indicate missing data, an optional field, or an issue with data ingestion. Human judgment is required to determine if this column should be made NOT NULL or if the nulls are intentional.",
+          "risk_level": "low",
+          "sql": "SELECT COUNT(*) FILTER (WHERE review_text IS NULL) AS null_review_text, COUNT(*) AS total_rows FROM reviews;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "reviews"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advise-shipments-warehouse-id-high-nulls",
+          "title": "Investigate high null ratio in `shipments.warehouse_id`",
+          "target": "shipments",
+          "rationale": "The `warehouse_id` column in the `shipments` table has a high percentage of NULL values. This may indicate missing data, an optional field, or an issue with data ingestion. Human judgment is required to determine if this column should be made NOT NULL or if the nulls are intentional.",
+          "risk_level": "low",
+          "sql": "SELECT COUNT(*) FILTER (WHERE warehouse_id IS NULL) AS null_warehouse_id, COUNT(*) AS total_rows FROM shipments;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "shipments"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advise-warehouses-manager-name-high-nulls",
+          "title": "Investigate high null ratio in `warehouses.manager_name`",
+          "target": "warehouses",
+          "rationale": "The `manager_name` column in the `warehouses` table has a high percentage of NULL values. This may indicate missing data, an optional field, or an issue with data ingestion. Human judgment is required to determine if this column should be made NOT NULL or if the nulls are intentional.",
+          "risk_level": "low",
+          "sql": "SELECT COUNT(*) FILTER (WHERE manager_name IS NULL) AS null_manager_name, COUNT(*) AS total_rows FROM warehouses;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "warehouses"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advise-categories-parent-category-id-high-nulls",
+          "title": "Investigate high null ratio in `categories.parent_category_id`",
+          "target": "categories",
+          "rationale": "The `parent_category_id` column in the `categories` table has a high percentage of NULL values. This may indicate missing data, an optional field (for top-level categories), or an issue with data ingestion. Human judgment is required to determine if this column should be made NOT NULL or if the nulls are intentional.",
+          "risk_level": "low",
+          "sql": "SELECT COUNT(*) FILTER (WHERE parent_category_id IS NULL) AS null_parent_category_id, COUNT(*) AS total_rows FROM categories;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "categories"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advise-order-items-product-id-outlier",
+          "title": "Investigate outlier distribution in `order_items.product_id`",
+          "target": "order_items",
+          "rationale": "The `product_id` column in the `order_items` table shows an outlier distribution. This could indicate data entry errors, unusual product IDs, or a need for further investigation into product sales patterns. Human judgment is required to determine if these values are valid or require correction.",
+          "risk_level": "low",
+          "sql": "SELECT product_id, COUNT(*) FROM order_items GROUP BY product_id ORDER BY COUNT(*) DESC LIMIT 10;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "order_items"
+          ],
+          "depends_on": [],
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advise-payments-transaction-reference-high-nulls",
+          "title": "Investigate high null ratio in `payments.transaction_reference`",
+          "target": "payments",
+          "rationale": "The `transaction_reference` column in the `payments` table has a high percentage of NULL values. This may indicate missing data, an optional field, or an issue with data ingestion. Human judgment is required to determine if this column should be made NOT NULL or if the nulls are intentional.",
+          "risk_level": "low",
+          "sql": "SELECT COUNT(*) FILTER (WHERE transaction_reference IS NULL) AS null_transaction_reference, COUNT(*) AS total_rows FROM payments;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "payments"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advise-audit-logs-low-cardinality",
+          "title": "Investigate low cardinality in `audit_logs` columns",
+          "target": "audit_logs",
+          "rationale": "Columns `table_name`, `action`, and `details` in `audit_logs` exhibit low cardinality. This might indicate that these columns could be good candidates for indexing, or that they contain repetitive data that could be normalized into a lookup table for efficiency. Human judgment is required to determine the best course of action.",
+          "risk_level": "low",
+          "sql": "SELECT 'table_name' AS column_name, COUNT(DISTINCT table_name) AS distinct_count, COUNT(*) AS total_count FROM audit_logs UNION ALL\nSELECT 'action' AS column_name, COUNT(DISTINCT action) AS distinct_count, COUNT(*) AS total_count FROM audit_logs UNION ALL\nSELECT 'details' AS column_name, COUNT(DISTINCT details) AS distinct_count, COUNT(*) AS total_count FROM audit_logs;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "audit_logs"
+          ],
+          "depends_on": [],
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advise-products-low-cardinality",
+          "title": "Investigate low cardinality in `products` columns",
+          "target": "products",
+          "rationale": "Columns `created_at` and `discontinued` in `products` exhibit low cardinality. This might indicate that these columns could be good candidates for indexing, or that they contain repetitive data that could be normalized into a lookup table for efficiency. Human judgment is required to determine the best course of action.",
+          "risk_level": "low",
+          "sql": "SELECT 'created_at' AS column_name, COUNT(DISTINCT created_at) AS distinct_count, COUNT(*) AS total_count FROM products UNION ALL\nSELECT 'discontinued' AS column_name, COUNT(DISTINCT discontinued) AS distinct_count, COUNT(*) AS total_count FROM products;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "products"
+          ],
+          "depends_on": [],
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advise-customers-low-cardinality",
+          "title": "Investigate low cardinality in `customers` columns",
+          "target": "customers",
+          "rationale": "Columns `created_at` and `notes` in `customers` exhibit low cardinality. This might indicate that these columns could be good candidates for indexing, or that they contain repetitive data that could be normalized into a lookup table for efficiency. Human judgment is required to determine the best course of action.",
+          "risk_level": "low",
+          "sql": "SELECT 'created_at' AS column_name, COUNT(DISTINCT created_at) AS distinct_count, COUNT(*) AS total_count FROM customers UNION ALL\nSELECT 'notes' AS column_name, COUNT(DISTINCT notes) AS distinct_count, COUNT(*) AS total_count FROM customers;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "customers"
+          ],
+          "depends_on": [],
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advise-addresses-created-at-low-cardinality",
+          "title": "Investigate low cardinality in `addresses.created_at`",
+          "target": "addresses",
+          "rationale": "The `created_at` column in `addresses` exhibits low cardinality. This might indicate that this column could be a good candidate for indexing, or that it contains repetitive data that could be normalized into a lookup table for efficiency. Human judgment is required to determine the best course of action.",
+          "risk_level": "low",
+          "sql": "SELECT COUNT(DISTINCT created_at) AS distinct_count, COUNT(*) AS total_count FROM addresses;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "addresses"
+          ],
+          "depends_on": [],
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advise-shipments-carrier-low-cardinality",
+          "title": "Investigate low cardinality in `shipments.carrier`",
+          "target": "shipments",
+          "rationale": "The `carrier` column in `shipments` exhibits low cardinality. This might indicate that this column could be a good candidate for indexing, or that it contains repetitive data that could be normalized into a lookup table for efficiency. Human judgment is required to determine the best course of action.",
+          "risk_level": "low",
+          "sql": "SELECT COUNT(DISTINCT carrier) AS distinct_count, COUNT(*) AS total_count FROM shipments;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "shipments"
+          ],
+          "depends_on": [],
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advise-employees-department-categorical-drift",
+          "title": "Investigate categorical drift in `employees.department`",
+          "target": "employees",
+          "rationale": "The `department` column in `employees` shows signs of categorical drift, with low-frequency categories like 'HR' and 'IT'. This could indicate changes in organizational structure, data entry inconsistencies, or a need to review the validity of these categories. Human judgment is required to determine if these values are valid or require correction.",
+          "risk_level": "low",
+          "sql": "SELECT department, COUNT(*) FROM employees GROUP BY department ORDER BY COUNT(*) ASC;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "employees"
+          ],
+          "depends_on": [],
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advise-reviews-review-text-low-cardinality",
+          "title": "Investigate low cardinality in `reviews.review_text`",
+          "target": "reviews",
+          "rationale": "The `review_text` column in `reviews` exhibits low cardinality. This might indicate that this column could be a good candidate for indexing, or that it contains repetitive data that could be normalized into a lookup table for efficiency. Human judgment is required to determine the best course of action.",
+          "risk_level": "low",
+          "sql": "SELECT COUNT(DISTINCT review_text) AS distinct_count, COUNT(*) AS total_count FROM reviews;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT 'No direct verification query for advisory finding. Manual review of data is needed.';"
+          ],
+          "rollback_queries": [
+            "SELECT 'No rollback needed for advisory query.';"
+          ],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "reviews"
+          ],
+          "depends_on": [],
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": null,
+          "source_rule": "",
+          "source_type": "ai",
+          "confidence": 0.9,
+          "severity": "low"
+        }
+      ]
+    }
+  }
+}

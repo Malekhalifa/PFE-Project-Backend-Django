@@ -120,7 +120,7 @@ class Finding(BaseModel):
             "critical": 0.90,
             "high":     0.85,
             "medium":   0.75,
-            "low":      0.70,  # below MIN_CONFIDENCE=0.75 → filtered by reducer
+            "low":      0.70,  # above MIN_CONFIDENCE=0.65 threshold
         }
         return _fallback.get(str(severity), 0.75)
 
@@ -210,6 +210,11 @@ class ReducedFindings(BaseModel):
     """Deduped, ranked, capped list of findings passed to the Fix Planner."""
 
     findings: list[Finding] = Field(default_factory=list)
+    findings_capped: bool = Field(
+        default=False,
+        description="True when the pipeline found more issues than the top-N cap. "
+                    "Score reflects only the top-N highest-priority findings.",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -229,10 +234,11 @@ class FixDependencyGraph(BaseModel):
 
     findings: list[Finding] = Field(default_factory=list)
     dependency_edges: list[FixDependencyEdge] = Field(default_factory=list)
+    findings_capped: bool = Field(default=False)
 
     def to_reduced_findings(self) -> ReducedFindings:
         """Backward-compat shim for code still consuming ReducedFindings."""
-        return ReducedFindings(findings=self.findings)
+        return ReducedFindings(findings=self.findings, findings_capped=self.findings_capped)
 
 
 # ---------------------------------------------------------------------------

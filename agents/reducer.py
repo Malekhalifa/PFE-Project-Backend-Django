@@ -16,6 +16,7 @@ import re
 
 from agno.workflow.types import StepInput, StepOutput
 
+from .rule_family_map import RULE_TO_FAMILY
 from .schemas import (
     _SEVERITY_RANK,
     Finding,
@@ -157,16 +158,99 @@ def _try_recover_partial(value: str, step_name: str) -> ValidationReport | None:
     return None
 
 
-def _finding_key(f: Finding) -> tuple:
-    """Deduplication key — same entity + rule family = same logical issue.
+def _canonical_family(rule: str) -> str:
+    """Map a rule name to its canonical remediation family via RULE_TO_FAMILY.
 
-    Excludes validator so that row and crossrow agents reporting the same
-    entity violation (e.g. duplicate_unique_column vs duplicate_unique_field
-    on the same column) are collapsed into one finding.
-    The rule is normalised to its first word to absorb minor naming variations.
+    Falls back to the first underscore-delimited word for unknown rules so
+    that new agent-emitted rules degrade gracefully rather than all collapsing
+    to "unknown".
     """
-    rule_family = f.rule.split("_")[0]
-    return (f.entity, rule_family)
+    return RULE_TO_FAMILY.get(rule, (rule.split("_")[0],))[0]
+
+
+_NULLABILITY_RULES = frozenset({
+    "null_ratio_high", "null_rate_high", "high_null_ratio", "fill_nulls",
+})
+_OUTLIER_RULES = frozenset({"distributional_outlier", "outlier"})
+_CARDINALITY_RULES = frozenset({"low_cardinality", "categorical_drift"})
+_DUPLICATE_RULES = frozenset({
+    "duplicate_values", "duplicate_rate_high", "duplicate_detected",
+    "exact_duplicate", "unique_violation",
+})
+_AI_INVESTIGATIVE_RULES = frozenset({
+    "uncertain_pattern", "semantic_anomaly", "fraud_indicator",
+})
+
+
+def _recompute_finding_confidence(f: Finding, profiler_summary: dict) -> float:
+    """Replace LLM self-reported confidence with deterministic signals.
+
+    1. Deterministic origin (py_profiler / schema snapshot) → 1.0
+    2. Profiler corroboration per rule family → ±0.10 to ±0.35
+    3. SQL-backed evidence (violation_count > 0) → +0.25
+    Base for LLM findings with no anchor: 0.50
+    AI-investigative rules (no SQL anchor possible): 0.40 base
+    """
+    if f.confidence >= 0.92:  # py_profiler and schema snapshot findings
+        return 1.0
+
+    score = 0.5
+    table = f.entity.split(".")[0]
+    col   = f.entity.split(".")[1] if "." in f.entity else None
+    col_stats: dict = {}
+    if col and table in profiler_summary:
+        col_stats = profiler_summary[table].get("columns", {}).get(col, {})
+
+    rule = f.rule
+
+    if rule in _NULLABILITY_RULES:
+        null_rate = col_stats.get("null_rate", -1)
+        if null_rate > 0.10:    score += 0.35
+        elif null_rate == 0.0:  score -= 0.30
+        elif null_rate > 0.0:   score += 0.10
+
+    elif rule in _OUTLIER_RULES:
+        score += 0.35 if col_stats.get("outlier_flag") else -0.15
+
+    elif rule in _CARDINALITY_RULES:
+        card = col_stats.get("cardinality", -1)
+        rows = col_stats.get("total_rows", 0)
+        if rows > 100 and 0 < card <= 20:   score += 0.35
+        elif card > 0 and rows > 0 and card > rows * 0.5:
+            score -= 0.10
+
+    elif rule in _DUPLICATE_RULES:
+        card = col_stats.get("cardinality", -1)
+        rows = col_stats.get("total_rows", 0)
+        if card > 0 and rows > 0:
+            dup_rate = 1.0 - (card / rows)
+            if dup_rate > 0.05:  score += 0.25
+            elif dup_rate == 0:  score -= 0.20
+
+    elif rule in _AI_INVESTIGATIVE_RULES:
+        score = 0.40
+
+    evidence = f.evidence or {}
+    if evidence.get("violation_count", 0) > 0 or evidence.get("violation_pct", 0) > 0:
+        score += 0.25
+
+    return min(1.0, max(0.0, score))
+
+
+def _finding_key(f: Finding) -> tuple:
+    """Deduplication key — same entity + canonical family = same logical issue.
+
+    Column-level entities (table.column) use the canonical family so that
+    rule aliases (null_ratio_high / high_null_ratio) on the same column
+    correctly collapse into one finding.
+
+    Table-level entities (no dot) use the exact rule to prevent distinct
+    schema-design issues (missing_pk vs missing_fk_index) from being
+    incorrectly merged just because they share a family.
+    """
+    if "." in f.entity:
+        return (f.entity, _canonical_family(f.rule))
+    return (f.entity, f.rule)
 
 
 def _rank(f: Finding) -> tuple:
@@ -346,6 +430,7 @@ class ReduceSignals:
         # Resolve schema, profiler baseline, and learned patterns from session state.
         schema: dict = {}
         profiler_tables: set[str] = set()
+        profiler_summary: dict = {}
         # Set of (rule_family, entity) pairs the user has previously rejected.
         rejected_patterns: set[tuple[str, str]] = set()
         try:
@@ -353,6 +438,7 @@ class ReduceSignals:
             if ws is not None:
                 sd = ws.session_data or {}
                 schema = sd.get("schema") or {}
+                profiler_summary = sd.get("profiler_summary") or {}
                 # Fast path: profiler_tables is pre-computed by py_profiler / store_profiler_output.
                 # Backward compat: fall back to deriving from profiler_report when the key is absent.
                 tables_list = sd.get("profiler_tables")
@@ -541,6 +627,13 @@ class ReduceSignals:
         all_findings: list[Finding] = [f for r in reports for f in r.findings]
         logger.info("reducer: %d raw findings from %d reports", len(all_findings), len(reports))
 
+        # ── 2b. Recompute confidence with deterministic signals ────────────
+        # Replaces LLM self-reported confidence values with evidence-backed scores.
+        all_findings = [
+            f.model_copy(update={"confidence": _recompute_finding_confidence(f, profiler_summary)})
+            for f in all_findings
+        ]
+
         # ── 3. Confidence filter ──────────────────────────────────────────
         filtered = [f for f in all_findings if f.confidence >= self.min_confidence]
 
@@ -553,7 +646,7 @@ class ReduceSignals:
             adjusted: list[Finding] = []
             for f in filtered:
                 table = f.entity.split(".")[0] if "." in f.entity else f.entity
-                rule_family = f.rule.split("_")[0]
+                rule_family = _canonical_family(f.rule)
                 # Match on exact entity OR table-level entity (e.g. "users.email" matches "users")
                 if (
                     (rule_family, f.entity) in rejected_patterns
@@ -892,9 +985,12 @@ class ReduceSignals:
 
         table_rule_groups: dict[tuple, list[Finding]] = defaultdict(list)
         for f in best.values():
-            rule_family = f.rule.split("_")[0]
             table = f.entity.split(".")[0]
-            table_rule_groups[(table, rule_family)].append(f)
+            if "." in f.entity:
+                group_key = (table, _canonical_family(f.rule))
+            else:
+                group_key = (table, f.rule)
+            table_rule_groups[group_key].append(f)
 
         merged: list[Finding] = []
         for (table, _), group in table_rule_groups.items():
@@ -938,17 +1034,19 @@ class ReduceSignals:
         ranked = sorted(merged, key=_rank, reverse=True)
 
         # ── 6. Cap ────────────────────────────────────────────────────────
+        findings_capped = len(ranked) > self.top_n
         top = ranked[: self.top_n]
         logger.info(
-            "reducer: %d unique findings → top %d after dedup/rank (min_confidence=%.2f)",
-            len(best),
+            "reducer: %d unique findings → top %d after dedup/rank (min_confidence=%.2f, capped=%s)",
+            len(ranked),
             len(top),
             self.min_confidence,
+            findings_capped,
         )
 
         # ── 7. Build dependency graph ─────────────────────────────────────
         dependency_edges = _build_dependency_edges(top)
-        result = FixDependencyGraph(findings=top, dependency_edges=dependency_edges)
+        result = FixDependencyGraph(findings=top, dependency_edges=dependency_edges, findings_capped=findings_capped)
 
         # ── 8. Persist for Playground continuity ─────────────────────────
         try:
@@ -997,6 +1095,6 @@ class ReduceSignals:
 # Default singleton — used by the Workflow step wiring.
 # QL_MAX_FINDINGS and QL_MIN_CONFIDENCE can be overridden via environment variables.
 reduce_signals = ReduceSignals(
-    min_confidence=float(os.environ.get("QL_MIN_CONFIDENCE", "0.75")),
+    min_confidence=float(os.environ.get("QL_MIN_CONFIDENCE", "0.65")),
     top_n=int(os.environ.get("QL_MAX_FINDINGS", "50")),
 )

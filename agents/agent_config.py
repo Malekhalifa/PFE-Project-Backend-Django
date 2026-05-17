@@ -22,7 +22,7 @@ from .schemas import FixPlan, ProfilerReport, ValidationReport
 HIGH_NULL_THRESHOLD       = 0.30   # null_rate ≥ this → flag null_rate_high
 DUPLICATE_RATIO_THRESHOLD = 0.05   # dup_count / total_rows ≥ this → flag duplicate_values
 OUTLIER_ZSCORE            = 3.0    # |z-score| ≥ this → flag outlier_distribution
-MIN_CONFIDENCE            = 0.75   # findings below this threshold are omitted
+MIN_CONFIDENCE            = 0.65   # findings below this threshold are omitted (matches QL_MIN_CONFIDENCE env var)
 
 
 def _make_parser_model() -> Gemini:

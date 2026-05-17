@@ -554,6 +554,69 @@ def _derive_schema_findings(
     return findings
 
 
+def _prioritize_profiler_summary(
+    summary: dict[str, Any],
+    schema: dict[str, Any],
+) -> dict[str, Any]:
+    """Re-order profiler_summary so high-risk columns appear first in agent prompts.
+
+    LLMs attend better to early context. Sorting by risk score ensures the most
+    suspect columns are seen first regardless of profiling completion order.
+
+    Score per column:
+      null_rate * 3  +  is_fk * 2  +  outlier_flag * 1.5  +  low_cardinality * 1
+    Tables are also sorted by their highest per-column score (descending).
+    """
+    def _col_score(col_stats: dict[str, Any], is_fk: bool) -> float:
+        null_rate = float(col_stats.get("null_rate") or 0.0)
+        outlier   = bool(col_stats.get("outlier_flag"))
+        card      = int(col_stats.get("cardinality") or 0)
+        rows      = int(col_stats.get("total_rows") or 0)
+        low_card  = (2 <= card <= 10) and rows > 100
+        return null_rate * 3.0 + int(is_fk) * 2.0 + int(outlier) * 1.5 + int(low_card) * 1.0
+
+    prioritized: dict[str, Any] = {}
+    table_max_scores: list[tuple[float, str]] = []
+
+    for table_name, table_data in summary.items():
+        fk_cols: set[str] = set()
+        schema_entry = schema.get(table_name) or {}
+        for fk in schema_entry.get("foreign_keys", []):
+            col = fk.get("column", "")
+            if col:
+                fk_cols.add(col)
+
+        cols: dict[str, Any] = table_data.get("columns") or {}
+        scored: list[tuple[float, str, dict]] = [
+            (_col_score(stats, col_name in fk_cols), col_name, stats)
+            for col_name, stats in cols.items()
+        ]
+        scored.sort(key=lambda x: x[0], reverse=True)
+
+        max_score = scored[0][0] if scored else 0.0
+        table_max_scores.append((max_score, table_name))
+
+        prioritized[table_name] = {
+            "row_count": table_data.get("row_count", 0),
+            "columns": {col_name: stats for _, col_name, stats in scored},
+        }
+
+    table_max_scores.sort(key=lambda x: x[0], reverse=True)
+    result = {tbl: prioritized[tbl] for _, tbl in table_max_scores}
+
+    # Log top 3 highest-risk columns for observability
+    top_cols = []
+    for _, tbl in table_max_scores[:5]:
+        cols = prioritized[tbl].get("columns", {})
+        for col_name, stats in list(cols.items())[:1]:
+            score = _col_score(stats, False)
+            top_cols.append(f"{tbl}.{col_name}(score={score:.1f})")
+    if top_cols:
+        logger.info("py_profiler: priority sort — top columns: %s", ", ".join(top_cols))
+
+    return result
+
+
 def python_profile_step(step_input: StepInput) -> StepOutput:
     """
     Pure-Python profiler step executor. Replaces Step(agent=members.profiler).
@@ -643,7 +706,7 @@ def python_profile_step(step_input: StepInput) -> StepOutput:
         # Mirror what store_profiler_output does for the LLM profiler
         if ws is not None:
             session_state["profiler_report"] = report.model_dump()
-            session_state["profiler_summary"] = {
+            raw_summary = {
                 t.table_name: {
                     "row_count": t.row_count,
                     "columns": {
@@ -658,6 +721,9 @@ def python_profile_step(step_input: StepInput) -> StepOutput:
                 }
                 for t in report.tables
             }
+            session_state["profiler_summary"] = _prioritize_profiler_summary(
+                raw_summary, schema
+            )
             session_state["structural_profiler_summary"] = {
                 t.table_name: t.row_count for t in report.tables
             }

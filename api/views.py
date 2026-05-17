@@ -1658,6 +1658,87 @@ class ExecuteFixView(APIView):
         return Response(payload, status=status.HTTP_200_OK)
 
 
+class ResetSandboxView(APIView):
+    """
+    POST /api/reset-sandbox/<job_id>/
+
+    Drops the job's sandbox database and recreates it as a fresh template
+    copy of the source database. Fixes the sandbox when source schema has
+    drifted or an incorrect fix was accepted.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, job_id):
+        unverified = _require_verified_email(request)
+        if unverified:
+            return unverified
+
+        job = find_owned_job(job_id, request.user)
+        if not job:
+            return Response(
+                {'detail': 'Job not found or access denied.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        connection_string = job.get('connection_string')
+        if not connection_string:
+            return Response(
+                {'detail': 'No connection string on this job.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        from urllib.parse import urlparse, urlunparse
+        from django.conf import settings
+        import psycopg2
+
+        parsed = urlparse(connection_string)
+        original_db = (parsed.path or '').lstrip('/')
+        if not original_db:
+            return Response({'detail': 'Cannot derive database name from DSN.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        job_suffix = job_id.replace('-', '')[:12]
+        sandbox_db = f"{original_db}_ql_{job_suffix}"
+
+        _db = settings.DATABASES['default']
+        admin_dsn = urlunparse((
+            'postgresql',
+            f"{_db['USER']}:{_db['PASSWORD']}@{parsed.hostname}:{parsed.port or 5432}",
+            '/postgres', '', '', '',
+        ))
+
+        try:
+            conn = psycopg2.connect(admin_dsn)
+            conn.autocommit = True
+            with conn.cursor() as cur:
+                # Terminate sandbox connections first
+                cur.execute(
+                    "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
+                    "WHERE datname = %s AND pid <> pg_backend_pid();",
+                    [sandbox_db],
+                )
+                cur.execute(f'DROP DATABASE IF EXISTS "{sandbox_db}";')
+                # CREATE WITH TEMPLATE requires zero active connections on the
+                # source DB — terminate them before the copy starts.
+                cur.execute(
+                    "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
+                    "WHERE datname = %s AND pid <> pg_backend_pid();",
+                    [original_db],
+                )
+                cur.execute(
+                    f'CREATE DATABASE "{sandbox_db}" WITH TEMPLATE "{original_db}";'
+                )
+            conn.close()
+        except Exception as exc:
+            logger.error("reset_sandbox: failed for job %s: %s", job_id, exc)
+            return Response(
+                {'detail': f'Sandbox reset failed: {exc}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        audit_log(job_id, 'SANDBOX_RESET', {'sandbox_db': sandbox_db}, user_id=str(request.user.id))
+        return Response({'status': 'ok', 'sandbox_db': sandbox_db})
+
+
 # ──────────────────────────────────────────────
 # Admin APM Monitoring
 # ──────────────────────────────────────────────
