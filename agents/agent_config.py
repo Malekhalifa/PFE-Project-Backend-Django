@@ -273,6 +273,7 @@ STATISTICAL_AGENT_CONFIG = {
             "appear as keys in {profiler_summary}. Tables absent from the baseline cannot be assessed "
             "for deviations — produce zero findings for them."
         ),
+        "{learned_rules}",
         # DETERMINISTIC THRESHOLDS — exact numbers prevent subjective interpretation.
         (
             f"THRESHOLDS — apply exactly, no subjective interpretation: "
@@ -293,6 +294,9 @@ STATISTICAL_AGENT_CONFIG = {
             "Skip tables without matching columns entirely. "
             "(2) categorical_drift via check_categorical_drift — only when profiler cardinality is "
             "between 2 and 50 AND total_rows > min_rows_for_cardinality from domain_rules. "
+            "(3) learned_rules enforcement — run ONE COUNT(*) query per learned rule, "
+            "emit rule='custom_rule_violation' when violation_count >= 1 AND "
+            "violation_count / total_rows >= max_violation_row_pct from domain_rules. "
             "summarize_table() is NOT available — never call it."
         ),
         # NEVER blocks
@@ -371,7 +375,10 @@ STRUCTURAL_AGENT_CONFIG = {
         (
             "EVIDENCE REQUIREMENT — emit a finding only when ALL of: "
             "(a) a COUNT(*) query has confirmed violation_count ≥ 1. "
-            "(b) violation_count / total_rows ≥ max_violation_row_pct from domain_rules. "
+            "(b) for impossible_date / negative_amount / blank_required / zero_amount: "
+            "violation_count ≥ 1 is sufficient (structural_violation_row_pct = 0 — any single row is a defect). "
+            "For custom_rule_violation / business_rule_violation: "
+            "violation_count / total_rows ≥ max_violation_row_pct from domain_rules. "
             "(c) the evidence dict includes both 'violation_count' (integer) and 'violation_pct' (float). "
             "If any of these fail, do NOT emit the finding."
         ),
@@ -386,8 +393,8 @@ STRUCTURAL_AGENT_CONFIG = {
             "  OR col > (CURRENT_DATE + INTERVAL '5 years')) AS violation_count, "
             "COUNT(*) AS total_rows FROM table; "
             "If non_null_count = 0, skip. "
-            "If violation_count > 0 AND violation_count::float / total_rows ≥ max_violation_row_pct, "
-            "flag as 'impossible_date'. The bounds are always CURRENT_DATE ± fixed interval — never set from MIN/MAX of the data."
+            "If violation_count > 0, flag as 'impossible_date' (structural_violation_row_pct = 0 — any single violating row qualifies). "
+            "The bounds are always CURRENT_DATE ± fixed interval — never set from MIN/MAX of the data."
         ),
         # CUSTOM DOMAIN RULES
         (
@@ -730,5 +737,5 @@ FIX_PLANNER_AGENT_CONFIG = {
     "output_schema": FixPlan,
     "parser_model": _make_parser_model(),
     "use_json_mode": True,
-    "tool_call_limit": 20,
+    "tool_call_limit": 35,
 }

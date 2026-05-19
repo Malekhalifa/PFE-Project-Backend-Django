@@ -695,21 +695,44 @@ class ReduceSignals:
         except Exception:
             _max_vio_pct = None
 
-        if _max_vio_pct is not None:
-            before_vio = len(filtered)
-            filtered = [
-                f for f in filtered
-                if f.rule not in ("row_level", "impossible_date", "negative_amount", "blank_required",
-                                  "domain_rule_failure", "row_violation")
-                or float((f.evidence or {}).get("violation_pct", 1.0)) >= _max_vio_pct
-            ]
-            dropped_vio = before_vio - len(filtered)
-            if dropped_vio:
-                logger.info(
-                    "reducer: suppressed %d row-level finding(s) below violation_pct threshold %.4f",
-                    dropped_vio,
-                    _max_vio_pct,
-                )
+        try:
+            _struct_vio_pct = _dr.get("structural_violation_row_pct")
+            if _struct_vio_pct is not None:
+                _struct_vio_pct = float(_struct_vio_pct)
+        except Exception:
+            _struct_vio_pct = None
+
+        # Binary-correct structural rules: any single violating row is a defect.
+        _BINARY_STRUCTURAL_RULES = frozenset({
+            "impossible_date", "negative_amount", "blank_required",
+            "negative_or_zero_amounts", "zero_amount", "blank_required_field",
+        })
+        # Threshold-based rules: noise filtering applies.
+        _THRESHOLD_ROW_RULES = frozenset({
+            "row_level", "domain_rule_failure", "row_violation",
+            "custom_rule_violation", "business_rule_violation", "logical_inconsistency",
+        })
+
+        before_vio = len(filtered)
+        new_filtered = []
+        for f in filtered:
+            vio_pct = float((f.evidence or {}).get("violation_pct", 1.0))
+            if f.rule in _BINARY_STRUCTURAL_RULES:
+                threshold = _struct_vio_pct if _struct_vio_pct is not None else (_max_vio_pct or 0.0)
+                if vio_pct >= threshold:
+                    new_filtered.append(f)
+            elif f.rule in _THRESHOLD_ROW_RULES:
+                if _max_vio_pct is None or vio_pct >= _max_vio_pct:
+                    new_filtered.append(f)
+            else:
+                new_filtered.append(f)
+        filtered = new_filtered
+        dropped_vio = before_vio - len(filtered)
+        if dropped_vio:
+            logger.info(
+                "reducer: suppressed %d row-level finding(s) below violation_pct threshold",
+                dropped_vio,
+            )
 
         # ── 3a-2. Zero-violation backstop ────────────────────────────────────
         # Drop row-level findings where evidence explicitly shows 0 violations.

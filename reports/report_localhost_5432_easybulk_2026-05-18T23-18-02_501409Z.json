@@ -1,0 +1,962 @@
+{
+  "pipeline_run_id": "354f90ea-646b-4945-a5e0-5feb443938aa",
+  "database_id": "localhost_5432_easybulk",
+  "llm_model": "gemini-2.5-flash",
+  "run_timestamp": "2026-05-18T23:18:02.501409Z",
+  "executive_summary": {
+    "verdict": "high_risk",
+    "top_issues": [
+      "[CRITICAL] duplicate values on users_aud.email",
+      "[HIGH] duplicate values on prm_organization_aud.code",
+      "[HIGH] null rate high on groupe_aud.admin_id"
+    ],
+    "tables_scanned": 25,
+    "tables_profiled": 25,
+    "fixes_recommended": 7,
+    "critical_fix_count": 1,
+    "migration_risk": {
+      "score": 30,
+      "high_risk_cards": 0,
+      "blocked_cards": 2,
+      "destructive_cards": 0
+    }
+  },
+  "summary": {
+    "confidence_score": 100,
+    "data_quality_score": 81,
+    "final_fix_count": 7,
+    "confidence_explanation": {
+      "total_findings": 9,
+      "high_confidence_count": 9,
+      "medium_confidence_count": 0,
+      "low_confidence_count": 0,
+      "summary": "100% of findings have confidence ≥ 0.9 (9/9 high, 0 medium, 0 low). Deterministic (py_profiler) findings are 0.92–1.0; LLM findings vary."
+    },
+    "timing": {
+      "started_at": "2026-05-18T23:18:02.501409Z",
+      "ended_at": "2026-05-18T23:20:01.005895Z",
+      "total_duration_ms": 118505,
+      "total_duration_human": "118.5s",
+      "phases_ms": {
+        "schema_priming": 247,
+        "Schema Integrity Validator": 19838,
+        "Python Profiler": 87,
+        "Relational Validator": 50023,
+        "Statistical Validator": 53126,
+        "Structural Validator": 55965,
+        "Reducer": 33,
+        "Data Fix Planner": 42381
+      },
+      "bottleneck": "Structural Validator"
+    },
+    "entity_hallucinations": {
+      "total_stripped": 0,
+      "breakdown": {
+        "non_existent_entities": 0,
+        "inferred_fk_rules": 0,
+        "outside_profiler_coverage": 0,
+        "fix_cards": 0
+      }
+    }
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "354f90ea-646b-4945-a5e0-5feb443938aa",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-18T23:18:02.501409Z",
+      "agent": "Schema Integrity Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 25,
+        "items_passed": 25,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "schema",
+        "findings_count": 0,
+        "deduped_finding_count": 0,
+        "grouped_finding_count": 0
+      },
+      "findings": []
+    },
+    "statistical_validator": {
+      "pipeline_run_id": "354f90ea-646b-4945-a5e0-5feb443938aa",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-18T23:18:02.501409Z",
+      "agent": "Statistical Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 25,
+        "items_passed": 18,
+        "items_flagged": 7,
+        "critical_issues": 1,
+        "high_issues": 7,
+        "medium_issues": 3,
+        "low_issues": 0,
+        "overall_quality_score": 85.7,
+        "overall_confidence": 0.9591,
+        "flagged_tables": [
+          "groupe_aud",
+          "prm_organization_aud",
+          "smsc_aud",
+          "smsc_routing_rule_aud",
+          "user_keys_aud",
+          "user_mission_aud",
+          "users_aud"
+        ]
+      },
+      "metrics": {
+        "validator": "statistical",
+        "findings_count": 11,
+        "deduped_finding_count": 11,
+        "grouped_finding_count": 7
+      },
+      "findings": [
+        {
+          "table": "users_aud",
+          "column": "email",
+          "entity": "users_aud.email",
+          "rule": "duplicate_values",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "observed_duplicate_percentage": 0.55,
+            "threshold": 0.05,
+            "total_rows": 20
+          },
+          "remediation_hint": "Investigate the source of duplicate 'email' values in 'users_aud' and enforce uniqueness if intended, or understand why duplicates are present."
+        },
+        {
+          "table": "prm_organization_aud",
+          "column": "code",
+          "entity": "prm_organization_aud.code",
+          "rule": "duplicate_values",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "observed_duplicate_percentage": 0.588,
+            "threshold": 0.05,
+            "total_rows": 17
+          },
+          "remediation_hint": "Investigate the source of duplicate 'code' values in 'prm_organization_aud' and enforce uniqueness if intended, or understand why duplicates are present."
+        },
+        {
+          "table": "groupe_aud",
+          "column": "admin_id",
+          "entity": "groupe_aud.admin_id",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "null_ratio": 0.9474,
+            "total_rows": 19,
+            "threshold_used": 0.1
+          },
+          "remediation_hint": "Investigate why 'groupe_aud.admin_id' has 95% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "smsc_aud",
+          "column": "updated_at",
+          "entity": "smsc_aud.updated_at",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "null_ratio": 0.8889,
+            "total_rows": 18,
+            "threshold_used": 0.8
+          },
+          "remediation_hint": "Investigate why 'smsc_aud.updated_at' has 89% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "user_mission_aud",
+          "column": null,
+          "entity": "user_mission_aud.groupe_id",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 0.95,
+          "evidence": {
+            "null_ratio": 0.5,
+            "total_rows": 12,
+            "threshold_used": 0.1,
+            "columns_with_high_nulls": [
+              "groupe_id",
+              "membership_id",
+              "role_id"
+            ]
+          },
+          "remediation_hint": "Investigate why 'user_mission_aud.groupe_id' has 50% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "groupe_id",
+            "membership_id",
+            "role_id"
+          ],
+          "count": 3
+        },
+        {
+          "table": "smsc_routing_rule_aud",
+          "column": null,
+          "entity": "smsc_routing_rule_aud.expediteur_id",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "null_ratio": 0.9375,
+            "total_rows": 16,
+            "threshold_used": 0.1,
+            "columns_with_high_nulls": [
+              "expediteur_id",
+              "groupe_id"
+            ]
+          },
+          "remediation_hint": "Investigate why 'smsc_routing_rule_aud.expediteur_id' has 94% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "expediteur_id",
+            "groupe_id"
+          ],
+          "count": 2
+        },
+        {
+          "table": "user_keys_aud",
+          "column": null,
+          "entity": "user_keys_aud.expiration_date",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 1,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "expiration_date",
+              "last_time_used_date"
+            ]
+          },
+          "remediation_hint": "Investigate why 'user_keys_aud.expiration_date' has 100% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "expiration_date",
+            "last_time_used_date"
+          ],
+          "count": 2
+        }
+      ]
+    },
+    "structural_validator": {
+      "pipeline_run_id": "354f90ea-646b-4945-a5e0-5feb443938aa",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-18T23:18:02.501409Z",
+      "agent": "Structural Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 25,
+        "items_passed": 25,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "structural",
+        "findings_count": 0,
+        "deduped_finding_count": 0,
+        "grouped_finding_count": 0
+      },
+      "findings": []
+    },
+    "relational_validator": {
+      "pipeline_run_id": "354f90ea-646b-4945-a5e0-5feb443938aa",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-18T23:18:02.501409Z",
+      "agent": "Relational Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 25,
+        "items_passed": 23,
+        "items_flagged": 2,
+        "critical_issues": 0,
+        "high_issues": 2,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 97.2,
+        "overall_confidence": 0.9,
+        "flagged_tables": [
+          "prm_organization_aud",
+          "users_aud"
+        ]
+      },
+      "metrics": {
+        "validator": "relational",
+        "findings_count": 2,
+        "deduped_finding_count": 2,
+        "grouped_finding_count": 2
+      },
+      "findings": [
+        {
+          "table": "prm_organization_aud",
+          "column": "code",
+          "entity": "prm_organization_aud.code",
+          "rule": "duplicate_values",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "duplicate_count": 3,
+            "total_rows": 17,
+            "duplicate_ratio": 0.176,
+            "example_duplicates": [
+              "TRACEABILITY",
+              "CAMPAIGN_TYPE_CLASSIC",
+              "CAMPAIGN_TYPE_TRANSACTIONAL",
+              "URL_NOTIFICATION",
+              "MSISDN"
+            ]
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "users_aud",
+          "column": "email",
+          "entity": "users_aud.email",
+          "rule": "duplicate_values",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "duplicate_count": 3,
+            "total_rows": 20,
+            "duplicate_ratio": 0.15,
+            "example_duplicates": [
+              "ranim.agent@yopmail.com",
+              "visionneurebs@yopmail.com"
+            ]
+          },
+          "remediation_hint": null
+        }
+      ]
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "354f90ea-646b-4945-a5e0-5feb443938aa",
+      "database_id": "localhost_5432_easybulk",
+      "run_timestamp": "2026-05-18T23:18:02.501409Z",
+      "agent": "Data Fix Planner",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 7,
+        "items_passed": 0,
+        "items_flagged": 7,
+        "critical_issues": 1,
+        "high_issues": 5,
+        "medium_issues": 1,
+        "low_issues": 0,
+        "overall_quality_score": 94.9,
+        "overall_confidence": 1.0,
+        "flagged_tables": [
+          "groupe_aud",
+          "prm_organization_aud",
+          "smsc_aud",
+          "smsc_routing_rule_aud",
+          "user_keys_aud",
+          "user_mission_aud",
+          "users_aud"
+        ]
+      },
+      "metrics": {
+        "total_issues_received": 7,
+        "fixes_generated": 7
+      },
+      "findings": [
+        {
+          "id": "fix_001_users_aud",
+          "fix_id": "remove-dup-users-aud-email",
+          "rows_affected_estimate": 11,
+          "tables_touched": [
+            "users_aud"
+          ],
+          "depends_on": [],
+          "table": "users_aud",
+          "target_table": "users_aud",
+          "problem": "Remove duplicate emails and enforce uniqueness in users_aud",
+          "fix": "[Pre-flight blocked: UNIQUE on (email) on table 'users_aud' would fail: 10 duplicate row(s) found] The `users_aud.email` column contains duplicate values, violating data integrity. This fix will delete duplicate rows, keeping the oldest `rev` for each `email`, and then add a unique constraint to prevent future duplicates.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "risk_level": "medium",
+          "card_family": "duplicates",
+          "interaction_model": "blocked",
+          "source_rule": "duplicate_values",
+          "source_type": "deterministic",
+          "evidence": {
+            "block_reason": "UNIQUE on (email) on table 'users_aud' would fail: 10 duplicate row(s) found",
+            "original_sql": "DELETE FROM users_aud\nWHERE ctid IN (\n    SELECT ctid\n    FROM (\n        SELECT\n            ctid,\n            ROW_NUMBER() OVER (PARTITION BY email ORDER BY rev ASC, id ASC) as rn\n        FROM users_aud\n    ) t\n    WHERE t.rn > 1\n);\nALTER TABLE users_aud ADD CONSTRAINT users_aud_email_unique UNIQUE (email);"
+          },
+          "evidence_payload": {
+            "_type": "blocked",
+            "block_reason": "UNIQUE on (email) on table 'users_aud' would fail: 10 duplicate row(s) found",
+            "original_sql": "DELETE FROM users_aud\nWHERE ctid IN (\n    SELECT ctid\n    FROM (\n        SELECT\n            ctid,\n            ROW_NUMBER() OVER (PARTITION BY email ORDER BY rev ASC, id ASC) as rn\n        FROM users_aud\n    ) t\n    WHERE t.rn > 1\n);\nALTER TABLE users_aud ADD CONSTRAINT users_aud_email_unique UNIQUE (email);"
+          },
+          "estimated_rows_affected": 11,
+          "queries": [],
+          "explanation": "[Pre-flight blocked: UNIQUE on (email) on table 'users_aud' would fail: 10 duplicate row(s) found] The `users_aud.email` column contains duplicate values, violating data integrity. This fix will delete duplicate rows, keeping the oldest `rev` for each `email`, and then add a unique constraint to prevent future duplicates.",
+          "preconditions": [
+            "BLOCKED: UNIQUE on (email) on table 'users_aud' would fail: 10 duplicate row(s) found",
+            "Original SQL: DELETE FROM users_aud\nWHERE ctid IN (\n    SELECT ctid\n    FROM (\n        SELECT\n            ctid,\n            ROW_NUMBER() OVER (PARTITION BY email ORDER BY rev ASC, id ASC) as rn\n        FROM users_a"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM users_aud WHERE email IN (SELECT email FROM users_aud GROUP BY email HAVING COUNT(*) > 1);",
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'users_aud_email_unique';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE users_aud DROP CONSTRAINT IF EXISTS users_aud_email_unique;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_002_prm_organization_aud",
+          "fix_id": "remove-dup-prm-organization-aud-code",
+          "rows_affected_estimate": 10,
+          "tables_touched": [
+            "prm_organization_aud"
+          ],
+          "depends_on": [],
+          "table": "prm_organization_aud",
+          "target_table": "prm_organization_aud",
+          "problem": "Remove duplicate codes and enforce uniqueness in prm_organization_aud",
+          "fix": "[Pre-flight blocked: UNIQUE on (code) on table 'prm_organization_aud' would fail: 10 duplicate row(s) found] The `prm_organization_aud.code` column contains duplicate values, violating data integrity. This fix will delete duplicate rows, keeping the oldest `rev` for each `code`, and then add a unique constraint to prevent future duplicates.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "medium",
+          "card_family": "duplicates",
+          "interaction_model": "blocked",
+          "source_rule": "duplicate_values",
+          "source_type": "deterministic",
+          "evidence": {
+            "block_reason": "UNIQUE on (code) on table 'prm_organization_aud' would fail: 10 duplicate row(s) found",
+            "original_sql": "DELETE FROM prm_organization_aud\nWHERE ctid IN (\n    SELECT ctid\n    FROM (\n        SELECT\n            ctid,\n            ROW_NUMBER() OVER (PARTITION BY code ORDER BY rev ASC, id ASC) as rn\n        FROM prm_organization_aud\n    ) t\n    WHERE t.rn > 1\n);\nALTER TABLE prm_organization_aud ADD CONSTRAINT prm_organization_aud_code_unique UNIQUE (code);"
+          },
+          "evidence_payload": {
+            "_type": "blocked",
+            "block_reason": "UNIQUE on (code) on table 'prm_organization_aud' would fail: 10 duplicate row(s) found",
+            "original_sql": "DELETE FROM prm_organization_aud\nWHERE ctid IN (\n    SELECT ctid\n    FROM (\n        SELECT\n            ctid,\n            ROW_NUMBER() OVER (PARTITION BY code ORDER BY rev ASC, id ASC) as rn\n        FROM prm_organization_aud\n    ) t\n    WHERE t.rn > 1\n);\nALTER TABLE prm_organization_aud ADD CONSTRAINT prm_organization_aud_code_unique UNIQUE (code);"
+          },
+          "estimated_rows_affected": 10,
+          "queries": [],
+          "explanation": "[Pre-flight blocked: UNIQUE on (code) on table 'prm_organization_aud' would fail: 10 duplicate row(s) found] The `prm_organization_aud.code` column contains duplicate values, violating data integrity. This fix will delete duplicate rows, keeping the oldest `rev` for each `code`, and then add a unique constraint to prevent future duplicates.",
+          "preconditions": [
+            "BLOCKED: UNIQUE on (code) on table 'prm_organization_aud' would fail: 10 duplicate row(s) found",
+            "Original SQL: DELETE FROM prm_organization_aud\nWHERE ctid IN (\n    SELECT ctid\n    FROM (\n        SELECT\n            ctid,\n            ROW_NUMBER() OVER (PARTITION BY code ORDER BY rev ASC, id ASC) as rn\n        FR"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM prm_organization_aud WHERE code IN (SELECT code FROM prm_organization_aud GROUP BY code HAVING COUNT(*) > 1);",
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'prm_organization_aud_code_unique';"
+          ],
+          "rollback_queries": [
+            "ALTER TABLE prm_organization_aud DROP CONSTRAINT IF EXISTS prm_organization_aud_code_unique;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_003_groupe_aud_admin_id",
+          "fix_id": "investigate-groupe-aud-admin-id-nulls",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "groupe_aud"
+          ],
+          "depends_on": [],
+          "table": "groupe_aud",
+          "target_table": "groupe_aud",
+          "problem": "Investigate high null ratio in groupe_aud.admin_id",
+          "fix": "The column `groupe_aud.admin_id` has a high null ratio (94.74%). This suggests that the column might not be consistently populated or its nullability requirements are not well-defined. Manual investigation is recommended to determine if `admin_id` should be mandatory or if nulls are expected.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "source_rule": "null_ratio_high",
+          "source_type": "deterministic",
+          "evidence": {
+            "null_ratio": 0.9474,
+            "total_rows": 19,
+            "threshold_used": 0.1
+          },
+          "evidence_payload": {
+            "column_name": "admin_id",
+            "null_ratio": 0.9474,
+            "total_rows": 19,
+            "threshold_used": 0.1
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT admin_id, COUNT(*) FROM groupe_aud GROUP BY admin_id ORDER BY COUNT(*) DESC;"
+          ],
+          "explanation": "The column `groupe_aud.admin_id` has a high null ratio (94.74%). This suggests that the column might not be consistently populated or its nullability requirements are not well-defined. Manual investigation is recommended to determine if `admin_id` should be mandatory or if nulls are expected.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_004_smsc_aud_updated_at",
+          "fix_id": "investigate-smsc-aud-updated-at-nulls",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "smsc_aud"
+          ],
+          "depends_on": [],
+          "table": "smsc_aud",
+          "target_table": "smsc_aud",
+          "problem": "Investigate high null ratio in smsc_aud.updated_at",
+          "fix": "The column `smsc_aud.updated_at` has a high null ratio (88.89%). This suggests that the column might not be consistently populated or its nullability requirements are not well-defined. Manual investigation is recommended to determine if `updated_at` should be mandatory or if nulls are expected.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "source_rule": "null_ratio_high",
+          "source_type": "deterministic",
+          "evidence": {
+            "null_ratio": 0.8889,
+            "total_rows": 18,
+            "threshold_used": 0.8
+          },
+          "evidence_payload": {
+            "column_name": "updated_at",
+            "null_ratio": 0.8889,
+            "total_rows": 18,
+            "threshold_used": 0.8
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT updated_at, COUNT(*) FROM smsc_aud GROUP BY updated_at ORDER BY COUNT(*) DESC;"
+          ],
+          "explanation": "The column `smsc_aud.updated_at` has a high null ratio (88.89%). This suggests that the column might not be consistently populated or its nullability requirements are not well-defined. Manual investigation is recommended to determine if `updated_at` should be mandatory or if nulls are expected.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_005_smsc_routing_rule_aud",
+          "fix_id": "investigate-smsc-routing-rule-aud-nulls",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "smsc_routing_rule_aud"
+          ],
+          "depends_on": [],
+          "table": "smsc_routing_rule_aud",
+          "target_table": "smsc_routing_rule_aud",
+          "problem": "Investigate high null ratio in smsc_routing_rule_aud (expediteur_id, groupe_id)",
+          "fix": "The columns `smsc_routing_rule_aud.expediteur_id` and `smsc_routing_rule_aud.groupe_id` have high null ratios (93.75%). This suggests that these columns might not be consistently populated or their nullability requirements are not well-defined. Manual investigation is recommended to determine if these columns should be mandatory or if nulls are expected.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "source_rule": "null_ratio_high",
+          "source_type": "deterministic",
+          "evidence": {
+            "null_ratio": 0.9375,
+            "total_rows": 16,
+            "threshold_used": 0.1,
+            "columns_with_high_nulls": [
+              "expediteur_id",
+              "groupe_id"
+            ]
+          },
+          "evidence_payload": {
+            "column_name": "expediteur_id",
+            "affected_columns": [
+              "groupe_id"
+            ],
+            "null_ratio": 0.9375,
+            "total_rows": 16,
+            "threshold_used": 0.1
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT expediteur_id, groupe_id, COUNT(*) FROM smsc_routing_rule_aud GROUP BY expediteur_id, groupe_id ORDER BY COUNT(*) DESC;"
+          ],
+          "explanation": "The columns `smsc_routing_rule_aud.expediteur_id` and `smsc_routing_rule_aud.groupe_id` have high null ratios (93.75%). This suggests that these columns might not be consistently populated or their nullability requirements are not well-defined. Manual investigation is recommended to determine if these columns should be mandatory or if nulls are expected.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_006_user_keys_aud",
+          "fix_id": "investigate-user-keys-aud-nulls",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_keys_aud"
+          ],
+          "depends_on": [],
+          "table": "user_keys_aud",
+          "target_table": "user_keys_aud",
+          "problem": "Investigate high null ratio in user_keys_aud (expiration_date, last_time_used_date)",
+          "fix": "The columns `user_keys_aud.expiration_date` and `user_keys_aud.last_time_used_date` have high null ratios (100%). This suggests that these columns might not be consistently populated or their nullability requirements are not well-defined. Manual investigation is recommended to determine if these columns should be mandatory or if nulls are expected.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "source_rule": "null_ratio_high",
+          "source_type": "deterministic",
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 1,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "expiration_date",
+              "last_time_used_date"
+            ]
+          },
+          "evidence_payload": {
+            "column_name": "expiration_date",
+            "affected_columns": [
+              "last_time_used_date"
+            ],
+            "null_ratio": 1.0,
+            "total_rows": 1,
+            "threshold_used": 0.4
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT expiration_date, last_time_used_date, COUNT(*) FROM user_keys_aud GROUP BY expiration_date, last_time_used_date ORDER BY COUNT(*) DESC;"
+          ],
+          "explanation": "The columns `user_keys_aud.expiration_date` and `user_keys_aud.last_time_used_date` have high null ratios (100%). This suggests that these columns might not be consistently populated or their nullability requirements are not well-defined. Manual investigation is recommended to determine if these columns should be mandatory or if nulls are expected.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_007_user_mission_aud",
+          "fix_id": "investigate-user-mission-aud-nulls",
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_mission_aud"
+          ],
+          "depends_on": [],
+          "table": "user_mission_aud",
+          "target_table": "user_mission_aud",
+          "problem": "Investigate high null ratio in user_mission_aud (groupe_id, membership_id, role_id)",
+          "fix": "The columns `user_mission_aud.groupe_id`, `user_mission_aud.membership_id`, and `user_mission_aud.role_id` have high null ratios (50%). This suggests that these columns might not be consistently populated or their nullability requirements are not well-defined. Manual investigation is recommended to determine if these columns should be mandatory or if nulls are expected.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "source_rule": "null_ratio_high",
+          "source_type": "deterministic",
+          "evidence": {
+            "null_ratio": 0.5,
+            "total_rows": 12,
+            "threshold_used": 0.1,
+            "columns_with_high_nulls": [
+              "groupe_id",
+              "membership_id",
+              "role_id"
+            ]
+          },
+          "evidence_payload": {
+            "column_name": "groupe_id",
+            "affected_columns": [
+              "membership_id",
+              "role_id"
+            ],
+            "null_ratio": 0.5,
+            "total_rows": 12,
+            "threshold_used": 0.1
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT groupe_id, membership_id, role_id, COUNT(*) FROM user_mission_aud GROUP BY groupe_id, membership_id, role_id ORDER BY COUNT(*) DESC;"
+          ],
+          "explanation": "The columns `user_mission_aud.groupe_id`, `user_mission_aud.membership_id`, and `user_mission_aud.role_id` have high null ratios (50%). This suggests that these columns might not be consistently populated or their nullability requirements are not well-defined. Manual investigation is recommended to determine if these columns should be mandatory or if nulls are expected.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        }
+      ],
+      "cards": [
+        {
+          "fix_id": "remove-dup-users-aud-email",
+          "title": "Remove duplicate emails and enforce uniqueness in users_aud",
+          "target": "users_aud",
+          "rationale": "[Pre-flight blocked: UNIQUE on (email) on table 'users_aud' would fail: 10 duplicate row(s) found] The `users_aud.email` column contains duplicate values, violating data integrity. This fix will delete duplicate rows, keeping the oldest `rev` for each `email`, and then add a unique constraint to prevent future duplicates.",
+          "risk_level": "medium",
+          "sql": "",
+          "explain_summary": null,
+          "preconditions": [
+            "BLOCKED: UNIQUE on (email) on table 'users_aud' would fail: 10 duplicate row(s) found",
+            "Original SQL: DELETE FROM users_aud\nWHERE ctid IN (\n    SELECT ctid\n    FROM (\n        SELECT\n            ctid,\n            ROW_NUMBER() OVER (PARTITION BY email ORDER BY rev ASC, id ASC) as rn\n        FROM users_a"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM users_aud WHERE email IN (SELECT email FROM users_aud GROUP BY email HAVING COUNT(*) > 1);",
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'users_aud_email_unique';"
+          ],
+          "verification_results": {
+            "SELECT COUNT(*) FROM users_aud WHERE email IN (SELECT email FROM users_aud GROUP BY email HAVING COUNT(*) > 1);": [
+              {
+                "count": 18
+              }
+            ],
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'users_aud_email_unique';": [
+              {
+                "count": 0
+              }
+            ]
+          },
+          "rollback_queries": [
+            "ALTER TABLE users_aud DROP CONSTRAINT IF EXISTS users_aud_email_unique;"
+          ],
+          "rows_affected_estimate": 11,
+          "tables_touched": [
+            "users_aud"
+          ],
+          "depends_on": [],
+          "card_family": "duplicates",
+          "interaction_model": "blocked",
+          "evidence": {
+            "block_reason": "UNIQUE on (email) on table 'users_aud' would fail: 10 duplicate row(s) found",
+            "original_sql": "DELETE FROM users_aud\nWHERE ctid IN (\n    SELECT ctid\n    FROM (\n        SELECT\n            ctid,\n            ROW_NUMBER() OVER (PARTITION BY email ORDER BY rev ASC, id ASC) as rn\n        FROM users_aud\n    ) t\n    WHERE t.rn > 1\n);\nALTER TABLE users_aud ADD CONSTRAINT users_aud_email_unique UNIQUE (email);"
+          },
+          "evidence_payload": {
+            "_type": "blocked",
+            "block_reason": "UNIQUE on (email) on table 'users_aud' would fail: 10 duplicate row(s) found",
+            "original_sql": "DELETE FROM users_aud\nWHERE ctid IN (\n    SELECT ctid\n    FROM (\n        SELECT\n            ctid,\n            ROW_NUMBER() OVER (PARTITION BY email ORDER BY rev ASC, id ASC) as rn\n        FROM users_aud\n    ) t\n    WHERE t.rn > 1\n);\nALTER TABLE users_aud ADD CONSTRAINT users_aud_email_unique UNIQUE (email);"
+          },
+          "source_rule": "duplicate_values",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "critical"
+        },
+        {
+          "fix_id": "remove-dup-prm-organization-aud-code",
+          "title": "Remove duplicate codes and enforce uniqueness in prm_organization_aud",
+          "target": "prm_organization_aud",
+          "rationale": "[Pre-flight blocked: UNIQUE on (code) on table 'prm_organization_aud' would fail: 10 duplicate row(s) found] The `prm_organization_aud.code` column contains duplicate values, violating data integrity. This fix will delete duplicate rows, keeping the oldest `rev` for each `code`, and then add a unique constraint to prevent future duplicates.",
+          "risk_level": "medium",
+          "sql": "",
+          "explain_summary": null,
+          "preconditions": [
+            "BLOCKED: UNIQUE on (code) on table 'prm_organization_aud' would fail: 10 duplicate row(s) found",
+            "Original SQL: DELETE FROM prm_organization_aud\nWHERE ctid IN (\n    SELECT ctid\n    FROM (\n        SELECT\n            ctid,\n            ROW_NUMBER() OVER (PARTITION BY code ORDER BY rev ASC, id ASC) as rn\n        FR"
+          ],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM prm_organization_aud WHERE code IN (SELECT code FROM prm_organization_aud GROUP BY code HAVING COUNT(*) > 1);",
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'prm_organization_aud_code_unique';"
+          ],
+          "verification_results": {
+            "SELECT COUNT(*) FROM prm_organization_aud WHERE code IN (SELECT code FROM prm_organization_aud GROUP BY code HAVING COUNT(*) > 1);": [
+              {
+                "count": 15
+              }
+            ],
+            "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'prm_organization_aud_code_unique';": [
+              {
+                "count": 0
+              }
+            ]
+          },
+          "rollback_queries": [
+            "ALTER TABLE prm_organization_aud DROP CONSTRAINT IF EXISTS prm_organization_aud_code_unique;"
+          ],
+          "rows_affected_estimate": 10,
+          "tables_touched": [
+            "prm_organization_aud"
+          ],
+          "depends_on": [],
+          "card_family": "duplicates",
+          "interaction_model": "blocked",
+          "evidence": {
+            "block_reason": "UNIQUE on (code) on table 'prm_organization_aud' would fail: 10 duplicate row(s) found",
+            "original_sql": "DELETE FROM prm_organization_aud\nWHERE ctid IN (\n    SELECT ctid\n    FROM (\n        SELECT\n            ctid,\n            ROW_NUMBER() OVER (PARTITION BY code ORDER BY rev ASC, id ASC) as rn\n        FROM prm_organization_aud\n    ) t\n    WHERE t.rn > 1\n);\nALTER TABLE prm_organization_aud ADD CONSTRAINT prm_organization_aud_code_unique UNIQUE (code);"
+          },
+          "evidence_payload": {
+            "_type": "blocked",
+            "block_reason": "UNIQUE on (code) on table 'prm_organization_aud' would fail: 10 duplicate row(s) found",
+            "original_sql": "DELETE FROM prm_organization_aud\nWHERE ctid IN (\n    SELECT ctid\n    FROM (\n        SELECT\n            ctid,\n            ROW_NUMBER() OVER (PARTITION BY code ORDER BY rev ASC, id ASC) as rn\n        FROM prm_organization_aud\n    ) t\n    WHERE t.rn > 1\n);\nALTER TABLE prm_organization_aud ADD CONSTRAINT prm_organization_aud_code_unique UNIQUE (code);"
+          },
+          "source_rule": "duplicate_values",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "investigate-groupe-aud-admin-id-nulls",
+          "title": "Investigate high null ratio in groupe_aud.admin_id",
+          "target": "groupe_aud.admin_id",
+          "rationale": "The column `groupe_aud.admin_id` has a high null ratio (94.74%). This suggests that the column might not be consistently populated or its nullability requirements are not well-defined. Manual investigation is recommended to determine if `admin_id` should be mandatory or if nulls are expected.",
+          "risk_level": "low",
+          "sql": "SELECT admin_id, COUNT(*) FROM groupe_aud GROUP BY admin_id ORDER BY COUNT(*) DESC;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "groupe_aud"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "column_name": "admin_id",
+            "null_ratio": 0.9474,
+            "total_rows": 19,
+            "threshold_used": 0.1
+          },
+          "source_rule": "null_ratio_high",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "investigate-smsc-aud-updated-at-nulls",
+          "title": "Investigate high null ratio in smsc_aud.updated_at",
+          "target": "smsc_aud.updated_at",
+          "rationale": "The column `smsc_aud.updated_at` has a high null ratio (88.89%). This suggests that the column might not be consistently populated or its nullability requirements are not well-defined. Manual investigation is recommended to determine if `updated_at` should be mandatory or if nulls are expected.",
+          "risk_level": "low",
+          "sql": "SELECT updated_at, COUNT(*) FROM smsc_aud GROUP BY updated_at ORDER BY COUNT(*) DESC;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "smsc_aud"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "column_name": "updated_at",
+            "null_ratio": 0.8889,
+            "total_rows": 18,
+            "threshold_used": 0.8
+          },
+          "source_rule": "null_ratio_high",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "investigate-smsc-routing-rule-aud-nulls",
+          "title": "Investigate high null ratio in smsc_routing_rule_aud (expediteur_id, groupe_id)",
+          "target": "smsc_routing_rule_aud",
+          "rationale": "The columns `smsc_routing_rule_aud.expediteur_id` and `smsc_routing_rule_aud.groupe_id` have high null ratios (93.75%). This suggests that these columns might not be consistently populated or their nullability requirements are not well-defined. Manual investigation is recommended to determine if these columns should be mandatory or if nulls are expected.",
+          "risk_level": "low",
+          "sql": "SELECT expediteur_id, groupe_id, COUNT(*) FROM smsc_routing_rule_aud GROUP BY expediteur_id, groupe_id ORDER BY COUNT(*) DESC;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "smsc_routing_rule_aud"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "column_name": "expediteur_id",
+            "affected_columns": [
+              "groupe_id"
+            ],
+            "null_ratio": 0.9375,
+            "total_rows": 16,
+            "threshold_used": 0.1
+          },
+          "source_rule": "null_ratio_high",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "investigate-user-keys-aud-nulls",
+          "title": "Investigate high null ratio in user_keys_aud (expiration_date, last_time_used_date)",
+          "target": "user_keys_aud",
+          "rationale": "The columns `user_keys_aud.expiration_date` and `user_keys_aud.last_time_used_date` have high null ratios (100%). This suggests that these columns might not be consistently populated or their nullability requirements are not well-defined. Manual investigation is recommended to determine if these columns should be mandatory or if nulls are expected.",
+          "risk_level": "low",
+          "sql": "SELECT expiration_date, last_time_used_date, COUNT(*) FROM user_keys_aud GROUP BY expiration_date, last_time_used_date ORDER BY COUNT(*) DESC;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_keys_aud"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "column_name": "expiration_date",
+            "affected_columns": [
+              "last_time_used_date"
+            ],
+            "null_ratio": 1.0,
+            "total_rows": 1,
+            "threshold_used": 0.4
+          },
+          "source_rule": "null_ratio_high",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "investigate-user-mission-aud-nulls",
+          "title": "Investigate high null ratio in user_mission_aud (groupe_id, membership_id, role_id)",
+          "target": "user_mission_aud",
+          "rationale": "The columns `user_mission_aud.groupe_id`, `user_mission_aud.membership_id`, and `user_mission_aud.role_id` have high null ratios (50%). This suggests that these columns might not be consistently populated or their nullability requirements are not well-defined. Manual investigation is recommended to determine if these columns should be mandatory or if nulls are expected.",
+          "risk_level": "low",
+          "sql": "SELECT groupe_id, membership_id, role_id, COUNT(*) FROM user_mission_aud GROUP BY groupe_id, membership_id, role_id ORDER BY COUNT(*) DESC;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 0,
+          "tables_touched": [
+            "user_mission_aud"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "column_name": "groupe_id",
+            "affected_columns": [
+              "membership_id",
+              "role_id"
+            ],
+            "null_ratio": 0.5,
+            "total_rows": 12,
+            "threshold_used": 0.1
+          },
+          "source_rule": "null_ratio_high",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "medium"
+        }
+      ]
+    }
+  }
+}

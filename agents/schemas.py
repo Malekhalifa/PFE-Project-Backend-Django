@@ -113,6 +113,22 @@ _RULE_TO_FAMILY: dict[str, str] = {
 class Finding(BaseModel):
     """A single validated data-quality issue."""
 
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_field_names(cls, values: Any) -> Any:
+        if not isinstance(values, dict):
+            return values
+        # LLM sometimes emits finding_type instead of rule
+        if "rule" not in values and "finding_type" in values:
+            values["rule"] = values.pop("finding_type")
+        # LLM sometimes emits table/table_name instead of entity
+        if "entity" not in values:
+            table = values.get("table") or values.get("table_name") or ""
+            col = values.get("column") or values.get("column_name") or ""
+            if table:
+                values["entity"] = f"{table}.{col}" if col else table
+        return values
+
     validator: Validator = Field(..., description="Which validator produced this finding")
     entity: str = Field(
         ...,
@@ -170,6 +186,17 @@ class Finding(BaseModel):
 
 class ValidationReport(BaseModel):
     """Returned by Schema, Structural, Statistical, and Relational validator agents."""
+
+    @model_validator(mode="before")
+    @classmethod
+    def infer_validator(cls, values: Any) -> Any:
+        if not isinstance(values, dict):
+            return values
+        if not values.get("validator"):
+            findings = values.get("findings") or []
+            if findings and isinstance(findings[0], dict):
+                values["validator"] = findings[0].get("validator", "schema")
+        return values
 
     validator: Validator
     findings: list[Finding] = Field(default_factory=list)
@@ -340,6 +367,13 @@ class FixCard(BaseModel):
     source_type: SourceType = Field(default="ai", description="deterministic, ai, or hybrid provenance.")
     confidence: float = Field(default=0.9, ge=0.0, le=1.0)
     severity: Severity = "medium"
+
+    @model_validator(mode="before")
+    @classmethod
+    def derive_title(cls, values: Any) -> Any:
+        if isinstance(values, dict) and not values.get("title") and values.get("fix_id"):
+            values["title"] = values["fix_id"].replace("-", " ").title()
+        return values
 
     @field_validator("sql", mode="before")
     @classmethod

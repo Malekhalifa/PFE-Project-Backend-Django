@@ -50,6 +50,23 @@ from .tool_factories import fixplanner_tools, profiler_tools, relational_tools, 
 _BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+def _make_tool_hook(agent_id: str):
+    """Return a tool hook closure with the agent id pre-bound.
+
+    In Agno workflow steps, run_context.agent resolves to the Step/Team wrapper,
+    not the underlying Agent. _agent_id(run_context) therefore returns "global"
+    for every agent, collapsing all per-agent dedup caches and tool-call counters
+    into a single shared key. This closure bypasses that lookup entirely by
+    capturing the correct agent id at construction time.
+    """
+    def _hook(run_context: Any, function_name: str, function_call: Any, arguments: dict) -> Any:
+        return qualitylab_tool_hook(
+            run_context, function_name, function_call, arguments,
+            _bound_aid=agent_id,
+        )
+    return _hook
+
+
 def _build_agentos_db() -> BaseDb:
     pg_user = os.environ.get("PG_USER", "").strip()
     if pg_user:
@@ -187,12 +204,18 @@ def build_members(
             "pre_hooks": list(agent_kwargs.get("pre_hooks", [])) + [emit_pipeline_status],
         }
 
+    # Strip shared tool_hooks — each agent gets its own _make_tool_hook closure
+    # so the agent id is pre-bound and not resolved from run_context.agent (which
+    # returns the workflow Step wrapper in Agno workflow steps, not the Agent).
+    _base_kwargs = {k: v for k, v in agent_kwargs.items() if k != "tool_hooks"}
+
     schema_validator = Agent(
         id="schema-validator",
         tools=schema_tools,
         model=build_model(model_id),
+        tool_hooks=[_make_tool_hook("schema-validator")],
         **SCHEMA_AGENT_CONFIG,
-        **agent_kwargs,
+        **_base_kwargs,
     )
     # Profiler runs after schema validation and stores a statistical baseline in
     # session_state["profiler_report"] for all parallel validators to reference.
@@ -200,35 +223,40 @@ def build_members(
         id="profiler",
         tools=profiler_tools,
         model=build_model(model_id),
+        tool_hooks=[_make_tool_hook("profiler")],
         post_hooks=[store_profiler_output, log_run_metrics],
         **PROFILER_AGENT_CONFIG,
-        **{k: v for k, v in agent_kwargs.items() if k != "post_hooks"},
+        **{k: v for k, v in _base_kwargs.items() if k != "post_hooks"},
     )
     statistical_validator = Agent(
         id="statistical-validator",
         tools=statistical_tools,
         model=build_model(model_id),
+        tool_hooks=[_make_tool_hook("statistical-validator")],
         **STATISTICAL_AGENT_CONFIG,
-        **agent_kwargs,
+        **_base_kwargs,
     )
     structural_validator = Agent(
         id="structural-validator",
         tools=structural_tools,
         model=build_model(model_id),
+        tool_hooks=[_make_tool_hook("structural-validator")],
         **STRUCTURAL_AGENT_CONFIG,
-        **agent_kwargs,
+        **_base_kwargs,
     )
     relational_validator = Agent(
         id="relational-validator",
         tools=relational_tools,
         model=build_model(model_id),
+        tool_hooks=[_make_tool_hook("relational-validator")],
         **RELATIONAL_AGENT_CONFIG,
-        **agent_kwargs,
+        **_base_kwargs,
     )
     fix_planner = Agent(
         id="fix-planner",
         tools=fixplanner_tools,
         model=build_model(model_id),
+        tool_hooks=[_make_tool_hook("fix-planner")],
         post_hooks=[
             validate_findings_entities,
             validate_fix_sql_safety,
@@ -236,7 +264,7 @@ def build_members(
             log_run_metrics,
         ],
         **FIX_PLANNER_AGENT_CONFIG,
-        **{k: v for k, v in agent_kwargs.items() if k != "post_hooks"},
+        **{k: v for k, v in _base_kwargs.items() if k != "post_hooks"},
     )
 
     return SimpleNamespace(

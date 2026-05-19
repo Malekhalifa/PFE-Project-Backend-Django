@@ -10,13 +10,18 @@
 # ── Null tolerance ─────────────────────────────────────────────────────────
 # Maximum acceptable fraction of NULL values in any non-key column.
 # Findings with null_ratio above this threshold are flagged as violations.
-max_null_pct: 0.05   # 5 %
+max_null_pct: 0.05 # 5 %
 
 # ── Row-level violation threshold ──────────────────────────────────────────
 # Minimum fraction of rows that must violate a row-level rule before it is
 # flagged. Findings where violation_pct < this value are suppressed as noise.
 # Set to null to flag any violation regardless of count.
-max_violation_row_pct: 0.01   # 1 %
+max_violation_row_pct: 0.01 # 1 % — custom/business rules
+
+# Threshold for binary-correct structural rules (impossible_date, negative_amount,
+# blank_required). These are always defects: any single violating row is flagged.
+# Set to null to use max_violation_row_pct for these too.
+structural_violation_row_pct: 0.0 # 0 % — flag any violation
 
 # ── Naming convention ──────────────────────────────────────────────────────
 # Expected identifier casing for table and column names.
@@ -26,7 +31,7 @@ naming_convention: snake_case
 # ── Row-count drift ────────────────────────────────────────────────────────
 # Maximum acceptable fractional change in row count versus the previous run.
 # Set to null to disable drift checks.
-max_row_count_drift_pct: 0.20   # 20 %
+max_row_count_drift_pct: 0.20 # 20 %
 
 # ── Severity threshold ─────────────────────────────────────────────────────
 # Minimum severity level to include in the final fix plan.
@@ -53,9 +58,9 @@ unique_column_patterns:
 # migration state tables, framework internals) that must not be analyzed.
 excluded_tables:
   - "*_aud"
-  - "rev_info"       # Hibernate Envers revision metadata — email/actor repeats by design
-  - "send_sms"       # Kannel SMS gateway spool — protocol integer fields (0 is valid)
-  - "sent_sms"       # Kannel SMS gateway log — same: mclass/coding/compress/dlr_mask are protocol constants where 0 is valid
+  - "rev_info" # Hibernate Envers revision metadata — email/actor repeats by design
+  - "send_sms" # Kannel SMS gateway spool — protocol integer fields (0 is valid)
+  - "sent_sms" # Kannel SMS gateway log — same: mclass/coding/compress/dlr_mask are protocol constants where 0 is valid
 
 # ── Cardinality suppression ─────────────────────────────────────────────────
 # Skip low_cardinality and categorical_drift findings for tables with fewer
@@ -109,9 +114,9 @@ nullable_fk_by_design: {}
 #   timestamp_columns: columns matching *updated_at, *modified_at, *last_*
 #   default:           all other columns
 null_thresholds:
-  fk_columns: 0.10        # flag FK cols with >10% null
+  fk_columns: 0.10 # flag FK cols with >10% null
   timestamp_columns: 0.80 # flag timestamp cols with >80% null
-  default: 0.40           # flag all other cols with >40% null
+  default: 0.40 # flag all other cols with >40% null
 
 # ── Custom business rules ──────────────────────────────────────────────────
 # Free-form rules injected verbatim into agent instructions.

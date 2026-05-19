@@ -255,6 +255,22 @@ def update_job_status(job_id: str, job_status: str) -> None:
         updated_at=now,
     )
 
+    # Record per-step start timestamp in Redis for the loading-screen timer.
+    # Frontend reads this on mount to seed elapsed-time counters that survive
+    # page refreshes (avoids the "timer resets to 0 on navigate-away" problem).
+    try:
+        import os as _os
+        import redis as _redis_mod
+        _r = _redis_mod.from_url(
+            _os.environ.get('REDIS_URL', 'redis://localhost:6379/0'),
+            decode_responses=True, socket_connect_timeout=1,
+        )
+        _rkey = f'ql:step_timing:{normalized_job_id}'
+        _r.hset(_rkey, status_value, now.isoformat())
+        _r.expire(_rkey, 86400)  # 24 h TTL — matches job retention
+    except Exception:
+        pass  # Redis unavailable — frontend falls back to local timestamps
+
 
 def update_job_celery_task_id(job_id: str, task_id: str | None) -> None:
     """Persist the latest Celery task identifier for a job."""

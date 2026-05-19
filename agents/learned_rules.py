@@ -34,6 +34,8 @@ _ACCUMULATE_RULES: frozenset[str] = frozenset({
     "zero_amount",
     "impossible_date",
     "blank_required_field",
+    "blank_required",
+    "not_null_constraint",  # LLM variant for custom NOT NULL rule violations
 })
 
 
@@ -48,7 +50,13 @@ def _rule_text_from_finding(finding: dict[str, Any]) -> str | None:
 
     if rule == "custom_rule_violation":
         hint = (finding.get("remediation_hint") or finding.get("fix") or "").strip()
-        return f"In table '{table}': {hint}" if hint else None
+        if not hint:
+            # Try evidence.rule_description (LLM sometimes puts the original rule text here)
+            hint = (evidence.get("rule_description") or "").strip()
+        if not hint:
+            col = (finding.get("column") or "").strip()
+            hint = f"column '{col}' must satisfy custom rule" if col else "custom rule violation must not occur"
+        return f"In table '{table}': {hint}"
 
     if rule in ("negative_or_zero_amounts", "negative_amount", "zero_amount"):
         cols = evidence.get("affected_columns") or []
@@ -66,14 +74,25 @@ def _rule_text_from_finding(finding: dict[str, Any]) -> str | None:
             f"(last 100 years to next 5 years)."
         )
 
-    if rule == "blank_required_field":
+    if rule in ("blank_required_field", "blank_required"):
         col = (finding.get("column") or "").strip()
         col_part = f" column '{col}'" if col else ""
         return f"In table '{table}':{col_part} must not be blank or empty string."
 
+    if rule == "not_null_constraint":
+        col = (finding.get("column") or "").strip()
+        hint = (finding.get("remediation_hint") or finding.get("fix") or "").strip()
+        if hint:
+            return f"In table '{table}': {hint}"
+        col_part = f" column '{col}'" if col else ""
+        return f"In table '{table}':{col_part} must not be null."
+
     if rule in ("business_rule_violation", "logical_inconsistency"):
         hint = (finding.get("remediation_hint") or finding.get("fix") or "").strip()
-        return f"In table '{table}': {hint}" if hint else None
+        if not hint:
+            col = (finding.get("column") or "").strip()
+            hint = f"column '{col}' must satisfy business rule" if col else "business rule violation must not occur"
+        return f"In table '{table}': {hint}"
 
     return None
 

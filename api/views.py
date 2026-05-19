@@ -638,9 +638,8 @@ class AnalyzePostgresView(APIView):
         conn_str = serializer.validated_data.get('connection_string')
         domain_rules = serializer.validated_data.get('domain_rules', [])
         llm_model = serializer.validated_data.get('llm_model', 'gemini-2.0-flash').strip() or 'gemini-2.0-flash'
-        target_sandbox = serializer.validated_data.get('target_sandbox', False)
         baseline_job_id = serializer.validated_data.get('baseline_job_id')
-        
+
         baseline_job = get_job(baseline_job_id) if baseline_job_id else None
         if baseline_job:
             if not conn_str and baseline_job.get('connection_string'):
@@ -649,18 +648,6 @@ class AnalyzePostgresView(APIView):
             original_model = (baseline_job.get('llm_model') or '').strip()
             if original_model:
                 llm_model = original_model
-
-        # If targeting sandbox, append _clean to the database name
-        if target_sandbox and conn_str:
-            try:
-                from urllib.parse import urlparse, urlunparse
-                p = urlparse(conn_str)
-                if p.path and not p.path.endswith('_clean'):
-                    new_path = p.path + "_clean"
-                    p = p._replace(path=new_path)
-                    conn_str = urlunparse(p)
-            except Exception:
-                pass
 
         # 1) Quick format check (pattern) to fail fast on obvious mistakes.
         if not looks_like_postgres_dsn(conn_str):
@@ -741,6 +728,20 @@ class StatusView(APIView):
         job = find_owned_job(jobId, request.user)
         job_status = job['status'] if job else 'unknown'
         response_payload = {'status': job_status}
+
+        # Return per-step start timestamps so the frontend timer survives refreshes.
+        # Written by update_job_status() into ql:step_timing:{jobId} (Redis hash).
+        try:
+            import redis as _redis_mod
+            _r = _redis_mod.from_url(
+                os.environ.get('REDIS_URL', 'redis://localhost:6379/0'),
+                decode_responses=True, socket_connect_timeout=1,
+            )
+            _timings = _r.hgetall(f'ql:step_timing:{jobId}') or {}
+            if _timings:
+                response_payload['step_started_at'] = _timings
+        except Exception:
+            pass
 
         if job_status == 'completed':
             analysis = get_analysis_result(jobId)

@@ -21,7 +21,7 @@ from agno.workflow.workflow import Workflow
 from services.report_service import save_final_pipeline_report
 
 from .py_profiler import python_profile_step
-from .reducer import _try_recover_partial, reduce_signals
+from .reducer import _clean_llm_json, _try_recover_partial, reduce_signals
 from .reporting import aggregate_pipeline_scores, confidence_breakdown, derive_database_id, report_to_markdown
 from .rule_family_map import build_evidence_payload, classify_fix
 from .rules import common_rules
@@ -650,29 +650,122 @@ def _as_reduced_findings(value: Any) -> ReducedFindings:
     return ReducedFindings(findings=[])
 
 
+_FIX_PLAN_CARD_KEY_ALIASES = (
+    "fixes", "fix_cards", "fix_plan", "remediation_cards",
+    "plan", "data", "results",
+)
+
+
+def _try_recover_fix_plan(value: str) -> FixPlan | None:
+    """Three-strategy rescue for a malformed/non-standard FixPlan JSON.
+
+    Strategy 0 — clean LLM JSON glitches (trailing commas, unquoted keys,
+                 smart quotes, code fences) and reparse with standard key.
+    Strategy 1 — parsed OK but wrong top-level key; tries common aliases:
+                 "fixes", "fix_cards", "fix_plan", "remediation_cards", etc.
+    Strategy 2 — top-level JSON array → treat as the cards list directly.
+    """
+    cleaned = _clean_llm_json(value)
+    try:
+        parsed = json.loads(cleaned)
+    except Exception:
+        return None
+
+    # Strategy 2: bare list → wrap as cards
+    if isinstance(parsed, list):
+        try:
+            plan = FixPlan.model_validate({"cards": parsed})
+            if plan.cards:
+                logger.warning(
+                    "fix_plan recovery: top-level array treated as cards — %d card(s).",
+                    len(plan.cards),
+                )
+                return plan
+        except Exception:
+            pass
+        return None
+
+    if not isinstance(parsed, dict):
+        return None
+
+    # Strategy 0+: cleaned text — standard key may have failed only due to dirty JSON
+    try:
+        plan = FixPlan.model_validate(parsed)
+        if plan.cards:
+            logger.warning(
+                "fix_plan recovery: standard key succeeded after json-clean — %d card(s).",
+                len(plan.cards),
+            )
+            return plan
+    except Exception:
+        pass
+
+    # Strategy 1: alternative top-level keys
+    for alias in _FIX_PLAN_CARD_KEY_ALIASES:
+        val = parsed.get(alias)
+        if isinstance(val, list) and val:
+            try:
+                plan = FixPlan.model_validate({"cards": val})
+                if plan.cards:
+                    logger.warning(
+                        "fix_plan recovery: found %d card(s) under key '%s'.",
+                        len(plan.cards), alias,
+                    )
+                    return plan
+            except Exception:
+                pass
+        elif isinstance(val, dict):
+            try:
+                plan = FixPlan.model_validate(val)
+                if plan.cards:
+                    logger.warning(
+                        "fix_plan recovery: found %d card(s) under nested key '%s'.",
+                        len(plan.cards), alias,
+                    )
+                    return plan
+            except Exception:
+                pass
+
+    return None
+
+
 def _as_fix_plan(value: Any) -> FixPlan:
     if isinstance(value, FixPlan):
         return value
     if isinstance(value, dict):
-        return FixPlan.model_validate(value)
+        try:
+            return FixPlan.model_validate(value)
+        except Exception:
+            recovered = _try_recover_fix_plan(json.dumps(value))
+            if recovered is not None:
+                return recovered
+            return FixPlan(cards=[])
     if isinstance(value, str):
         try:
             parsed = json.loads(value)
             return FixPlan.model_validate(parsed)
         except Exception:
-            logger.warning("Failed to parse FixPlan from string, falling back to empty. Content: %s", value[:100])
+            recovered = _try_recover_fix_plan(value)
+            if recovered is not None:
+                return recovered
+            logger.warning(
+                "Failed to parse FixPlan — recovery also failed. Falling back to empty. "
+                "Content: %.200s", value,
+            )
             return FixPlan(cards=[])
     logger.warning("Expected FixPlan but got %s, falling back to empty.", type(value).__name__)
     return FixPlan(cards=[])
 
 
-def _warn_empty_fix_plan(fix_plan: FixPlan, findings_count: int) -> None:
+def _warn_empty_fix_plan(fix_plan: FixPlan, findings_count: int, raw_content: Any = None) -> None:
     if findings_count > 0 and not fix_plan.cards:
         logger.warning(
             "Fix Planner returned 0 cards for %d finding(s) — "
             "LLM may have exceeded tool call budget or misinterpreted prompt constraints.",
             findings_count,
         )
+        if raw_content:
+            logger.debug("Fix Planner raw LLM output: %.2000s", str(raw_content)[:2000])
 
 
 def _split_entity(entity: str) -> tuple[str, str | None]:
@@ -1325,13 +1418,13 @@ def _maybe_retry_fix_planner(
     session_state: dict[str, Any],
     database_id: str,
 ) -> None:
-    """Retry the Fix Planner when the initial run returned a transient error.
+    """Retry the Fix Planner whenever cards == 0 and findings > 0.
 
-    Trigger: ``reports.fix_plan.cards`` is empty AND the raw step content
-    matches a transient error marker (502, 503, 504, UNAVAILABLE, etc.).
-    Common case: Gemini returns an HTML 502 page that Agno tries to parse as
-    a ``FixPlan``, falling back to an empty list with a "Failed to parse"
-    warning. We detect this and re-issue the run after a short delay.
+    Covers three failure modes:
+      (a) transient HTTP 5xx — Agno parsed the error page as an empty FixPlan
+      (b) budget exhaustion — MALFORMED_FUNCTION_CALL mid-generation
+      (c) wrong JSON structure — LLM returned {"fixes": [...]} instead of {"cards": [...]}
+          (the recovery in _as_fix_plan handles this, but a retry is a safety net)
 
     Mutates ``reports.fix_plan`` in place on success.
     """
@@ -1339,15 +1432,23 @@ def _maybe_retry_fix_planner(
         return
     if not reports.reduced.findings:
         return  # nothing to plan for
-    if not _is_transient_error(raw_fix_plan_content):
-        return
+
+    if _is_quota_error(raw_fix_plan_content):
+        delay = _QUOTA_RETRY_DELAY_S
+        reason = "quota exhaustion"
+    elif _is_transient_error(raw_fix_plan_content):
+        delay = _RELATIONAL_RETRY_DELAY_S
+        reason = "transient HTTP error"
+    else:
+        delay = _RELATIONAL_RETRY_DELAY_S
+        reason = f"0 cards for {len(reports.reduced.findings)} finding(s) — budget exhaustion or wrong JSON structure"
 
     import time as _time
-    delay = _QUOTA_RETRY_DELAY_S if _is_quota_error(raw_fix_plan_content) else _RELATIONAL_RETRY_DELAY_S
     for attempt in range(1, _MAX_RELATIONAL_RETRIES + 1):
         logger.warning(
-            "Fix Planner transient failure — retry %d/%d in %ds (marker matched)",
-            attempt, _MAX_RELATIONAL_RETRIES, delay,
+            "Fix Planner retry %d/%d in %ds — reason: %s. Raw output: %.200s",
+            attempt, _MAX_RELATIONAL_RETRIES, delay, reason,
+            str(raw_fix_plan_content)[:200],
         )
         _time.sleep(delay)
         new_plan = _rerun_fix_planner(
@@ -1923,7 +2024,7 @@ def orchestrator_workflow(
             connection_string=session_state["connection_string"],
             job_id=session_state.get("job_id"),
         )
-        _warn_empty_fix_plan(reports.fix_plan, len(reports.reduced.findings))
+        _warn_empty_fix_plan(reports.fix_plan, len(reports.reduced.findings), raw_fix_plan_content)
 
         total_tables = len(session_state.get("schema") or {})
         legacy = _build_legacy_reports(
@@ -1942,9 +2043,9 @@ def orchestrator_workflow(
             pipeline_t0=pipeline_t0,
         )
 
-        # Persist structural findings as regression guards for future runs.
+        # Persist structural + statistical findings as regression guards for future runs.
         # Convert Finding objects → dicts for the learned_rules writer.
-        _structural_dicts = [
+        _learnable_findings = [
             {
                 "rule": f.rule,
                 "table": f.entity.split(".")[0] if f.entity else "",
@@ -1952,9 +2053,9 @@ def orchestrator_workflow(
                 "evidence": f.evidence,
                 "remediation_hint": f.suggested_action,
             }
-            for f in reports.structural.findings
+            for f in reports.structural.findings + reports.statistical.findings
         ]
-        save_learned_rules(database_id, pipeline_run_id, _structural_dicts)
+        save_learned_rules(database_id, pipeline_run_id, _learnable_findings)
         prune_learned_rules(database_id)
 
         finish_pipeline_trace(

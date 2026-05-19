@@ -39,7 +39,6 @@ class AnalyzePostgresSerializer(serializers.Serializer):
         help_text=_LLM_MODEL_HINT,
     )
     baseline_job_id = serializers.CharField(required=False, allow_null=True, allow_blank=True)
-    target_sandbox = serializers.BooleanField(required=False, default=False)
 
     def validate(self, attrs):
         if not attrs.get('connection_string') and not attrs.get('baseline_job_id'):

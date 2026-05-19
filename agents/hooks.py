@@ -89,6 +89,8 @@ def qualitylab_tool_hook(
     function_name: str,
     function_call,
     arguments: dict,
+    *,
+    _bound_aid: str | None = None,
 ):
     """Shared tool hook: query normalization, dedup, loop detection, timing telemetry.
 
@@ -96,10 +98,16 @@ def qualitylab_tool_hook(
     scoped per-agent using the agent's id.  This prevents parallel validators
     (statistical / structural / relational) from sharing cache state with the schema
     and profiler agents that ran before them.
+
+    ``_bound_aid`` is set by the per-agent closure wrapper created in team.py
+    (_make_tool_hook). It bypasses _agent_id(run_context), which fails in Agno
+    workflow steps where run_context.agent resolves to the Step wrapper (not the
+    underlying Agent), causing aid="global" for every agent and losing per-agent
+    tool-call counts and dedup isolation.
     """
     if run_context.session_state is None:
         return function_call(**arguments)
-    aid = _agent_id(run_context)
+    aid = _bound_aid if _bound_aid is not None else _agent_id(run_context)
     job_id = (run_context.session_state or {}).get("job_id") or "nojob"
     seen: dict[str, Any] = run_context.session_state.setdefault(f"_tool_calls_seen_{aid}", {})
 
@@ -367,7 +375,19 @@ def _load_excluded_table_patterns() -> list[str]:
     return list(rules.get("excluded_tables", []))
 
 
+def _load_included_table_patterns() -> list[str]:
+    """Return glob allowlist patterns. When non-empty, only matching tables are analysed."""
+    from .rules import domain_rules as load_domain_rules
+    rules = load_domain_rules()
+    val = rules.get("included_tables") or []
+    return list(val) if isinstance(val, (list, tuple)) else []
+
+
 def _is_excluded(table_name: str, patterns: list[str]) -> bool:
+    return any(fnmatch.fnmatch(table_name, pat) for pat in patterns)
+
+
+def _is_included(table_name: str, patterns: list[str]) -> bool:
     return any(fnmatch.fnmatch(table_name, pat) for pat in patterns)
 
 
@@ -568,8 +588,18 @@ def ensure_schema_primed(run_input: RunInput, run_context: RunContext) -> None:
         postgres_tool.connect(connection_string)
 
     excluded_patterns = _load_excluded_table_patterns()
+    included_patterns = _load_included_table_patterns()
     all_tables = _normalize_table_list_result(pg.show_tables())
-    tables = [t for t in all_tables if not _is_excluded(t, excluded_patterns)]
+
+    if included_patterns:
+        # Allowlist mode: keep only tables that match included_tables patterns
+        # (excluded_tables still removes anything in the allowlist that should never be touched).
+        tables = [
+            t for t in all_tables
+            if _is_included(t, included_patterns) and not _is_excluded(t, excluded_patterns)
+        ]
+    else:
+        tables = [t for t in all_tables if not _is_excluded(t, excluded_patterns)]
 
     if len(all_tables) != len(tables):
         skipped = sorted(set(all_tables) - set(tables))
@@ -956,7 +986,23 @@ def log_run_metrics(run_output: RunOutput, agent=None, run_context: RunContext =
     # the workflow Step/Team wrapper in current Agno versions).
     target_agent = agent if agent is not None else getattr(run_context, "agent", None)
     aid = (getattr(target_agent, "id", "") or "") or "global"
-    tool_calls = len(state.get(f"_tool_calls_seen_{aid}", {}))
+    # 3-tier fallback — mirrors reducer audit logic for consistency.
+    # Tier 1: _validator_tool_calls[aid] — bumped every entry including cache hits.
+    # Tier 2: _tool_calls_seen_{aid} length — unique (function+args) pairs.
+    # Tier 3: Redis side-channel — bypasses in-process session propagation gap.
+    tool_calls = int((state.get("_validator_tool_calls") or {}).get(aid, 0))
+    if tool_calls == 0:
+        tool_calls = len(state.get(f"_tool_calls_seen_{aid}", {}))
+    if tool_calls == 0:
+        try:
+            _rc = _redis_client()
+            _jid = state.get("job_id")
+            if _rc is not None and _jid:
+                _rv = _rc.get(f"ql:tcounts:{_jid}:{aid}")
+                if _rv is not None:
+                    tool_calls = int(_rv)
+        except Exception:
+            pass
 
     findings_count = 0
     if isinstance(run_output.content, ValidationReport):
