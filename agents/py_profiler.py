@@ -48,6 +48,18 @@ _TEMPORAL_TYPES: frozenset[str] = frozenset({
 _MAX_WORKERS = 8
 _STATEMENT_TIMEOUT_MS = 30_000
 
+# ── Semantic-type validation patterns ──────────────────────────────────────
+# Column-name → PostgreSQL regex mapping. Substring-matched against column
+# names (case-insensitive). Extend via domain_rules.yaml under the key
+# "semantic_type_patterns" to override or add patterns without code changes.
+_SEMANTIC_TYPE_PATTERNS: dict[str, str] = {
+    "email": r"^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$",
+    "phone": r"^\+?[\d\s\-().]{7,20}$",
+    "url": r"^https?://",
+    "postal_code": r"^[\d\s\-]{3,12}$",
+    "iso_code": r"^[A-Z]{2,3}$",
+}
+
 
 def _classify(data_type: str) -> str:
     """Return 'numeric', 'temporal', or 'categorical' for a PostgreSQL data type string."""
@@ -346,6 +358,54 @@ def _build_schema_from_db(connection_string: str) -> dict[str, Any]:
 _TS_SUFFIXES = ("updated_at", "modified_at", "last_used", "last_time", "last_login", "last_seen")
 
 
+def _build_deterministic_summary(
+    auto_findings: list[dict],
+    schema_findings: list[dict],
+    orphan_findings: list[dict],
+    temporal_findings: list[dict],
+    format_findings: list[dict],
+) -> str:
+    """Build a compact summary of all deterministic findings for LLM agent prompts.
+
+    The summary tells each LLM agent what has ALREADY been confirmed by SQL,
+    so they focus on multi-column patterns, business hypotheses, and severity
+    adjustment — not re-discovery. Zero hardcoded names: only rule counts and
+    category labels.
+    """
+    from collections import Counter
+
+    parts: list[str] = []
+    total = 0
+
+    for label, findings, extra_rules in [
+        ("statistical", auto_findings, None),
+        ("schema", schema_findings, None),
+        ("orphaned FK", orphan_findings, None),
+        ("temporal ordering", temporal_findings, None),
+        ("format/pattern", format_findings, None),
+    ]:
+        if not findings:
+            continue
+        n = len(findings)
+        total += n
+        rules = Counter(f.get("rule", "?") for f in findings)
+        rule_str = ", ".join(f"{c}× {r}" for r, c in rules.most_common(8))
+        tables = len({f.get("entity", "").split(".")[0] for f in findings})
+        parts.append(f"  - {n} {label} findings across {tables} table(s): {rule_str}")
+
+    if not parts:
+        return "No deterministic findings were emitted by py_profiler for this run."
+
+    header = (
+        f"DETERMINISTIC FINDINGS — {total} total, already confirmed by SQL probes.\n"
+        "These are VERIFIED. Do NOT re-discover, re-verify, or re-query them.\n"
+        "Your job: identify multi-column patterns, cross-table relationships,\n"
+        "business hypotheses, and severity adjustments NOT captured below.\n"
+        "Output at most 10 NEW findings total. If nothing to add, return empty.\n"
+    )
+    return header + "\n".join(parts)
+
+
 def _compute_statistical_skip_reason(
     schema: dict[str, Any],
     profiler_summary: dict[str, Any],
@@ -448,7 +508,7 @@ def _derive_findings(
                     "entity": f"{tbl}.{col}",
                     "rule": "null_ratio_high",
                     "severity": severity,
-                    "confidence": 0.95,
+                    "confidence": 1.0,
                     "evidence": {
                         "null_ratio": round(null_rate, 4),
                         "total_rows": col_stat.total_rows,
@@ -457,6 +517,55 @@ def _derive_findings(
                     "suggested_action": (
                         f"Investigate why '{tbl}.{col}' has {null_rate:.0%} null values. "
                         "Consider enforcing NOT NULL if this column is required."
+                    ),
+                })
+
+        # ── Cardinality-based duplicate detection ──────────────────────
+        # Columns where cardinality / total_rows < 0.98 AND column name
+        # matches unique_column_patterns likely have duplicates. Zero
+        # extra queries — reuses profiler stats already computed.
+        try:
+            unique_patterns: list[str] = domain_rules.get("unique_column_patterns") or []
+            if not isinstance(unique_patterns, list):
+                unique_patterns = []
+        except Exception:
+            unique_patterns = []
+        # Default patterns if domain_rules is empty
+        if not unique_patterns:
+            unique_patterns = ["email", "msisdn", "reference", "sku", "code", "token", "key", "uuid", "slug", "username"]
+
+        for tbl_stat in report.tables:
+            tbl = tbl_stat.table_name
+            if tbl_stat.row_count < 10:
+                continue
+            for col_stat in tbl_stat.column_stats:
+                col = col_stat.column_name
+                if col_stat.total_rows < 10:
+                    continue
+                # Check if column name matches any unique pattern
+                col_lower = col.lower()
+                if not any(p in col_lower for p in unique_patterns):
+                    continue
+                # Cardinality ratio: if < 0.98, duplicates likely exist
+                card_ratio = col_stat.cardinality / col_stat.total_rows
+                if card_ratio >= 0.98:
+                    continue
+                dup_estimate = col_stat.total_rows - col_stat.cardinality
+                findings.append({
+                    "validator": "statistical",
+                    "entity": f"{tbl}.{col}",
+                    "rule": "suspected_duplicates",
+                    "severity": "high" if dup_estimate > 100 else "medium",
+                    "confidence": 0.85,
+                    "evidence": {
+                        "cardinality_ratio": round(card_ratio, 4),
+                        "estimated_duplicates": dup_estimate,
+                        "total_rows": col_stat.total_rows,
+                    },
+                    "suggested_action": (
+                        f"'{tbl}.{col}' has an estimated {dup_estimate} duplicate "
+                        f"value(s) (cardinality ratio {card_ratio:.2%}). "
+                        "Run find_duplicate_rows() to confirm and generate dedup SQL."
                     ),
                 })
 
@@ -496,7 +605,7 @@ def _derive_schema_findings(
                 "validator": "schema",
                 "entity": table_name,
                 "rule": "missing_pk",
-                "severity": "high",
+                "severity": "critical",
                 "confidence": 1.0,
                 "evidence": {"has_primary_key": False},
                 "suggested_action": f"Add a PRIMARY KEY to '{table_name}'.",
@@ -538,7 +647,7 @@ def _derive_schema_findings(
                 "validator": "schema",
                 "entity": f"{table_name}.{fk_col}",
                 "rule": "missing_index_fk_column",
-                "severity": "medium",
+                "severity": "high",
                 "confidence": 0.95,
                 "evidence": {
                     "foreign_table": fk.get("foreign_table", ""),
@@ -551,6 +660,628 @@ def _derive_schema_findings(
                 ),
             })
 
+    return findings
+
+
+# ── Category 1: Orphaned FK scanner ──────────────────────────────────────
+
+def _derive_orphaned_fk_findings(
+    schema: dict[str, Any],
+    connection_string: str,
+) -> list[dict[str, Any]]:
+    """Detect orphaned foreign key references via LEFT JOIN ... IS NULL.
+
+    For every FK constraint in the schema snapshot, run one COUNT(*) query.
+    Zero hardcoded names — FK metadata comes from information_schema.
+    """
+    findings: list[dict[str, Any]] = []
+    conn = psycopg2.connect(connection_string)
+    conn.autocommit = True
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(f"SET statement_timeout = {_STATEMENT_TIMEOUT_MS}")
+            for table_name, entry in schema.items():
+                for fk in entry.get("foreign_keys", []):
+                    fk_col = fk.get("column", "")
+                    parent_table = fk.get("foreign_table", "")
+                    parent_col = fk.get("foreign_column", "")
+                    if not all([fk_col, parent_table, parent_col]):
+                        continue
+                    if not (_SAFE_IDENTIFIER.match(fk_col)
+                            and _SAFE_IDENTIFIER.match(parent_table)
+                            and _SAFE_IDENTIFIER.match(parent_col)):
+                        continue
+                    try:
+                        cur.execute(
+                            f'SELECT COUNT(*) AS n FROM "{table_name}" c '
+                            f'LEFT JOIN "{parent_table}" p '
+                            f'ON c."{fk_col}" = p."{parent_col}" '
+                            f'WHERE c."{fk_col}" IS NOT NULL '
+                            f'AND p."{parent_col}" IS NULL'
+                        )
+                        row = cur.fetchone()
+                        count = (row or {}).get("n", 0)
+                    except Exception:
+                        continue
+                    if count > 0:
+                        findings.append({
+                            "validator": "relational",
+                            "entity": f"{table_name}.{fk_col}",
+                            "rule": "orphaned_fk",
+                            "severity": "critical" if count > 10 else "high",
+                            "confidence": 1.0,
+                            "evidence": {
+                                "orphan_count": count,
+                                "parent_table": parent_table,
+                                "parent_column": parent_col,
+                            },
+                            "suggested_action": (
+                                f"{count} row(s) in '{table_name}.{fk_col}' "
+                                f"reference non-existent {parent_table}.{parent_col}. "
+                                "Delete orphaned rows or re-establish the FK constraint."
+                            ),
+                        })
+    finally:
+        conn.close()
+    return findings
+
+
+# ── Category 1b: Heuristic orphan scan (_id columns without formal FK) ────
+
+def _derive_heuristic_orphan_findings(
+    schema: dict[str, Any],
+    connection_string: str,
+) -> list[dict[str, Any]]:
+    """Detect suspected orphan references on INT/BIGINT _id columns lacking a FK.
+
+    When FK constraints were dropped (e.g., for test injection), they don't
+    appear in information_schema. This heuristic checks _id columns without
+    formal FK by matching naming convention to plausible parent tables.
+    Zero hardcoded table names — parent lookup is schema-driven.
+    """
+    findings: list[dict[str, Any]] = []
+
+    # Build table name index for parent lookup
+    all_tables: set[str] = {t.lower() for t in schema}
+
+    # Collect existing FK columns to skip (already covered by formal orphan scan)
+    fk_columns: set[tuple[str, str]] = set()
+    for table_name, entry in schema.items():
+        for fk in entry.get("foreign_keys", []):
+            fk_columns.add((table_name.lower(), fk.get("column", "").lower()))
+
+    conn = psycopg2.connect(connection_string)
+    conn.autocommit = True
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(f"SET statement_timeout = {_STATEMENT_TIMEOUT_MS}")
+            for table_name, entry in schema.items():
+                for col_detail in entry.get("column_details", []):
+                    col_name = col_detail.get("column_name", "")
+                    col_type = (col_detail.get("data_type") or "").lower().split("(")[0].strip()
+                    if not col_name or not col_name.lower().endswith("_id"):
+                        continue
+                    if col_type not in _NUMERIC_TYPES:
+                        continue
+                    if (table_name.lower(), col_name.lower()) in fk_columns:
+                        continue  # formal FK exists, already scanned
+                    if not _SAFE_IDENTIFIER.match(col_name):
+                        continue
+
+                    # Derive plausible parent: strip _id suffix, try singular/plural
+                    base = col_name[:-3]  # remove "_id"
+                    candidates = [base, base + "s"]
+                    # Handle common irregular: _ies → _y
+                    if base.endswith("ie"):
+                        candidates.append(base[:-2] + "y")
+                    parent_table = None
+                    for c in candidates:
+                        if c.lower() in all_tables:
+                            parent_table = c
+                            break
+                    if parent_table is None:
+                        continue
+
+                    # Look for matching PK column in parent
+                    parent_entry = schema.get(parent_table, {})
+                    pk_cols = parent_entry.get("primary_key_columns", [])
+                    if not pk_cols:
+                        continue
+                    parent_col = pk_cols[0]  # use first PK column
+
+                    try:
+                        cur.execute(
+                            f'SELECT COUNT(*) AS n FROM "{table_name}" c '
+                            f'LEFT JOIN "{parent_table}" p '
+                            f'ON c."{col_name}" = p."{parent_col}" '
+                            f'WHERE c."{col_name}" IS NOT NULL '
+                            f'AND p."{parent_col}" IS NULL'
+                        )
+                        row = cur.fetchone() or {}
+                        count = row.get("n", 0)
+                    except Exception:
+                        continue
+                    if count > 0:
+                        findings.append({
+                            "validator": "relational",
+                            "entity": f"{table_name}.{col_name}",
+                            "rule": "suspected_orphaned_fk",
+                            "severity": "critical" if count > 10 else "high",
+                            "confidence": 0.85,
+                            "evidence": {
+                                "orphan_count": count,
+                                "suspected_parent": parent_table,
+                                "parent_column": parent_col,
+                                "no_formal_fk": True,
+                            },
+                            "suggested_action": (
+                                f"{count} row(s) in '{table_name}.{col_name}' "
+                                f"reference non-existent {parent_table}.{parent_col} "
+                                f"(no formal FK constraint exists — suspected orphan). "
+                                "Delete orphaned rows or re-add the FK constraint."
+                            ),
+                        })
+    finally:
+        conn.close()
+    return findings
+
+
+# ── Category 2: Temporal ordering detector ───────────────────────────────
+
+def _derive_temporal_ordering_findings(
+    schema: dict[str, Any],
+    connection_string: str,
+) -> list[dict[str, Any]]:
+    """Detect temporal ordering inconsistencies between timestamp column pairs.
+
+    For every table with ≥2 timestamp/date columns, enumerates all unordered
+    pairs and checks whether both a > b AND a < b exist in the same table.
+    Zero hardcoded column names — column types come from information_schema.
+    """
+    findings: list[dict[str, Any]] = []
+    conn = psycopg2.connect(connection_string)
+    conn.autocommit = True
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(f"SET statement_timeout = {_STATEMENT_TIMEOUT_MS}")
+            for table_name, entry in schema.items():
+                # Collect timestamp/date columns for this table
+                ts_cols: list[str] = []
+                for col_detail in entry.get("column_details", []):
+                    col_name = col_detail.get("column_name", "")
+                    col_type = (col_detail.get("data_type") or "").lower()
+                    if not col_name or not _SAFE_IDENTIFIER.match(col_name):
+                        continue
+                    if col_type.split("(")[0].strip() in _TEMPORAL_TYPES:
+                        ts_cols.append(col_name)
+
+                if len(ts_cols) < 2:
+                    continue
+
+                # Enumerate all unordered pairs
+                for i in range(len(ts_cols)):
+                    for j in range(i + 1, len(ts_cols)):
+                        a, b = ts_cols[i], ts_cols[j]
+                        try:
+                            cur.execute(
+                                f'SELECT '
+                                f'COUNT(*) FILTER (WHERE "{a}" IS NOT NULL AND "{b}" IS NOT NULL) AS both_populated, '
+                                f'COUNT(*) FILTER (WHERE "{a}" > "{b}") AS a_after_b, '
+                                f'COUNT(*) FILTER (WHERE "{a}" < "{b}") AS a_before_b '
+                                f'FROM "{table_name}"'
+                            )
+                            row = cur.fetchone() or {}
+                        except Exception:
+                            continue
+
+                        both = row.get("both_populated", 0)
+                        a_after = row.get("a_after_b", 0)
+                        a_before = row.get("a_before_b", 0)
+
+                        if both == 0:
+                            continue
+                        if a_after == 0 or a_before == 0:
+                            continue  # consistent ordering — no anomaly
+
+                        minority = min(a_after, a_before)
+                        minority_pct = minority / both
+
+                        if minority_pct < 0.01:
+                            severity = "low"
+                        elif minority_pct < 0.05:
+                            severity = "medium"
+                        else:
+                            severity = "high"
+
+                        findings.append({
+                            "validator": "statistical",
+                            "entity": table_name,
+                            "rule": "temporal_ordering_inconsistency",
+                            "severity": severity,
+                            "confidence": 1.0,
+                            "evidence": {
+                                "column_a": a,
+                                "column_b": b,
+                                "a_after_b": a_after,
+                                "a_before_b": a_before,
+                                "both_populated": both,
+                                "minority_pct": round(minority_pct, 4),
+                            },
+                            "suggested_action": (
+                                f"'{table_name}' has {minority} row(s) "
+                                f"({minority_pct:.2%}) where '{a}' and '{b}' "
+                                f"ordering is inconsistent with the majority. "
+                                "Investigate whether these are data entry errors."
+                            ),
+                        })
+    finally:
+        conn.close()
+    return findings
+
+
+# ── Category 3: Format/pattern detectors ──────────────────────────────────
+
+def _derive_format_findings(
+    schema: dict[str, Any],
+    connection_string: str,
+    domain_rules: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Detect format, casing, whitespace, and enum anomalies.
+
+    Three sub-detectors, all generic (zero hardcoded column names):
+      3a. Whitespace / empty-string / mixed-case on all VARCHAR/TEXT columns
+      3b. Enum anomaly on low-cardinality VARCHAR columns (< 50 distinct)
+      3c. Semantic-type regex validation (config-driven via column-name substring)
+
+    Semantic patterns are loaded from domain_rules.yaml key
+    "semantic_type_patterns", falling back to the module-level default.
+    """
+    findings: list[dict[str, Any]] = []
+
+    # Merge user-provided semantic patterns with defaults
+    semantic_patterns: dict[str, str] = dict(_SEMANTIC_TYPE_PATTERNS)
+    try:
+        user_patterns = domain_rules.get("semantic_type_patterns") or {}
+        if isinstance(user_patterns, dict):
+            semantic_patterns.update({k: str(v) for k, v in user_patterns.items()})
+    except Exception:
+        pass
+
+    conn = psycopg2.connect(connection_string)
+    conn.autocommit = True
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(f"SET statement_timeout = {_STATEMENT_TIMEOUT_MS}")
+
+            for table_name, entry in schema.items():
+                col_details = entry.get("column_details", [])
+                for col_detail in col_details:
+                    col_name = col_detail.get("column_name", "")
+                    col_type = (col_detail.get("data_type") or "").lower().split("(")[0].strip()
+                    if not col_name or not _SAFE_IDENTIFIER.match(col_name):
+                        continue
+
+                    is_varchar = col_type in ("character varying", "varchar", "text", "char", "character")
+                    is_numeric = col_type in _NUMERIC_TYPES
+                    is_temporal = col_type in _TEMPORAL_TYPES
+
+                    # ── 3a. Whitespace / casing (VARCHAR/TEXT only) ──────
+                    if is_varchar:
+                        try:
+                            cur.execute(
+                                f'SELECT '
+                                f'COUNT(*) AS total, '
+                                f'COUNT(*) FILTER (WHERE "{col_name}" IS NOT NULL '
+                                f'AND "{col_name}" != trim("{col_name}")) AS ws_count, '
+                                f'COUNT(*) FILTER (WHERE "{col_name}" IS NOT NULL '
+                                f'AND "{col_name}" = \'\') AS empty_count '
+                                f'FROM "{table_name}"'
+                            )
+                            row = cur.fetchone() or {}
+                        except Exception:
+                            continue
+                        total = row.get("total", 0)
+                        ws = row.get("ws_count", 0)
+                        empty = row.get("empty_count", 0)
+
+                        if ws > 0:
+                            findings.append({
+                                "validator": "structural",
+                                "entity": f"{table_name}.{col_name}",
+                                "rule": "whitespace_anomaly",
+                                "severity": "medium" if ws / max(total, 1) > 0.05 else "low",
+                                "confidence": 1.0,
+                                "evidence": {
+                                    "rows_with_whitespace": ws,
+                                    "total_rows": total,
+                                },
+                                "suggested_action": (
+                                    f"'{table_name}.{col_name}' has {ws} value(s) "
+                                    "with leading/trailing whitespace. Trim and revalidate."
+                                ),
+                            })
+                        if empty > 0:
+                            findings.append({
+                                "validator": "structural",
+                                "entity": f"{table_name}.{col_name}",
+                                "rule": "empty_string_values",
+                                "severity": "medium",
+                                "confidence": 1.0,
+                                "evidence": {
+                                    "empty_string_count": empty,
+                                    "total_rows": total,
+                                },
+                                "suggested_action": (
+                                    f"'{table_name}.{col_name}' has {empty} empty "
+                                    "string(s). Consider converting to NULL or adding "
+                                    "a CHECK constraint."
+                                ),
+                            })
+
+                    # ── 4a. Negative values (all NUMERIC columns) ──────────
+                    if is_numeric:
+                        try:
+                            cur.execute(
+                                f'SELECT COUNT(*) AS n FROM "{table_name}" '
+                                f'WHERE "{col_name}" < 0'
+                            )
+                            row = cur.fetchone() or {}
+                            neg = row.get("n", 0)
+                        except Exception:
+                            neg = 0
+                        if neg > 0:
+                            findings.append({
+                                "validator": "statistical",
+                                "entity": f"{table_name}.{col_name}",
+                                "rule": "negative_amount",
+                                "severity": "critical" if neg > 10 else "high",
+                                "confidence": 1.0,
+                                "evidence": {"negative_count": neg},
+                                "suggested_action": (
+                                    f"'{table_name}.{col_name}' has {neg} negative "
+                                    "value(s). Set to 0 or NULL after business review."
+                                ),
+                            })
+
+                    # ── 4b. Future timestamps (all TIMESTAMP/DATE columns) ───
+                    if is_temporal:
+                        try:
+                            cur.execute(
+                                f'SELECT COUNT(*) AS n FROM "{table_name}" '
+                                f'WHERE "{col_name}" > CURRENT_TIMESTAMP'
+                            )
+                            row = cur.fetchone() or {}
+                            future = row.get("n", 0)
+                        except Exception:
+                            future = 0
+                        if future > 0:
+                            findings.append({
+                                "validator": "statistical",
+                                "entity": f"{table_name}.{col_name}",
+                                "rule": "impossible_date",
+                                "severity": "high" if future > 5 else "medium",
+                                "confidence": 1.0,
+                                "evidence": {"future_timestamp_count": future},
+                                "suggested_action": (
+                                    f"'{table_name}.{col_name}' has {future} future "
+                                    "timestamp(s). Set to NULL or correct the date."
+                                ),
+                            })
+
+                    # ── 4c. Constant value (all columns) ─────────────────
+                    try:
+                        cur.execute(
+                            f'SELECT MIN("{col_name}") AS min_val, '
+                            f'MAX("{col_name}") AS max_val, '
+                            f'COUNT(*) AS n '
+                            f'FROM "{table_name}" '
+                            f'WHERE "{col_name}" IS NOT NULL'
+                        )
+                        row = cur.fetchone() or {}
+                        min_v = row.get("min_val")
+                        max_v = row.get("max_val")
+                        n = row.get("n", 0)
+                    except Exception:
+                        min_v, max_v, n = None, None, 0
+                    if n > 1 and min_v is not None and max_v is not None and str(min_v) == str(max_v):
+                        if is_temporal:
+                            findings.append({
+                                "validator": "statistical",
+                                "entity": f"{table_name}.{col_name}",
+                                "rule": "constant_timestamp",
+                                "severity": "medium",
+                                "confidence": 1.0,
+                                "evidence": {
+                                    "constant_value": str(min_v),
+                                    "total_non_null": n,
+                                },
+                                "suggested_action": (
+                                    f"'{table_name}.{col_name}' is constant "
+                                    f"({min_v}) across {n} non-null rows. "
+                                    "Possible batch-insert bug or unused column."
+                                ),
+                            })
+                        else:
+                            findings.append({
+                                "validator": "statistical",
+                                "entity": f"{table_name}.{col_name}",
+                                "rule": "constant_value",
+                                "severity": "low",
+                                "confidence": 1.0,
+                                "evidence": {
+                                    "constant_value": str(min_v),
+                                    "total_non_null": n,
+                                },
+                                "suggested_action": (
+                                    f"'{table_name}.{col_name}' has the same "
+                                    f"value ({min_v}) across all {n} non-null "
+                                    "rows. Verify this is intentional."
+                                ),
+                            })
+
+                    # ── 4d. Numeric range heuristic (pct/rate/percent) ──
+                    _RANGE_PATTERNS = ("pct", "percent", "rate", "percentage")
+                    if is_numeric and any(p in col_name.lower() for p in _RANGE_PATTERNS):
+                        try:
+                            cur.execute(
+                                f'SELECT COUNT(*) AS n FROM "{table_name}" '
+                                f'WHERE "{col_name}" < 0 OR "{col_name}" > 100'
+                            )
+                            row = cur.fetchone() or {}
+                            n = row.get("n", 0)
+                        except Exception:
+                            n = 0
+                        if n > 0:
+                            findings.append({
+                                "validator": "structural",
+                                "entity": f"{table_name}.{col_name}",
+                                "rule": "range_violation",
+                                "severity": "high" if n > 5 else "medium",
+                                "confidence": 0.90,
+                                "evidence": {
+                                    "violation_count": n,
+                                    "expected_range": "[0, 100]",
+                                },
+                                "suggested_action": (
+                                    f"'{table_name}.{col_name}' has {n} value(s) "
+                                    "outside the expected [0, 100] range. "
+                                    "Review and correct or clamp values."
+                                ),
+                            })
+
+                    # ── 3c. Semantic-type regex (any column type) ──────────
+                    col_lower = col_name.lower()
+                    for semantic_key, pattern in semantic_patterns.items():
+                        if semantic_key not in col_lower:
+                            continue
+                        try:
+                            cur.execute(
+                                f'SELECT COUNT(*) AS n FROM "{table_name}" '
+                                f'WHERE "{col_name}" IS NOT NULL '
+                                f'AND "{col_name}" !~ \'{pattern}\''
+                            )
+                            row = cur.fetchone() or {}
+                            violations = row.get("n", 0)
+                        except Exception:
+                            continue
+                        if violations > 0:
+                            findings.append({
+                                "validator": "structural",
+                                "entity": f"{table_name}.{col_name}",
+                                "rule": "format_violation",
+                                "severity": "high" if violations > 10 else "medium",
+                                "confidence": 0.95,
+                                "evidence": {
+                                    "semantic_type": semantic_key,
+                                    "pattern": pattern,
+                                    "violation_count": violations,
+                                },
+                                "suggested_action": (
+                                    f"'{table_name}.{col_name}' has {violations} "
+                                    f"value(s) failing {semantic_key} format validation. "
+                                    "Review and correct malformed entries."
+                                ),
+                            })
+                        break  # one semantic type per column
+
+            # ── 3b. Enum anomaly (low-cardinality VARCHAR) ─────────────────
+            # Run as a separate pass — needs per-column GROUP BY queries
+            for table_name, entry in schema.items():
+                for col_detail in entry.get("column_details", []):
+                    col_name = col_detail.get("column_name", "")
+                    col_type = (col_detail.get("data_type") or "").lower().split("(")[0].strip()
+                    if not col_name or not _SAFE_IDENTIFIER.match(col_name):
+                        continue
+                    if col_type not in ("character varying", "varchar", "text", "char", "character"):
+                        continue
+                    # Only check columns with low cardinality (2-50 distinct values)
+                    try:
+                        cur.execute(
+                            f'SELECT "{col_name}" AS val, COUNT(*) AS n '
+                            f'FROM "{table_name}" WHERE "{col_name}" IS NOT NULL '
+                            f'GROUP BY "{col_name}" ORDER BY n DESC'
+                        )
+                        rows = cur.fetchall()
+                    except Exception:
+                        continue
+
+                    distinct_count = len(rows)
+                    if distinct_count < 2 or distinct_count > 50:
+                        continue
+
+                    dominant_n = rows[0]["n"] if rows else 0
+                    if dominant_n == 0:
+                        continue
+                    threshold = max(1, int(dominant_n * 0.01))  # 1% of dominant
+
+                    rare_values: list[str] = []
+                    ws_variants: list[str] = []
+                    for r in rows:
+                        val = r.get("val")
+                        if val is None:
+                            continue
+                        n = r.get("n", 0)
+                        val_str = str(val)
+                        if n < threshold:
+                            rare_values.append(f"{val_str} (n={n})")
+                        if val_str != val_str.strip():
+                            ws_variants.append(f"{val_str!r} (n={n})")
+
+                    if rare_values:
+                        findings.append({
+                            "validator": "structural",
+                            "entity": f"{table_name}.{col_name}",
+                            "rule": "enum_anomaly",
+                            "severity": "medium",
+                            "confidence": 0.90,
+                            "evidence": {
+                                "distinct_count": distinct_count,
+                                "dominant_value": str(rows[0].get("val", "")),
+                                "dominant_count": dominant_n,
+                                "rare_values": rare_values[:10],
+                                "whitespace_variants": ws_variants[:5],
+                            },
+                            "suggested_action": (
+                                f"'{table_name}.{col_name}' has {len(rare_values)} "
+                                f"rare value(s) out of {distinct_count} distinct values. "
+                                "Review for typos, case variants, or invalid enum entries."
+                            ),
+                        })
+
+                    # ── Case-variant check ────────────────────────────
+                    # Group by lower(trim(col)) — if any group has > 1
+                    # distinct original value, case inconsistency exists.
+                    from collections import defaultdict as _dd
+                    case_groups: dict[str, set[str]] = _dd(set)
+                    for r in rows:
+                        val = r.get("val")
+                        if val is None:
+                            continue
+                        key = str(val).strip().lower()
+                        case_groups[key].add(str(val))
+                    case_conflicts = [
+                        f"{k}: {sorted(v)}"
+                        for k, v in case_groups.items() if len(v) > 1
+                    ]
+                    if case_conflicts:
+                        findings.append({
+                            "validator": "structural",
+                            "entity": f"{table_name}.{col_name}",
+                            "rule": "case_inconsistency",
+                            "severity": "medium",
+                            "confidence": 1.0,
+                            "evidence": {
+                                "case_conflicts": case_conflicts[:10],
+                                "distinct_count": distinct_count,
+                            },
+                            "suggested_action": (
+                                f"'{table_name}.{col_name}' has {len(case_conflicts)} "
+                                "case-variant group(s). Normalize to a consistent format."
+                            ),
+                        })
+
+    finally:
+        conn.close()
     return findings
 
 
@@ -755,6 +1486,52 @@ def python_profile_step(step_input: StepInput) -> StepOutput:
                     "py_profiler: derived %d deterministic schema finding(s) from schema snapshot",
                     len(schema_findings),
                 )
+
+            # ── New deterministic detectors (zero LLM tokens) ──────────
+            orphan_findings = _derive_orphaned_fk_findings(schema, connection_string)
+            session_state["orphaned_fk_findings"] = orphan_findings
+            if orphan_findings:
+                logger.info(
+                    "py_profiler: found %d orphaned FK reference(s)",
+                    len(orphan_findings),
+                )
+
+            heuristic_orphan = _derive_heuristic_orphan_findings(schema, connection_string)
+            # Merge heuristic orphans into orphaned_fk_findings for reducer
+            all_orphans = orphan_findings + heuristic_orphan
+            session_state["orphaned_fk_findings"] = all_orphans
+            if heuristic_orphan:
+                logger.info(
+                    "py_profiler: found %d heuristic orphan(s) on _id columns without FK",
+                    len(heuristic_orphan),
+                )
+
+            temporal_findings = _derive_temporal_ordering_findings(schema, connection_string)
+            session_state["temporal_ordering_findings"] = temporal_findings
+            if temporal_findings:
+                logger.info(
+                    "py_profiler: found %d temporal ordering inconsistencies",
+                    len(temporal_findings),
+                )
+
+            format_findings = _derive_format_findings(schema, connection_string, _dr)
+            session_state["format_findings"] = format_findings
+            if format_findings:
+                logger.info(
+                    "py_profiler: found %d format/pattern anomaly(s)",
+                    len(format_findings),
+                )
+
+            # ── Build deterministic coverage summary for LLM agents ─────
+            _all_deterministic = (
+                auto_findings + schema_findings +
+                orphan_findings + temporal_findings + format_findings
+            )
+            session_state["deterministic_findings_count"] = len(_all_deterministic)
+            session_state["deterministic_summary"] = _build_deterministic_summary(
+                auto_findings, schema_findings,
+                orphan_findings, temporal_findings, format_findings,
+            )
 
             skip_reason = _compute_statistical_skip_reason(
                 schema, session_state.get("profiler_summary", {}), _dr

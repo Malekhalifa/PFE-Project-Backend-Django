@@ -43,6 +43,7 @@ RemediationFamily = Literal[
     "nullability",
     "duplicates",
     "statistical",
+    "structural",
     "temporal",
     "content",
     "type_integrity",
@@ -70,6 +71,7 @@ Validator = Literal[
     "column",
     "row",
     "crossrow",
+    "unknown",      # fallback when LLM omits validator field
 ]
 
 _SEVERITY_RANK: dict[str, int] = {
@@ -127,6 +129,10 @@ class Finding(BaseModel):
             col = values.get("column") or values.get("column_name") or ""
             if table:
                 values["entity"] = f"{table}.{col}" if col else table
+        # LLM sometimes omits validator — default to "unknown" so we don't
+        # discard the entire report over one missing field.
+        if "validator" not in values:
+            values["validator"] = "unknown"
         return values
 
     validator: Validator = Field(..., description="Which validator produced this finding")

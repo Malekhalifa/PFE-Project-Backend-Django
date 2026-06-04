@@ -885,10 +885,11 @@ def compute_dqs(
     Equal 1/3 split: no empirical evidence privileges any one dimension.
     Weights are normalised so they sum to 1 across all tables.
 
-    Per-table penalty uses sum-capped accumulation:
-      penalty(t) = min(1.0, Σ severity_hit(f)·confidence(f) for f in findings(t))
-    Multiple findings on the same table accumulate — a comprehensively broken
-    table reaches full damage faster than one with a single issue.
+    Per-table penalty uses a bounded accumulation function:
+      penalty(t) = raw(t) / (1 + raw(t))
+      where raw(t) = Σ severity_hit(f)·confidence(f) for f in findings(t)
+    Multiple findings on the same table accumulate — every fix visibly
+    improves the score, with diminishing returns as raw penalty grows large.
 
     severity_hit: critical=1.0, high=0.6, medium=0.25, low=0.05
     DQS = Σ w(t)·(1 − penalty(t)) × 100
@@ -933,7 +934,8 @@ def compute_dqs(
         if table not in table_map:
             continue
         hit = severity_hit.get(f.severity, 0.0) * max(0.0, min(1.0, f.confidence))
-        table_penalty[table] = min(1.0, table_penalty.get(table, 0.0) + hit)
+        _raw = table_penalty.get(table, 0.0) + hit
+        table_penalty[table] = _raw / (1.0 + _raw)
 
     health = sum(w[t] * (1.0 - table_penalty.get(t, 0.0)) for t in table_map)
     return round(health * 100, 1)
@@ -1069,6 +1071,7 @@ def _legacy_fix_entry(card: FixCard, index: int, reduced_findings: ReducedFindin
     source_rule = card.source_rule or (matched.rule if matched else "")
     severity = matched.severity if matched else card.severity
     confidence = matched.confidence if matched else card.confidence
+    validator = matched.validator if matched else None
     evidence = dict(card.evidence or (matched.evidence if matched else {}))
     if card.card_family != "unknown" or not matched:
         family = card.card_family
@@ -1106,6 +1109,7 @@ def _legacy_fix_entry(card: FixCard, index: int, reduced_findings: ReducedFindin
         "interaction_model": interaction_model,
         "source_rule": source_rule,
         "source_type": source_type,
+        "validator": validator,
         "evidence": evidence,
         "evidence_payload": evidence_payload,
         "estimated_rows_affected": card.rows_affected_estimate or 0,
@@ -1407,6 +1411,38 @@ def _merge_schema_auto_findings_into(
             "CONSISTENCY CHECK: LLM schema agent found only %d finding(s) vs "
             "%d from deterministic schema snapshot — possible under-detection.",
             llm_count, len(auto),
+        )
+
+
+def _merge_deterministic_findings_into(
+    report: Any,
+    session_state: dict[str, Any],
+    state_key: str,
+    label: str,
+) -> None:
+    """Inject deterministic findings from session_state into a validator report.
+
+    Generic helper — used by orphaned FK, temporal ordering, and format
+    detectors. Appends any (entity, rule) pairs not already present.
+    """
+    auto = session_state.get(state_key) or []
+    if not auto or report is None:
+        return
+    existing = {(f.entity, f.rule) for f in (report.findings or [])}
+    merged = 0
+    for raw in auto:
+        try:
+            f = Finding.model_validate(raw)
+            if (f.entity, f.rule) not in existing:
+                report.findings.append(f)
+                existing.add((f.entity, f.rule))
+                merged += 1
+        except Exception:
+            pass
+    if merged:
+        logger.info(
+            "Merged %d deterministic %s finding(s) into %s report",
+            merged, label, getattr(report, "validator", "?"),
         )
 
 
@@ -1993,6 +2029,17 @@ def orchestrator_workflow(
         # reports.statistical, the merged auto-findings are discarded — preserved
         # as-is to avoid behavior drift.
         _merge_profiler_auto_findings_into(reports.statistical, session_state)
+
+        # ── New deterministic detectors ──────────────────────────────────
+        _merge_deterministic_findings_into(
+            reports.relational, session_state, "orphaned_fk_findings", "orphaned FK"
+        )
+        _merge_deterministic_findings_into(
+            reports.statistical, session_state, "temporal_ordering_findings", "temporal ordering"
+        )
+        _merge_deterministic_findings_into(
+            reports.structural, session_state, "format_findings", "format/pattern"
+        )
 
         # Profiler recovery — replaces reports.{profiler, statistical, structural,
         # reduced, fix_plan} when the workflow profiler step failed silently.

@@ -29,6 +29,12 @@ from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
+# django-allauth social accounts (may not exist if allauth not installed)
+try:
+    from allauth.socialaccount.models import SocialAccount
+except ImportError:  # pragma: no cover
+    SocialAccount = None
+
 from config.celery import app as celery_app
 from api.models import AnalysisResult, AuditLog, Job, audit_log
 from api.db import (
@@ -50,6 +56,7 @@ from api.db import (
 from api.permissions import find_owned_job
 from api.serializers import (
     AnalyzePostgresSerializer,
+    AnalyzeSandboxSerializer,
     ChatMessageCreateSerializer,
     JobDeleteSerializer,
 )
@@ -948,7 +955,7 @@ class ResultsExportView(APIView):
                 'job_id': jobId,
                 'file_path': meta.get('file_path'),
                 'file_size_bytes': meta.get('file_size_bytes'),
-                'mode': meta.get('mode', 'normal'),
+                'mode': meta.get('mode', 'agentic_postgres'),
                 'analysis_type': meta.get('analysis_type', 'in-memory'),
                 'started_at': meta.get('started_at'),
                 'completed_at': meta.get('completed_at'),
@@ -1453,6 +1460,15 @@ class GetFixesView(APIView):
             except Exception:
                 pass
 
+        # Include which fix_ids have already been successfully executed,
+        # so the frontend can restore accepted state on page reload.
+        executed = (
+            AuditLog.objects
+            .filter(job_id=job_id, event_type='FIX_EXECUTED', payload__status_code=200)
+            .values_list('payload__fix_id', flat=True)
+        )
+        fixes_payload['executed_fix_ids'] = [fid for fid in executed if fid]
+
         return Response(fixes_payload)
 
 
@@ -1740,6 +1756,151 @@ class ResetSandboxView(APIView):
         return Response({'status': 'ok', 'sandbox_db': sandbox_db})
 
 
+class AnalyzeSandboxView(APIView):
+    """
+    POST /api/analyze-sandbox/<job_id>/
+
+    Runs the full QualityLab analysis pipeline against the job's sandbox
+    database instead of the source database. Creates a new job so results
+    appear independently in history, linked to the original via baseline_job_id.
+
+    Body (optional): { "llm_model": "gemini-2.5-flash" }
+    """
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [AnalyzePostgresUserRateThrottle]
+
+    def post(self, request, job_id):
+        unverified = _require_verified_email(request)
+        if unverified:
+            return unverified
+
+        # 1 — Ownership check
+        job = find_owned_job(job_id, request.user)
+        if not job:
+            return Response(
+                {'detail': 'Job not found or access denied.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        connection_string = job.get('connection_string')
+        if not connection_string:
+            return Response(
+                {'detail': 'No connection string on this job.'},
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
+
+        # 2 — Validate optional body
+        serializer = AnalyzeSandboxSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # 3 — Resolve LLM model: env var with fallback, matching _DEFAULT_POSTGRES_LLM_MODEL
+        llm_model = (
+            serializer.validated_data.get('llm_model', '').strip()
+            or os.environ.get('GEMINI_MODEL', 'gemini-2.5-flash')
+        )
+
+        # 4 — Derive sandbox DB connection string (same pattern as ResetSandboxView)
+        from urllib.parse import urlparse, urlunparse
+
+        parsed = urlparse(connection_string)
+        original_db = (parsed.path or '').lstrip('/')
+        if not original_db:
+            return Response(
+                {'detail': 'Cannot derive database name from DSN.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        job_suffix = job_id.replace('-', '')[:12]
+        sandbox_db = f"{original_db}_ql_{job_suffix}"
+
+        # Use _replace(path=...) — preserves original netloc intact (user:pass@host:port).
+        # Manual urlunparse blows up when password/port are None.
+        sandbox_conn_str = urlunparse(parsed._replace(path=f"/{sandbox_db}"))
+
+        # 5 — Provision sandbox database (CREATE WITH TEMPLATE, same as ResetSandboxView)
+        from django.conf import settings as _settings
+        import psycopg2 as _psycopg2
+
+        _db = _settings.DATABASES['default']
+        admin_dsn = urlunparse((
+            'postgresql',
+            f"{_db['USER']}:{_db['PASSWORD']}@{parsed.hostname}:{parsed.port or 5432}",
+            '/postgres', '', '', '',
+        ))
+
+        try:
+            conn = _psycopg2.connect(admin_dsn)
+            conn.autocommit = True
+            with conn.cursor() as cur:
+                # Terminate existing sandbox connections (safe regardless of reuse)
+                cur.execute(
+                    "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
+                    "WHERE datname = %s AND pid <> pg_backend_pid();",
+                    [sandbox_db],
+                )
+                # Preserve accumulated fixes: only create sandbox if it doesn't exist.
+                # ResetSandboxView handles explicit reset when a fresh clone is needed.
+                cur.execute(
+                    "SELECT 1 FROM pg_catalog.pg_database WHERE datname = %s",
+                    [sandbox_db],
+                )
+                sandbox_exists = cur.fetchone() is not None
+
+                if not sandbox_exists:
+                    cur.execute(
+                        "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
+                        "WHERE datname = %s AND pid <> pg_backend_pid();",
+                        [original_db],
+                    )
+                    cur.execute(
+                        f'CREATE DATABASE "{sandbox_db}" WITH TEMPLATE "{original_db}";'
+                    )
+            conn.close()
+        except Exception as exc:
+            logger.error("analyze_sandbox: provision failed for job %s: %s", job_id, exc)
+            return Response(
+                {'detail': f'Sandbox provision failed: {exc}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        # 6 — Create a new job for the sandbox analysis
+        user_id = str(request.user.id)
+        from api.db import create_job as _create_job, update_job_connection_string as _update_conn
+
+        new_job_id = _create_job(
+            user_id=user_id,
+            mode="agentic_postgres",
+            llm_model=llm_model,
+        )
+        _update_conn(new_job_id, sandbox_conn_str)
+
+        # 7 — Launch the analysis task against the sandbox
+        async_result = analyze_postgres_task.delay(
+            job_id=new_job_id,
+            connection_string=sandbox_conn_str,
+            domain_rules=[],
+            llm_model=llm_model,
+            baseline_job_id=job_id,
+        )
+        task_id = str(getattr(async_result, 'id', '') or '')
+        if task_id:
+            update_job_celery_task_id(new_job_id, task_id)
+
+        audit_log(
+            new_job_id, 'SANDBOX_ANALYSIS_ENQUEUED',
+            {'source_job_id': job_id, 'task_id': task_id},
+            user_id=user_id,
+        )
+
+        return Response({
+            'job_id': new_job_id,
+            'message': 'Sandbox analysis started',
+            'task_id': task_id,
+            'sandbox_db': sandbox_db,
+        })
+
+
 # ──────────────────────────────────────────────
 # Admin APM Monitoring
 # ──────────────────────────────────────────────
@@ -1754,7 +1915,7 @@ def _to_iso_utc(value: datetime | None) -> str | None:
     return value.astimezone(timezone.utc).isoformat().replace('+00:00', 'Z')
 
 
-def _serialize_admin_user(user: User, *, job_count: int = 0) -> dict[str, Any]:
+def _serialize_admin_user(user: User, *, job_count: int = 0, social_providers: list[str] | None = None) -> dict[str, Any]:
     first_name = str(getattr(user, 'first_name', '') or '').strip()
     last_name = str(getattr(user, 'last_name', '') or '').strip()
     full_name = f'{first_name} {last_name}'.strip()
@@ -1773,6 +1934,7 @@ def _serialize_admin_user(user: User, *, job_count: int = 0) -> dict[str, Any]:
         'date_joined': _to_iso_utc(user.date_joined),
         'last_login': _to_iso_utc(user.last_login),
         'job_count': int(job_count),
+        'social_providers': social_providers or [],
     }
 
 
@@ -1838,8 +2000,44 @@ class AdminUsersView(APIView):
             )
         }
 
+        # Query social account providers (Google, GitHub) from django-allauth
+        social_providers_map: dict[str, list[str]] = {}
+        if SocialAccount is not None:
+            social_rows = (
+                SocialAccount.objects
+                .filter(user_id__in=user_ids)
+                .values('user_id', 'provider')
+            )
+            for entry in social_rows:
+                uid = str(entry['user_id'])
+                provider = str(entry['provider'])
+                if uid not in social_providers_map:
+                    social_providers_map[uid] = []
+                social_providers_map[uid].append(provider)
+
+        # Fallback: social-auth users who predate SocialAccount creation
+        # (GitHub callback path). They have no usable password — password
+        # auth is impossible, so they must have signed up via OAuth.
+        # Google users are already covered by allauth's built-in flow.
+        for user in rows:
+            uid = str(user.id)
+            if uid not in social_providers_map and not user.has_usable_password():
+                social_providers_map[uid] = ['github']
+                try:
+                    SocialAccount.objects.get_or_create(
+                        user=user,
+                        provider='github',
+                        defaults={'uid': str(getattr(user, 'email', '') or '').lower(), 'extra_data': {}},
+                    )
+                except Exception:
+                    pass
+
         items = [
-            _serialize_admin_user(user, job_count=job_counts.get(str(user.id), 0))
+            _serialize_admin_user(
+                user,
+                job_count=job_counts.get(str(user.id), 0),
+                social_providers=social_providers_map.get(str(user.id)),
+            )
             for user in rows
         ]
 
@@ -1964,7 +2162,7 @@ class AdminStatsView(APIView):
 
         active_jobs_qs = Job.objects.filter(
             Q(status__in=list(_ADMIN_ACTIVE_JOB_STATUSES)) | Q(status__startswith='running_')
-        ).only('id', 'status', 'updated_at', 'user_id', 'mode').order_by('-updated_at')
+        ).only('id', 'status', 'updated_at', 'user_id').order_by('-updated_at')
         active_jobs_count = active_jobs_qs.count()
         active_jobs_sample = list(active_jobs_qs[:25])
 
@@ -1977,7 +2175,6 @@ class AdminStatsView(APIView):
             {
                 'job_id': entry.id,
                 'status': entry.status,
-                'mode': entry.mode,
                 'updated_at': entry.updated_at.isoformat().replace('+00:00', 'Z') if entry.updated_at else None,
                 'user_email': active_user_emails.get(str(entry.user_id)),
             }
@@ -2068,9 +2265,39 @@ class AdminStatsView(APIView):
 
 
 class AdminPipelinePerformanceView(APIView):
-    """GET /api/admin/pipeline-performance/ — step-level timings and success rates."""
+    """GET /api/admin/pipeline-performance/ — step-level timings from report JSON files."""
 
     permission_classes = [IsAuthenticated]
+
+    # Map report phase names → canonical pipeline step keys (merge synonyms)
+    _PHASE_TO_STEP: dict[str, str] = {
+        'schema_priming': 'running_schema',
+        'Schema Integrity Validator': 'running_schema',
+        'Python Profiler': 'running_profiler',
+        'Statistical Validator': 'running_statistical',
+        'Relational Validator': 'running_relational',
+        'Structural Validator': 'running_structural',
+        'Reducer': 'running_fix_planner',
+        'Data Fix Planner': 'running_fix_planner',
+    }
+
+    _STEP_LABELS: dict[str, str] = {
+        'running_schema': 'Schema Integrity Validator',
+        'running_profiler': 'Database Profiler',
+        'running_statistical': 'Statistical Validator',
+        'running_structural': 'Structural Validator',
+        'running_relational': 'Relational Validator',
+        'running_fix_planner': 'Data Fix Planner',
+    }
+
+    _CANONICAL_ORDER = [
+        'running_schema',
+        'running_profiler',
+        'running_statistical',
+        'running_structural',
+        'running_relational',
+        'running_fix_planner',
+    ]
 
     def get(self, request):
         admin_error = _require_admin_staff(request)
@@ -2081,136 +2308,143 @@ class AdminPipelinePerformanceView(APIView):
         window_days = _coerce_int(request.query_params.get('days'), 7, minimum=1, maximum=30)
         since = now - timedelta(days=window_days)
 
-        step_metrics: dict[str, dict[str, Any]] = {}
-        run_metrics: dict[str, dict[str, Any]] = {}
-        measured_logs = AuditLog.objects.filter(
-            created_at__gte=since,
-            event_type__in=['PIPELINE_STEP_COMPLETED', 'PIPELINE_STEP_FAILED'],
-        ).only('event_type', 'payload')
-
-        for entry in measured_logs.iterator():
-            payload = entry.payload if isinstance(entry.payload, dict) else {}
-            step = str(payload.get('step') or '').strip()
-            if not step:
-                continue
-
-            metric = step_metrics.setdefault(
-                step,
-                {
-                    'durations': [],
-                    'success': 0,
-                    'total': 0,
-                    'source': 'measured',
-                },
-            )
-
-            metric['total'] += 1
-            classification = _classify_audit_event(entry.event_type, payload)
-            if classification != 'error' and entry.event_type == 'PIPELINE_STEP_COMPLETED':
-                metric['success'] += 1
-
-            try:
-                duration_ms = float(payload.get('duration_ms'))
-            except (TypeError, ValueError):
-                duration_ms = None
-
-            if duration_ms is not None and duration_ms >= 0:
-                metric['durations'].append(duration_ms)
-
-            pipeline_run_id = str(payload.get('pipeline_run_id') or '').strip()
-            if not pipeline_run_id:
-                continue
-
-            run_metric = run_metrics.setdefault(
-                pipeline_run_id,
-                {
-                    'duration_ms': 0.0,
-                    'timed_steps': 0,
-                    'has_failure': False,
-                },
-            )
-            if duration_ms is not None and duration_ms >= 0:
-                run_metric['duration_ms'] += duration_ms
-                run_metric['timed_steps'] += 1
-
-            if entry.event_type == 'PIPELINE_STEP_FAILED' or classification == 'error':
-                run_metric['has_failure'] = True
-
-        uses_estimation = False
-
-        step_label_map = {key: label for key, label in _PIPELINE_STEP_DEFINITIONS}
-        canonical_steps = [key for key, _label in _PIPELINE_STEP_DEFINITIONS]
-        extra_steps = sorted([key for key in step_metrics.keys() if key not in canonical_steps])
-        ordered_steps = canonical_steps + extra_steps
-
-        step_rows = []
-        for step in ordered_steps:
-            metric = step_metrics.get(
-                step,
-                {
-                    'durations': [],
-                    'success': 0,
-                    'total': 0,
-                    'source': 'none',
-                },
-            )
-            durations = metric['durations']
-            sample_count = len(durations)
-            average_duration_ms = round(sum(durations) / sample_count, 2) if sample_count else 0.0
-            min_duration_ms = round(min(durations), 2) if sample_count else 0.0
-            max_duration_ms = round(max(durations), 2) if sample_count else 0.0
-            success_rate = round((metric['success'] * 100.0) / metric['total'], 2) if metric['total'] else 0.0
-
-            step_rows.append(
-                {
-                    'step': step,
-                    'label': step_label_map.get(step, step.replace('_', ' ').title()),
-                    'average_duration_ms': average_duration_ms,
-                    'min_duration_ms': min_duration_ms,
-                    'max_duration_ms': max_duration_ms,
-                    'sample_count': sample_count,
-                    'success_rate': success_rate,
-                    'source': metric['source'],
-                }
-            )
-
-        run_totals = [
-            entry['duration_ms']
-            for entry in run_metrics.values()
-            if entry.get('timed_steps', 0) > 0
-        ]
-        total_sample_count = len(run_totals)
-        total_average_duration_ms = round(sum(run_totals) / total_sample_count, 2) if total_sample_count else 0.0
-        total_min_duration_ms = round(min(run_totals), 2) if total_sample_count else 0.0
-        total_max_duration_ms = round(max(run_totals), 2) if total_sample_count else 0.0
-        successful_runs = sum(
-            1
-            for entry in run_metrics.values()
-            if entry.get('timed_steps', 0) > 0 and not entry.get('has_failure', False)
-        )
-        total_success_rate = round((successful_runs * 100.0) / total_sample_count, 2) if total_sample_count else 0.0
-
-        step_rows.append(
-            {
-                'step': 'total_pipeline',
-                'label': 'Total Pipeline',
-                'average_duration_ms': total_average_duration_ms,
-                'min_duration_ms': total_min_duration_ms,
-                'max_duration_ms': total_max_duration_ms,
-                'sample_count': total_sample_count,
-                'success_rate': total_success_rate,
-                'source': 'measured' if total_sample_count else 'none',
-            }
-        )
-
-        return Response(
-            {
+        reports_dir = getattr(settings, 'REPORTS_DIR', None)
+        if not reports_dir or not os.path.isdir(reports_dir):
+            return Response({
                 'window_days': window_days,
-                'uses_estimation': uses_estimation,
-                'steps': step_rows,
+                'uses_estimation': False,
+                'steps': [],
                 'generated_at': now.isoformat().replace('+00:00', 'Z'),
-            }
-        )
+            })
+
+        # Aggregate: step → list of durations in ms from each report run
+        step_durations: dict[str, list[float]] = {step: [] for step in self._CANONICAL_ORDER}
+        run_totals: list[float] = []
+        sample_count = 0
+
+        try:
+            filenames = sorted(os.listdir(reports_dir))
+        except OSError:
+            filenames = []
+
+        for fname in filenames:
+            if not fname.startswith('report_') or not fname.endswith('.json'):
+                continue
+
+            fpath = os.path.join(reports_dir, fname)
+
+            # Fast filename-based date filter (most reports encode timestamp in filename)
+            # Fall back to mtime if filename parsing fails
+            fname_date = self._parse_date_from_filename(fname)
+            if fname_date is not None:
+                if fname_date < since:
+                    continue
+            else:
+                try:
+                    mtime = os.path.getmtime(fpath)
+                    if datetime.fromtimestamp(mtime, tz=timezone.utc) < since:
+                        continue
+                except OSError:
+                    continue
+
+            # Parse only reports within the window
+            try:
+                with open(fpath, 'r', encoding='utf-8') as fh:
+                    report = json.load(fh)
+            except (json.JSONDecodeError, OSError):
+                continue
+
+            timing = (report.get('summary') or {}).get('timing')
+            if not timing:
+                continue
+
+            phases_ms = timing.get('phases_ms')
+            if not isinstance(phases_ms, dict) or not phases_ms:
+                continue
+
+            # Double-check timestamp from report content if available
+            run_ts = report.get('run_timestamp')
+            if run_ts:
+                try:
+                    run_dt = parse_datetime(run_ts)
+                    if run_dt and run_dt < since:
+                        continue
+                except Exception:
+                    pass
+
+            run_total = 0.0
+            for phase_name, duration_ms in phases_ms.items():
+                try:
+                    dur = float(duration_ms)
+                except (TypeError, ValueError):
+                    continue
+                if dur < 0:
+                    continue
+
+                step_key = self._PHASE_TO_STEP.get(phase_name)
+                if step_key and step_key in step_durations:
+                    step_durations[step_key].append(dur)
+                run_total += dur
+
+            if run_total > 0:
+                run_totals.append(run_total)
+            sample_count += 1
+
+        # Build step rows
+        step_rows = []
+        for step in self._CANONICAL_ORDER:
+            durations = step_durations[step]
+            n = len(durations)
+            avg_ms = round(sum(durations) / n, 2) if n else 0.0
+            min_ms = round(min(durations), 2) if n else 0.0
+            max_ms = round(max(durations), 2) if n else 0.0
+            step_rows.append({
+                'step': step,
+                'label': self._STEP_LABELS.get(step, step),
+                'average_duration_ms': avg_ms,
+                'min_duration_ms': min_ms,
+                'max_duration_ms': max_ms,
+                'sample_count': n,
+                'success_rate': 100.0 if n else 0.0,
+                'source': 'measured' if n else 'none',
+            })
+
+        # Total pipeline aggregate
+        total_n = len(run_totals)
+        total_avg = round(sum(run_totals) / total_n, 2) if total_n else 0.0
+        total_min = round(min(run_totals), 2) if total_n else 0.0
+        total_max = round(max(run_totals), 2) if total_n else 0.0
+        step_rows.append({
+            'step': 'total_pipeline',
+            'label': 'Total Pipeline',
+            'average_duration_ms': total_avg,
+            'min_duration_ms': total_min,
+            'max_duration_ms': total_max,
+            'sample_count': total_n,
+            'success_rate': 100.0 if total_n else 0.0,
+            'source': 'measured' if total_n else 'none',
+        })
+
+        return Response({
+            'window_days': window_days,
+            'uses_estimation': False,
+            'steps': step_rows,
+            'generated_at': now.isoformat().replace('+00:00', 'Z'),
+        })
+
+    @staticmethod
+    def _parse_date_from_filename(filename: str) -> datetime | None:
+        """Extract UTC datetime from report filename like report_..._2026-06-01T01-51-43_477055Z.json."""
+        import re as _re
+        m = _re.search(r'(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2})', filename)
+        if not m:
+            return None
+        try:
+            ts_str = m.group(1).replace('-', ':', 3).replace(':', '-', 2)  # → 2026-06-01T01:51:43
+            dt = datetime.strptime(ts_str, '%Y-%m-%dT%H:%M:%S')
+            return dt.replace(tzinfo=timezone.utc)
+        except (ValueError, IndexError):
+            return None
 
 
 class AdminAuditLogView(APIView):

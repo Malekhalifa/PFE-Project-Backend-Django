@@ -179,6 +179,17 @@ SCHEMA_AGENT_CONFIG = {
             "SCOPE: Schema definition only. Never inspect row values, never run COUNT(*) on data, "
             "never test cross-row behavior."
         ),
+        (
+            "{deterministic_summary}"
+        ),
+        (
+            "FOCUS: The deterministic findings above are already confirmed by PostgreSQL metadata. "
+            "Do NOT re-check PK/FK/index existence for entities already listed. Instead, focus on: "
+            "(1) naming convention consistency — do timestamp columns use consistent suffixes? "
+            "do FK columns follow a pattern? (2) type appropriateness — VARCHAR storing only "
+            "numeric strings? (3) denormalization signals — columns duplicated across tables? "
+            "Output at most 10 NEW findings total. If nothing to add, return empty."
+        ),
         "{common_rules}",
         "Domain rules: {schema_rules}",
         # AUTHORITATIVE SOURCE
@@ -197,16 +208,11 @@ SCHEMA_AGENT_CONFIG = {
             "(3) Fallback assumption — only when both (1) and (2) are unavailable. "
             "Never override a higher-precedence source with a lower one."
         ),
-        # WORKFLOW
-        (
-            "WORKFLOW: cover all structural rule categories in one pass — missing PKs, nullable FK-style "
-            "columns, naming convention, index gaps. Do not spend all tool calls on a single rule type."
-        ),
         # TOOL DISCIPLINE
         (
-            "Tool discipline: "
-            "If has_primary_key = true in the snapshot, NEVER call describe_constraints() to re-verify the PK. "
-            "Call describe_constraints(table) only when has_primary_key = false AND primary_key_columns is empty."
+            "Tool discipline: py_profiler already verified PK/FK/index existence for all tables. "
+            "Never call describe_constraints() for PK/FK/index re-verification. "
+            "Use tools ONLY for naming convention analysis and type-appropriateness checks."
         ),
         # NEVER blocks (clustered negative constraints)
         (
@@ -230,7 +236,7 @@ SCHEMA_AGENT_CONFIG = {
     "output_schema": ValidationReport,
     "parser_model": _make_parser_model(),
     "use_json_mode": True,
-    "tool_call_limit": 30,
+    "tool_call_limit": 10,
 }
 
 
@@ -261,6 +267,19 @@ STATISTICAL_AGENT_CONFIG = {
             "duplicate values, outlier distributions, low cardinality, categorical drift. "
             "SCOPE: One column at a time. Never report schema-structure issues or cross-row relationship anomalies."
         ),
+        (
+            "{deterministic_summary}"
+        ),
+        (
+            "FOCUS: The deterministic findings above are already confirmed by COUNT(*) probes. "
+            "Do NOT re-discover null_rate_high, constant_value, constant_timestamp, negative_amount, "
+            "or impossible_date for entities already listed. Instead, focus on: "
+            "(1) multi-column correlation — do any column statistics on the same table correlate? "
+            "(2) business hypotheses — what process could explain each anomaly pattern? "
+            "(3) severity adjustment — a 98% null rate on a column named 'deleted_at' is expected, "
+            "but on 'email' is critical. Adjust severities accordingly. "
+            "Output at most 10 NEW findings total. If nothing to add, return empty."
+        ),
         "{common_rules}",
         "Domain rules: {statistical_rules}",
         # validator_schema is a compact view (column_details + unique_constraints only) — the
@@ -274,41 +293,23 @@ STATISTICAL_AGENT_CONFIG = {
             "for deviations — produce zero findings for them."
         ),
         "{learned_rules}",
-        # DETERMINISTIC THRESHOLDS — exact numbers prevent subjective interpretation.
-        (
-            f"THRESHOLDS — apply exactly, no subjective interpretation: "
-            f"null_rate_high when null_rate ≥ {HIGH_NULL_THRESHOLD:.2f}. "
-            f"duplicate_values when dup_count / total_rows ≥ {DUPLICATE_RATIO_THRESHOLD:.2f}. "
-            f"outlier_distribution when |z-score| ≥ {OUTLIER_ZSCORE:.1f} for ≥ 1% of non-null rows. "
-            f"Compare observed values against the profiler baseline — never flag a column whose "
-            f"deviation falls within the baseline's recorded variance."
-        ),
         # TOOL DISCIPLINE
         (
-            "Tool discipline — read directly from {profiler_summary} where possible: "
-            "null_rate_high, outlier_distribution, low_cardinality findings come from profiler data "
-            "with ZERO tool calls. Never re-query values the profiler already measured. "
+            "Tool discipline: py_profiler already confirmed all single-column statistics. "
             "Use run_query() ONLY for: "
-            "(1) duplicate_values — on tables that have at least one column matching "
-            "unique_column_patterns from domain_rules (e.g. email, msisdn, reference, *_code). "
-            "Skip tables without matching columns entirely. "
-            "(2) categorical_drift via check_categorical_drift — only when profiler cardinality is "
-            "between 2 and 50 AND total_rows > min_rows_for_cardinality from domain_rules. "
-            "(3) learned_rules enforcement — run ONE COUNT(*) query per learned rule, "
-            "emit rule='custom_rule_violation' when violation_count >= 1 AND "
-            "violation_count / total_rows >= max_violation_row_pct from domain_rules. "
-            "summarize_table() is NOT available — never call it."
+            "(1) multi-column correlation hypotheses — probe two columns on the same table. "
+            "(2) learned_rules enforcement — run ONE COUNT(*) query per learned rule. "
+            "Never re-verify null_rate_high, constant_value, constant_timestamp, negative_amount, "
+            "or impossible_date — those are confirmed in {deterministic_summary}."
         ),
         # NEVER blocks
         (
             "NEVER: "
-            "(a) flag duplicate_values for columns that do not match unique_column_patterns "
-            "(never flag personal name fields). "
-            "(b) flag low_cardinality or categorical_drift for tables matching lookup_table_patterns. "
-            "(c) flag any rule for a table with fewer rows than min_rows_for_cardinality. "
-            "(d) emit one finding per column when multiple columns of the same table share the same "
-            "rule — instead emit ONE finding for the table entity with "
-            "evidence.affected_columns = ['col1', 'col2', ...]."
+            "(a) re-emit null_rate_high, constant_value, constant_timestamp, negative_amount, "
+            "or impossible_date — py_profiler already confirmed these. "
+            "(b) flag any rule for a table with fewer rows than min_rows_for_cardinality. "
+            "(c) emit one finding per column when multiple columns share the same rule — "
+            "emit ONE table-level finding with evidence.affected_columns instead."
         ),
         # OUTPUT
         (
@@ -323,7 +324,7 @@ STATISTICAL_AGENT_CONFIG = {
     "output_schema": ValidationReport,
     "parser_model": _make_parser_model(),
     "use_json_mode": True,
-    "tool_call_limit": 30,
+    "tool_call_limit": 10,
 }
 
 
@@ -348,6 +349,20 @@ STRUCTURAL_AGENT_CONFIG = {
             "SCOPE: Row content only. Never report schema definition issues, cross-row aggregates, "
             "or relational integrity issues."
         ),
+        (
+            "{deterministic_summary}"
+        ),
+        (
+            "FOCUS: The deterministic findings above are already confirmed by COUNT(*) probes. "
+            "Do NOT re-discover negative_amount, impossible_date, whitespace_anomaly, empty_string_values, "
+            "enum_anomaly, or format_violation for entities already listed. Instead, focus on: "
+            "(1) cross-field validation — do any pairs of columns on the same table have mutually "
+            "inconsistent values? (e.g., 'status = shipped' but 'shipped_at IS NULL'). "
+            "(2) row-level business rules that span multiple columns. "
+            "(3) custom domain-rule violations from {structural_rules}. "
+            "Use run_query() only for novel cross-field hypotheses — never re-verify listed findings. "
+            "Output at most 5 NEW findings total. If nothing to add, return empty."
+        ),
         "{common_rules}",
         "Domain rules: {structural_rules}",
         # validator_schema is a compact view (column_details + unique_constraints only).
@@ -360,55 +375,31 @@ STRUCTURAL_AGENT_CONFIG = {
         # WORKFLOW
         (
             "WORKFLOW: "
-            "(1) Read row_count per table directly from the profiler baseline. "
-            "Skip any table where row_count = 0. "
-            "(2) Process tables in descending row_count order. "
-            "(3) For each table run AT MOST 3 batched queries: one for numeric columns "
-            "(negative/zero amounts), one for date/timestamp columns (impossible dates), "
-            "one for required text columns (blank strings). "
-            "Never fan out into per-column queries. "
-            "Never call summarize_table() or run COUNT(*) for row count — that is already in the baseline. "
-            "Always use targeted WHERE-clause queries — never scan full tables when a predicate can "
-            "isolate violations."
+            "(1) py_profiler already confirmed negative_amount, impossible_date, whitespace_anomaly, "
+            "empty_string_values, enum_anomaly, format_violation, and constant_value for all columns. "
+            "Do NOT re-check these. "
+            "(2) Focus on cross-field hypotheses: probe pairs of columns on the same table for "
+            "mutual consistency violations (e.g., 'status = X implies column Y IS NOT NULL'). "
+            "(3) Custom domain rules from {structural_rules}: run ONE COUNT(*) per rule. "
+            "Use run_query() ONLY for novel cross-field hypotheses — never re-verify deterministic findings."
         ),
-        # EVIDENCE REQUIREMENT — strong gate against hallucinated row-level findings.
+        # EVIDENCE REQUIREMENT
         (
-            "EVIDENCE REQUIREMENT — emit a finding only when ALL of: "
-            "(a) a COUNT(*) query has confirmed violation_count ≥ 1. "
-            "(b) for impossible_date / negative_amount / blank_required / zero_amount: "
-            "violation_count ≥ 1 is sufficient (structural_violation_row_pct = 0 — any single row is a defect). "
-            "For custom_rule_violation / business_rule_violation: "
-            "violation_count / total_rows ≥ max_violation_row_pct from domain_rules. "
-            "(c) the evidence dict includes both 'violation_count' (integer) and 'violation_pct' (float). "
-            "If any of these fail, do NOT emit the finding."
-        ),
-        # DATE/TIMESTAMP TEMPLATE
-        (
-            "Date/timestamp template — use static plausibility bounds, never derive bounds from the data. "
-            "NEVER use PERCENTILE_CONT() on date/timestamp types — it raises a type error. "
-            "Run ONE query per date/timestamp column: "
-            "SELECT "
-            "COUNT(*) FILTER (WHERE col IS NOT NULL) AS non_null_count, "
-            "COUNT(*) FILTER (WHERE col < (CURRENT_DATE - INTERVAL '100 years') "
-            "  OR col > (CURRENT_DATE + INTERVAL '5 years')) AS violation_count, "
-            "COUNT(*) AS total_rows FROM table; "
-            "If non_null_count = 0, skip. "
-            "If violation_count > 0, flag as 'impossible_date' (structural_violation_row_pct = 0 — any single violating row qualifies). "
-            "The bounds are always CURRENT_DATE ± fixed interval — never set from MIN/MAX of the data."
+            "EVIDENCE REQUIREMENT: emit a finding only when a COUNT(*) query confirms "
+            "violation_count ≥ 1. For custom_rule_violation: violation_count / total_rows "
+            "≥ max_violation_row_pct from domain_rules. "
+            "Include 'violation_count' (integer) and 'violation_pct' (float) in evidence."
         ),
         # CUSTOM DOMAIN RULES
         (
-            "Custom domain rules: for each entry in domain_rules.custom_rules that targets a specific "
-            "table, run ONE COUNT(*) query using the rule as a WHERE predicate. "
-            "Emit rule = 'custom_rule_violation' only when the evidence requirement above holds. "
-            "Use this to enforce cross-column logical constraints such as "
-            "'status = shipped implies shipped_at IS NOT NULL'."
+            "Custom domain rules: for each entry in domain_rules.custom_rules, "
+            "run ONE COUNT(*) query using the rule as a WHERE predicate. "
+            "Emit rule = 'custom_rule_violation' when the evidence requirement holds."
         ),
         # CONSOLIDATION
         (
-            "When a single query reveals violations across multiple columns of the same table "
-            "(e.g. send_sms_table_size, spool_size, sms_received all contain negative values), "
-            "emit ONE finding for the table entity with affected_columns = ['col1', 'col2', ...]. "
+            "When violations span multiple columns of the same table with the same rule, "
+            "emit ONE table-level finding with evidence.affected_columns. "
             "Never emit one finding per column."
         ),
         # OUTPUT
@@ -424,7 +415,7 @@ STRUCTURAL_AGENT_CONFIG = {
     "output_schema": ValidationReport,
     "parser_model": _make_parser_model(),
     "use_json_mode": True,
-    "tool_call_limit": 30,
+    "tool_call_limit": 10,
 }
 
 
@@ -449,6 +440,19 @@ RELATIONAL_AGENT_CONFIG = {
             "SCOPE: Cross-row only. Never report null rates, outliers, cardinality, drift, or "
             "schema-definition issues — those belong to other validators."
         ),
+        (
+            "{deterministic_summary}"
+        ),
+        (
+            "FOCUS: The deterministic findings above are already confirmed by LEFT JOIN IS NULL "
+            "and statistical probes. Do NOT re-run orphan scans or duplicate checks for entities "
+            "already listed. Instead, focus on: "
+            "(1) cardinality ratio anomalies — is the child:parent ratio consistent across a table? "
+            "(2) temporal cross-table consistency — do child timestamps ever precede parent timestamps? "
+            "(3) functional dependency interpretation — what business rule does each FD violation reveal? "
+            "Use analyze_relationship() and detect_fd() for novel patterns only. "
+            "Output at most 5 NEW findings total. If nothing to add, return empty."
+        ),
         "{common_rules}",
         "Domain rules: {relational_rules}",
         # relational_schema is a compact view: column_details, foreign_keys, unique_constraints,
@@ -461,23 +465,17 @@ RELATIONAL_AGENT_CONFIG = {
             "duplicate_values, orphaned_fk_reference, functional_dependency_violation, "
             "temporal_inconsistency, referential_constraint_violation."
         ),
-        # TWO-PHASE WORKFLOW — central to this agent.
+        # WORKFLOW — single phase, py_profiler already scanned orphaned FKs.
         (
-            "WORKFLOW — 25-tool-call budget split into two mandatory phases. "
-            "Use describe_table(), describe_constraints(), run_query(), and relational helper tools "
-            "(analyze_relationship, find_duplicate_rows, detect_fd). "
-            "Prefer aggregation queries with FILTER over multiple queries. "
-            "PHASE 1 — FK orphan sweep (≤ 10 calls): "
-            "call analyze_relationship() for each FK in the schema snapshot's foreign_keys lists. "
-            "If a FK returns 0 orphans, accept it and move on. Never re-query a FK that already returned 0. "
-            "HARD STOP after 10 calls regardless of remaining FKs — Phase 2 must always run. "
-            "PHASE 2 — Cross-row duplicate and FD analysis (≥ 15 calls): "
-            "for every table with > 10 rows, call find_duplicate_rows() on columns matching "
-            "unique_column_patterns from domain_rules (email, msisdn, reference, *_code). "
-            "Then call detect_fd() on columns with single-column unique constraints or known "
-            "determinants (e.g. groupe_id → quota, organization_id → name). "
-            "Skip detect_fd() for any column covered by a composite unique constraint. "
-            "Phase 2 MUST execute — most real findings come from it, even when Phase 1 found nothing."
+            "WORKFLOW: py_profiler already confirmed orphaned FK references via LEFT JOIN IS NULL "
+            "for every FK constraint. Do NOT re-run FK orphan sweeps. Focus on: "
+            "(1) Functional dependency analysis — call detect_fd() on columns with single-column "
+            "unique constraints or known determinants. Skip composite-unique-protected columns. "
+            "(2) Cross-table temporal consistency — probe whether child timestamps precede parent "
+            "timestamps using targeted run_query(). "
+            "(3) Cardinality ratio anomalies — check whether child:parent row ratios are "
+            "consistent within a table using COUNT(*) aggregation. "
+            "Use analyze_relationship() and detect_fd() for novel patterns only."
         ),
         # DETERMINISTIC THRESHOLD
         (
@@ -496,22 +494,16 @@ RELATIONAL_AGENT_CONFIG = {
             "(b) the column has no unique constraint but matches unique_column_patterns. "
             "Flag functional_dependency_violation (X → Y) only when X has NO unique constraint, "
             "OR X is the sole column in a single-column unique constraint. "
-            "Junction tables (many-to-many relations such as user_contact_tags, campagne_contacts) "
+            "Junction tables (many-to-many relations with exactly two FK columns forming a composite PK) "
             "NEVER have FDs between their two FK columns — never run FD checks on them."
         ),
-        # FK ORPHAN DISCIPLINE
+        # FK REFERENCE DISCIPLINE
         (
-            "FK orphan discipline: the schema snapshot's foreign_keys list per table is the AUTHORITATIVE "
-            "FK source — entries look like {constraint_name, column, foreign_table, foreign_column}. "
-            "Read FK definitions from this list — never call describe_constraints() for FK discovery. "
-            "Only run orphan checks on FK relationships explicitly listed in foreign_keys. "
-            "NEVER infer FK relationships from column naming patterns (a column named 'contact_id' is "
-            "NOT a FK to 'contacts' unless foreign_keys says so). "
-            "A column absent from foreign_keys has no FK relationship to check. "
-            "Use LEFT JOIN … IS NULL for all orphan queries — never NOT IN (mishandles NULLs): "
-            "SELECT COUNT(*) FROM source s "
-            "LEFT JOIN target t ON s.source_col = t.target_col "
-            "WHERE t.target_col IS NULL AND s.source_col IS NOT NULL"
+            "FK reference discipline: py_profiler already scanned all FK relationships for orphans. "
+            "Read FK definitions from schema snapshot's foreign_keys list. "
+            "NEVER infer FK relationships from column naming patterns. "
+            "Focus on cross-table patterns the orphan scan cannot detect: "
+            "temporal ordering across tables, cardinality ratio anomalies, FD violations."
         ),
         # NEVER blocks
         (
@@ -537,7 +529,7 @@ RELATIONAL_AGENT_CONFIG = {
     "output_schema": ValidationReport,
     "parser_model": _make_parser_model(),
     "use_json_mode": True,
-    "tool_call_limit": 25,
+    "tool_call_limit": 15,
 }
 
 
@@ -591,8 +583,8 @@ FIX_PLANNER_AGENT_CONFIG = {
         # FIX_ID
         (
             "fix_id: short, lowercase, hyphen-separated slug, unique within the plan. "
-            "Derive from action + target — e.g. 'add-pk-users', 'fill-null-orders-email', "
-            "'remove-dup-sessions-token'. "
+            "Derive from action + target — e.g. 'add-pk-{table}', 'fill-null-{table}-{column}', "
+            "'remove-dup-{table}-{column}'. Use the actual table and column names from each finding."
             "Assign fix_ids BEFORE resolving dependencies. No two cards may share a fix_id."
         ),
         # INTERACTION_MODEL — the most error-prone field, so explicit mapping + negative anchor.
@@ -637,7 +629,9 @@ FIX_PLANNER_AGENT_CONFIG = {
             "type_mismatch → 'type_integrity'. "
             "categorical_drift / outlier_detected / distribution_anomaly → 'statistical'. "
             "temporal_inconsistency / stale_timestamp → 'temporal'. "
-            "Any rule not in the list above → 'unknown'."
+            "Any rule not in the list above → 'unknown'. "
+            "You may also use 'structural' for structural-validator findings "
+            "(negative_or_zero_amounts, impossible_date, blank_required_field, etc.)."
         ),
         # GROUPED FINDINGS — one finding with count > 1 = ONE card.
         (
@@ -737,5 +731,5 @@ FIX_PLANNER_AGENT_CONFIG = {
     "output_schema": FixPlan,
     "parser_model": _make_parser_model(),
     "use_json_mode": True,
-    "tool_call_limit": 35,
+    "tool_call_limit": 15,
 }

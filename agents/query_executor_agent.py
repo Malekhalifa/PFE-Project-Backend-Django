@@ -21,6 +21,20 @@ def utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
+import re as _re
+
+_CONCURRENT_DDL_RE = _re.compile(r'\bCONCURRENTLY\b', _re.IGNORECASE)
+
+
+def _is_concurrent_ddl(query: str) -> bool:
+    """True when the query uses CONCURRENTLY (CREATE INDEX / REINDEX ... CONCURRENTLY).
+
+    These statements refuse to run inside a transaction block and must be
+    executed with autocommit enabled.
+    """
+    return bool(_CONCURRENT_DDL_RE.search(query))
+
+
 class QueryExecutorAgent:
     """Executes SQL fix queries inside one PostgreSQL transaction."""
 
@@ -168,10 +182,40 @@ class QueryExecutorAgent:
             connection.autocommit = False
             cursor = connection.cursor()
 
+            # Split CONCURRENTLY queries — they refuse to run inside a
+            # transaction block. Execute them individually with autocommit
+            # before the main transaction, then run the rest as one txn.
+            concurrent_queries = [q for q in queries if _is_concurrent_ddl(q)]
+            transactional_queries = [q for q in queries if not _is_concurrent_ddl(q)]
+
+            concurrently_logs: list[dict] = []
+            if concurrent_queries:
+                connection.autocommit = True
+                for q in concurrent_queries:
+                    log_entry, rows_affected, exc = self._execute_single_query(cursor, q)
+                    concurrently_logs.append(log_entry)
+                    if exc is not None:
+                        connection.autocommit = False
+                        self._safe_close(cursor)
+                        self._safe_close(connection)
+                        return self._failure_payload(
+                            queries=queries,
+                            database_id=database_id,
+                            executed_at=executed_at,
+                            started_at=started_at,
+                            query_logs=concurrently_logs,
+                            error=self._build_db_error(exc),
+                        )
+                connection.autocommit = False
+
             # Start an explicit transaction boundary before executing user SQL.
             cursor.execute("BEGIN;")
 
-            query_logs, total_rows_affected, failure_exc = self._execute_queries(cursor, queries)
+            query_logs, total_rows_affected, failure_exc = self._execute_queries(cursor, transactional_queries)
+
+            # Merge results — CONCURRENTLY logs first, then transactional logs.
+            all_logs = concurrently_logs + query_logs
+
             if failure_exc is not None:
                 self._safe_rollback(connection)
                 return self._failure_payload(
@@ -179,7 +223,7 @@ class QueryExecutorAgent:
                     database_id=database_id,
                     executed_at=executed_at,
                     started_at=started_at,
-                    query_logs=query_logs,
+                    query_logs=all_logs,
                     error=self._build_db_error(failure_exc),
                 )
 
@@ -190,7 +234,7 @@ class QueryExecutorAgent:
                 executed_at=executed_at,
                 started_at=started_at,
                 rows_affected=total_rows_affected,
-                query_logs=query_logs,
+                query_logs=all_logs,
             )
 
         except Exception as exc:
@@ -207,6 +251,34 @@ class QueryExecutorAgent:
         finally:
             self._safe_close(cursor)
             self._safe_close(connection)
+
+    def _execute_single_query(self, cursor, query: str) -> tuple[dict, int, Exception | None]:
+        """Execute one query with autocommit already enabled. Returns (log_entry, rows_affected, exc|None)."""
+        query_started_at = time.perf_counter()
+        try:
+            cursor.execute(query)
+            rows_affected = cursor.rowcount
+            duration_ms = int((time.perf_counter() - query_started_at) * 1000)
+            log_entry = {
+                'index': 1,
+                'query': query,
+                'status': 'success',
+                'duration_ms': duration_ms,
+                'rows_affected': max(rows_affected, 0),
+                'error': None,
+            }
+            return log_entry, max(rows_affected, 0), None
+        except Exception as exc:
+            duration_ms = int((time.perf_counter() - query_started_at) * 1000)
+            log_entry = {
+                'index': 1,
+                'query': query,
+                'status': 'failure',
+                'duration_ms': duration_ms,
+                'rows_affected': 0,
+                'error': self._build_db_error(exc),
+            }
+            return log_entry, 0, exc
 
     def _execute_queries(self, cursor, queries: list[str]) -> tuple[list[dict], int, Exception | None]:
         query_logs: list[dict] = []

@@ -190,6 +190,52 @@ _SCHEMA_STRUCTURAL_RULES = frozenset({
     "missing_index_fk_column",
 })
 
+# ── Rule alias normalization ──────────────────────────────────────────────
+# Agents emit different rule names for the same logical concept (e.g.
+# "nullable_fk" and "nullable_fk_column").  Normalize to a single canonical
+# name *before* dedup so that _finding_key produces identical keys.
+_RULE_ALIASES: dict[str, str] = {
+    "nullable_fk_column":       "nullable_fk",
+    "nullable_foreign_key":     "nullable_fk",
+    "orphan_fk":                "orphaned_fk",
+    "broken_fk":                "orphaned_fk",
+    "referential_integrity":    "orphaned_fk",
+    "missing_fk_index":         "missing_index_fk_column",
+    "unindexed_fk":             "missing_index_fk_column",
+    "missing_primary_key":      "missing_pk",
+    "add_pk":                   "missing_pk",
+    "null_ratio_high":          "high_null_ratio",
+    "null_rate_high":           "high_null_ratio",
+    "duplicate_rate_high":      "duplicate_detected",
+    "duplicate_values":         "duplicate_detected",
+    "exact_duplicate":          "duplicate_detected",
+    "unique_violation":         "duplicate_detected",
+    "outlier":                  "distributional_outlier",
+}
+
+
+def _normalize_rule(rule: str) -> str:
+    """Return canonical rule name, collapsing aliases to a single key."""
+    return _RULE_ALIASES.get(rule, rule)
+
+
+def _normalize_finding_entity(f: Finding) -> str:
+    """Ensure column-level findings use consistent entity format.
+
+    Some agents emit table.column while others emit just the table name
+    even when a specific column is the target.  Extract the column from
+    evidence when available so dedup keys match.
+    """
+    entity = f.entity.strip()
+    if "." in entity:
+        return entity
+    # Table-level entity — try to recover the column from evidence
+    if f.evidence:
+        col = f.evidence.get("column") or f.evidence.get("column_name")
+        if col:
+            return f"{entity}.{col}"
+    return entity
+
 
 def _recompute_finding_confidence(f: Finding, profiler_summary: dict) -> float:
     """Replace LLM self-reported confidence with deterministic signals.
@@ -636,6 +682,18 @@ class ReduceSignals:
 
                 _merge_auto(_stat_report,   _profiler_auto, "statistical")
                 _merge_auto(_schema_report, _schema_auto,   "schema")
+
+                # ── Merge new deterministic detectors ──────────────────────
+                _orphan_auto: list[dict] = _sd.get("orphaned_fk_findings") or []
+                _temporal_auto: list[dict] = _sd.get("temporal_ordering_findings") or []
+                _format_auto: list[dict] = _sd.get("format_findings") or []
+
+                _relational_report = reports_by_step.get("relational")
+                _structural_report = reports_by_step.get("structural")
+
+                _merge_auto(_relational_report, _orphan_auto,   "orphaned FK")
+                _merge_auto(_stat_report,       _temporal_auto, "temporal ordering")
+                _merge_auto(_structural_report, _format_auto,   "format/pattern")
         except Exception as _merge_exc:
             logger.warning("reducer: auto-findings merge failed: %s", _merge_exc)
 
@@ -1007,7 +1065,16 @@ class ReduceSignals:
                     dropped_stat,
                 )
 
-        # ── 4. Dedupe — keep the highest-ranked copy per (validator, entity, rule) ──
+        # ── 3e. Normalize rule aliases + entity format before dedup ─────────
+        # Collapse "nullable_fk" / "nullable_fk_column" → "nullable_fk" so
+        # _finding_key produces identical keys for the same logical issue.
+        # Also normalize table-only entities to table.column when evidence
+        # carries a column reference, preventing entity-format mismatch.
+        for f in filtered:
+            f.rule = _normalize_rule(f.rule)
+            f.entity = _normalize_finding_entity(f)
+
+        # ── 4. Dedupe — keep the highest-ranked copy per (entity, family) ──
         best: dict[tuple, Finding] = {}
         for f in filtered:
             key = _finding_key(f)

@@ -142,7 +142,7 @@ def _clear_jwt_cookie(response):
     return response
 
 
-def _get_or_create_social_user(email):
+def _get_or_create_social_user(email, provider='github'):
     """Find existing user by email or create a new one for social login."""
     normalized_email = (email or '').strip().lower()
     now = timezone.now()
@@ -161,6 +161,31 @@ def _get_or_create_social_user(email):
             user.email_verified_at = now
             if hasattr(user, 'save'):
                 user.save(update_fields=['email_verified', 'email_verified_at'])
+
+        # Ensure a SocialAccount record exists so admin dashboard can show auth method
+        if not created:
+            # If the user already exists, still create SocialAccount if missing
+            try:
+                from allauth.socialaccount.models import SocialAccount
+                SocialAccount.objects.get_or_create(
+                    user=user,
+                    provider=provider,
+                    defaults={'uid': normalized_email, 'extra_data': {}},
+                )
+            except Exception:
+                pass
+        else:
+            try:
+                from allauth.socialaccount.models import SocialAccount
+                SocialAccount.objects.create(
+                    user=user,
+                    provider=provider,
+                    uid=normalized_email,
+                    extra_data={},
+                )
+            except Exception:
+                pass
+
         return user
     except IntegrityError:
         # Race-safe fallback when two social callbacks attempt the same email.
@@ -170,6 +195,15 @@ def _get_or_create_social_user(email):
             user.email_verified_at = now
             if hasattr(user, 'save'):
                 user.save(update_fields=['email_verified', 'email_verified_at'])
+        try:
+            from allauth.socialaccount.models import SocialAccount
+            SocialAccount.objects.get_or_create(
+                user=user,
+                provider=provider,
+                defaults={'uid': normalized_email, 'extra_data': {}},
+            )
+        except Exception:
+            pass
         return user
 
 

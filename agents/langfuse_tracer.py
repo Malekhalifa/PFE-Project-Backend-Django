@@ -11,8 +11,10 @@ from __future__ import annotations
 
 import logging
 import os
+import socket
 from contextvars import ContextVar
 from typing import Any
+from urllib.parse import urlparse
 
 logger = logging.getLogger("qualitylab.langfuse")
 
@@ -21,6 +23,34 @@ _current_span: ContextVar[Any] = ContextVar("_ql_langfuse_span", default=None)
 
 _client: Any = None
 _client_init_attempted = False
+_otel_preflight_done = False
+
+
+def _langfuse_reachable(host: str) -> bool:
+    """Quick TCP probe — if Langfuse is down, skip OTEL to avoid span-export noise."""
+    try:
+        parsed = urlparse(host)
+        port = parsed.port or (443 if parsed.scheme == "https" else 80)
+        with socket.create_connection((parsed.hostname, port), timeout=2):
+            return True
+    except Exception:
+        return False
+
+
+def _otel_preflight() -> None:
+    """Run once at process start. If Langfuse host unreachable, disable OTEL."""
+    global _otel_preflight_done
+    if _otel_preflight_done:
+        return
+    _otel_preflight_done = True
+
+    lf_host = os.environ.get("LANGFUSE_HOST", "https://cloud.langfuse.com")
+    if not _langfuse_reachable(lf_host):
+        os.environ["OTEL_SDK_DISABLED"] = "true"
+        logger.info(
+            "Langfuse host %s unreachable — OTEL export disabled (no span-export noise)",
+            lf_host,
+        )
 
 
 def _get_client() -> Any:
@@ -30,8 +60,12 @@ def _get_client() -> Any:
     _client_init_attempted = True
     if not (os.environ.get("LANGFUSE_SECRET_KEY") and os.environ.get("LANGFUSE_PUBLIC_KEY")):
         return None
+    _otel_preflight()
+    if os.environ.get("OTEL_SDK_DISABLED"):
+        logger.info("Langfuse client skipped — OTEL disabled (host unreachable)")
+        return None
     try:
-        from langfuse import Langfuse
+        from langfuse import Langfuse  # noqa: E402
         _client = Langfuse(
             public_key=os.environ["LANGFUSE_PUBLIC_KEY"],
             secret_key=os.environ["LANGFUSE_SECRET_KEY"],

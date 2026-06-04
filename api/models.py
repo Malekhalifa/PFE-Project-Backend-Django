@@ -40,7 +40,7 @@ class Job(models.Model):
     # Job lifecycle
     status = models.CharField(max_length=64, default='starting', db_index=True)
     celery_task_id = models.CharField(max_length=128, null=True, blank=True, db_index=True)
-    mode = models.CharField(max_length=64, default='normal')
+    mode = models.CharField(max_length=64, default='agentic_postgres')
     llm_model = models.CharField(max_length=128, default='gemini-2.5-flash')
 
     # Audit timestamps

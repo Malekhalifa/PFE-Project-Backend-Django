@@ -58,6 +58,28 @@ class AnalyzePostgresSerializer(serializers.Serializer):
         return model_id
 
 
+class AnalyzeSandboxSerializer(serializers.Serializer):
+    llm_model = serializers.CharField(
+        required=False,
+        allow_blank=False,
+        max_length=128,
+        default='gemini-2.5-flash',
+        help_text=_LLM_MODEL_HINT,
+    )
+
+    def validate_llm_model(self, value: str) -> str:
+        model_id = (value or '').strip()
+        if not model_id:
+            raise serializers.ValidationError(f"llm_model cannot be empty. {_LLM_MODEL_HINT}")
+
+        if not re.match(r'^[A-Za-z0-9._:-]+$', model_id):
+            raise serializers.ValidationError(
+                f"llm_model contains invalid characters. Use letters, numbers, '.', '_', '-', ':' only. {_LLM_MODEL_HINT}"
+            )
+
+        return model_id
+
+
 class ChatMessageCreateSerializer(serializers.Serializer):
     role = serializers.ChoiceField(choices=['user', 'agent'])
     content = serializers.CharField(required=True, allow_blank=False, max_length=60000)

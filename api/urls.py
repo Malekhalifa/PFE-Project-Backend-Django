@@ -38,6 +38,7 @@ urlpatterns = [
     path('fixes/<str:job_id>/', views.GetFixesView.as_view(), name='get-fixes'),
     path('execute-fix/<str:job_id>/', views.ExecuteFixView.as_view(), name='execute-fix'),
     path('reset-sandbox/<str:job_id>/', views.ResetSandboxView.as_view(), name='reset-sandbox'),
+    path('analyze-sandbox/<str:job_id>/', views.AnalyzeSandboxView.as_view(), name='analyze-sandbox'),
 
     # Admin APM Monitoring
     path('admin/stats/', views.AdminStatsView.as_view(), name='admin-stats'),

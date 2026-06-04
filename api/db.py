@@ -143,7 +143,7 @@ def _legacy_cleaning_summary(report: dict | None) -> dict:
 
 def create_job(
     user_id: str,
-    mode: str = 'normal',
+    mode: str = 'agentic_postgres',
     llm_model: str = _DEFAULT_LLM_MODEL,
 ) -> str:
     """Create a new job row. Returns the job_id (UUID string)."""
@@ -202,7 +202,7 @@ def get_job(job_id: str) -> dict | None:
         'connection_string': decrypted_connection_string,
         'status': row.get('status') or '',
         'celery_task_id': row.get('celery_task_id'),
-        'mode': row.get('mode') or 'normal',
+        'mode': row.get('mode') or 'agentic_postgres',
         'llm_model': row.get('llm_model') or _DEFAULT_LLM_MODEL,
         'created_at': row.get('created_at'),
         'updated_at': row.get('updated_at'),
