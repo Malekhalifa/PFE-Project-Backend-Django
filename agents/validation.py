@@ -333,29 +333,55 @@ def build_validation_workflow(
 _MAX_RELATIONAL_RETRIES = 2
 _RELATIONAL_RETRY_DELAY_S = 5
 
-_TRANSIENT_MARKERS = (
-    "502", "503", "504",
-    "Bad Gateway", "Service Unavailable",
-    "DEADLINE_EXCEEDED", "timed out", "timeout",
-    "UNAVAILABLE", "RESOURCE_EXHAUSTED",
-    "Server Error", "Error 502", "Error 503", "Error 504",
+# ── Transient / quota error detection ────────────────────────────────────────
+# Delegates to the structured gemini_errors module so classification logic
+# lives in one place.  Kept as thin wrappers for backward compatibility with
+# the rest of the retry machinery.
+
+from .gemini_errors import (
+    classify_gemini_error,
+    gemini_error_detail_payload,
+    GeminiErrorCode,
 )
-_QUOTA_MARKERS = ("RESOURCE_EXHAUSTED", "429", "quota")
-_QUOTA_RETRY_DELAY_S = 60
 
 
 def _is_transient_error(content: Any) -> bool:
+    """True if *content* matches a known transient Gemini error pattern."""
     if not isinstance(content, str):
         return False
-    lower = content.lower()
-    return any(m.lower() in lower for m in _TRANSIENT_MARKERS)
+    code, _ = classify_gemini_error(content)
+    return code in (
+        GeminiErrorCode.QUOTA_EXCEEDED,
+        GeminiErrorCode.MODEL_OVERLOADED,
+        GeminiErrorCode.TRANSIENT,
+        GeminiErrorCode.DEADLINE_EXCEEDED,
+        GeminiErrorCode.MALFORMED_FUNCTION_CALL,
+    )
 
 
 def _is_quota_error(content: Any) -> bool:
+    """True if *content* matches a quota / rate-limit error."""
     if not isinstance(content, str):
         return False
-    lower = content.lower()
-    return any(m.lower() in lower for m in _QUOTA_MARKERS)
+    code, _ = classify_gemini_error(content)
+    return code == GeminiErrorCode.QUOTA_EXCEEDED
+
+
+_QUOTA_RETRY_DELAY_S = 60
+
+
+def classify_step_error(content: Any) -> dict | None:
+    """Classify a step's raw error output and return a structured payload dict.
+
+    Returns ``None`` when *content* isn't a recognisable error string so
+    callers can fall back to a generic message.
+    """
+    if not isinstance(content, str) or not content.strip():
+        return None
+    error_code, _ = classify_gemini_error(content)
+    if error_code == GeminiErrorCode.UNKNOWN:
+        return None
+    return gemini_error_detail_payload(error_code, "unknown")
 
 
 def _run_relational_standalone(
@@ -1536,6 +1562,70 @@ def _maybe_retry_relational(
     )
 
 
+def _run_validator_standalone(
+    *,
+    validator: Any,
+    validator_name: str,
+    session_state: dict[str, Any],
+    database_id: str,
+    error_hint: Any = None,
+) -> ValidationReport:
+    """Re-run a validator agent standalone after a transient failure.
+
+    Generic version of _run_relational_standalone — works for statistical,
+    structural, and relational validators.
+    """
+    import time as _time
+    delay = _QUOTA_RETRY_DELAY_S if _is_quota_error(error_hint) else _RELATIONAL_RETRY_DELAY_S
+    for attempt in range(1, _MAX_RELATIONAL_RETRIES + 1):
+        logger.warning("%s transient failure — retry %d/%d in %ds",
+                       validator_name, attempt, _MAX_RELATIONAL_RETRIES, delay)
+        _time.sleep(delay)
+        try:
+            response = validator.run(
+                input=(
+                    f"Re-run {validator_name} analysis for database '{database_id}'. "
+                    "The previous attempt failed with a transient error. Execute your "
+                    "analysis fully and return a complete ValidationReport."
+                ),
+                session_state=session_state,
+            )
+            report = _as_validation_report(getattr(response, "content", ""), validator_name)
+            if report.findings:
+                return report
+        except Exception as exc:
+            logger.error("%s retry %d/%d failed: %s",
+                         validator_name, attempt, _MAX_RELATIONAL_RETRIES, exc)
+    return ValidationReport(validator=validator_name.lower().replace(" ", "-"), findings=[])
+
+
+def _maybe_retry_validator(
+    report: ValidationReport,
+    raw_content: Any,
+    *,
+    members: Any,
+    session_state: dict[str, Any],
+    database_id: str,
+    agent_attr: str,
+    validator_name: str,
+) -> ValidationReport:
+    """Retry a validator agent on transient error. Generic for any validator."""
+    if report.findings:
+        return report
+    if not _is_transient_error(raw_content):
+        return report
+    validator = getattr(members, agent_attr, None)
+    if validator is None:
+        return report
+    return _run_validator_standalone(
+        validator=validator,
+        validator_name=validator_name,
+        session_state=session_state,
+        database_id=database_id,
+        error_hint=raw_content,
+    )
+
+
 def _merge_profiler_auto_findings_into(
     statistical_report: ValidationReport,
     session_state: dict[str, Any],
@@ -1808,6 +1898,30 @@ def _build_summary_artifacts(
         "bottleneck": bottleneck,
     }
 
+    # ── Langfuse pipeline end — push scores to parent trace ────────────
+    try:
+        from .langfuse_tracer import record_pipeline_end
+        _preflight = session_state.get("_preflight_summary") or {}
+        _hc = session_state.get("_hallucination_counts") or {}
+        record_pipeline_end(
+            pipeline_run_id=session_state.get("pipeline_run_id", "unknown"),
+            job_id=session_state.get("job_id"),
+            parent_trace_id=session_state.get("_lf_parent_trace_id", ""),
+            data_quality_score=data_quality_score,
+            confidence_score=confidence_score,
+            total_findings=len(reports.reduced.findings),
+            blocked_cards=int(_preflight.get("blocked", 0)),
+            modified_cards=int(_preflight.get("modified", 0)),
+            total_elapsed_ms=float(total_ms),
+            stripping_stats={
+                "hallucinated_entities_stripped": _hc.get("entities_stripped", 0),
+                "fk_rule_findings_stripped": _hc.get("fk_rules_stripped", 0),
+                "fix_cards_stripped": _hc.get("fix_cards_stripped", 0),
+            },
+        )
+    except Exception as _lf_end_exc:
+        logger.debug("Langfuse pipeline end skipped: %s", _lf_end_exc)
+
     return _SummaryArtifacts(
         confidence_score=confidence_score,
         data_quality_score=data_quality_score,
@@ -1982,22 +2096,15 @@ def orchestrator_workflow(
         learned_patterns=learned_patterns,
     )
     session_state["learned_rules"] = format_for_prompt(_active_learned)
-    # Stored so log_run_metrics hook can pass it to Langfuse generation spans.
     session_state["model_id"] = resolved_model_id
+    # Stored so log_run_metrics hook can link all 5 agent traces via session_id.
+    session_state["pipeline_run_id"] = pipeline_run_id
 
     workflow, members = build_validation_workflow(
         resolved_model_id=resolved_model_id,
         session_state=session_state,
         dependencies=dependencies,
         job_id=job_id,
-    )
-
-    from .langfuse_tracer import finish_pipeline_trace, start_pipeline_trace
-    start_pipeline_trace(
-        pipeline_run_id=pipeline_run_id,
-        job_id=job_id,
-        database_id=database_id,
-        model_id=resolved_model_id,
     )
 
     try:
@@ -2014,14 +2121,38 @@ def orchestrator_workflow(
         # Schema auto-findings — mutates reports.schema.findings in place.
         _merge_schema_auto_findings_into(reports.schema, session_state)
 
-        # Relational transient retry — replaces reports.relational on success.
+        # ── Transient retry for parallel validators ────────────────────
+        # Statistical, Structural, and Relational run in parallel and can
+        # all hit Gemini 429 quotas or 503 overload simultaneously.
+        # Retry each on transient error with backoff.
         raw_relational = getattr(step_outputs.get("relational"), "content", "")
+        raw_statistical = getattr(step_outputs.get("statistical"), "content", "")
+        raw_structural = getattr(step_outputs.get("structural"), "content", "")
+
         reports.relational = _maybe_retry_relational(
             reports.relational,
             raw_relational,
             members=members,
             session_state=session_state,
             database_id=database_id,
+        )
+        reports.statistical = _maybe_retry_validator(
+            reports.statistical,
+            raw_statistical,
+            members=members,
+            session_state=session_state,
+            database_id=database_id,
+            agent_attr="statistical_validator",
+            validator_name="Statistical Validator",
+        )
+        reports.structural = _maybe_retry_validator(
+            reports.structural,
+            raw_structural,
+            members=members,
+            session_state=session_state,
+            database_id=database_id,
+            agent_attr="structural_validator",
+            validator_name="Structural Validator",
         )
 
         # Profiler auto-findings — mutates reports.statistical.findings in place.
@@ -2105,14 +2236,6 @@ def orchestrator_workflow(
         save_learned_rules(database_id, pipeline_run_id, _learnable_findings)
         prune_learned_rules(database_id)
 
-        finish_pipeline_trace(
-            data_quality_score=summary.data_quality_score,
-            confidence_score=summary.confidence_score,
-            total_findings=len(reports.reduced.findings),
-            total_fixes=len(legacy.legacy_fixes),
-            total_duration_ms=summary.timing_info.get("total_duration_ms"),
-        )
-
         return _assemble_final_payload(
             legacy,
             summary,
@@ -2124,5 +2247,4 @@ def orchestrator_workflow(
             session_state=session_state,
         )
     except Exception:
-        finish_pipeline_trace(error="pipeline failed — see Django logs")
         raise

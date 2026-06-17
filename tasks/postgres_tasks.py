@@ -54,6 +54,25 @@ def _set_job_status(job_id: str, status: str) -> None:
     except Exception as exc:
         _logger.debug("celery task WS push skipped (status=%s): %s", status, exc)
 
+
+def _set_job_error(job_id: str, error_detail: dict) -> None:
+    """Push structured error detail over WebSocket to connected clients.
+
+    Called before ``_set_job_status(job_id, 'failed')`` so the frontend
+    receives the classified error payload before the terminal status.
+    """
+    try:
+        from asgiref.sync import async_to_sync
+        from channels.layers import get_channel_layer
+        layer = get_channel_layer()
+        if layer is not None:
+            async_to_sync(layer.group_send)(
+                f"job_{job_id}",
+                {"type": "job.error", **error_detail},
+            )
+    except Exception as exc:
+        _logger.debug("celery task error WS push skipped: %s", exc)
+
 _WORKFLOW_DB_DIR = Path(__file__).resolve().parent.parent / "tmp"
 
 
@@ -248,6 +267,16 @@ def analyze_postgres_task(
         except Exception:
             _logger.exception('Failed to resolve failed pipeline step for job %s', job_id)
 
+        # Classify the error and push structured detail over WebSocket before
+        # the generic 'failed' status so the frontend can show a specific message.
+        try:
+            from agents.gemini_errors import classify_gemini_error, gemini_error_detail_payload
+            error_code, _user_msg = classify_gemini_error(str(e))
+            error_detail = gemini_error_detail_payload(error_code, failed_at_step)
+            _set_job_error(job_id, error_detail)
+        except Exception:
+            _logger.debug("Error classification skipped for job %s", job_id)
+
         _set_job_status(job_id, 'failed')
         _logger.info("pipeline_status: failed job=%s source=celery_task_exception", job_id)
         update_job_celery_task_id(job_id, None)
@@ -264,3 +293,154 @@ def analyze_postgres_task(
         raise
     finally:
         _cleanup_job_db(job_id)
+
+
+# ── Stuck-job detection (Celery beat every 5 min) ────────────────────────────
+
+# Per-step time budgets in milliseconds.  Steps that consistently take longer
+# than their budget trigger a stuck notification over the job WebSocket.
+_STEP_TIME_BUDGETS_MS: dict[str, int] = {
+    "running_schema": 5 * 60 * 1000,       # 5 min
+    "running_profiler": 5 * 60 * 1000,      # 5 min
+    "running_statistical": 10 * 60 * 1000,  # 10 min
+    "running_structural": 10 * 60 * 1000,   # 10 min
+    "running_relational": 10 * 60 * 1000,   # 10 min
+    "running_reducer": 3 * 60 * 1000,       # 3 min
+    "running_fix_planner": 15 * 60 * 1000,  # 15 min (soft warning at 5 min)
+}
+
+
+def _get_step_started_at(job_id: str, status: str) -> str | None:
+    """Read the ISO timestamp when *status* began from Redis step-timing hash."""
+    try:
+        import os as _os
+        import redis as _redis_mod
+        _r = _redis_mod.from_url(
+            _os.environ.get("REDIS_URL", "redis://localhost:6379/0"),
+            decode_responses=True,
+            socket_connect_timeout=1,
+        )
+        rkey = f"ql:step_timing:{job_id}"
+        return _r.hget(rkey, status)
+    except Exception:
+        return None
+
+
+def _find_stuck_jobs() -> list[tuple[str, str, int]]:
+    """Scan active jobs and return [(job_id, status, stuck_ms)] for any step
+    that has exceeded its time budget."""
+    from api.models import Job as JobModel
+
+    now = datetime.now(timezone.utc)
+    stuck: list[tuple[str, str, int]] = []
+
+    active_statuses = list(_STEP_TIME_BUDGETS_MS.keys())
+    qs = JobModel.objects.filter(
+        status__in=active_statuses,
+    ).only("id", "status", "updated_at")[:100]
+
+    for job in qs:
+        status = job.status
+        budget = _STEP_TIME_BUDGETS_MS.get(status)
+        if budget is None:
+            continue
+
+        # Prefer the Redis step-start timestamp; fall back to job.updated_at.
+        started_at_iso = _get_step_started_at(str(job.id), status)
+        if started_at_iso:
+            try:
+                started = datetime.fromisoformat(
+                    started_at_iso.replace("Z", "+00:00")
+                )
+            except Exception:
+                started = job.updated_at
+        else:
+            started = job.updated_at
+
+        if started is None:
+            continue
+
+        stuck_ms = int((now - started).total_seconds() * 1000)
+        if stuck_ms >= budget:
+            stuck.append((str(job.id), status, stuck_ms))
+
+    return stuck
+
+
+def _notify_stuck_job(job_id: str, status: str, stuck_ms: int) -> None:
+    """Push a stuck notification over WebSocket with a user-facing message.
+
+    Data Fix Planner gets a reassuring message at 5 min (soft warning);
+    at 15 min it becomes a hard alert suggesting cancel+retry.
+    """
+    is_fix_planner = status == "running_fix_planner"
+
+    if is_fix_planner and stuck_ms < 15 * 60 * 1000:
+        user_message = (
+            "The Data Fix Planner is taking longer than usual "
+            "— this is normal for complex datasets."
+        )
+        notification_type = "stuck_warning"
+    elif is_fix_planner:
+        user_message = (
+            "The Data Fix Planner appears to be stuck. "
+            "You can wait or cancel and retry the analysis."
+        )
+        notification_type = "stuck_alert"
+    else:
+        user_message = (
+            "The analysis is taking longer than expected. "
+            "You can wait or cancel and retry."
+        )
+        notification_type = "stuck_alert"
+
+    # Re-check: skip notification if job has already completed / failed.
+    try:
+        current = get_job(job_id) or {}
+        cur_status = str(current.get("status") or "")
+        if cur_status in ("completed", "failed", "cancelled", "CANCELLED"):
+            return
+    except Exception:
+        pass
+
+    try:
+        from asgiref.sync import async_to_sync
+        from channels.layers import get_channel_layer
+        layer = get_channel_layer()
+        if layer is not None:
+            async_to_sync(layer.group_send)(
+                f"job_{job_id}",
+                {
+                    "type": "job.stuck",
+                    "status": status,
+                    "stuck_duration_ms": stuck_ms,
+                    "user_message": user_message,
+                    "notification_type": notification_type,
+                },
+            )
+    except Exception as exc:
+        _logger.debug("stuck notification WS push skipped: %s", exc)
+
+    _logger.warning(
+        "stuck_notification: job=%s status=%s stuck_ms=%d type=%s",
+        job_id,
+        status,
+        stuck_ms,
+        notification_type,
+    )
+
+
+@app.task(bind=True, max_retries=0, time_limit=120)
+def check_stuck_jobs(self):
+    """Celery beat task: detect pipeline steps stuck beyond their budget.
+
+    Runs every 5 minutes (configured in config/celery.py).  For each active
+    job sitting on a running_* status longer than the step's budget, pushes
+    a ``job.stuck`` WebSocket event so the frontend can notify the user.
+    """
+    close_old_connections()
+    stuck = _find_stuck_jobs()
+    for job_id, status, stuck_ms in stuck:
+        _notify_stuck_job(job_id, status, stuck_ms)
+    if stuck:
+        _logger.info("check_stuck_jobs: %d stuck job(s) notified", len(stuck))
