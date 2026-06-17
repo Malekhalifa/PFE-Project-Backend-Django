@@ -7,8 +7,7 @@ one persisted runtime entity:
   Job              ← jobs
   AnalysisResult   ← analysis_results
   ChatMessage      ← chat_messages
-  JobGuideline     ← job_guidelines
-  AuditLog         ← audit_log  (was already here, unchanged)
+  AuditLog         ← audit_log
 """
 import uuid
 from django.core.exceptions import ValidationError
@@ -104,38 +103,6 @@ class ChatMessage(models.Model):
 
     def __str__(self):
         return f'ChatMessage({self.job_id}, {self.role})'
-
-
-# ──────────────────────────────────────────────
-# Job guidelines
-# ──────────────────────────────────────────────
-
-class JobGuideline(models.Model):
-    """
-    Per-run AI-generated guideline text for each pipeline phase.
-
-        guidelines shape:
-            {
-                "schema_integrity_validator": "...",
-                "column_validator":           "...",
-                "cross_row_validator":        "...",
-                "row_level_validator":        "...",
-                "data_fix_planner":           "..."
-            }
-    """
-    job = models.OneToOneField(
-        Job, on_delete=models.CASCADE, related_name='guideline',
-        db_column='job_id',
-    )
-    guidelines = models.JSONField(default=dict)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        db_table = 'job_guidelines'
-
-    def __str__(self):
-        return f'JobGuideline({self.job_id})'
 
 
 # ──────────────────────────────────────────────

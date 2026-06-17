@@ -17,7 +17,6 @@ from api.models import (
     Job,
     AnalysisResult,
     ChatMessage,
-    JobGuideline,
 )
 from api.connection_string_crypto import (
     decrypt_connection_string,
@@ -27,14 +26,7 @@ from api.connection_string_crypto import (
 
 logger = logging.getLogger(__name__)
 
-_GUIDELINE_KEYS = [
-    'schema_integrity_validator',
-    'column_validator',
-    'row_level_validator',
-    'cross_row_validator',
-    'data_fix_planner',
-]
-_DEFAULT_LLM_MODEL = 'gemini-2.0-flash'
+_DEFAULT_LLM_MODEL = 'gemini-2.5-flash'
 
 
 def _default_column_validator_analysis() -> dict[str, Any]:
@@ -498,49 +490,3 @@ def get_chat_job_ids(job_ids: list[str]) -> set[str]:
     )
 
 
-# ──────────────────────────────────────────────
-# Job guidelines
-# ──────────────────────────────────────────────
-
-def save_job_guideline(job_id: str, agent_key: str, guideline_text: str) -> None:
-    """
-    Upsert one agent's guideline text for a job.
-
-        agent_key is one of:
-            'schema_integrity_validator' | 'column_validator' |
-            'row_level_validator'        | 'cross_row_validator' |
-            'data_fix_planner'
-
-    Guidelines accumulate as the pipeline progresses.
-    """
-    normalized_job_id = _normalize_uuid(job_id)
-    if not normalized_job_id:
-        return
-
-    obj, _ = JobGuideline.objects.get_or_create(
-        job_id=normalized_job_id,
-        defaults={'guidelines': {}},
-    )
-    base = dict.fromkeys(_GUIDELINE_KEYS, '')
-    # Merge-update the specific agent key
-    obj.guidelines = {
-        **base,
-        **(obj.guidelines or {}),
-        agent_key: guideline_text,
-    }
-    obj.save(update_fields=['guidelines', 'updated_at'])
-
-
-def get_job_guidelines(job_id: str) -> dict[str, str] | None:
-    """
-    Return the full guidelines map for a job, or None if not found.
-    Shape: { 'schema_integrity_validator': '...', ... }
-    """
-    normalized_job_id = _normalize_uuid(job_id)
-    if not normalized_job_id:
-        return None
-
-    try:
-        return JobGuideline.objects.get(job_id=normalized_job_id).guidelines or None
-    except JobGuideline.DoesNotExist:
-        return None

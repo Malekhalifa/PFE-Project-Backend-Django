@@ -1,0 +1,2616 @@
+{
+  "pipeline_run_id": "1403bac4-29cb-484f-aeb5-4a29ab8538da",
+  "database_id": "localhost_5432_enterprise_test_db",
+  "llm_model": "gemini-2.5-flash",
+  "run_timestamp": "2026-06-08T21:04:58.359388Z",
+  "executive_summary": {
+    "verdict": "medium_risk",
+    "top_issues": [
+      "[CRITICAL] Learned Rule Violation: Quantity on hand must be greater than 0. on inventory.quantity_on_hand",
+      "[CRITICAL] Learned Rule Violation: Quantity available must be greater than 0. on inventory.quantity_available",
+      "[CRITICAL] Learned Rule Violation: Line total must be greater than 0. on order_items.line_total"
+    ],
+    "tables_scanned": 35,
+    "tables_profiled": 35,
+    "fixes_recommended": 0,
+    "critical_fix_count": 0,
+    "migration_risk": {
+      "score": 0,
+      "high_risk_cards": 0,
+      "blocked_cards": 0,
+      "destructive_cards": 0
+    }
+  },
+  "summary": {
+    "confidence_score": 99,
+    "data_quality_score": 67,
+    "final_fix_count": 0,
+    "confidence_explanation": {
+      "total_findings": 143,
+      "high_confidence_count": 124,
+      "medium_confidence_count": 19,
+      "low_confidence_count": 0,
+      "summary": "87% of findings have confidence ≥ 0.9 (124/143 high, 19 medium, 0 low). Deterministic (py_profiler) findings are 0.92–1.0; LLM findings vary."
+    },
+    "timing": {
+      "started_at": "2026-06-08T21:04:58.359388Z",
+      "ended_at": "2026-06-08T21:14:54.463118Z",
+      "total_duration_ms": 596061,
+      "total_duration_human": "596.1s",
+      "phases_ms": {
+        "schema_priming": 2141,
+        "Schema Integrity Validator": 49030,
+        "Python Profiler": 41731,
+        "Relational Validator": 46083,
+        "Structural Validator": 75531,
+        "Statistical Validator": 104020,
+        "Reducer": 381,
+        "Data Fix Planner": 12285
+      },
+      "bottleneck": "Statistical Validator"
+    },
+    "entity_hallucinations": {
+      "total_stripped": 2,
+      "breakdown": {
+        "non_existent_entities": 0,
+        "inferred_fk_rules": 0,
+        "outside_profiler_coverage": 0,
+        "fix_cards": 2
+      }
+    }
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "1403bac4-29cb-484f-aeb5-4a29ab8538da",
+      "database_id": "localhost_5432_enterprise_test_db",
+      "run_timestamp": "2026-06-08T21:04:58.359388Z",
+      "agent": "Schema Integrity Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 35,
+        "items_passed": 0,
+        "items_flagged": 37,
+        "critical_issues": 0,
+        "high_issues": 19,
+        "medium_issues": 30,
+        "low_issues": 2,
+        "overall_quality_score": 74.5,
+        "overall_confidence": 0.9078,
+        "flagged_tables": [
+          "customer_addresses",
+          "customers",
+          "departments",
+          "employee_role_assignments",
+          "employees",
+          "order_audit_log",
+          "orders",
+          "payments",
+          "price_history",
+          "product_categories",
+          "products",
+          "return_items",
+          "returns",
+          "shipments",
+          "suppliers",
+          "tax_rates",
+          "warehouses"
+        ]
+      },
+      "metrics": {
+        "validator": "schema",
+        "findings_count": 51,
+        "deduped_finding_count": 51,
+        "grouped_finding_count": 37
+      },
+      "findings": [
+        {
+          "table": "employees",
+          "column": "hiredate",
+          "entity": "employees.hiredate",
+          "rule": "redundant_column",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "table": "employees",
+            "duplicate_column": "hiredate",
+            "original_column": "hire_date",
+            "data_type": "date"
+          },
+          "remediation_hint": "Consider removing the redundant 'hiredate' column and using 'hire_date' consistently to reduce denormalization."
+        },
+        {
+          "table": "products",
+          "column": "productweight",
+          "entity": "products.productweight",
+          "rule": "redundant_column",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "table": "products",
+            "duplicate_column": "productweight",
+            "original_column": "weight_grams",
+            "data_type": "integer"
+          },
+          "remediation_hint": "Consider removing the redundant 'productweight' column and using 'weight_grams' consistently to reduce denormalization."
+        },
+        {
+          "table": "employees",
+          "column": "hiredate",
+          "entity": "employees.hiredate",
+          "rule": "naming_convention_violation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table": "employees",
+            "column_name": "hiredate",
+            "expected_convention": "snake_case"
+          },
+          "remediation_hint": "Rename column 'hiredate' to 'hire_date' to adhere to the 'snake_case' naming convention."
+        },
+        {
+          "table": "products",
+          "column": "productweight",
+          "entity": "products.productweight",
+          "rule": "naming_convention_violation",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "table": "products",
+            "column_name": "productweight",
+            "expected_convention": "snake_case"
+          },
+          "remediation_hint": "Rename column 'productweight' to 'product_weight' to adhere to the 'snake_case' naming convention."
+        },
+        {
+          "table": "order_audit_log",
+          "column": "changed_by",
+          "entity": "order_audit_log.changed_by",
+          "rule": "fk_suffix_convention_violation",
+          "severity": "medium",
+          "confidence": 0.75,
+          "evidence": {
+            "table": "order_audit_log",
+            "column_name": "changed_by",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id",
+            "expected_suffix": "_id"
+          },
+          "remediation_hint": "Rename foreign key column 'changed_by' to 'changed_by_id' to follow the '_id' suffix convention for foreign keys."
+        },
+        {
+          "table": "employee_role_assignments",
+          "column": "assigned_by",
+          "entity": "employee_role_assignments.assigned_by",
+          "rule": "fk_suffix_convention_violation",
+          "severity": "medium",
+          "confidence": 0.75,
+          "evidence": {
+            "table": "employee_role_assignments",
+            "column_name": "assigned_by",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id",
+            "expected_suffix": "_id"
+          },
+          "remediation_hint": "Rename foreign key column 'assigned_by' to 'assigned_by_id' to follow the '_id' suffix convention for foreign keys."
+        },
+        {
+          "table": "price_history",
+          "column": "changed_by",
+          "entity": "price_history.changed_by",
+          "rule": "fk_suffix_convention_violation",
+          "severity": "medium",
+          "confidence": 0.75,
+          "evidence": {
+            "table": "price_history",
+            "column_name": "changed_by",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id",
+            "expected_suffix": "_id"
+          },
+          "remediation_hint": "Rename foreign key column 'changed_by' to 'changed_by_id' to follow the '_id' suffix convention for foreign keys."
+        },
+        {
+          "table": "price_history",
+          "column": null,
+          "entity": "price_history.effective_from",
+          "rule": "timestamp_suffix_convention_violation",
+          "severity": "low",
+          "confidence": 0.75,
+          "evidence": {
+            "table": "price_history",
+            "column_name": "effective_from",
+            "data_type": "timestamp without time zone",
+            "expected_suffix": "_at"
+          },
+          "remediation_hint": "Rename timestamp column 'effective_from' to 'effective_from_at' to follow the '_at' suffix convention.",
+          "affected_columns": [
+            "effective_from",
+            "effective_until"
+          ],
+          "count": 2
+        },
+        {
+          "table": "departments",
+          "column": "parent_department_id",
+          "entity": "departments.parent_department_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true
+          },
+          "remediation_hint": "'departments.parent_department_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record."
+        },
+        {
+          "table": "departments",
+          "column": "parent_department_id",
+          "entity": "departments.parent_department_id",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "foreign_table": "departments",
+            "foreign_column": "department_id"
+          },
+          "remediation_hint": "Add an index on 'departments.parent_department_id' (FK → departments.department_id) to speed up JOIN and orphan-check queries."
+        },
+        {
+          "table": "customers",
+          "column": "nationality_country_id",
+          "entity": "customers.nationality_country_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true
+          },
+          "remediation_hint": "'customers.nationality_country_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record."
+        },
+        {
+          "table": "customers",
+          "column": "nationality_country_id",
+          "entity": "customers.nationality_country_id",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "foreign_table": "countries",
+            "foreign_column": "country_id"
+          },
+          "remediation_hint": "Add an index on 'customers.nationality_country_id' (FK → countries.country_id) to speed up JOIN and orphan-check queries."
+        },
+        {
+          "table": "customer_addresses",
+          "column": "country_id",
+          "entity": "customer_addresses.country_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true
+          },
+          "remediation_hint": "'customer_addresses.country_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record."
+        },
+        {
+          "table": "warehouses",
+          "column": "country_id",
+          "entity": "warehouses.country_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true
+          },
+          "remediation_hint": "'warehouses.country_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record."
+        },
+        {
+          "table": "warehouses",
+          "column": "country_id",
+          "entity": "warehouses.country_id",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "foreign_table": "countries",
+            "foreign_column": "country_id"
+          },
+          "remediation_hint": "Add an index on 'warehouses.country_id' (FK → countries.country_id) to speed up JOIN and orphan-check queries."
+        },
+        {
+          "table": "order_audit_log",
+          "column": "changed_by",
+          "entity": "order_audit_log.changed_by",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true
+          },
+          "remediation_hint": "'order_audit_log.changed_by' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record."
+        },
+        {
+          "table": "product_categories",
+          "column": "parent_category_id",
+          "entity": "product_categories.parent_category_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true
+          },
+          "remediation_hint": "'product_categories.parent_category_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record."
+        },
+        {
+          "table": "product_categories",
+          "column": "parent_category_id",
+          "entity": "product_categories.parent_category_id",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "foreign_table": "product_categories",
+            "foreign_column": "category_id"
+          },
+          "remediation_hint": "Add an index on 'product_categories.parent_category_id' (FK → product_categories.category_id) to speed up JOIN and orphan-check queries."
+        },
+        {
+          "table": "tax_rates",
+          "column": "country_id",
+          "entity": "tax_rates.country_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true
+          },
+          "remediation_hint": "'tax_rates.country_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record."
+        },
+        {
+          "table": "tax_rates",
+          "column": "country_id",
+          "entity": "tax_rates.country_id",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "foreign_table": "countries",
+            "foreign_column": "country_id"
+          },
+          "remediation_hint": "Add an index on 'tax_rates.country_id' (FK → countries.country_id) to speed up JOIN and orphan-check queries."
+        },
+        {
+          "table": "employees",
+          "column": null,
+          "entity": "employees.department_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true,
+            "columns_with_high_nulls": [
+              "department_id",
+              "manager_id"
+            ]
+          },
+          "remediation_hint": "'employees.department_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record.",
+          "affected_columns": [
+            "department_id",
+            "manager_id"
+          ],
+          "count": 2
+        },
+        {
+          "table": "suppliers",
+          "column": "country_id",
+          "entity": "suppliers.country_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true
+          },
+          "remediation_hint": "'suppliers.country_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record."
+        },
+        {
+          "table": "suppliers",
+          "column": "country_id",
+          "entity": "suppliers.country_id",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "foreign_table": "countries",
+            "foreign_column": "country_id"
+          },
+          "remediation_hint": "Add an index on 'suppliers.country_id' (FK → countries.country_id) to speed up JOIN and orphan-check queries."
+        },
+        {
+          "table": "products",
+          "column": null,
+          "entity": "products.category_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true,
+            "columns_with_high_nulls": [
+              "category_id",
+              "supplier_id"
+            ]
+          },
+          "remediation_hint": "'products.category_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record.",
+          "affected_columns": [
+            "category_id",
+            "supplier_id"
+          ],
+          "count": 2
+        },
+        {
+          "table": "orders",
+          "column": null,
+          "entity": "orders.shipping_address_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true,
+            "columns_with_high_nulls": [
+              "shipping_address_id",
+              "billing_address_id",
+              "shipping_method_id",
+              "currency_id"
+            ]
+          },
+          "remediation_hint": "'orders.shipping_address_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record.",
+          "affected_columns": [
+            "shipping_address_id",
+            "billing_address_id",
+            "shipping_method_id",
+            "currency_id"
+          ],
+          "count": 4
+        },
+        {
+          "table": "orders",
+          "column": null,
+          "entity": "orders.currency_id",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "foreign_table": "currencies",
+            "foreign_column": "currency_id",
+            "columns_with_high_nulls": [
+              "currency_id",
+              "shipping_address_id",
+              "shipping_method_id",
+              "billing_address_id"
+            ]
+          },
+          "remediation_hint": "Add an index on 'orders.currency_id' (FK → currencies.currency_id) to speed up JOIN and orphan-check queries.",
+          "affected_columns": [
+            "currency_id",
+            "shipping_address_id",
+            "shipping_method_id",
+            "billing_address_id"
+          ],
+          "count": 4
+        },
+        {
+          "table": "payments",
+          "column": null,
+          "entity": "payments.payment_method_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true,
+            "columns_with_high_nulls": [
+              "payment_method_id",
+              "currency_id"
+            ]
+          },
+          "remediation_hint": "'payments.payment_method_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record.",
+          "affected_columns": [
+            "payment_method_id",
+            "currency_id"
+          ],
+          "count": 2
+        },
+        {
+          "table": "payments",
+          "column": null,
+          "entity": "payments.payment_method_id",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "foreign_table": "payment_methods",
+            "foreign_column": "payment_method_id",
+            "columns_with_high_nulls": [
+              "payment_method_id",
+              "currency_id"
+            ]
+          },
+          "remediation_hint": "Add an index on 'payments.payment_method_id' (FK → payment_methods.payment_method_id) to speed up JOIN and orphan-check queries.",
+          "affected_columns": [
+            "payment_method_id",
+            "currency_id"
+          ],
+          "count": 2
+        },
+        {
+          "table": "shipments",
+          "column": null,
+          "entity": "shipments.shipping_method_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true,
+            "columns_with_high_nulls": [
+              "shipping_method_id",
+              "warehouse_id"
+            ]
+          },
+          "remediation_hint": "'shipments.shipping_method_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record.",
+          "affected_columns": [
+            "shipping_method_id",
+            "warehouse_id"
+          ],
+          "count": 2
+        },
+        {
+          "table": "shipments",
+          "column": "shipping_method_id",
+          "entity": "shipments.shipping_method_id",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "foreign_table": "shipping_methods",
+            "foreign_column": "shipping_method_id"
+          },
+          "remediation_hint": "Add an index on 'shipments.shipping_method_id' (FK → shipping_methods.shipping_method_id) to speed up JOIN and orphan-check queries."
+        },
+        {
+          "table": "returns",
+          "column": "customer_id",
+          "entity": "returns.customer_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true
+          },
+          "remediation_hint": "'returns.customer_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record."
+        },
+        {
+          "table": "return_items",
+          "column": null,
+          "entity": "return_items.order_item_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true,
+            "columns_with_high_nulls": [
+              "order_item_id",
+              "product_id"
+            ]
+          },
+          "remediation_hint": "'return_items.order_item_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record.",
+          "affected_columns": [
+            "order_item_id",
+            "product_id"
+          ],
+          "count": 2
+        },
+        {
+          "table": "return_items",
+          "column": "product_id",
+          "entity": "return_items.product_id",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "foreign_table": "products",
+            "foreign_column": "product_id"
+          },
+          "remediation_hint": "Add an index on 'return_items.product_id' (FK → products.product_id) to speed up JOIN and orphan-check queries."
+        },
+        {
+          "table": "employee_role_assignments",
+          "column": "assigned_by",
+          "entity": "employee_role_assignments.assigned_by",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true
+          },
+          "remediation_hint": "'employee_role_assignments.assigned_by' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record."
+        },
+        {
+          "table": "employee_role_assignments",
+          "column": "assigned_by",
+          "entity": "employee_role_assignments.assigned_by",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "foreign_table": "employees",
+            "foreign_column": "employee_id"
+          },
+          "remediation_hint": "Add an index on 'employee_role_assignments.assigned_by' (FK → employees.employee_id) to speed up JOIN and orphan-check queries."
+        },
+        {
+          "table": "price_history",
+          "column": "changed_by",
+          "entity": "price_history.changed_by",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true
+          },
+          "remediation_hint": "'price_history.changed_by' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record."
+        },
+        {
+          "table": "price_history",
+          "column": null,
+          "entity": "price_history.product_id",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "foreign_table": "products",
+            "foreign_column": "product_id",
+            "columns_with_high_nulls": [
+              "product_id",
+              "changed_by"
+            ]
+          },
+          "remediation_hint": "Add an index on 'price_history.product_id' (FK → products.product_id) to speed up JOIN and orphan-check queries.",
+          "affected_columns": [
+            "product_id",
+            "changed_by"
+          ],
+          "count": 2
+        }
+      ]
+    },
+    "statistical_validator": {
+      "pipeline_run_id": "1403bac4-29cb-484f-aeb5-4a29ab8538da",
+      "database_id": "localhost_5432_enterprise_test_db",
+      "run_timestamp": "2026-06-08T21:04:58.359388Z",
+      "agent": "Statistical Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 35,
+        "items_passed": 0,
+        "items_flagged": 41,
+        "critical_issues": 10,
+        "high_issues": 29,
+        "medium_issues": 13,
+        "low_issues": 4,
+        "overall_quality_score": 42.4,
+        "overall_confidence": 0.9893,
+        "flagged_tables": [
+          "customer_addresses",
+          "customers",
+          "departments",
+          "discount_codes",
+          "email_notifications",
+          "employee_role_assignments",
+          "employees",
+          "inventory",
+          "login_attempts",
+          "order_audit_log",
+          "order_items",
+          "orders",
+          "payments",
+          "price_history",
+          "product_categories",
+          "products",
+          "return_items",
+          "returns",
+          "shipments",
+          "suppliers",
+          "tax_rates",
+          "warehouses"
+        ]
+      },
+      "metrics": {
+        "validator": "statistical",
+        "findings_count": 56,
+        "deduped_finding_count": 56,
+        "grouped_finding_count": 41
+      },
+      "findings": [
+        {
+          "table": "inventory",
+          "column": "quantity_on_hand",
+          "entity": "inventory.quantity_on_hand",
+          "rule": "Learned Rule Violation: Quantity on hand must be greater than 0.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "violation_count": 5422,
+            "total_rows": 83949,
+            "violation_percentage": 0.0645
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "inventory",
+          "column": "quantity_available",
+          "entity": "inventory.quantity_available",
+          "rule": "Learned Rule Violation: Quantity available must be greater than 0.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "violation_count": 17571,
+            "total_rows": 83949,
+            "violation_percentage": 0.2093
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "order_items",
+          "column": "line_total",
+          "entity": "order_items.line_total",
+          "rule": "Learned Rule Violation: Line total must be greater than 0.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "violation_count": 2381,
+            "total_rows": 400000,
+            "violation_percentage": 0.0059
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "order_items",
+          "column": "quantity",
+          "entity": "order_items.quantity",
+          "rule": "Learned Rule Violation: Quantity must be greater than 0.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "violation_count": 1222,
+            "total_rows": 400000,
+            "violation_percentage": 0.003
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "order_items",
+          "column": "discount_pct",
+          "entity": "order_items.discount_pct",
+          "rule": "Learned Rule Violation: Discount percentage must be non-negative.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "violation_count": 785,
+            "total_rows": 400000,
+            "violation_percentage": 0.0019
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "orders",
+          "column": null,
+          "entity": "orders.updated_at",
+          "rule": "Learned Rule Violation: Impossible future date.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "violation_count": 3,
+            "total_rows": 100907,
+            "max_value": "2099-12-17",
+            "columns_with_high_nulls": [
+              "updated_at",
+              "created_at"
+            ]
+          },
+          "remediation_hint": null,
+          "affected_columns": [
+            "updated_at",
+            "created_at"
+          ],
+          "count": 2
+        },
+        {
+          "table": "orders",
+          "column": "total_amount",
+          "entity": "orders.total_amount",
+          "rule": "Learned Rule Violation: Total amount must be greater than 0.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "violation_count": 311,
+            "total_rows": 100907,
+            "violation_percentage": 0.003
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "payments",
+          "column": "amount",
+          "entity": "payments.amount",
+          "rule": "Learned Rule Violation: Amount must be greater than 0.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "violation_count": 289,
+            "total_rows": 100000,
+            "violation_percentage": 0.0028
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "products",
+          "column": "base_price",
+          "entity": "products.base_price",
+          "rule": "Learned Rule Violation: Base price must be greater than 0.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "violation_count": 50,
+            "total_rows": 15285,
+            "violation_percentage": 0.0032
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "employees",
+          "column": "preferences",
+          "entity": "employees.preferences",
+          "rule": "suspected_duplicates",
+          "severity": "high",
+          "confidence": 0.85,
+          "evidence": {
+            "cardinality_ratio": 0.005,
+            "estimated_duplicates": 199,
+            "total_rows": 200
+          },
+          "remediation_hint": "'employees.preferences' has an estimated 199 duplicate value(s) (cardinality ratio 0.50%). Run find_duplicate_rows() to confirm and generate dedup SQL."
+        },
+        {
+          "table": "customers",
+          "column": "email",
+          "entity": "customers.email",
+          "rule": "suspected_duplicates",
+          "severity": "high",
+          "confidence": 0.85,
+          "evidence": {
+            "cardinality_ratio": 0.8237,
+            "estimated_duplicates": 9088,
+            "total_rows": 51545
+          },
+          "remediation_hint": "'customers.email' has an estimated 9088 duplicate value(s) (cardinality ratio 82.37%). Run find_duplicate_rows() to confirm and generate dedup SQL."
+        },
+        {
+          "table": "email_notifications",
+          "column": "recipient_email",
+          "entity": "email_notifications.recipient_email",
+          "rule": "suspected_duplicates",
+          "severity": "high",
+          "confidence": 0.85,
+          "evidence": {
+            "cardinality_ratio": 0.6873,
+            "estimated_duplicates": 25016,
+            "total_rows": 80000
+          },
+          "remediation_hint": "'email_notifications.recipient_email' has an estimated 25016 duplicate value(s) (cardinality ratio 68.73%). Run find_duplicate_rows() to confirm and generate dedup SQL."
+        },
+        {
+          "table": "login_attempts",
+          "column": "email",
+          "entity": "login_attempts.email",
+          "rule": "suspected_duplicates",
+          "severity": "high",
+          "confidence": 0.85,
+          "evidence": {
+            "cardinality_ratio": 0.2451,
+            "estimated_duplicates": 150985,
+            "total_rows": 200000
+          },
+          "remediation_hint": "'login_attempts.email' has an estimated 150985 duplicate value(s) (cardinality ratio 24.51%). Run find_duplicate_rows() to confirm and generate dedup SQL."
+        },
+        {
+          "table": "departments",
+          "column": "parent_department_id",
+          "entity": "departments.parent_department_id",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 0.6111,
+            "total_rows": 18,
+            "threshold_used": 0.1
+          },
+          "remediation_hint": "Investigate why 'departments.parent_department_id' has 61% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "warehouses",
+          "column": null,
+          "entity": "warehouses.address_line1",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 8,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "address_line1",
+              "postal_code"
+            ]
+          },
+          "remediation_hint": "Investigate why 'warehouses.address_line1' has 100% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "address_line1",
+            "postal_code"
+          ],
+          "count": 2
+        },
+        {
+          "table": "product_categories",
+          "column": null,
+          "entity": "product_categories.image_url",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 24,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "image_url",
+              "parent_category_id"
+            ]
+          },
+          "remediation_hint": "Investigate why 'product_categories.image_url' has 100% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "parent_category_id",
+            "image_url"
+          ],
+          "count": 2
+        },
+        {
+          "table": "tax_rates",
+          "column": null,
+          "entity": "tax_rates.effective_from",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 10,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "effective_from",
+              "effective_until"
+            ]
+          },
+          "remediation_hint": "Investigate why 'tax_rates.effective_from' has 100% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "effective_from",
+            "effective_until"
+          ],
+          "count": 2
+        },
+        {
+          "table": "suppliers",
+          "column": "deleted_at",
+          "entity": "suppliers.deleted_at",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 0.985,
+            "total_rows": 200,
+            "threshold_used": 0.4
+          },
+          "remediation_hint": "Investigate why 'suppliers.deleted_at' has 98% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "employees",
+          "column": null,
+          "entity": "employees.termination_date",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 200,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "termination_date",
+              "phone",
+              "deleted_at",
+              "hiredate"
+            ]
+          },
+          "remediation_hint": "Investigate why 'employees.termination_date' has 100% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "phone",
+            "termination_date",
+            "deleted_at",
+            "hiredate"
+          ],
+          "count": 4
+        },
+        {
+          "table": "order_audit_log",
+          "column": "change_reason",
+          "entity": "order_audit_log.change_reason",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 0.4955,
+            "total_rows": 50000,
+            "threshold_used": 0.4
+          },
+          "remediation_hint": "Investigate why 'order_audit_log.change_reason' has 50% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "products",
+          "column": null,
+          "entity": "products.deleted_at",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 0.982,
+            "total_rows": 15285,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "deleted_at",
+              "productweight"
+            ]
+          },
+          "remediation_hint": "Investigate why 'products.deleted_at' has 98% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "deleted_at",
+            "productweight"
+          ],
+          "count": 2
+        },
+        {
+          "table": "return_items",
+          "column": "reason_detail",
+          "entity": "return_items.reason_detail",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 0.5042,
+            "total_rows": 8000,
+            "threshold_used": 0.4
+          },
+          "remediation_hint": "Investigate why 'return_items.reason_detail' has 50% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "employee_role_assignments",
+          "column": "expires_at",
+          "entity": "employee_role_assignments.expires_at",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 200,
+            "threshold_used": 0.4
+          },
+          "remediation_hint": "Investigate why 'employee_role_assignments.expires_at' has 100% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "customers",
+          "column": "deleted_at",
+          "entity": "customers.deleted_at",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 0.9695,
+            "total_rows": 51545,
+            "threshold_used": 0.4
+          },
+          "remediation_hint": "Investigate why 'customers.deleted_at' has 97% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "customer_addresses",
+          "column": null,
+          "entity": "customer_addresses.line2",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 90000,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "line2",
+              "state_province"
+            ]
+          },
+          "remediation_hint": "Investigate why 'customer_addresses.line2' has 100% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "line2",
+            "state_province"
+          ],
+          "count": 2
+        },
+        {
+          "table": "discount_codes",
+          "column": null,
+          "entity": "discount_codes.min_order_amount",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 0.484,
+            "total_rows": 500,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "min_order_amount",
+              "max_discount_amount"
+            ]
+          },
+          "remediation_hint": "Investigate why 'discount_codes.min_order_amount' has 48% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "min_order_amount",
+            "max_discount_amount"
+          ],
+          "count": 2
+        },
+        {
+          "table": "shipments",
+          "column": null,
+          "entity": "shipments.delivered_at",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 0.8676,
+            "total_rows": 90863,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "delivered_at",
+              "shipped_at"
+            ]
+          },
+          "remediation_hint": "Investigate why 'shipments.delivered_at' has 87% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "shipped_at",
+            "delivered_at"
+          ],
+          "count": 2
+        },
+        {
+          "table": "payments",
+          "column": "refunded_at",
+          "entity": "payments.refunded_at",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 0.9916,
+            "total_rows": 100000,
+            "threshold_used": 0.4
+          },
+          "remediation_hint": "Investigate why 'payments.refunded_at' has 99% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "price_history",
+          "column": "effective_until",
+          "entity": "price_history.effective_until",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 30000,
+            "threshold_used": 0.4
+          },
+          "remediation_hint": "Investigate why 'price_history.effective_until' has 100% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "orders",
+          "column": null,
+          "entity": "orders.notes",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 100907,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "notes",
+              "shipping_address_id",
+              "billing_address_id",
+              "deleted_at"
+            ]
+          },
+          "remediation_hint": "Investigate why 'orders.notes' has 100% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "shipping_address_id",
+            "billing_address_id",
+            "notes",
+            "deleted_at"
+          ],
+          "count": 4
+        },
+        {
+          "table": "email_notifications",
+          "column": null,
+          "entity": "email_notifications.body",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 80000,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "body",
+              "error_message"
+            ]
+          },
+          "remediation_hint": "Investigate why 'email_notifications.body' has 100% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "body",
+            "error_message"
+          ],
+          "count": 2
+        },
+        {
+          "table": "login_attempts",
+          "column": "failure_reason",
+          "entity": "login_attempts.failure_reason",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 0.9218,
+            "total_rows": 200000,
+            "threshold_used": 0.4
+          },
+          "remediation_hint": "Investigate why 'login_attempts.failure_reason' has 92% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "customers",
+          "column": null,
+          "entity": "customers",
+          "rule": "temporal_ordering_inconsistency",
+          "severity": "low",
+          "confidence": 1.0,
+          "evidence": {
+            "column_a": "date_of_birth",
+            "column_b": "deleted_at",
+            "a_after_b": 3,
+            "a_before_b": 1402,
+            "both_populated": 1405,
+            "minority_pct": 0.0021
+          },
+          "remediation_hint": "'customers' has 3 row(s) (0.21%) where 'date_of_birth' and 'deleted_at' ordering is inconsistent with the majority. Investigate whether these are data entry errors."
+        },
+        {
+          "table": "inventory",
+          "column": null,
+          "entity": "inventory",
+          "rule": "temporal_ordering_inconsistency",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "column_a": "last_restock_date",
+            "column_b": "last_count_date",
+            "a_after_b": 62756,
+            "a_before_b": 20729,
+            "both_populated": 83949,
+            "minority_pct": 0.2469
+          },
+          "remediation_hint": "'inventory' has 20729 row(s) (24.69%) where 'last_restock_date' and 'last_count_date' ordering is inconsistent with the majority. Investigate whether these are data entry errors."
+        },
+        {
+          "table": "employees",
+          "column": null,
+          "entity": "employees",
+          "rule": "temporal_ordering_inconsistency",
+          "severity": "low",
+          "confidence": 1.0,
+          "evidence": {
+            "column_a": "hire_date",
+            "column_b": "created_at",
+            "a_after_b": 1,
+            "a_before_b": 198,
+            "both_populated": 199,
+            "minority_pct": 0.005
+          },
+          "remediation_hint": "'employees' has 1 row(s) (0.50%) where 'hire_date' and 'created_at' ordering is inconsistent with the majority. Investigate whether these are data entry errors."
+        },
+        {
+          "table": "products",
+          "column": null,
+          "entity": "products",
+          "rule": "temporal_ordering_inconsistency",
+          "severity": "low",
+          "confidence": 1.0,
+          "evidence": {
+            "column_a": "deleted_at",
+            "column_b": "updated_at",
+            "a_after_b": 2,
+            "a_before_b": 273,
+            "both_populated": 275,
+            "minority_pct": 0.0073
+          },
+          "remediation_hint": "'products' has 2 row(s) (0.73%) where 'deleted_at' and 'updated_at' ordering is inconsistent with the majority. Investigate whether these are data entry errors."
+        },
+        {
+          "table": "orders",
+          "column": null,
+          "entity": "orders",
+          "rule": "temporal_ordering_inconsistency",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "column_a": "created_at",
+            "column_b": "updated_at",
+            "a_after_b": 2346,
+            "a_before_b": 98421,
+            "both_populated": 100907,
+            "minority_pct": 0.0232
+          },
+          "remediation_hint": "'orders' has 2346 row(s) (2.32%) where 'created_at' and 'updated_at' ordering is inconsistent with the majority. Investigate whether these are data entry errors."
+        },
+        {
+          "table": "payments",
+          "column": null,
+          "entity": "payments",
+          "rule": "temporal_ordering_inconsistency",
+          "severity": "low",
+          "confidence": 1.0,
+          "evidence": {
+            "column_a": "paid_at",
+            "column_b": "created_at",
+            "a_after_b": 89548,
+            "a_before_b": 82,
+            "both_populated": 89646,
+            "minority_pct": 0.0009
+          },
+          "remediation_hint": "'payments' has 82 row(s) (0.09%) where 'paid_at' and 'created_at' ordering is inconsistent with the majority. Investigate whether these are data entry errors."
+        },
+        {
+          "table": "shipments",
+          "column": null,
+          "entity": "shipments",
+          "rule": "temporal_ordering_inconsistency",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "column_a": "shipped_at",
+            "column_b": "delivered_at",
+            "a_after_b": 209,
+            "a_before_b": 11808,
+            "both_populated": 12026,
+            "minority_pct": 0.0174
+          },
+          "remediation_hint": "'shipments' has 209 row(s) (1.74%) where 'shipped_at' and 'delivered_at' ordering is inconsistent with the majority. Investigate whether these are data entry errors."
+        },
+        {
+          "table": "returns",
+          "column": null,
+          "entity": "returns",
+          "rule": "temporal_ordering_inconsistency",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "column_a": "requested_at",
+            "column_b": "processed_at",
+            "a_after_b": 2267,
+            "a_before_b": 2582,
+            "both_populated": 4862,
+            "minority_pct": 0.4663
+          },
+          "remediation_hint": "'returns' has 2267 row(s) (46.63%) where 'requested_at' and 'processed_at' ordering is inconsistent with the majority. Investigate whether these are data entry errors."
+        },
+        {
+          "table": "email_notifications",
+          "column": null,
+          "entity": "email_notifications",
+          "rule": "temporal_ordering_inconsistency",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "column_a": "sent_at",
+            "column_b": "created_at",
+            "a_after_b": 34849,
+            "a_before_b": 24871,
+            "both_populated": 60173,
+            "minority_pct": 0.4133
+          },
+          "remediation_hint": "'email_notifications' has 24871 row(s) (41.33%) where 'sent_at' and 'created_at' ordering is inconsistent with the majority. Investigate whether these are data entry errors."
+        }
+      ]
+    },
+    "structural_validator": {
+      "pipeline_run_id": "1403bac4-29cb-484f-aeb5-4a29ab8538da",
+      "database_id": "localhost_5432_enterprise_test_db",
+      "run_timestamp": "2026-06-08T21:04:58.359388Z",
+      "agent": "Structural Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 35,
+        "items_passed": 0,
+        "items_flagged": 56,
+        "critical_issues": 11,
+        "high_issues": 14,
+        "medium_issues": 43,
+        "low_issues": 6,
+        "overall_quality_score": 48.4,
+        "overall_confidence": 0.9838,
+        "flagged_tables": [
+          "countries",
+          "currencies",
+          "customer_addresses",
+          "customer_segment_members",
+          "customer_segments",
+          "customers",
+          "departments",
+          "discount_codes",
+          "email_notifications",
+          "employee_role_assignments",
+          "employee_roles",
+          "employees",
+          "inventory",
+          "order_items",
+          "order_statuses",
+          "orders",
+          "payment_methods",
+          "payments",
+          "price_history",
+          "product_categories",
+          "product_suppliers",
+          "product_tags",
+          "products",
+          "return_items",
+          "returns",
+          "shipments",
+          "shipping_methods",
+          "suppliers",
+          "system_configurations",
+          "tags",
+          "tax_rates",
+          "warehouses"
+        ]
+      },
+      "metrics": {
+        "validator": "structural",
+        "findings_count": 74,
+        "deduped_finding_count": 74,
+        "grouped_finding_count": 56
+      },
+      "findings": [
+        {
+          "table": "inventory",
+          "column": "quantity_available",
+          "entity": "inventory.quantity_available",
+          "rule": "quantity_available must be > 0",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "violation_count": 17571,
+            "violation_pct": 0.20931,
+            "min_value": -212,
+            "columns_with_high_nulls": [
+              "quantity_available",
+              "quantity_on_hand"
+            ]
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "inventory",
+          "column": "quantity_on_hand",
+          "entity": "inventory.quantity_on_hand",
+          "rule": "quantity_on_hand must be > 0",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "violation_count": 5422,
+            "violation_pct": 0.06458,
+            "min_value": -199
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "orders",
+          "column": "total_amount",
+          "entity": "orders.total_amount",
+          "rule": "total_amount must be > 0",
+          "severity": "high",
+          "confidence": 0.75,
+          "evidence": {
+            "violation_count": 1010,
+            "violation_pct": 0.010009,
+            "min_value": -2096.04
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "orders",
+          "column": "updated_at",
+          "entity": "orders.updated_at",
+          "rule": "column 'updated_at' date values must be within plausible range (last 100 years to next 5 years)",
+          "severity": "high",
+          "confidence": 0.75,
+          "evidence": {
+            "violation_count": 1010,
+            "violation_pct": 0.010009,
+            "max_value": "2099-12-17 23:59:59"
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "order_items",
+          "column": "discount_pct",
+          "entity": "order_items.discount_pct",
+          "rule": "discount_pct must be > 0",
+          "severity": "medium",
+          "confidence": 0.75,
+          "evidence": {
+            "violation_count": 4000,
+            "violation_pct": 0.01,
+            "min_value": -25.0
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "payment_methods",
+          "column": "created_at",
+          "entity": "payment_methods.created_at",
+          "rule": "constant_timestamp",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "2026-05-31 22:02:28.094872",
+            "total_non_null": 11
+          },
+          "remediation_hint": "'payment_methods.created_at' is constant (2026-05-31 22:02:28.094872) across 11 non-null rows. Possible batch-insert bug or unused column."
+        },
+        {
+          "table": "departments",
+          "column": "headcount",
+          "entity": "departments.headcount",
+          "rule": "constant_value",
+          "severity": "low",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "0",
+            "total_non_null": 18
+          },
+          "remediation_hint": "'departments.headcount' has the same value (0) across all 18 non-null rows. Verify this is intentional."
+        },
+        {
+          "table": "customers",
+          "column": null,
+          "entity": "customers.email",
+          "rule": "whitespace_anomaly",
+          "severity": "low",
+          "confidence": 1.0,
+          "evidence": {
+            "rows_with_whitespace": 139,
+            "total_rows": 51545,
+            "columns_with_high_nulls": [
+              "email",
+              "loyalty_tier"
+            ]
+          },
+          "remediation_hint": "'customers.email' has 139 value(s) with leading/trailing whitespace. Trim and revalidate.",
+          "affected_columns": [
+            "email",
+            "loyalty_tier"
+          ],
+          "count": 2
+        },
+        {
+          "table": "customers",
+          "column": "email",
+          "entity": "customers.email",
+          "rule": "format_violation",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "semantic_type": "email",
+            "pattern": "^[A-Za-z0-9._%+\\-]+@[A-Za-z0-9.\\-]+\\.[A-Za-z]{2,}$",
+            "violation_count": 716
+          },
+          "remediation_hint": "'customers.email' has 716 value(s) failing email format validation. Review and correct malformed entries."
+        },
+        {
+          "table": "customers",
+          "column": null,
+          "entity": "customers.date_of_birth",
+          "rule": "impossible_date",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "future_timestamp_count": 59,
+            "columns_with_high_nulls": [
+              "date_of_birth",
+              "created_at"
+            ]
+          },
+          "remediation_hint": "'customers.date_of_birth' has 59 future timestamp(s). Set to NULL or correct the date.",
+          "affected_columns": [
+            "date_of_birth",
+            "created_at"
+          ],
+          "count": 2
+        },
+        {
+          "table": "warehouses",
+          "column": null,
+          "entity": "warehouses.created_at",
+          "rule": "constant_timestamp",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "2026-05-31 22:02:35.486870",
+            "total_non_null": 8,
+            "columns_with_high_nulls": [
+              "created_at",
+              "updated_at"
+            ]
+          },
+          "remediation_hint": "'warehouses.created_at' is constant (2026-05-31 22:02:35.486870) across 8 non-null rows. Possible batch-insert bug or unused column.",
+          "affected_columns": [
+            "created_at",
+            "updated_at"
+          ],
+          "count": 2
+        },
+        {
+          "table": "inventory",
+          "column": null,
+          "entity": "inventory.quantity_on_hand",
+          "rule": "negative_amount",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "negative_count": 141,
+            "columns_with_high_nulls": [
+              "quantity_on_hand",
+              "quantity_available"
+            ]
+          },
+          "remediation_hint": "'inventory.quantity_on_hand' has 141 negative value(s). Set to 0 or NULL after business review.",
+          "affected_columns": [
+            "quantity_on_hand",
+            "quantity_available"
+          ],
+          "count": 2
+        },
+        {
+          "table": "inventory",
+          "column": null,
+          "entity": "inventory.created_at",
+          "rule": "constant_timestamp",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "2026-05-31 22:02:35.490685",
+            "total_non_null": 83949,
+            "columns_with_high_nulls": [
+              "created_at",
+              "updated_at"
+            ]
+          },
+          "remediation_hint": "'inventory.created_at' is constant (2026-05-31 22:02:35.490685) across 83949 non-null rows. Possible batch-insert bug or unused column.",
+          "affected_columns": [
+            "created_at",
+            "updated_at"
+          ],
+          "count": 2
+        },
+        {
+          "table": "customer_segment_members",
+          "column": "added_at",
+          "entity": "customer_segment_members.added_at",
+          "rule": "constant_timestamp",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "2026-05-31 22:02:59.427832",
+            "total_non_null": 20277
+          },
+          "remediation_hint": "'customer_segment_members.added_at' is constant (2026-05-31 22:02:59.427832) across 20277 non-null rows. Possible batch-insert bug or unused column."
+        },
+        {
+          "table": "tags",
+          "column": "created_at",
+          "entity": "tags.created_at",
+          "rule": "constant_timestamp",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "2026-05-31 22:02:28.096607",
+            "total_non_null": 15
+          },
+          "remediation_hint": "'tags.created_at' is constant (2026-05-31 22:02:28.096607) across 15 non-null rows. Possible batch-insert bug or unused column."
+        },
+        {
+          "table": "product_categories",
+          "column": null,
+          "entity": "product_categories.parent_category_id",
+          "rule": "constant_value",
+          "severity": "low",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "1",
+            "total_non_null": 14,
+            "columns_with_high_nulls": [
+              "parent_category_id",
+              "sort_order"
+            ]
+          },
+          "remediation_hint": "'product_categories.parent_category_id' has the same value (1) across all 14 non-null rows. Verify this is intentional.",
+          "affected_columns": [
+            "parent_category_id",
+            "sort_order"
+          ],
+          "count": 2
+        },
+        {
+          "table": "countries",
+          "column": "phone_code",
+          "entity": "countries.phone_code",
+          "rule": "format_violation",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "semantic_type": "phone",
+            "pattern": "^\\+?[\\d\\s\\-().]{7,20}$",
+            "violation_count": 25
+          },
+          "remediation_hint": "'countries.phone_code' has 25 value(s) failing phone format validation. Review and correct malformed entries."
+        },
+        {
+          "table": "countries",
+          "column": null,
+          "entity": "countries.created_at",
+          "rule": "constant_timestamp",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "2026-05-31 22:02:28.093522",
+            "total_non_null": 25,
+            "columns_with_high_nulls": [
+              "created_at",
+              "updated_at"
+            ]
+          },
+          "remediation_hint": "'countries.created_at' is constant (2026-05-31 22:02:28.093522) across 25 non-null rows. Possible batch-insert bug or unused column.",
+          "affected_columns": [
+            "created_at",
+            "updated_at"
+          ],
+          "count": 2
+        },
+        {
+          "table": "tax_rates",
+          "column": "created_at",
+          "entity": "tax_rates.created_at",
+          "rule": "constant_timestamp",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "2026-05-31 22:02:28.096899",
+            "total_non_null": 10
+          },
+          "remediation_hint": "'tax_rates.created_at' is constant (2026-05-31 22:02:28.096899) across 10 non-null rows. Possible batch-insert bug or unused column."
+        },
+        {
+          "table": "order_statuses",
+          "column": "created_at",
+          "entity": "order_statuses.created_at",
+          "rule": "constant_timestamp",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "2026-05-31 22:02:28.094556",
+            "total_non_null": 11
+          },
+          "remediation_hint": "'order_statuses.created_at' is constant (2026-05-31 22:02:28.094556) across 11 non-null rows. Possible batch-insert bug or unused column."
+        },
+        {
+          "table": "shipping_methods",
+          "column": null,
+          "entity": "shipping_methods.created_at",
+          "rule": "constant_timestamp",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "2026-05-31 22:02:28.095152",
+            "total_non_null": 8,
+            "columns_with_high_nulls": [
+              "created_at",
+              "updated_at"
+            ]
+          },
+          "remediation_hint": "'shipping_methods.created_at' is constant (2026-05-31 22:02:28.095152) across 8 non-null rows. Possible batch-insert bug or unused column.",
+          "affected_columns": [
+            "created_at",
+            "updated_at"
+          ],
+          "count": 2
+        },
+        {
+          "table": "employees",
+          "column": "phone",
+          "entity": "employees.phone",
+          "rule": "format_violation",
+          "severity": "medium",
+          "confidence": 0.95,
+          "evidence": {
+            "semantic_type": "phone",
+            "pattern": "^\\+?[\\d\\s\\-().]{7,20}$",
+            "violation_count": 7
+          },
+          "remediation_hint": "'employees.phone' has 7 value(s) failing phone format validation. Review and correct malformed entries."
+        },
+        {
+          "table": "employees",
+          "column": "hire_date",
+          "entity": "employees.hire_date",
+          "rule": "impossible_date",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "future_timestamp_count": 1
+          },
+          "remediation_hint": "'employees.hire_date' has 1 future timestamp(s). Set to NULL or correct the date."
+        },
+        {
+          "table": "employees",
+          "column": "employment_status",
+          "entity": "employees.employment_status",
+          "rule": "empty_string_values",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "empty_string_count": 2,
+            "total_rows": 200
+          },
+          "remediation_hint": "'employees.employment_status' has 2 empty string(s). Consider converting to NULL or adding a CHECK constraint."
+        },
+        {
+          "table": "employees",
+          "column": null,
+          "entity": "employees.created_at",
+          "rule": "constant_timestamp",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "2026-05-31 22:02:28.097957",
+            "total_non_null": 200,
+            "columns_with_high_nulls": [
+              "created_at",
+              "updated_at"
+            ]
+          },
+          "remediation_hint": "'employees.created_at' is constant (2026-05-31 22:02:28.097957) across 200 non-null rows. Possible batch-insert bug or unused column.",
+          "affected_columns": [
+            "created_at",
+            "updated_at"
+          ],
+          "count": 2
+        },
+        {
+          "table": "suppliers",
+          "column": "rating",
+          "entity": "suppliers.rating",
+          "rule": "negative_amount",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "negative_count": 2
+          },
+          "remediation_hint": "'suppliers.rating' has 2 negative value(s). Set to 0 or NULL after business review."
+        },
+        {
+          "table": "suppliers",
+          "column": null,
+          "entity": "suppliers.created_at",
+          "rule": "constant_timestamp",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "2026-05-31 22:02:34.319183",
+            "total_non_null": 200,
+            "columns_with_high_nulls": [
+              "created_at",
+              "updated_at"
+            ]
+          },
+          "remediation_hint": "'suppliers.created_at' is constant (2026-05-31 22:02:34.319183) across 200 non-null rows. Possible batch-insert bug or unused column.",
+          "affected_columns": [
+            "created_at",
+            "updated_at"
+          ],
+          "count": 2
+        },
+        {
+          "table": "products",
+          "column": null,
+          "entity": "products.base_price",
+          "rule": "negative_amount",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "negative_count": 21,
+            "columns_with_high_nulls": [
+              "base_price",
+              "stock_quantity"
+            ]
+          },
+          "remediation_hint": "'products.base_price' has 21 negative value(s). Set to 0 or NULL after business review.",
+          "affected_columns": [
+            "base_price",
+            "stock_quantity"
+          ],
+          "count": 2
+        },
+        {
+          "table": "orders",
+          "column": "total_amount",
+          "entity": "orders.total_amount",
+          "rule": "negative_amount",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "negative_count": 311
+          },
+          "remediation_hint": "'orders.total_amount' has 311 negative value(s). Set to 0 or NULL after business review."
+        },
+        {
+          "table": "orders",
+          "column": null,
+          "entity": "orders.created_at",
+          "rule": "impossible_date",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "future_timestamp_count": 242,
+            "columns_with_high_nulls": [
+              "created_at",
+              "updated_at"
+            ]
+          },
+          "remediation_hint": "'orders.created_at' has 242 future timestamp(s). Set to NULL or correct the date.",
+          "affected_columns": [
+            "created_at",
+            "updated_at"
+          ],
+          "count": 2
+        },
+        {
+          "table": "currencies",
+          "column": "created_at",
+          "entity": "currencies.created_at",
+          "rule": "constant_timestamp",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "2026-05-31 22:02:28.093970",
+            "total_non_null": 19
+          },
+          "remediation_hint": "'currencies.created_at' is constant (2026-05-31 22:02:28.093970) across 19 non-null rows. Possible batch-insert bug or unused column."
+        },
+        {
+          "table": "order_items",
+          "column": null,
+          "entity": "order_items.quantity",
+          "rule": "negative_amount",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "negative_count": 1222,
+            "columns_with_high_nulls": [
+              "quantity",
+              "discount_pct",
+              "line_total"
+            ]
+          },
+          "remediation_hint": "'order_items.quantity' has 1222 negative value(s). Set to 0 or NULL after business review.",
+          "affected_columns": [
+            "quantity",
+            "discount_pct",
+            "line_total"
+          ],
+          "count": 3
+        },
+        {
+          "table": "order_items",
+          "column": "discount_pct",
+          "entity": "order_items.discount_pct",
+          "rule": "range_violation",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "violation_count": 1950,
+            "expected_range": "[0, 100]"
+          },
+          "remediation_hint": "'order_items.discount_pct' has 1950 value(s) outside the expected [0, 100] range. Review and correct or clamp values."
+        },
+        {
+          "table": "payments",
+          "column": "amount",
+          "entity": "payments.amount",
+          "rule": "negative_amount",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "negative_count": 289
+          },
+          "remediation_hint": "'payments.amount' has 289 negative value(s). Set to 0 or NULL after business review."
+        },
+        {
+          "table": "payments",
+          "column": "created_at",
+          "entity": "payments.created_at",
+          "rule": "impossible_date",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "future_timestamp_count": 48
+          },
+          "remediation_hint": "'payments.created_at' has 48 future timestamp(s). Set to NULL or correct the date."
+        },
+        {
+          "table": "shipments",
+          "column": null,
+          "entity": "shipments.delivered_at",
+          "rule": "impossible_date",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "future_timestamp_count": 14,
+            "columns_with_high_nulls": [
+              "delivered_at",
+              "estimated_delivery_date"
+            ]
+          },
+          "remediation_hint": "'shipments.delivered_at' has 14 future timestamp(s). Set to NULL or correct the date.",
+          "affected_columns": [
+            "delivered_at",
+            "estimated_delivery_date"
+          ],
+          "count": 2
+        },
+        {
+          "table": "shipments",
+          "column": "created_at",
+          "entity": "shipments.created_at",
+          "rule": "constant_timestamp",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "2026-05-31 22:02:56.697267",
+            "total_non_null": 90863
+          },
+          "remediation_hint": "'shipments.created_at' is constant (2026-05-31 22:02:56.697267) across 90863 non-null rows. Possible batch-insert bug or unused column."
+        },
+        {
+          "table": "returns",
+          "column": null,
+          "entity": "returns.created_at",
+          "rule": "constant_timestamp",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "2026-05-31 22:03:06.748712",
+            "total_non_null": 8000,
+            "columns_with_high_nulls": [
+              "created_at",
+              "updated_at"
+            ]
+          },
+          "remediation_hint": "'returns.created_at' is constant (2026-05-31 22:03:06.748712) across 8000 non-null rows. Possible batch-insert bug or unused column.",
+          "affected_columns": [
+            "created_at",
+            "updated_at"
+          ],
+          "count": 2
+        },
+        {
+          "table": "return_items",
+          "column": "created_at",
+          "entity": "return_items.created_at",
+          "rule": "constant_timestamp",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "2026-05-31 22:03:07.643293",
+            "total_non_null": 8000
+          },
+          "remediation_hint": "'return_items.created_at' is constant (2026-05-31 22:03:07.643293) across 8000 non-null rows. Possible batch-insert bug or unused column."
+        },
+        {
+          "table": "product_tags",
+          "column": "created_at",
+          "entity": "product_tags.created_at",
+          "rule": "constant_timestamp",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "2026-05-31 22:02:58.938833",
+            "total_non_null": 28086
+          },
+          "remediation_hint": "'product_tags.created_at' is constant (2026-05-31 22:02:58.938833) across 28086 non-null rows. Possible batch-insert bug or unused column."
+        },
+        {
+          "table": "product_suppliers",
+          "column": "created_at",
+          "entity": "product_suppliers.created_at",
+          "rule": "constant_timestamp",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "2026-05-31 22:02:59.179110",
+            "total_non_null": 24851
+          },
+          "remediation_hint": "'product_suppliers.created_at' is constant (2026-05-31 22:02:59.179110) across 24851 non-null rows. Possible batch-insert bug or unused column."
+        },
+        {
+          "table": "customer_segments",
+          "column": "created_at",
+          "entity": "customer_segments.created_at",
+          "rule": "constant_timestamp",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "2026-05-31 22:02:36.899906",
+            "total_non_null": 7
+          },
+          "remediation_hint": "'customer_segments.created_at' is constant (2026-05-31 22:02:36.899906) across 7 non-null rows. Possible batch-insert bug or unused column."
+        },
+        {
+          "table": "employee_roles",
+          "column": "created_at",
+          "entity": "employee_roles.created_at",
+          "rule": "constant_timestamp",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "2026-05-31 22:02:28.097654",
+            "total_non_null": 8
+          },
+          "remediation_hint": "'employee_roles.created_at' is constant (2026-05-31 22:02:28.097654) across 8 non-null rows. Possible batch-insert bug or unused column."
+        },
+        {
+          "table": "employee_role_assignments",
+          "column": "assigned_by",
+          "entity": "employee_role_assignments.assigned_by",
+          "rule": "constant_value",
+          "severity": "low",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "137",
+            "total_non_null": 200
+          },
+          "remediation_hint": "'employee_role_assignments.assigned_by' has the same value (137) across all 200 non-null rows. Verify this is intentional."
+        },
+        {
+          "table": "employee_role_assignments",
+          "column": "assigned_at",
+          "entity": "employee_role_assignments.assigned_at",
+          "rule": "constant_timestamp",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "2026-05-31 22:02:59.424831",
+            "total_non_null": 200,
+            "columns_with_high_nulls": [
+              "assigned_at",
+              "assigned_by"
+            ]
+          },
+          "remediation_hint": "'employee_role_assignments.assigned_at' is constant (2026-05-31 22:02:59.424831) across 200 non-null rows. Possible batch-insert bug or unused column."
+        },
+        {
+          "table": "email_notifications",
+          "column": "sent_at",
+          "entity": "email_notifications.sent_at",
+          "rule": "impossible_date",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "future_timestamp_count": 56
+          },
+          "remediation_hint": "'email_notifications.sent_at' has 56 future timestamp(s). Set to NULL or correct the date."
+        },
+        {
+          "table": "system_configurations",
+          "column": null,
+          "entity": "system_configurations.created_at",
+          "rule": "constant_timestamp",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "2026-05-31 22:03:06.473354",
+            "total_non_null": 24,
+            "columns_with_high_nulls": [
+              "created_at",
+              "updated_at"
+            ]
+          },
+          "remediation_hint": "'system_configurations.created_at' is constant (2026-05-31 22:03:06.473354) across 24 non-null rows. Possible batch-insert bug or unused column.",
+          "affected_columns": [
+            "created_at",
+            "updated_at"
+          ],
+          "count": 2
+        },
+        {
+          "table": "discount_codes",
+          "column": "expires_at",
+          "entity": "discount_codes.expires_at",
+          "rule": "impossible_date",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "future_timestamp_count": 487
+          },
+          "remediation_hint": "'discount_codes.expires_at' has 487 future timestamp(s). Set to NULL or correct the date."
+        },
+        {
+          "table": "discount_codes",
+          "column": null,
+          "entity": "discount_codes.created_at",
+          "rule": "constant_timestamp",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "2026-05-31 22:03:06.477052",
+            "total_non_null": 500,
+            "columns_with_high_nulls": [
+              "created_at",
+              "updated_at"
+            ]
+          },
+          "remediation_hint": "'discount_codes.created_at' is constant (2026-05-31 22:03:06.477052) across 500 non-null rows. Possible batch-insert bug or unused column.",
+          "affected_columns": [
+            "created_at",
+            "updated_at"
+          ],
+          "count": 2
+        },
+        {
+          "table": "price_history",
+          "column": "created_at",
+          "entity": "price_history.created_at",
+          "rule": "constant_timestamp",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "2026-05-31 22:03:06.479909",
+            "total_non_null": 30000
+          },
+          "remediation_hint": "'price_history.created_at' is constant (2026-05-31 22:03:06.479909) across 30000 non-null rows. Possible batch-insert bug or unused column."
+        },
+        {
+          "table": "customers",
+          "column": "loyalty_tier",
+          "entity": "customers.loyalty_tier",
+          "rule": "enum_anomaly",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "distinct_count": 6,
+            "dominant_value": "bronze",
+            "dominant_count": 20397,
+            "rare_values": [
+              "gold  (n=137)"
+            ],
+            "whitespace_variants": [
+              "'gold ' (n=137)"
+            ]
+          },
+          "remediation_hint": "'customers.loyalty_tier' has 1 rare value(s) out of 6 distinct values. Review for typos, case variants, or invalid enum entries."
+        },
+        {
+          "table": "customers",
+          "column": "loyalty_tier",
+          "entity": "customers.loyalty_tier",
+          "rule": "case_inconsistency",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "case_conflicts": [
+              "gold: ['gold', 'gold ']"
+            ],
+            "distinct_count": 6
+          },
+          "remediation_hint": "'customers.loyalty_tier' has 1 case-variant group(s). Normalize to a consistent format."
+        },
+        {
+          "table": "customer_addresses",
+          "column": "city",
+          "entity": "customer_addresses.city",
+          "rule": "case_inconsistency",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "case_conflicts": [
+              "new york: ['New York', 'new york']"
+            ],
+            "distinct_count": 30
+          },
+          "remediation_hint": "'customer_addresses.city' has 1 case-variant group(s). Normalize to a consistent format."
+        },
+        {
+          "table": "payments",
+          "column": "status",
+          "entity": "payments.status",
+          "rule": "enum_anomaly",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "distinct_count": 7,
+            "dominant_value": "completed",
+            "dominant_count": 84287,
+            "rare_values": [
+              "unknown_status (n=384)"
+            ],
+            "whitespace_variants": []
+          },
+          "remediation_hint": "'payments.status' has 1 rare value(s) out of 7 distinct values. Review for typos, case variants, or invalid enum entries."
+        },
+        {
+          "table": "payments",
+          "column": "status",
+          "entity": "payments.status",
+          "rule": "case_inconsistency",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "case_conflicts": [
+              "completed: ['COMPLETED', 'Completed', 'completed']"
+            ],
+            "distinct_count": 7
+          },
+          "remediation_hint": "'payments.status' has 1 case-variant group(s). Normalize to a consistent format."
+        },
+        {
+          "table": "shipments",
+          "column": "status",
+          "entity": "shipments.status",
+          "rule": "case_inconsistency",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "case_conflicts": [
+              "in_transit: ['IN_TRANSIT', 'in_transit']"
+            ],
+            "distinct_count": 5
+          },
+          "remediation_hint": "'shipments.status' has 1 case-variant group(s). Normalize to a consistent format."
+        }
+      ]
+    },
+    "relational_validator": {
+      "pipeline_run_id": "1403bac4-29cb-484f-aeb5-4a29ab8538da",
+      "database_id": "localhost_5432_enterprise_test_db",
+      "run_timestamp": "2026-06-08T21:04:58.359388Z",
+      "agent": "Relational Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 35,
+        "items_passed": 26,
+        "items_flagged": 9,
+        "critical_issues": 7,
+        "high_issues": 1,
+        "medium_issues": 1,
+        "low_issues": 0,
+        "overall_quality_score": 80.8,
+        "overall_confidence": 0.8778,
+        "flagged_tables": [
+          "customer_addresses",
+          "inventory",
+          "order_items",
+          "orders",
+          "payments",
+          "price_history",
+          "products",
+          "shipments"
+        ]
+      },
+      "metrics": {
+        "validator": "relational",
+        "findings_count": 9,
+        "deduped_finding_count": 9,
+        "grouped_finding_count": 9
+      },
+      "findings": [
+        {
+          "table": "order_items",
+          "column": "created_at",
+          "entity": "order_items.created_at",
+          "rule": "temporal_inconsistency",
+          "severity": "critical",
+          "confidence": 0.95,
+          "evidence": {
+            "example_order_id": 47,
+            "order_created_at": "2026-06-13 22:03:48.533304",
+            "order_item_created_at": "2025-09-25 22:02:36.900764"
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "price_history",
+          "column": "effective_from",
+          "entity": "price_history.effective_from",
+          "rule": "temporal_inconsistency",
+          "severity": "critical",
+          "confidence": 0.95,
+          "evidence": {
+            "example_product_id": 9267,
+            "product_created_at": "2026-05-31 22:02:34.326853",
+            "price_effective_from": "2025-06-09 22:03:06.479909"
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "products",
+          "column": "sku",
+          "entity": "products.sku",
+          "rule": "functional_dependency_violation",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "violating_sku_example": "SKU-00000249",
+            "number_of_variants_for_sku": 2
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "customer_addresses",
+          "column": null,
+          "entity": "customer_addresses",
+          "rule": "cardinality_ratio_anomaly",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "average_addresses_per_customer": 1.74,
+            "customer_with_highest_addresses": 25749,
+            "highest_address_count": 9
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "inventory",
+          "column": "product_id",
+          "entity": "inventory.product_id",
+          "rule": "suspected_orphaned_fk",
+          "severity": "critical",
+          "confidence": 0.85,
+          "evidence": {
+            "orphan_count": 36,
+            "suspected_parent": "products",
+            "parent_column": "product_id",
+            "no_formal_fk": true
+          },
+          "remediation_hint": "36 row(s) in 'inventory.product_id' reference non-existent products.product_id (no formal FK constraint exists — suspected orphan). Delete orphaned rows or re-add the FK constraint."
+        },
+        {
+          "table": "orders",
+          "column": "customer_id",
+          "entity": "orders.customer_id",
+          "rule": "suspected_orphaned_fk",
+          "severity": "critical",
+          "confidence": 0.85,
+          "evidence": {
+            "orphan_count": 55,
+            "suspected_parent": "customers",
+            "parent_column": "customer_id",
+            "no_formal_fk": true
+          },
+          "remediation_hint": "55 row(s) in 'orders.customer_id' reference non-existent customers.customer_id (no formal FK constraint exists — suspected orphan). Delete orphaned rows or re-add the FK constraint."
+        },
+        {
+          "table": "order_items",
+          "column": "product_id",
+          "entity": "order_items.product_id",
+          "rule": "suspected_orphaned_fk",
+          "severity": "critical",
+          "confidence": 0.85,
+          "evidence": {
+            "orphan_count": 199,
+            "suspected_parent": "products",
+            "parent_column": "product_id",
+            "no_formal_fk": true
+          },
+          "remediation_hint": "199 row(s) in 'order_items.product_id' reference non-existent products.product_id (no formal FK constraint exists — suspected orphan). Delete orphaned rows or re-add the FK constraint."
+        },
+        {
+          "table": "payments",
+          "column": "order_id",
+          "entity": "payments.order_id",
+          "rule": "suspected_orphaned_fk",
+          "severity": "critical",
+          "confidence": 0.85,
+          "evidence": {
+            "orphan_count": 38,
+            "suspected_parent": "orders",
+            "parent_column": "order_id",
+            "no_formal_fk": true
+          },
+          "remediation_hint": "38 row(s) in 'payments.order_id' reference non-existent orders.order_id (no formal FK constraint exists — suspected orphan). Delete orphaned rows or re-add the FK constraint."
+        },
+        {
+          "table": "shipments",
+          "column": "order_id",
+          "entity": "shipments.order_id",
+          "rule": "suspected_orphaned_fk",
+          "severity": "critical",
+          "confidence": 0.85,
+          "evidence": {
+            "orphan_count": 40,
+            "suspected_parent": "orders",
+            "parent_column": "order_id",
+            "no_formal_fk": true
+          },
+          "remediation_hint": "40 row(s) in 'shipments.order_id' reference non-existent orders.order_id (no formal FK constraint exists — suspected orphan). Delete orphaned rows or re-add the FK constraint."
+        }
+      ]
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "1403bac4-29cb-484f-aeb5-4a29ab8538da",
+      "database_id": "localhost_5432_enterprise_test_db",
+      "run_timestamp": "2026-06-08T21:04:58.359388Z",
+      "agent": "Data Fix Planner",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 121,
+        "items_passed": 121,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "total_issues_received": 121,
+        "fixes_generated": 0
+      },
+      "findings": [],
+      "cards": []
+    }
+  }
+}

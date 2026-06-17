@@ -67,6 +67,23 @@ def _make_tool_hook(agent_id: str):
     return _hook
 
 
+def _make_metrics_hook(agent_id: str, phase_name: str):
+    """Return a metrics hook closure with agent id and phase name pre-bound.
+
+    Same pattern as _make_tool_hook: in Agno workflow steps, run_context.agent
+    resolves to the Step/Team wrapper — not the underlying Agent. This closure
+    bypasses that lookup by capturing the correct identity at construction time,
+    so Langfuse traces are recorded under the right agent name.
+    """
+    def _hook(run_output: Any, agent: Any, run_context: Any) -> None:
+        return log_run_metrics(
+            run_output, agent, run_context,
+            _bound_aid=agent_id,
+            _bound_phase_name=phase_name,
+        )
+    return _hook
+
+
 def _build_agentos_db() -> BaseDb:
     pg_user = os.environ.get("PG_USER", "").strip()
     if pg_user:
@@ -171,7 +188,7 @@ def _shared_agent_kwargs(
         "dependencies": dependencies,
         "tool_hooks": [qualitylab_tool_hook],
         "pre_hooks": pre_hooks,
-        "post_hooks": [validate_findings_entities, log_run_metrics],
+        "post_hooks": [validate_findings_entities],
         "cache_callables": False,
         "resolve_in_context": True,
     }
@@ -214,8 +231,10 @@ def build_members(
         tools=schema_tools,
         model=build_model(model_id),
         tool_hooks=[_make_tool_hook("schema-validator")],
+        post_hooks=list(_base_kwargs.get("post_hooks", []))
+        + [_make_metrics_hook("schema-validator", "Schema Integrity Validator")],
         **SCHEMA_AGENT_CONFIG,
-        **_base_kwargs,
+        **{k: v for k, v in _base_kwargs.items() if k != "post_hooks"},
     )
     # Profiler runs after schema validation and stores a statistical baseline in
     # session_state["profiler_report"] for all parallel validators to reference.
@@ -224,7 +243,7 @@ def build_members(
         tools=profiler_tools,
         model=build_model(model_id),
         tool_hooks=[_make_tool_hook("profiler")],
-        post_hooks=[store_profiler_output, log_run_metrics],
+        post_hooks=[store_profiler_output, _make_metrics_hook("profiler", "Database Profiler")],
         **PROFILER_AGENT_CONFIG,
         **{k: v for k, v in _base_kwargs.items() if k != "post_hooks"},
     )
@@ -233,24 +252,30 @@ def build_members(
         tools=statistical_tools,
         model=build_model(model_id),
         tool_hooks=[_make_tool_hook("statistical-validator")],
+        post_hooks=list(_base_kwargs.get("post_hooks", []))
+        + [_make_metrics_hook("statistical-validator", "Statistical Validator")],
         **STATISTICAL_AGENT_CONFIG,
-        **_base_kwargs,
+        **{k: v for k, v in _base_kwargs.items() if k != "post_hooks"},
     )
     structural_validator = Agent(
         id="structural-validator",
         tools=structural_tools,
         model=build_model(model_id),
         tool_hooks=[_make_tool_hook("structural-validator")],
+        post_hooks=list(_base_kwargs.get("post_hooks", []))
+        + [_make_metrics_hook("structural-validator", "Structural Validator")],
         **STRUCTURAL_AGENT_CONFIG,
-        **_base_kwargs,
+        **{k: v for k, v in _base_kwargs.items() if k != "post_hooks"},
     )
     relational_validator = Agent(
         id="relational-validator",
         tools=relational_tools,
         model=build_model(model_id),
         tool_hooks=[_make_tool_hook("relational-validator")],
+        post_hooks=list(_base_kwargs.get("post_hooks", []))
+        + [_make_metrics_hook("relational-validator", "Relational Validator")],
         **RELATIONAL_AGENT_CONFIG,
-        **_base_kwargs,
+        **{k: v for k, v in _base_kwargs.items() if k != "post_hooks"},
     )
     fix_planner = Agent(
         id="fix-planner",
@@ -261,7 +286,7 @@ def build_members(
             validate_findings_entities,
             validate_fix_sql_safety,
             validate_fix_preflight,
-            log_run_metrics,
+            _make_metrics_hook("fix-planner", "Data Fix Planner"),
         ],
         **FIX_PLANNER_AGENT_CONFIG,
         **{k: v for k, v in _base_kwargs.items() if k != "post_hooks"},

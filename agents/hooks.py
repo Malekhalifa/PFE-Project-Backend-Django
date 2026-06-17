@@ -246,6 +246,20 @@ def qualitylab_tool_hook(
     # NOTE: _validator_tool_calls + Redis tcounts are bumped at the TOP of the
     # hook (so cache hits also count). No double-write needed here.
 
+    # ── Per-tool timing for Langfuse observability ────────────────────
+    # Collect (function_name, elapsed_ms, result_size) for each tool call
+    # so the Langfuse tracer can create child spans showing thinking time
+    # vs tool execution time.
+    timings: list[dict[str, Any]] = run_context.session_state.setdefault(
+        f"_tool_timings_{aid}", []
+    )
+    timings.append({
+        "tool": function_name,
+        "elapsed_ms": round(elapsed_ms, 1),
+        "result_bytes": result_size,
+        "query": raw_sql[:200] if function_name in ("run_query", "_run_query") else "",
+    })
+
     if r is not None:
         try:
             r.setex(redis_key, 3600, json.dumps(result, default=str))
@@ -679,6 +693,22 @@ def ensure_schema_primed(run_input: RunInput, run_context: RunContext) -> None:
 
     logger.info("ensure_schema_primed: loaded %d tables", len(schema))
 
+    # ── Langfuse pipeline start ─────────────────────────────────────────
+    try:
+        from .langfuse_tracer import record_pipeline_start
+        lf_ctx = record_pipeline_start(
+            pipeline_run_id=state.get("pipeline_run_id", "unknown"),
+            job_id=state.get("job_id"),
+            database_id=state.get("database_id", "unknown"),
+            table_count=len(schema),
+            model_id=state.get("model_id", os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")),
+        )
+        if lf_ctx.get("trace_id"):
+            state["_lf_parent_trace_id"] = lf_ctx["trace_id"]
+            state["_lf_parent_observation_id"] = lf_ctx["observation_id"]
+    except Exception as _lf_start_exc:
+        logger.debug("Langfuse pipeline start skipped: %s", _lf_start_exc)
+
 
 # Per-agent slim domain_rules key sets. Each agent only receives the keys it
 # actually uses — cuts ~50% of domain_rules injection tokens per call.
@@ -977,15 +1007,41 @@ _AGENT_ID_TO_PHASE = {
 }
 
 
-def log_run_metrics(run_output: RunOutput, agent=None, run_context: RunContext = None) -> None:
+def log_run_metrics(
+    run_output: RunOutput,
+    agent=None,
+    run_context: RunContext = None,
+    *,
+    _bound_aid: str | None = None,
+    _bound_phase_name: str | None = None,
+) -> None:
     state = (run_context.session_state if run_context is not None else None) or {}
     elapsed_ms = (time.time() - state.get("_run_start", time.time())) * 1000
 
-    # Resolve the agent the same way as emit_pipeline_status: prefer the hook's
-    # directly-injected ``agent`` parameter over run_context.agent (which holds
-    # the workflow Step/Team wrapper in current Agno versions).
-    target_agent = agent if agent is not None else getattr(run_context, "agent", None)
-    aid = (getattr(target_agent, "id", "") or "") or "global"
+    # ── Agent identity resolution ──────────────────────────────────────
+    # When _bound_aid and _bound_phase_name are provided (from the per-agent
+    # _make_metrics_hook closure), skip the broken run_context.agent lookup
+    # entirely. In Agno workflow steps, run_context.agent resolves to the
+    # Step/Team wrapper, not the underlying Agent — returning "global" for
+    # every parallel sub-step and causing Langfuse traces to be lost.
+    if _bound_aid is not None:
+        aid = _bound_aid
+        phase_name = _bound_phase_name or _AGENT_ID_TO_PHASE.get(aid) or aid
+    else:
+        target_agent = agent if agent is not None else getattr(run_context, "agent", None)
+        aid = (getattr(target_agent, "id", "") or "") or "global"
+        phase_name = (
+            _AGENT_ID_TO_PHASE.get(aid)
+            or getattr(target_agent, "name", None)
+            or "team"
+        )
+
+    # Skip team-level wrapper runs — the per-agent hooks handle each agent.
+    # The team's own post_hook fires after all members and would record a
+    # spurious "team" generation in Langfuse.
+    if phase_name == "team" or aid == "global":
+        return
+
     # 3-tier fallback — mirrors reducer audit logic for consistency.
     # Tier 1: _validator_tool_calls[aid] — bumped every entry including cache hits.
     # Tier 2: _tool_calls_seen_{aid} length — unique (function+args) pairs.
@@ -1009,12 +1065,6 @@ def log_run_metrics(run_output: RunOutput, agent=None, run_context: RunContext =
         findings_count = len(run_output.content.findings)
     elif isinstance(run_output.content, FixPlan):
         findings_count = len(run_output.content.cards)
-
-    phase_name = (
-        _AGENT_ID_TO_PHASE.get(aid)
-        or getattr(target_agent, "name", None)
-        or "team"
-    )
 
     timing = state.setdefault("_phase_timing_ms", {})
     timing[phase_name] = round(elapsed_ms)
@@ -1044,19 +1094,40 @@ def log_run_metrics(run_output: RunOutput, agent=None, run_context: RunContext =
     if isinstance(output_tokens, list):
         output_tokens = sum(x for x in output_tokens if isinstance(x, int)) or None
 
+    # ── Reasoning / thinking telemetry from Agno ─────────────────────────
+    time_to_first_token: float | None = getattr(metrics, "time_to_first_token", None)
+    reasoning_tokens: int | None = getattr(metrics, "reasoning_tokens", None)
+    reasoning_steps: list[Any] = getattr(run_output, "reasoning_steps", None) or []
+    reasoning_step_count: int = len(reasoning_steps) if reasoning_steps else 0
+
+    # Per-tool timings collected by qualitylab_tool_hook.
+    tool_timings: list[dict[str, Any]] = state.get(f"_tool_timings_{aid}", [])
+
     try:
-        from .langfuse_tracer import create_agent_span
-        create_agent_span(
+        from .langfuse_tracer import record_agent_trace
+        record_agent_trace(
             agent_name=phase_name,
+            pipeline_run_id=state.get("pipeline_run_id", "unknown"),
+            job_id=state.get("job_id"),
+            database_id=state.get("database_id", "unknown"),
+            model_id=state.get("model_id", "unknown"),
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
             elapsed_ms=elapsed_ms,
             tool_calls=tool_calls,
             findings_count=findings_count,
-            input_tokens=input_tokens,
-            output_tokens=output_tokens,
-            model_id=state.get("model_id"),
+            parent_trace_id=state.get("_lf_parent_trace_id", ""),
+            tool_timings=tool_timings,
+            time_to_first_token=time_to_first_token,
+            reasoning_tokens=reasoning_tokens,
+            reasoning_step_count=reasoning_step_count,
         )
     except Exception as _lf_exc:
-        logger.debug("Langfuse span skipped: %s", _lf_exc)
+        logger.debug("Langfuse trace skipped: %s", _lf_exc)
+
+    # Clean up per-agent tool timings for this agent to avoid cross-agent
+    # accumulation in the shared session_state.
+    state.pop(f"_tool_timings_{aid}", None)
 
 
 try:

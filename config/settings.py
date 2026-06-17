@@ -199,7 +199,7 @@ if USE_SQLITE_TEST_DB:
         }
     }
 else:
-    # PostgreSQL (Django ORM) — all data: users, jobs, results, chat, guidelines
+    # PostgreSQL (Django ORM) — all data: users, jobs, results, chat, audit logs, learned rules
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',

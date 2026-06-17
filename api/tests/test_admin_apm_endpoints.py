@@ -225,16 +225,6 @@ class AdminApmEndpointTests(TestCase):
                 'pipeline_run_id': pipeline_run_id,
             },
         )
-        self._create_audit(
-            job_id=job.id,
-            event_type='PIPELINE_STEP_COMPLETED',
-            payload={
-                'step': 'saving_guidelines',
-                'duration_ms': 50,
-                'status_code': 200,
-                'pipeline_run_id': pipeline_run_id,
-            },
-        )
 
         request = self._auth_request(
             method='get',
@@ -255,10 +245,6 @@ class AdminApmEndpointTests(TestCase):
         self.assertAlmostEqual(float(schema_metric.get('success_rate')), 66.67, places=2)
         self.assertAlmostEqual(float(schema_metric.get('average_duration_ms')), 233.33, places=2)
 
-        saving_metric = next((row for row in step_rows if row.get('step') == 'saving_guidelines'), None)
-        self.assertIsNotNone(saving_metric)
-        self.assertEqual(saving_metric.get('source'), 'measured')
-        self.assertEqual(saving_metric.get('sample_count'), 1)
 
         total_metric = next((row for row in step_rows if row.get('step') == 'total_pipeline'), None)
         self.assertIsNotNone(total_metric)
@@ -312,7 +298,6 @@ class AdminApmEndpointTests(TestCase):
         for step, duration in [
             ('schema_validation', 120),
             ('column_validation', 180),
-            ('saving_guidelines', 40),
         ]:
             self._create_audit(
                 job_id=job.id,
@@ -328,7 +313,6 @@ class AdminApmEndpointTests(TestCase):
         for step, duration in [
             ('schema_validation', 200),
             ('column_validation', 100),
-            ('saving_guidelines', 60),
         ]:
             self._create_audit(
                 job_id=job.id,

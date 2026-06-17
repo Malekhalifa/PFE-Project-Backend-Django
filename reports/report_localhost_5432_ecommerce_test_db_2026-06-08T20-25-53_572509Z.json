@@ -1,0 +1,4379 @@
+{
+  "pipeline_run_id": "52e06fd1-76fb-4ef5-bdbe-e61f00325242",
+  "database_id": "localhost_5432_ecommerce_test_db",
+  "llm_model": "gemini-2.5-flash",
+  "run_timestamp": "2026-06-08T20:25:53.572509Z",
+  "executive_summary": {
+    "verdict": "medium_risk",
+    "top_issues": [
+      "[CRITICAL] negative stock quantity on products.stock_quantity",
+      "[CRITICAL] cross field consistency violation on shipments",
+      "[CRITICAL] negative amount on products.stock_quantity"
+    ],
+    "tables_scanned": 15,
+    "tables_profiled": 15,
+    "fixes_recommended": 40,
+    "critical_fix_count": 9,
+    "migration_risk": {
+      "score": 0,
+      "high_risk_cards": 0,
+      "blocked_cards": 0,
+      "destructive_cards": 0
+    }
+  },
+  "summary": {
+    "confidence_score": 100,
+    "data_quality_score": 69,
+    "final_fix_count": 40,
+    "confidence_explanation": {
+      "total_findings": 65,
+      "high_confidence_count": 52,
+      "medium_confidence_count": 13,
+      "low_confidence_count": 0,
+      "summary": "80% of findings have confidence ≥ 0.9 (52/65 high, 13 medium, 0 low). Deterministic (py_profiler) findings are 0.92–1.0; LLM findings vary."
+    },
+    "timing": {
+      "started_at": "2026-06-08T20:25:53.572509Z",
+      "ended_at": "2026-06-08T20:31:55.092959Z",
+      "total_duration_ms": 361509,
+      "total_duration_human": "361.5s",
+      "phases_ms": {
+        "schema_priming": 908,
+        "Schema Integrity Validator": 44523,
+        "Python Profiler": 674,
+        "Structural Validator": 23564,
+        "Relational Validator": 34376,
+        "Statistical Validator": 55680,
+        "Reducer": 122,
+        "Data Fix Planner": 259983
+      },
+      "bottleneck": "Data Fix Planner"
+    },
+    "entity_hallucinations": {
+      "total_stripped": 0,
+      "breakdown": {
+        "non_existent_entities": 0,
+        "inferred_fk_rules": 0,
+        "outside_profiler_coverage": 0,
+        "fix_cards": 0
+      }
+    }
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "52e06fd1-76fb-4ef5-bdbe-e61f00325242",
+      "database_id": "localhost_5432_ecommerce_test_db",
+      "run_timestamp": "2026-06-08T20:25:53.572509Z",
+      "agent": "Schema Integrity Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 15,
+        "items_passed": 0,
+        "items_flagged": 23,
+        "critical_issues": 0,
+        "high_issues": 16,
+        "medium_issues": 9,
+        "low_issues": 1,
+        "overall_quality_score": 58.1,
+        "overall_confidence": 0.9158,
+        "flagged_tables": [
+          "addresses",
+          "categories",
+          "employees",
+          "inventory",
+          "orders",
+          "payments",
+          "reviews",
+          "support_tickets"
+        ]
+      },
+      "metrics": {
+        "validator": "schema",
+        "findings_count": 26,
+        "deduped_finding_count": 26,
+        "grouped_finding_count": 23
+      },
+      "findings": [
+        {
+          "table": "categories",
+          "column": "parent_category_id",
+          "entity": "categories.parent_category_id",
+          "rule": "missing_foreign_key_index",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "column": "parent_category_id",
+            "foreign_table": "categories",
+            "foreign_column": "category_id",
+            "table_indexes": [
+              "categories_pkey"
+            ],
+            "indexed_columns": [
+              "category_id"
+            ]
+          },
+          "remediation_hint": "Foreign key column 'parent_category_id' in table 'categories' is not indexed."
+        },
+        {
+          "table": "employees",
+          "column": "manager_id",
+          "entity": "employees.manager_id",
+          "rule": "missing_foreign_key_index",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "column": "manager_id",
+            "foreign_table": "employees",
+            "foreign_column": "employee_id",
+            "table_indexes": [
+              "employees_pkey"
+            ],
+            "indexed_columns": [
+              "employee_id"
+            ]
+          },
+          "remediation_hint": "Foreign key column 'manager_id' in table 'employees' is not indexed."
+        },
+        {
+          "table": "orders",
+          "column": "customer_id",
+          "entity": "orders.customer_id",
+          "rule": "missing_foreign_key_index",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "column": "customer_id",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id",
+            "table_indexes": [
+              "orders_pkey"
+            ],
+            "indexed_columns": [
+              "order_id"
+            ]
+          },
+          "remediation_hint": "Foreign key column 'customer_id' in table 'orders' is not indexed."
+        },
+        {
+          "table": "support_tickets",
+          "column": null,
+          "entity": "support_tickets.customer_id",
+          "rule": "missing_foreign_key_index",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "column": "customer_id",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id",
+            "table_indexes": [
+              "support_tickets_pkey"
+            ],
+            "indexed_columns": [
+              "ticket_id"
+            ]
+          },
+          "remediation_hint": "Foreign key column 'customer_id' in table 'support_tickets' is not indexed.",
+          "affected_columns": [
+            "customer_id",
+            "order_id"
+          ],
+          "count": 2
+        },
+        {
+          "table": "payments",
+          "column": "order_id",
+          "entity": "payments.order_id",
+          "rule": "missing_foreign_key_index",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "column": "order_id",
+            "foreign_table": "orders",
+            "foreign_column": "order_id",
+            "table_indexes": [
+              "payments_pkey"
+            ],
+            "indexed_columns": [
+              "payment_id"
+            ]
+          },
+          "remediation_hint": "Foreign key column 'order_id' in table 'payments' is not indexed."
+        },
+        {
+          "table": "reviews",
+          "column": "product_id",
+          "entity": "reviews.product_id",
+          "rule": "missing_foreign_key_index",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "column": "product_id",
+            "foreign_table": "products",
+            "foreign_column": "product_id",
+            "table_indexes": [
+              "reviews_pkey"
+            ],
+            "indexed_columns": [
+              "review_id"
+            ]
+          },
+          "remediation_hint": "Foreign key column 'product_id' in table 'reviews' is not indexed."
+        },
+        {
+          "table": "addresses",
+          "column": "customer_id",
+          "entity": "addresses.customer_id",
+          "rule": "missing_foreign_key_index",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "column": "customer_id",
+            "foreign_table": "customers",
+            "foreign_column": "customer_id",
+            "table_indexes": [
+              "addresses_pkey"
+            ],
+            "indexed_columns": [
+              "address_id"
+            ]
+          },
+          "remediation_hint": "Foreign key column 'customer_id' in table 'addresses' is not indexed."
+        },
+        {
+          "table": "inventory",
+          "column": "last_updated",
+          "entity": "inventory.last_updated",
+          "rule": "naming_convention_inconsistency",
+          "severity": "medium",
+          "confidence": 0.9,
+          "evidence": {
+            "inconsistent_suffixes": [
+              "_updated",
+              "_date",
+              "_at"
+            ]
+          },
+          "remediation_hint": "Inconsistent naming convention for timestamp columns. Some use '_at' (e.g., created_at, hired_at), others use '_date' (e.g., order_date, shipped_date, delivered_date, payment_date), and 'last_updated' uses '_updated'."
+        },
+        {
+          "table": "employees",
+          "column": "department",
+          "entity": "employees.department",
+          "rule": "potential_denormalization",
+          "severity": "low",
+          "confidence": 0.75,
+          "evidence": {
+            "column_name": "department",
+            "data_type": "character varying"
+          },
+          "remediation_hint": "The 'department' column in the 'employees' table might indicate denormalization. Consider creating a separate 'departments' table and using a foreign key."
+        },
+        {
+          "table": "categories",
+          "column": "parent_category_id",
+          "entity": "categories.parent_category_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true
+          },
+          "remediation_hint": "'categories.parent_category_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record."
+        },
+        {
+          "table": "categories",
+          "column": "parent_category_id",
+          "entity": "categories.parent_category_id",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "foreign_table": "categories",
+            "foreign_column": "category_id"
+          },
+          "remediation_hint": "Add an index on 'categories.parent_category_id' (FK → categories.category_id) to speed up JOIN and orphan-check queries."
+        },
+        {
+          "table": "employees",
+          "column": "manager_id",
+          "entity": "employees.manager_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true
+          },
+          "remediation_hint": "'employees.manager_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record."
+        },
+        {
+          "table": "employees",
+          "column": "manager_id",
+          "entity": "employees.manager_id",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "foreign_table": "employees",
+            "foreign_column": "employee_id"
+          },
+          "remediation_hint": "Add an index on 'employees.manager_id' (FK → employees.employee_id) to speed up JOIN and orphan-check queries."
+        },
+        {
+          "table": "orders",
+          "column": "customer_id",
+          "entity": "orders.customer_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true
+          },
+          "remediation_hint": "'orders.customer_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record."
+        },
+        {
+          "table": "orders",
+          "column": "customer_id",
+          "entity": "orders.customer_id",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "foreign_table": "customers",
+            "foreign_column": "customer_id"
+          },
+          "remediation_hint": "Add an index on 'orders.customer_id' (FK → customers.customer_id) to speed up JOIN and orphan-check queries."
+        },
+        {
+          "table": "support_tickets",
+          "column": null,
+          "entity": "support_tickets.customer_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true,
+            "columns_with_high_nulls": [
+              "customer_id",
+              "order_id"
+            ]
+          },
+          "remediation_hint": "'support_tickets.customer_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record.",
+          "affected_columns": [
+            "customer_id",
+            "order_id"
+          ],
+          "count": 2
+        },
+        {
+          "table": "support_tickets",
+          "column": null,
+          "entity": "support_tickets.customer_id",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "foreign_table": "customers",
+            "foreign_column": "customer_id",
+            "columns_with_high_nulls": [
+              "customer_id",
+              "order_id"
+            ]
+          },
+          "remediation_hint": "Add an index on 'support_tickets.customer_id' (FK → customers.customer_id) to speed up JOIN and orphan-check queries.",
+          "affected_columns": [
+            "customer_id",
+            "order_id"
+          ],
+          "count": 2
+        },
+        {
+          "table": "payments",
+          "column": "order_id",
+          "entity": "payments.order_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true
+          },
+          "remediation_hint": "'payments.order_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record."
+        },
+        {
+          "table": "payments",
+          "column": "order_id",
+          "entity": "payments.order_id",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "foreign_table": "orders",
+            "foreign_column": "order_id"
+          },
+          "remediation_hint": "Add an index on 'payments.order_id' (FK → orders.order_id) to speed up JOIN and orphan-check queries."
+        },
+        {
+          "table": "reviews",
+          "column": "product_id",
+          "entity": "reviews.product_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true
+          },
+          "remediation_hint": "'reviews.product_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record."
+        },
+        {
+          "table": "reviews",
+          "column": "product_id",
+          "entity": "reviews.product_id",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "foreign_table": "products",
+            "foreign_column": "product_id"
+          },
+          "remediation_hint": "Add an index on 'reviews.product_id' (FK → products.product_id) to speed up JOIN and orphan-check queries."
+        },
+        {
+          "table": "addresses",
+          "column": "customer_id",
+          "entity": "addresses.customer_id",
+          "rule": "nullable_fk",
+          "severity": "medium",
+          "confidence": 0.92,
+          "evidence": {
+            "is_nullable": true,
+            "has_fk_constraint": true
+          },
+          "remediation_hint": "'addresses.customer_id' has a FK constraint but is nullable. Add NOT NULL if every row must reference a valid parent record."
+        },
+        {
+          "table": "addresses",
+          "column": "customer_id",
+          "entity": "addresses.customer_id",
+          "rule": "missing_fk_index",
+          "severity": "high",
+          "confidence": 0.95,
+          "evidence": {
+            "foreign_table": "customers",
+            "foreign_column": "customer_id"
+          },
+          "remediation_hint": "Add an index on 'addresses.customer_id' (FK → customers.customer_id) to speed up JOIN and orphan-check queries."
+        }
+      ]
+    },
+    "statistical_validator": {
+      "pipeline_run_id": "52e06fd1-76fb-4ef5-bdbe-e61f00325242",
+      "database_id": "localhost_5432_ecommerce_test_db",
+      "run_timestamp": "2026-06-08T20:25:53.572509Z",
+      "agent": "Statistical Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 15,
+        "items_passed": 0,
+        "items_flagged": 18,
+        "critical_issues": 1,
+        "high_issues": 6,
+        "medium_issues": 18,
+        "low_issues": 0,
+        "overall_quality_score": 71.0,
+        "overall_confidence": 0.954,
+        "flagged_tables": [
+          "audit_logs",
+          "categories",
+          "customers",
+          "employees",
+          "order_items",
+          "orders",
+          "payments",
+          "products",
+          "reviews",
+          "shipments",
+          "suppliers",
+          "support_tickets",
+          "warehouses"
+        ]
+      },
+      "metrics": {
+        "validator": "statistical",
+        "findings_count": 25,
+        "deduped_finding_count": 25,
+        "grouped_finding_count": 18
+      },
+      "findings": [
+        {
+          "table": "products",
+          "column": "stock_quantity",
+          "entity": "products.stock_quantity",
+          "rule": "negative_stock_quantity",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "min_value": -50,
+            "null_rate": 0.0,
+            "total_rows": 1000
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "order_items",
+          "column": "product_id",
+          "entity": "order_items.product_id",
+          "rule": "extreme_outlier_product_id",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "max_value": 999999,
+            "products_table_max_product_id": 1000,
+            "outlier_flag_from_profiler": true
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "employees",
+          "column": null,
+          "entity": "employees",
+          "rule": "unmanaged_departments_for_managed_employees",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "employees_with_null_department_and_null_manager": 0,
+            "employees_with_null_department_only": 24,
+            "employees_with_null_manager_only": 5,
+            "total_employees": 100
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "employees",
+          "column": "department",
+          "entity": "employees.department",
+          "rule": "low_cardinality_high_null_rate",
+          "severity": "medium",
+          "confidence": 0.75,
+          "evidence": {
+            "cardinality": 6,
+            "null_rate": 0.24,
+            "total_rows": 100
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "categories",
+          "column": "parent_category_id",
+          "entity": "categories.parent_category_id",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 0.2,
+            "total_rows": 20,
+            "threshold_used": 0.1
+          },
+          "remediation_hint": "Investigate why 'categories.parent_category_id' has 20% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "suppliers",
+          "column": "email",
+          "entity": "suppliers.email",
+          "rule": "suspected_duplicates",
+          "severity": "medium",
+          "confidence": 0.85,
+          "evidence": {
+            "cardinality_ratio": 0.7,
+            "estimated_duplicates": 15,
+            "total_rows": 50
+          },
+          "remediation_hint": "'suppliers.email' has an estimated 15 duplicate value(s) (cardinality ratio 70.00%). Run find_duplicate_rows() to confirm and generate dedup SQL."
+        },
+        {
+          "table": "employees",
+          "column": "email",
+          "entity": "employees.email",
+          "rule": "suspected_duplicates",
+          "severity": "medium",
+          "confidence": 0.85,
+          "evidence": {
+            "cardinality_ratio": 0.6,
+            "estimated_duplicates": 40,
+            "total_rows": 100
+          },
+          "remediation_hint": "'employees.email' has an estimated 40 duplicate value(s) (cardinality ratio 60.00%). Run find_duplicate_rows() to confirm and generate dedup SQL."
+        },
+        {
+          "table": "payments",
+          "column": "transaction_reference",
+          "entity": "payments.transaction_reference",
+          "rule": "suspected_duplicates",
+          "severity": "high",
+          "confidence": 0.85,
+          "evidence": {
+            "cardinality_ratio": 0.5977,
+            "estimated_duplicates": 1207,
+            "total_rows": 3000
+          },
+          "remediation_hint": "'payments.transaction_reference' has an estimated 1207 duplicate value(s) (cardinality ratio 59.77%). Run find_duplicate_rows() to confirm and generate dedup SQL."
+        },
+        {
+          "table": "customers",
+          "column": "email",
+          "entity": "customers.email",
+          "rule": "suspected_duplicates",
+          "severity": "high",
+          "confidence": 0.85,
+          "evidence": {
+            "cardinality_ratio": 0.829,
+            "estimated_duplicates": 342,
+            "total_rows": 2000
+          },
+          "remediation_hint": "'customers.email' has an estimated 342 duplicate value(s) (cardinality ratio 82.90%). Run find_duplicate_rows() to confirm and generate dedup SQL."
+        },
+        {
+          "table": "warehouses",
+          "column": "manager_name",
+          "entity": "warehouses.manager_name",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 0.5333,
+            "total_rows": 15,
+            "threshold_used": 0.4
+          },
+          "remediation_hint": "Investigate why 'warehouses.manager_name' has 53% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "support_tickets",
+          "column": null,
+          "entity": "support_tickets.resolved_at",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 1000,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "resolved_at",
+              "customer_id",
+              "assigned_employee_id",
+              "order_id"
+            ]
+          },
+          "remediation_hint": "Investigate why 'support_tickets.resolved_at' has 100% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "customer_id",
+            "assigned_employee_id",
+            "order_id",
+            "resolved_at"
+          ],
+          "count": 4
+        },
+        {
+          "table": "orders",
+          "column": null,
+          "entity": "orders.shipping_address_id",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 0.207,
+            "total_rows": 3000,
+            "threshold_used": 0.1,
+            "columns_with_high_nulls": [
+              "shipping_address_id",
+              "employee_id",
+              "notes"
+            ]
+          },
+          "remediation_hint": "Investigate why 'orders.shipping_address_id' has 21% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "shipping_address_id",
+            "employee_id",
+            "notes"
+          ],
+          "count": 3
+        },
+        {
+          "table": "reviews",
+          "column": "review_text",
+          "entity": "reviews.review_text",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 0.4947,
+            "total_rows": 1500,
+            "threshold_used": 0.4
+          },
+          "remediation_hint": "Investigate why 'reviews.review_text' has 49% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "audit_logs",
+          "column": null,
+          "entity": "audit_logs.details",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 0.8495,
+            "total_rows": 2000,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "details",
+              "performed_by"
+            ]
+          },
+          "remediation_hint": "Investigate why 'audit_logs.details' has 85% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "performed_by",
+            "details"
+          ],
+          "count": 2
+        },
+        {
+          "table": "shipments",
+          "column": "warehouse_id",
+          "entity": "shipments.warehouse_id",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 0.1432,
+            "total_rows": 2500,
+            "threshold_used": 0.1
+          },
+          "remediation_hint": "Investigate why 'shipments.warehouse_id' has 14% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "payments",
+          "column": "transaction_reference",
+          "entity": "payments.transaction_reference",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 0.4023,
+            "total_rows": 3000,
+            "threshold_used": 0.4
+          },
+          "remediation_hint": "Investigate why 'payments.transaction_reference' has 40% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "customers",
+          "column": null,
+          "entity": "customers.phone",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 0.506,
+            "total_rows": 2000,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "phone",
+              "notes"
+            ]
+          },
+          "remediation_hint": "Investigate why 'customers.phone' has 51% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "phone",
+            "notes"
+          ],
+          "count": 2
+        },
+        {
+          "table": "shipments",
+          "column": null,
+          "entity": "shipments",
+          "rule": "temporal_ordering_inconsistency",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "column_a": "shipped_date",
+            "column_b": "delivered_date",
+            "a_after_b": 874,
+            "a_before_b": 1620,
+            "both_populated": 2500,
+            "minority_pct": 0.3496
+          },
+          "remediation_hint": "'shipments' has 874 row(s) (34.96%) where 'shipped_date' and 'delivered_date' ordering is inconsistent with the majority. Investigate whether these are data entry errors."
+        }
+      ]
+    },
+    "structural_validator": {
+      "pipeline_run_id": "52e06fd1-76fb-4ef5-bdbe-e61f00325242",
+      "database_id": "localhost_5432_ecommerce_test_db",
+      "run_timestamp": "2026-06-08T20:25:53.572509Z",
+      "agent": "Structural Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 15,
+        "items_passed": 2,
+        "items_flagged": 13,
+        "critical_issues": 2,
+        "high_issues": 1,
+        "medium_issues": 3,
+        "low_issues": 12,
+        "overall_quality_score": 83.8,
+        "overall_confidence": 1.0,
+        "flagged_tables": [
+          "addresses",
+          "audit_logs",
+          "customers",
+          "orders",
+          "payments",
+          "products",
+          "reviews",
+          "shipments",
+          "support_tickets"
+        ]
+      },
+      "metrics": {
+        "validator": "structural",
+        "findings_count": 18,
+        "deduped_finding_count": 18,
+        "grouped_finding_count": 13
+      },
+      "findings": [
+        {
+          "table": "shipments",
+          "column": null,
+          "entity": "shipments",
+          "rule": "cross_field_consistency_violation",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "violation_count": 874,
+            "total_rows": 2500,
+            "violation_pct": 0.3496,
+            "affected_columns": [
+              "shipped_date",
+              "delivered_date"
+            ]
+          },
+          "remediation_hint": "Investigate data ingestion or application logic causing 'delivered_date' to be earlier than 'shipped_date' and implement data validation checks."
+        },
+        {
+          "table": "products",
+          "column": null,
+          "entity": "products",
+          "rule": "cross_field_consistency_violation",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "violation_count": 86,
+            "total_rows": 1000,
+            "violation_pct": 0.086,
+            "affected_columns": [
+              "discontinued",
+              "stock_quantity"
+            ]
+          },
+          "remediation_hint": "Review inventory management processes for discontinued products to ensure 'stock_quantity' is correctly updated to zero or reclassified upon discontinuation."
+        },
+        {
+          "table": "orders",
+          "column": null,
+          "entity": "orders.status",
+          "rule": "constant_value",
+          "severity": "low",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "COMPLETED",
+            "total_non_null": 2271,
+            "columns_with_high_nulls": [
+              "status",
+              "notes"
+            ]
+          },
+          "remediation_hint": "'orders.status' has the same value (COMPLETED) across all 2271 non-null rows. Verify this is intentional.",
+          "affected_columns": [
+            "status",
+            "notes"
+          ],
+          "count": 2
+        },
+        {
+          "table": "products",
+          "column": "stock_quantity",
+          "entity": "products.stock_quantity",
+          "rule": "negative_amount",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "negative_count": 13
+          },
+          "remediation_hint": "'products.stock_quantity' has 13 negative value(s). Set to 0 or NULL after business review."
+        },
+        {
+          "table": "products",
+          "column": "created_at",
+          "entity": "products.created_at",
+          "rule": "constant_timestamp",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "2026-05-13 14:11:07.967531",
+            "total_non_null": 1000
+          },
+          "remediation_hint": "'products.created_at' is constant (2026-05-13 14:11:07.967531) across 1000 non-null rows. Possible batch-insert bug or unused column."
+        },
+        {
+          "table": "shipments",
+          "column": "carrier",
+          "entity": "shipments.carrier",
+          "rule": "constant_value",
+          "severity": "low",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "DHL",
+            "total_non_null": 1995
+          },
+          "remediation_hint": "'shipments.carrier' has the same value (DHL) across all 1995 non-null rows. Verify this is intentional."
+        },
+        {
+          "table": "support_tickets",
+          "column": null,
+          "entity": "support_tickets.issue_type",
+          "rule": "constant_value",
+          "severity": "low",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "PAYMENT",
+            "total_non_null": 1000,
+            "columns_with_high_nulls": [
+              "issue_type",
+              "priority",
+              "status"
+            ]
+          },
+          "remediation_hint": "'support_tickets.issue_type' has the same value (PAYMENT) across all 1000 non-null rows. Verify this is intentional.",
+          "affected_columns": [
+            "issue_type",
+            "priority",
+            "status"
+          ],
+          "count": 3
+        },
+        {
+          "table": "payments",
+          "column": null,
+          "entity": "payments.payment_method",
+          "rule": "constant_value",
+          "severity": "low",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "CARD",
+            "total_non_null": 2387,
+            "columns_with_high_nulls": [
+              "payment_method",
+              "status"
+            ]
+          },
+          "remediation_hint": "'payments.payment_method' has the same value (CARD) across all 2387 non-null rows. Verify this is intentional.",
+          "affected_columns": [
+            "payment_method",
+            "status"
+          ],
+          "count": 2
+        },
+        {
+          "table": "reviews",
+          "column": "review_text",
+          "entity": "reviews.review_text",
+          "rule": "constant_value",
+          "severity": "low",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "Good product",
+            "total_non_null": 758
+          },
+          "remediation_hint": "'reviews.review_text' has the same value (Good product) across all 758 non-null rows. Verify this is intentional."
+        },
+        {
+          "table": "audit_logs",
+          "column": null,
+          "entity": "audit_logs.table_name",
+          "rule": "constant_value",
+          "severity": "low",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "orders",
+            "total_non_null": 2000,
+            "columns_with_high_nulls": [
+              "table_name",
+              "details"
+            ]
+          },
+          "remediation_hint": "'audit_logs.table_name' has the same value (orders) across all 2000 non-null rows. Verify this is intentional.",
+          "affected_columns": [
+            "table_name",
+            "details"
+          ],
+          "count": 2
+        },
+        {
+          "table": "customers",
+          "column": "created_at",
+          "entity": "customers.created_at",
+          "rule": "constant_timestamp",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "2026-05-13 14:11:07.910253",
+            "total_non_null": 2000,
+            "columns_with_high_nulls": [
+              "created_at",
+              "notes"
+            ]
+          },
+          "remediation_hint": "'customers.created_at' is constant (2026-05-13 14:11:07.910253) across 2000 non-null rows. Possible batch-insert bug or unused column."
+        },
+        {
+          "table": "customers",
+          "column": "notes",
+          "entity": "customers.notes",
+          "rule": "constant_value",
+          "severity": "low",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "VIP customer",
+            "total_non_null": 615
+          },
+          "remediation_hint": "'customers.notes' has the same value (VIP customer) across all 615 non-null rows. Verify this is intentional."
+        },
+        {
+          "table": "addresses",
+          "column": "created_at",
+          "entity": "addresses.created_at",
+          "rule": "constant_timestamp",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "constant_value": "2026-05-13 14:11:07.950759",
+            "total_non_null": 2500
+          },
+          "remediation_hint": "'addresses.created_at' is constant (2026-05-13 14:11:07.950759) across 2500 non-null rows. Possible batch-insert bug or unused column."
+        }
+      ]
+    },
+    "relational_validator": {
+      "pipeline_run_id": "52e06fd1-76fb-4ef5-bdbe-e61f00325242",
+      "database_id": "localhost_5432_ecommerce_test_db",
+      "run_timestamp": "2026-06-08T20:25:53.572509Z",
+      "agent": "Relational Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 15,
+        "items_passed": 4,
+        "items_flagged": 11,
+        "critical_issues": 9,
+        "high_issues": 5,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 34.3,
+        "overall_confidence": 0.8857,
+        "flagged_tables": [
+          "inventory",
+          "order_items",
+          "orders",
+          "payments",
+          "products",
+          "reviews",
+          "shipments"
+        ]
+      },
+      "metrics": {
+        "validator": "relational",
+        "findings_count": 14,
+        "deduped_finding_count": 14,
+        "grouped_finding_count": 11
+      },
+      "findings": [
+        {
+          "table": "orders",
+          "column": "order_date",
+          "entity": "orders.order_date",
+          "rule": "temporal_inconsistency",
+          "severity": "critical",
+          "confidence": 0.95,
+          "evidence": {
+            "description": "Orders exist with an order_date earlier than the associated customer's created_at date.",
+            "count_of_inconsistent_records": 2788,
+            "parent_table": "customers",
+            "child_table": "orders"
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "inventory",
+          "column": "last_updated",
+          "entity": "inventory.last_updated",
+          "rule": "temporal_inconsistency",
+          "severity": "critical",
+          "confidence": 0.95,
+          "evidence": {
+            "description": "Inventory records exist with a last_updated date earlier than the associated product's created_at date.",
+            "count_of_inconsistent_records": 1995,
+            "parent_table": "products",
+            "child_table": "inventory"
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "reviews",
+          "column": "created_at",
+          "entity": "reviews.created_at",
+          "rule": "temporal_inconsistency",
+          "severity": "critical",
+          "confidence": 0.95,
+          "evidence": {
+            "description": "Reviews exist with a created_at date earlier than the associated customer's created_at date.",
+            "count_of_inconsistent_records": 1498,
+            "parent_table": "customers",
+            "child_table": "reviews"
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "payments",
+          "column": "payment_date",
+          "entity": "payments.payment_date",
+          "rule": "temporal_inconsistency",
+          "severity": "critical",
+          "confidence": 0.95,
+          "evidence": {
+            "description": "Payments exist with a payment_date earlier than the associated order's order_date.",
+            "count_of_inconsistent_records": 1480,
+            "parent_table": "orders",
+            "child_table": "payments"
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "shipments",
+          "column": "shipped_date",
+          "entity": "shipments.shipped_date",
+          "rule": "temporal_inconsistency",
+          "severity": "critical",
+          "confidence": 0.95,
+          "evidence": {
+            "description": "Shipments exist with a shipped_date earlier than the associated order's order_date.",
+            "count_of_inconsistent_records": 1086,
+            "parent_table": "orders",
+            "child_table": "shipments"
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "inventory",
+          "column": null,
+          "entity": "inventory.warehouse_id",
+          "rule": "suspected_orphaned_fk",
+          "severity": "critical",
+          "confidence": 0.85,
+          "evidence": {
+            "orphan_count": 57,
+            "suspected_parent": "warehouses",
+            "parent_column": "warehouse_id",
+            "no_formal_fk": true
+          },
+          "remediation_hint": "57 row(s) in 'inventory.warehouse_id' reference non-existent warehouses.warehouse_id (no formal FK constraint exists — suspected orphan). Delete orphaned rows or re-add the FK constraint.",
+          "affected_columns": [
+            "warehouse_id",
+            "product_id"
+          ],
+          "count": 2
+        },
+        {
+          "table": "orders",
+          "column": "employee_id",
+          "entity": "orders.employee_id",
+          "rule": "suspected_orphaned_fk",
+          "severity": "high",
+          "confidence": 0.85,
+          "evidence": {
+            "orphan_count": 6,
+            "suspected_parent": "employees",
+            "parent_column": "employee_id",
+            "no_formal_fk": true
+          },
+          "remediation_hint": "6 row(s) in 'orders.employee_id' reference non-existent employees.employee_id (no formal FK constraint exists — suspected orphan). Delete orphaned rows or re-add the FK constraint."
+        },
+        {
+          "table": "products",
+          "column": "supplier_id",
+          "entity": "products.supplier_id",
+          "rule": "suspected_orphaned_fk",
+          "severity": "critical",
+          "confidence": 0.85,
+          "evidence": {
+            "orphan_count": 14,
+            "suspected_parent": "suppliers",
+            "parent_column": "supplier_id",
+            "no_formal_fk": true
+          },
+          "remediation_hint": "14 row(s) in 'products.supplier_id' reference non-existent suppliers.supplier_id (no formal FK constraint exists — suspected orphan). Delete orphaned rows or re-add the FK constraint."
+        },
+        {
+          "table": "order_items",
+          "column": null,
+          "entity": "order_items.product_id",
+          "rule": "suspected_orphaned_fk",
+          "severity": "critical",
+          "confidence": 0.85,
+          "evidence": {
+            "orphan_count": 64,
+            "suspected_parent": "products",
+            "parent_column": "product_id",
+            "no_formal_fk": true
+          },
+          "remediation_hint": "64 row(s) in 'order_items.product_id' reference non-existent products.product_id (no formal FK constraint exists — suspected orphan). Delete orphaned rows or re-add the FK constraint.",
+          "affected_columns": [
+            "order_id",
+            "product_id"
+          ],
+          "count": 2
+        },
+        {
+          "table": "shipments",
+          "column": null,
+          "entity": "shipments.warehouse_id",
+          "rule": "suspected_orphaned_fk",
+          "severity": "critical",
+          "confidence": 0.85,
+          "evidence": {
+            "orphan_count": 77,
+            "suspected_parent": "warehouses",
+            "parent_column": "warehouse_id",
+            "no_formal_fk": true
+          },
+          "remediation_hint": "77 row(s) in 'shipments.warehouse_id' reference non-existent warehouses.warehouse_id (no formal FK constraint exists — suspected orphan). Delete orphaned rows or re-add the FK constraint.",
+          "affected_columns": [
+            "order_id",
+            "warehouse_id"
+          ],
+          "count": 2
+        },
+        {
+          "table": "reviews",
+          "column": "customer_id",
+          "entity": "reviews.customer_id",
+          "rule": "suspected_orphaned_fk",
+          "severity": "high",
+          "confidence": 0.85,
+          "evidence": {
+            "orphan_count": 1,
+            "suspected_parent": "customers",
+            "parent_column": "customer_id",
+            "no_formal_fk": true
+          },
+          "remediation_hint": "1 row(s) in 'reviews.customer_id' reference non-existent customers.customer_id (no formal FK constraint exists — suspected orphan). Delete orphaned rows or re-add the FK constraint."
+        }
+      ]
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "52e06fd1-76fb-4ef5-bdbe-e61f00325242",
+      "database_id": "localhost_5432_ecommerce_test_db",
+      "run_timestamp": "2026-06-08T20:25:53.572509Z",
+      "agent": "Data Fix Planner",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 41,
+        "items_passed": 1,
+        "items_flagged": 40,
+        "critical_issues": 9,
+        "high_issues": 17,
+        "medium_issues": 9,
+        "low_issues": 5,
+        "overall_quality_score": 85.8,
+        "overall_confidence": 1.0,
+        "flagged_tables": [
+          "addresses",
+          "audit_logs",
+          "categories",
+          "customers",
+          "employees",
+          "inventory",
+          "orders",
+          "payments",
+          "products",
+          "reviews",
+          "shipments",
+          "support_tickets",
+          "warehouses"
+        ]
+      },
+      "metrics": {
+        "total_issues_received": 41,
+        "fixes_generated": 40
+      },
+      "findings": [
+        {
+          "id": "fix_001_products_stock_quantity",
+          "fix_id": "investigate-products-negative-stock-quantity",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "products"
+          ],
+          "depends_on": [],
+          "table": "products",
+          "target_table": "products",
+          "problem": "Investigate Negative Stock Quantity in products.stock_quantity",
+          "fix": "Negative stock quantities were detected in the `products` table. This indicates a data integrity issue that requires investigation to determine the root cause and appropriate corrective action. The provided SQL identifies the affected records.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "structural",
+          "interaction_model": "investigate",
+          "source_rule": "negative_stock_quantity",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "min_value": -50,
+            "null_rate": 0.0,
+            "total_rows": 1000
+          },
+          "evidence_payload": {
+            "min_value": -50,
+            "null_rate": 0.0,
+            "total_rows": 1000,
+            "column_name": "stock_quantity"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT product_id, stock_quantity FROM products WHERE stock_quantity < 0;"
+          ],
+          "explanation": "Negative stock quantities were detected in the `products` table. This indicates a data integrity issue that requires investigation to determine the root cause and appropriate corrective action. The provided SQL identifies the affected records.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_002_shipments",
+          "fix_id": "investigate-shipments-date-ordering",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "shipments"
+          ],
+          "depends_on": [],
+          "table": "shipments",
+          "target_table": "shipments",
+          "problem": "Investigate Inconsistent Shipped and Delivered Dates in Shipments",
+          "fix": "The `shipments` table contains records where the `delivered_date` is earlier than the `shipped_date`, indicating a temporal ordering inconsistency. This suggests a data quality issue that requires investigation into data ingestion or application logic. The provided SQL identifies the inconsistent records.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "source_rule": "temporal_ordering_inconsistency",
+          "source_type": "deterministic",
+          "validator": "structural",
+          "evidence": {
+            "violation_count": 874,
+            "total_rows": 2500,
+            "violation_pct": 0.3496,
+            "affected_columns": [
+              "shipped_date",
+              "delivered_date"
+            ]
+          },
+          "evidence_payload": {
+            "violation_count": 874,
+            "total_rows": 2500,
+            "violation_pct": 0.3496,
+            "affected_columns": [
+              "shipped_date",
+              "delivered_date"
+            ],
+            "column_a": "shipped_date",
+            "column_b": "delivered_date",
+            "a_after_b": 874,
+            "a_before_b": 1620,
+            "both_populated": 2500,
+            "minority_pct": 0.3496,
+            "column_name": "shipped_date"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT shipment_id, shipped_date, delivered_date FROM shipments WHERE delivered_date < shipped_date;"
+          ],
+          "explanation": "The `shipments` table contains records where the `delivered_date` is earlier than the `shipped_date`, indicating a temporal ordering inconsistency. This suggests a data quality issue that requires investigation into data ingestion or application logic. The provided SQL identifies the inconsistent records.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_003_orders_order_date",
+          "fix_id": "investigate-orders-order-date-temporal-inconsistency",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "orders",
+            "customers"
+          ],
+          "depends_on": [],
+          "table": "orders",
+          "target_table": "orders",
+          "problem": "Investigate Temporal Inconsistency in orders.order_date",
+          "fix": "Orders exist with an order_date earlier than the associated customer's created_at date. This temporal inconsistency suggests a data quality issue that requires investigation. The provided SQL identifies the inconsistent records.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "source_rule": "temporal_inconsistency",
+          "source_type": "deterministic",
+          "validator": "relational",
+          "evidence": {
+            "description": "Orders exist with an order_date earlier than the associated customer's created_at date.",
+            "count_of_inconsistent_records": 2788,
+            "parent_table": "customers",
+            "child_table": "orders"
+          },
+          "evidence_payload": {
+            "description": "Orders exist with an order_date earlier than the associated customer's created_at date.",
+            "count_of_inconsistent_records": 2788,
+            "parent_table": "customers",
+            "child_table": "orders",
+            "column_name": "order_date"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT o.order_id, o.order_date, c.created_at AS customer_created_at FROM orders o JOIN customers c ON o.customer_id = c.customer_id WHERE o.order_date < c.created_at;"
+          ],
+          "explanation": "Orders exist with an order_date earlier than the associated customer's created_at date. This temporal inconsistency suggests a data quality issue that requires investigation. The provided SQL identifies the inconsistent records.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_004_inventory_last_updated",
+          "fix_id": "investigate-inventory-last-updated-temporal-inconsistency",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "inventory",
+            "products"
+          ],
+          "depends_on": [],
+          "table": "inventory",
+          "target_table": "inventory",
+          "problem": "Investigate Temporal Inconsistency in inventory.last_updated",
+          "fix": "Inventory records exist with a last_updated date earlier than the associated product's created_at date. This temporal inconsistency suggests a data quality issue that requires investigation. The provided SQL identifies the inconsistent records.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "source_rule": "temporal_inconsistency",
+          "source_type": "deterministic",
+          "validator": "relational",
+          "evidence": {
+            "description": "Inventory records exist with a last_updated date earlier than the associated product's created_at date.",
+            "count_of_inconsistent_records": 1995,
+            "parent_table": "products",
+            "child_table": "inventory"
+          },
+          "evidence_payload": {
+            "description": "Inventory records exist with a last_updated date earlier than the associated product's created_at date.",
+            "count_of_inconsistent_records": 1995,
+            "parent_table": "products",
+            "child_table": "inventory",
+            "column_name": "last_updated"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT i.inventory_id, i.last_updated, p.created_at AS product_created_at FROM inventory i JOIN products p ON i.product_id = p.product_id WHERE i.last_updated < p.created_at;"
+          ],
+          "explanation": "Inventory records exist with a last_updated date earlier than the associated product's created_at date. This temporal inconsistency suggests a data quality issue that requires investigation. The provided SQL identifies the inconsistent records.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_005_reviews_created_at",
+          "fix_id": "investigate-reviews-created-at-temporal-inconsistency",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "reviews",
+            "customers"
+          ],
+          "depends_on": [],
+          "table": "reviews",
+          "target_table": "reviews",
+          "problem": "Investigate Temporal Inconsistency in reviews.created_at",
+          "fix": "Reviews exist with a created_at date earlier than the associated customer's created_at date. This temporal inconsistency suggests a data quality issue that requires investigation. The provided SQL identifies the inconsistent records.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "source_rule": "temporal_inconsistency",
+          "source_type": "deterministic",
+          "validator": "relational",
+          "evidence": {
+            "description": "Reviews exist with a created_at date earlier than the associated customer's created_at date.",
+            "count_of_inconsistent_records": 1498,
+            "parent_table": "customers",
+            "child_table": "reviews"
+          },
+          "evidence_payload": {
+            "description": "Reviews exist with a created_at date earlier than the associated customer's created_at date.",
+            "count_of_inconsistent_records": 1498,
+            "parent_table": "customers",
+            "child_table": "reviews",
+            "column_name": "created_at"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT r.review_id, r.created_at, c.created_at AS customer_created_at FROM reviews r JOIN customers c ON r.customer_id = c.customer_id WHERE r.created_at < c.created_at;"
+          ],
+          "explanation": "Reviews exist with a created_at date earlier than the associated customer's created_at date. This temporal inconsistency suggests a data quality issue that requires investigation. The provided SQL identifies the inconsistent records.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_006_payments_payment_date",
+          "fix_id": "investigate-payments-payment-date-temporal-inconsistency",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "payments",
+            "orders"
+          ],
+          "depends_on": [],
+          "table": "payments",
+          "target_table": "payments",
+          "problem": "Investigate Temporal Inconsistency in payments.payment_date",
+          "fix": "Payments exist with a payment_date earlier than the associated order's order_date. This temporal inconsistency suggests a data quality issue that requires investigation. The provided SQL identifies the inconsistent records.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "source_rule": "temporal_inconsistency",
+          "source_type": "deterministic",
+          "validator": "relational",
+          "evidence": {
+            "description": "Payments exist with a payment_date earlier than the associated order's order_date.",
+            "count_of_inconsistent_records": 1480,
+            "parent_table": "orders",
+            "child_table": "payments"
+          },
+          "evidence_payload": {
+            "description": "Payments exist with a payment_date earlier than the associated order's order_date.",
+            "count_of_inconsistent_records": 1480,
+            "parent_table": "orders",
+            "child_table": "payments",
+            "column_name": "payment_date"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT p.payment_id, p.payment_date, o.order_date FROM payments p JOIN orders o ON p.order_id = o.order_id WHERE p.payment_date < o.order_date;"
+          ],
+          "explanation": "Payments exist with a payment_date earlier than the associated order's order_date. This temporal inconsistency suggests a data quality issue that requires investigation. The provided SQL identifies the inconsistent records.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_007_shipments_shipped_date",
+          "fix_id": "investigate-shipments-shipped-date-temporal-inconsistency",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "shipments",
+            "orders"
+          ],
+          "depends_on": [],
+          "table": "shipments",
+          "target_table": "shipments",
+          "problem": "Investigate Temporal Inconsistency in shipments.shipped_date",
+          "fix": "Shipments exist with a shipped_date earlier than the associated order's order_date. This temporal inconsistency suggests a data quality issue that requires investigation. The provided SQL identifies the inconsistent records.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "source_rule": "temporal_inconsistency",
+          "source_type": "deterministic",
+          "validator": "relational",
+          "evidence": {
+            "description": "Shipments exist with a shipped_date earlier than the associated order's order_date.",
+            "count_of_inconsistent_records": 1086,
+            "parent_table": "orders",
+            "child_table": "shipments"
+          },
+          "evidence_payload": {
+            "description": "Shipments exist with a shipped_date earlier than the associated order's order_date.",
+            "count_of_inconsistent_records": 1086,
+            "parent_table": "orders",
+            "child_table": "shipments",
+            "column_name": "shipped_date"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT s.shipment_id, s.shipped_date, o.order_date FROM shipments s JOIN orders o ON s.order_id = o.order_id WHERE s.shipped_date < o.order_date;"
+          ],
+          "explanation": "Shipments exist with a shipped_date earlier than the associated order's order_date. This temporal inconsistency suggests a data quality issue that requires investigation. The provided SQL identifies the inconsistent records.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_008_categories_parent_category_id",
+          "fix_id": "add-index-categories-parent-category-id",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "categories"
+          ],
+          "depends_on": [],
+          "table": "categories",
+          "target_table": "categories",
+          "problem": "Add Index on categories.parent_category_id (FK to categories.category_id)",
+          "fix": "Adding an index on `categories.parent_category_id` will improve the performance of queries involving foreign key lookups and orphan checks, as this column is a foreign key referencing `categories.category_id`.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "validator": "schema",
+          "evidence": {
+            "foreign_table": "categories",
+            "foreign_column": "category_id"
+          },
+          "evidence_payload": {
+            "foreign_table": "categories",
+            "foreign_column": "category_id",
+            "column_name": "parent_category_id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS idx_categories_parent_category_id ON categories (parent_category_id);"
+          ],
+          "explanation": "Adding an index on `categories.parent_category_id` will improve the performance of queries involving foreign key lookups and orphan checks, as this column is a foreign key referencing `categories.category_id`.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'categories' AND indexname = 'idx_categories_parent_category_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_categories_parent_category_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_009_employees_manager_id",
+          "fix_id": "add-index-employees-manager-id",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "employees"
+          ],
+          "depends_on": [],
+          "table": "employees",
+          "target_table": "employees",
+          "problem": "Add Index on employees.manager_id (FK to employees.employee_id)",
+          "fix": "Adding an index on `employees.manager_id` will improve the performance of queries involving foreign key lookups and orphan checks, as this column is a foreign key referencing `employees.employee_id`.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "validator": "schema",
+          "evidence": {
+            "foreign_table": "employees",
+            "foreign_column": "employee_id"
+          },
+          "evidence_payload": {
+            "foreign_table": "employees",
+            "foreign_column": "employee_id",
+            "column_name": "manager_id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS idx_employees_manager_id ON employees (manager_id);"
+          ],
+          "explanation": "Adding an index on `employees.manager_id` will improve the performance of queries involving foreign key lookups and orphan checks, as this column is a foreign key referencing `employees.employee_id`.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'employees' AND indexname = 'idx_employees_manager_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_employees_manager_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_010_orders_customer_id",
+          "fix_id": "add-index-orders-customer-id",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "orders"
+          ],
+          "depends_on": [],
+          "table": "orders",
+          "target_table": "orders",
+          "problem": "Add Index on orders.customer_id (FK to customers.customer_id)",
+          "fix": "Adding an index on `orders.customer_id` will improve the performance of queries involving foreign key lookups and orphan checks, as this column is a foreign key referencing `customers.customer_id`.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "validator": "schema",
+          "evidence": {
+            "foreign_table": "customers",
+            "foreign_column": "customer_id"
+          },
+          "evidence_payload": {
+            "foreign_table": "customers",
+            "foreign_column": "customer_id",
+            "column_name": "customer_id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders (customer_id);"
+          ],
+          "explanation": "Adding an index on `orders.customer_id` will improve the performance of queries involving foreign key lookups and orphan checks, as this column is a foreign key referencing `customers.customer_id`.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'orders' AND indexname = 'idx_orders_customer_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_orders_customer_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_011_support_tickets_customer_id",
+          "fix_id": "add-index-support-tickets-customer-id",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "support_tickets"
+          ],
+          "depends_on": [],
+          "table": "support_tickets",
+          "target_table": "support_tickets",
+          "problem": "Add Index on support_tickets.customer_id (FK to customers.customer_id)",
+          "fix": "Adding an index on `support_tickets.customer_id` will improve the performance of queries involving foreign key lookups and orphan checks, as this column is a foreign key referencing `customers.customer_id`.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "validator": null,
+          "evidence": {},
+          "evidence_payload": {
+            "foreign_table": "customers",
+            "foreign_column": "customer_id",
+            "columns_with_high_nulls": [
+              "customer_id",
+              "order_id"
+            ],
+            "column_name": "customer_id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS idx_support_tickets_customer_id ON support_tickets (customer_id);"
+          ],
+          "explanation": "Adding an index on `support_tickets.customer_id` will improve the performance of queries involving foreign key lookups and orphan checks, as this column is a foreign key referencing `customers.customer_id`.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'support_tickets' AND indexname = 'idx_support_tickets_customer_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_support_tickets_customer_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_012_payments_order_id",
+          "fix_id": "add-index-payments-order-id",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "payments"
+          ],
+          "depends_on": [],
+          "table": "payments",
+          "target_table": "payments",
+          "problem": "Add Index on payments.order_id (FK to orders.order_id)",
+          "fix": "Adding an index on `payments.order_id` will improve the performance of queries involving foreign key lookups and orphan checks, as this column is a foreign key referencing `orders.order_id`.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "validator": "schema",
+          "evidence": {
+            "foreign_table": "orders",
+            "foreign_column": "order_id"
+          },
+          "evidence_payload": {
+            "foreign_table": "orders",
+            "foreign_column": "order_id",
+            "column_name": "order_id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS idx_payments_order_id ON payments (order_id);"
+          ],
+          "explanation": "Adding an index on `payments.order_id` will improve the performance of queries involving foreign key lookups and orphan checks, as this column is a foreign key referencing `orders.order_id`.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'payments' AND indexname = 'idx_payments_order_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_payments_order_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_013_reviews_product_id",
+          "fix_id": "add-index-reviews-product-id",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "reviews"
+          ],
+          "depends_on": [],
+          "table": "reviews",
+          "target_table": "reviews",
+          "problem": "Add Index on reviews.product_id (FK to products.product_id)",
+          "fix": "Adding an index on `reviews.product_id` will improve the performance of queries involving foreign key lookups and orphan checks, as this column is a foreign key referencing `products.product_id`.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "validator": "schema",
+          "evidence": {
+            "foreign_table": "products",
+            "foreign_column": "product_id"
+          },
+          "evidence_payload": {
+            "foreign_table": "products",
+            "foreign_column": "product_id",
+            "column_name": "product_id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS idx_reviews_product_id ON reviews (product_id);"
+          ],
+          "explanation": "Adding an index on `reviews.product_id` will improve the performance of queries involving foreign key lookups and orphan checks, as this column is a foreign key referencing `products.product_id`.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'reviews' AND indexname = 'idx_reviews_product_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_reviews_product_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_014_addresses_customer_id",
+          "fix_id": "add-index-addresses-customer-id",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "addresses"
+          ],
+          "depends_on": [],
+          "table": "addresses",
+          "target_table": "addresses",
+          "problem": "Add Index on addresses.customer_id (FK to customers.customer_id)",
+          "fix": "Adding an index on `addresses.customer_id` will improve the performance of queries involving foreign key lookups and orphan checks, as this column is a foreign key referencing `customers.customer_id`.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "medium",
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "validator": "schema",
+          "evidence": {
+            "foreign_table": "customers",
+            "foreign_column": "customer_id"
+          },
+          "evidence_payload": {
+            "foreign_table": "customers",
+            "foreign_column": "customer_id",
+            "column_name": "customer_id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "CREATE INDEX IF NOT EXISTS idx_addresses_customer_id ON addresses (customer_id);"
+          ],
+          "explanation": "Adding an index on `addresses.customer_id` will improve the performance of queries involving foreign key lookups and orphan checks, as this column is a foreign key referencing `customers.customer_id`.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'addresses' AND indexname = 'idx_addresses_customer_id';"
+          ],
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_addresses_customer_id;"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_015_support_tickets",
+          "fix_id": "investigate-support-tickets-high-nulls",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "support_tickets"
+          ],
+          "depends_on": [],
+          "table": "support_tickets",
+          "target_table": "support_tickets",
+          "problem": "Investigate High Null Ratio in Multiple Columns of support_tickets",
+          "fix": "Multiple columns in the `support_tickets` table (`resolved_at`, `customer_id`, `assigned_employee_id`, `order_id`) have a high ratio of NULL values. This suggests potential data completeness issues that require investigation to determine if these columns should be mandatory or if data ingestion processes need adjustment. The provided SQL identifies records with NULLs in these columns.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "validator": "schema",
+          "evidence": {
+            "foreign_table": "customers",
+            "foreign_column": "customer_id",
+            "columns_with_high_nulls": [
+              "customer_id",
+              "order_id"
+            ]
+          },
+          "evidence_payload": {
+            "null_ratio": 1.0,
+            "total_rows": 1000,
+            "threshold_used": 0.4,
+            "affected_columns": [
+              "resolved_at",
+              "customer_id",
+              "assigned_employee_id",
+              "order_id"
+            ],
+            "column_name": "resolved_at"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT ticket_id, resolved_at, customer_id, assigned_employee_id, order_id FROM support_tickets WHERE resolved_at IS NULL OR customer_id IS NULL OR assigned_employee_id IS NULL OR order_id IS NULL;"
+          ],
+          "explanation": "Multiple columns in the `support_tickets` table (`resolved_at`, `customer_id`, `assigned_employee_id`, `order_id`) have a high ratio of NULL values. This suggests potential data completeness issues that require investigation to determine if these columns should be mandatory or if data ingestion processes need adjustment. The provided SQL identifies records with NULLs in these columns.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_016_audit_logs",
+          "fix_id": "investigate-audit-logs-high-nulls",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "audit_logs"
+          ],
+          "depends_on": [],
+          "table": "audit_logs",
+          "target_table": "audit_logs",
+          "problem": "Investigate High Null Ratio in Multiple Columns of audit_logs",
+          "fix": "Multiple columns in the `audit_logs` table (`details`, `performed_by`) have a high ratio of NULL values. This suggests potential data completeness issues that require investigation to determine if these columns should be mandatory or if data ingestion processes need adjustment. The provided SQL identifies records with NULLs in these columns.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "null_ratio": 0.8495,
+            "total_rows": 2000,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "details",
+              "performed_by"
+            ]
+          },
+          "evidence_payload": {
+            "null_ratio": 0.8495,
+            "total_rows": 2000,
+            "threshold_used": 0.4,
+            "affected_columns": [
+              "details",
+              "performed_by"
+            ],
+            "column_name": "details"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT log_id, details, performed_by FROM audit_logs WHERE details IS NULL OR performed_by IS NULL;"
+          ],
+          "explanation": "Multiple columns in the `audit_logs` table (`details`, `performed_by`) have a high ratio of NULL values. This suggests potential data completeness issues that require investigation to determine if these columns should be mandatory or if data ingestion processes need adjustment. The provided SQL identifies records with NULLs in these columns.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_017_products",
+          "fix_id": "investigate-products-discontinued-stock-quantity",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "products"
+          ],
+          "depends_on": [],
+          "table": "products",
+          "target_table": "products",
+          "problem": "Investigate Inconsistent Discontinued Status and Stock Quantity in products",
+          "fix": "The `products` table contains records where `discontinued` is TRUE but `stock_quantity` is greater than 0. This cross-field consistency violation suggests an issue with inventory management for discontinued products. Investigation is needed to ensure `stock_quantity` is correctly updated or reclassified. The provided SQL identifies the inconsistent records.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "structural",
+          "interaction_model": "investigate",
+          "source_rule": "cross_field_consistency_violation",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "min_value": -50,
+            "null_rate": 0.0,
+            "total_rows": 1000
+          },
+          "evidence_payload": {
+            "violation_count": 86,
+            "total_rows": 1000,
+            "violation_pct": 0.086,
+            "affected_columns": [
+              "discontinued",
+              "stock_quantity"
+            ],
+            "column_name": "discontinued"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT product_id, discontinued, stock_quantity FROM products WHERE discontinued IS TRUE AND stock_quantity > 0;"
+          ],
+          "explanation": "The `products` table contains records where `discontinued` is TRUE but `stock_quantity` is greater than 0. This cross-field consistency violation suggests an issue with inventory management for discontinued products. Investigation is needed to ensure `stock_quantity` is correctly updated or reclassified. The provided SQL identifies the inconsistent records.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_018_categories_parent_category_id",
+          "fix_id": "advisory-categories-parent-category-id-nullable-fk",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "categories"
+          ],
+          "depends_on": [],
+          "table": "categories",
+          "target_table": "categories",
+          "problem": "Advisory: Nullable Foreign Key categories.parent_category_id",
+          "fix": "The `categories.parent_category_id` column has a foreign key constraint but is nullable. This means a category can exist without a parent. If every category is intended to have a parent, consider enforcing a `NOT NULL` constraint after addressing existing NULL values. The provided SQL counts nulls.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "validator": "schema",
+          "evidence": {
+            "foreign_table": "categories",
+            "foreign_column": "category_id"
+          },
+          "evidence_payload": {
+            "is_nullable": true,
+            "has_fk_constraint": true,
+            "column_name": "parent_category_id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'categories.parent_category_id' AS column_name, COUNT(*) AS null_count FROM categories WHERE parent_category_id IS NULL;"
+          ],
+          "explanation": "The `categories.parent_category_id` column has a foreign key constraint but is nullable. This means a category can exist without a parent. If every category is intended to have a parent, consider enforcing a `NOT NULL` constraint after addressing existing NULL values. The provided SQL counts nulls.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_019_employees_manager_id",
+          "fix_id": "advisory-employees-manager-id-nullable-fk",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "employees"
+          ],
+          "depends_on": [],
+          "table": "employees",
+          "target_table": "employees",
+          "problem": "Advisory: Nullable Foreign Key employees.manager_id",
+          "fix": "The `employees.manager_id` column has a foreign key constraint but is nullable. This means an employee can exist without a manager. If every employee is intended to have a manager, consider enforcing a `NOT NULL` constraint after addressing existing NULL values. The provided SQL counts nulls.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "validator": "schema",
+          "evidence": {
+            "foreign_table": "employees",
+            "foreign_column": "employee_id"
+          },
+          "evidence_payload": {
+            "is_nullable": true,
+            "has_fk_constraint": true,
+            "column_name": "manager_id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'employees.manager_id' AS column_name, COUNT(*) AS null_count FROM employees WHERE manager_id IS NULL;"
+          ],
+          "explanation": "The `employees.manager_id` column has a foreign key constraint but is nullable. This means an employee can exist without a manager. If every employee is intended to have a manager, consider enforcing a `NOT NULL` constraint after addressing existing NULL values. The provided SQL counts nulls.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_020_orders_customer_id",
+          "fix_id": "advisory-orders-customer-id-nullable-fk",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "orders"
+          ],
+          "depends_on": [],
+          "table": "orders",
+          "target_table": "orders",
+          "problem": "Advisory: Nullable Foreign Key orders.customer_id",
+          "fix": "The `orders.customer_id` column has a foreign key constraint but is nullable. This means an order can exist without an associated customer. If every order is intended to have a customer, consider enforcing a `NOT NULL` constraint after addressing existing NULL values. The provided SQL counts nulls.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "validator": "schema",
+          "evidence": {
+            "foreign_table": "customers",
+            "foreign_column": "customer_id"
+          },
+          "evidence_payload": {
+            "is_nullable": true,
+            "has_fk_constraint": true,
+            "column_name": "customer_id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'orders.customer_id' AS column_name, COUNT(*) AS null_count FROM orders WHERE customer_id IS NULL;"
+          ],
+          "explanation": "The `orders.customer_id` column has a foreign key constraint but is nullable. This means an order can exist without an associated customer. If every order is intended to have a customer, consider enforcing a `NOT NULL` constraint after addressing existing NULL values. The provided SQL counts nulls.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_021_support_tickets_customer_id",
+          "fix_id": "advisory-support-tickets-customer-id-nullable-fk",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "support_tickets"
+          ],
+          "depends_on": [],
+          "table": "support_tickets",
+          "target_table": "support_tickets",
+          "problem": "Advisory: Nullable Foreign Key support_tickets.customer_id",
+          "fix": "The `support_tickets.customer_id` column has a foreign key constraint but is nullable. This means a support ticket can exist without an associated customer. If every support ticket is intended to have a customer, consider enforcing a `NOT NULL` constraint after addressing existing NULL values. The provided SQL counts nulls.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "validator": null,
+          "evidence": {},
+          "evidence_payload": {
+            "is_nullable": true,
+            "has_fk_constraint": true,
+            "columns_with_high_nulls": [
+              "customer_id",
+              "order_id"
+            ],
+            "column_name": "customer_id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'support_tickets.customer_id' AS column_name, COUNT(*) AS null_count FROM support_tickets WHERE customer_id IS NULL;"
+          ],
+          "explanation": "The `support_tickets.customer_id` column has a foreign key constraint but is nullable. This means a support ticket can exist without an associated customer. If every support ticket is intended to have a customer, consider enforcing a `NOT NULL` constraint after addressing existing NULL values. The provided SQL counts nulls.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_022_payments_order_id",
+          "fix_id": "advisory-payments-order-id-nullable-fk",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "payments"
+          ],
+          "depends_on": [],
+          "table": "payments",
+          "target_table": "payments",
+          "problem": "Advisory: Nullable Foreign Key payments.order_id",
+          "fix": "The `payments.order_id` column has a foreign key constraint but is nullable. This means a payment can exist without an associated order. If every payment is intended to have an order, consider enforcing a `NOT NULL` constraint after addressing existing NULL values. The provided SQL counts nulls.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "validator": "schema",
+          "evidence": {
+            "foreign_table": "orders",
+            "foreign_column": "order_id"
+          },
+          "evidence_payload": {
+            "is_nullable": true,
+            "has_fk_constraint": true,
+            "column_name": "order_id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'payments.order_id' AS column_name, COUNT(*) AS null_count FROM payments WHERE order_id IS NULL;"
+          ],
+          "explanation": "The `payments.order_id` column has a foreign key constraint but is nullable. This means a payment can exist without an associated order. If every payment is intended to have an order, consider enforcing a `NOT NULL` constraint after addressing existing NULL values. The provided SQL counts nulls.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_023_reviews_product_id",
+          "fix_id": "advisory-reviews-product-id-nullable-fk",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "reviews"
+          ],
+          "depends_on": [],
+          "table": "reviews",
+          "target_table": "reviews",
+          "problem": "Advisory: Nullable Foreign Key reviews.product_id",
+          "fix": "The `reviews.product_id` column has a foreign key constraint but is nullable. This means a review can exist without an associated product. If every review is intended to have a product, consider enforcing a `NOT NULL` constraint after addressing existing NULL values. The provided SQL counts nulls.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "validator": "schema",
+          "evidence": {
+            "foreign_table": "products",
+            "foreign_column": "product_id"
+          },
+          "evidence_payload": {
+            "is_nullable": true,
+            "has_fk_constraint": true,
+            "column_name": "product_id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'reviews.product_id' AS column_name, COUNT(*) AS null_count FROM reviews WHERE product_id IS NULL;"
+          ],
+          "explanation": "The `reviews.product_id` column has a foreign key constraint but is nullable. This means a review can exist without an associated product. If every review is intended to have a product, consider enforcing a `NOT NULL` constraint after addressing existing NULL values. The provided SQL counts nulls.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_024_addresses_customer_id",
+          "fix_id": "advisory-addresses-customer-id-nullable-fk",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "addresses"
+          ],
+          "depends_on": [],
+          "table": "addresses",
+          "target_table": "addresses",
+          "problem": "Advisory: Nullable Foreign Key addresses.customer_id",
+          "fix": "The `addresses.customer_id` column has a foreign key constraint but is nullable. This means an address can exist without an associated customer. If every address is intended to have a customer, consider enforcing a `NOT NULL` constraint after addressing existing NULL values. The provided SQL counts nulls.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "validator": "schema",
+          "evidence": {
+            "foreign_table": "customers",
+            "foreign_column": "customer_id"
+          },
+          "evidence_payload": {
+            "is_nullable": true,
+            "has_fk_constraint": true,
+            "column_name": "customer_id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'addresses.customer_id' AS column_name, COUNT(*) AS null_count FROM addresses WHERE customer_id IS NULL;"
+          ],
+          "explanation": "The `addresses.customer_id` column has a foreign key constraint but is nullable. This means an address can exist without an associated customer. If every address is intended to have a customer, consider enforcing a `NOT NULL` constraint after addressing existing NULL values. The provided SQL counts nulls.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_025_categories_parent_category_id",
+          "fix_id": "advisory-categories-parent-category-id-high-null-ratio",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "categories"
+          ],
+          "depends_on": [],
+          "table": "categories",
+          "target_table": "categories",
+          "problem": "Advisory: High Null Ratio in categories.parent_category_id",
+          "fix": "The `categories.parent_category_id` column has a high ratio of NULL values (20%). This suggests potential data completeness issues that require investigation to determine if this column should be mandatory or if data ingestion processes need adjustment. The provided SQL counts nulls.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "validator": "schema",
+          "evidence": {
+            "foreign_table": "categories",
+            "foreign_column": "category_id"
+          },
+          "evidence_payload": {
+            "null_ratio": 0.2,
+            "total_rows": 20,
+            "threshold_used": 0.1,
+            "column_name": "parent_category_id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'categories.parent_category_id' AS column_name, COUNT(*) AS null_count FROM categories WHERE parent_category_id IS NULL;"
+          ],
+          "explanation": "The `categories.parent_category_id` column has a high ratio of NULL values (20%). This suggests potential data completeness issues that require investigation to determine if this column should be mandatory or if data ingestion processes need adjustment. The provided SQL counts nulls.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_026_warehouses_manager_name",
+          "fix_id": "advisory-warehouses-manager-name-high-null-ratio",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "warehouses"
+          ],
+          "depends_on": [],
+          "table": "warehouses",
+          "target_table": "warehouses",
+          "problem": "Advisory: High Null Ratio in warehouses.manager_name",
+          "fix": "The `warehouses.manager_name` column has a high ratio of NULL values (53%). This suggests potential data completeness issues that require investigation to determine if this column should be mandatory or if data ingestion processes need adjustment. The provided SQL counts nulls.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "null_ratio": 0.5333,
+            "total_rows": 15,
+            "threshold_used": 0.4
+          },
+          "evidence_payload": {
+            "null_ratio": 0.5333,
+            "total_rows": 15,
+            "threshold_used": 0.4,
+            "column_name": "manager_name"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'warehouses.manager_name' AS column_name, COUNT(*) AS null_count FROM warehouses WHERE manager_name IS NULL;"
+          ],
+          "explanation": "The `warehouses.manager_name` column has a high ratio of NULL values (53%). This suggests potential data completeness issues that require investigation to determine if this column should be mandatory or if data ingestion processes need adjustment. The provided SQL counts nulls.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_027_orders",
+          "fix_id": "investigate-orders-high-nulls",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "orders"
+          ],
+          "depends_on": [],
+          "table": "orders",
+          "target_table": "orders",
+          "problem": "Investigate High Null Ratio in Multiple Columns of orders",
+          "fix": "Multiple columns in the `orders` table (`shipping_address_id`, `employee_id`, `notes`) have a high ratio of NULL values. This suggests potential data completeness issues that require investigation to determine if these columns should be mandatory or if data ingestion processes need adjustment. The provided SQL identifies records with NULLs in these columns.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "validator": "relational",
+          "evidence": {
+            "description": "Orders exist with an order_date earlier than the associated customer's created_at date.",
+            "count_of_inconsistent_records": 2788,
+            "parent_table": "customers",
+            "child_table": "orders"
+          },
+          "evidence_payload": {
+            "null_ratio": 0.207,
+            "total_rows": 3000,
+            "threshold_used": 0.1,
+            "affected_columns": [
+              "shipping_address_id",
+              "employee_id",
+              "notes"
+            ],
+            "column_name": "shipping_address_id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT order_id, shipping_address_id, employee_id, notes FROM orders WHERE shipping_address_id IS NULL OR employee_id IS NULL OR notes IS NULL;"
+          ],
+          "explanation": "Multiple columns in the `orders` table (`shipping_address_id`, `employee_id`, `notes`) have a high ratio of NULL values. This suggests potential data completeness issues that require investigation to determine if these columns should be mandatory or if data ingestion processes need adjustment. The provided SQL identifies records with NULLs in these columns.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_028_reviews_review_text",
+          "fix_id": "advisory-reviews-review-text-high-null-ratio",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "reviews"
+          ],
+          "depends_on": [],
+          "table": "reviews",
+          "target_table": "reviews",
+          "problem": "Advisory: High Null Ratio in reviews.review_text",
+          "fix": "The `reviews.review_text` column has a high ratio of NULL values (49%). This suggests potential data completeness issues that require investigation to determine if this column should be mandatory or if data ingestion processes need adjustment. The provided SQL counts nulls.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "null_ratio": 0.4947,
+            "total_rows": 1500,
+            "threshold_used": 0.4
+          },
+          "evidence_payload": {
+            "null_ratio": 0.4947,
+            "total_rows": 1500,
+            "threshold_used": 0.4,
+            "column_name": "review_text"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'reviews.review_text' AS column_name, COUNT(*) AS null_count FROM reviews WHERE review_text IS NULL;"
+          ],
+          "explanation": "The `reviews.review_text` column has a high ratio of NULL values (49%). This suggests potential data completeness issues that require investigation to determine if this column should be mandatory or if data ingestion processes need adjustment. The provided SQL counts nulls.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_029_shipments_warehouse_id",
+          "fix_id": "advisory-shipments-warehouse-id-high-null-ratio",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "shipments"
+          ],
+          "depends_on": [],
+          "table": "shipments",
+          "target_table": "shipments",
+          "problem": "Advisory: High Null Ratio in shipments.warehouse_id",
+          "fix": "The `shipments.warehouse_id` column has a high ratio of NULL values (14%). This suggests potential data completeness issues that require investigation to determine if this column should be mandatory or if data ingestion processes need adjustment. The provided SQL counts nulls.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "null_ratio": 0.1432,
+            "total_rows": 2500,
+            "threshold_used": 0.1
+          },
+          "evidence_payload": {
+            "null_ratio": 0.1432,
+            "total_rows": 2500,
+            "threshold_used": 0.1,
+            "column_name": "warehouse_id"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'shipments.warehouse_id' AS column_name, COUNT(*) AS null_count FROM shipments WHERE warehouse_id IS NULL;"
+          ],
+          "explanation": "The `shipments.warehouse_id` column has a high ratio of NULL values (14%). This suggests potential data completeness issues that require investigation to determine if this column should be mandatory or if data ingestion processes need adjustment. The provided SQL counts nulls.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_030_payments_transaction_reference",
+          "fix_id": "advisory-payments-transaction-reference-high-null-ratio",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "payments"
+          ],
+          "depends_on": [],
+          "table": "payments",
+          "target_table": "payments",
+          "problem": "Advisory: High Null Ratio in payments.transaction_reference",
+          "fix": "The `payments.transaction_reference` column has a high ratio of NULL values (40%). This suggests potential data completeness issues that require investigation to determine if this column should be mandatory or if data ingestion processes need adjustment. The provided SQL counts nulls.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "null_ratio": 0.4023,
+            "total_rows": 3000,
+            "threshold_used": 0.4
+          },
+          "evidence_payload": {
+            "null_ratio": 0.4023,
+            "total_rows": 3000,
+            "threshold_used": 0.4,
+            "column_name": "transaction_reference"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'payments.transaction_reference' AS column_name, COUNT(*) AS null_count FROM payments WHERE transaction_reference IS NULL;"
+          ],
+          "explanation": "The `payments.transaction_reference` column has a high ratio of NULL values (40%). This suggests potential data completeness issues that require investigation to determine if this column should be mandatory or if data ingestion processes need adjustment. The provided SQL counts nulls.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_031_customers",
+          "fix_id": "investigate-customers-high-nulls",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "customers"
+          ],
+          "depends_on": [],
+          "table": "customers",
+          "target_table": "customers",
+          "problem": "Investigate High Null Ratio in Multiple Columns of customers",
+          "fix": "Multiple columns in the `customers` table (`phone`, `notes`) have a high ratio of NULL values. This suggests potential data completeness issues that require investigation to determine if these columns should be mandatory or if data ingestion processes need adjustment. The provided SQL identifies records with NULLs in these columns.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "null_ratio": 0.506,
+            "total_rows": 2000,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "phone",
+              "notes"
+            ]
+          },
+          "evidence_payload": {
+            "null_ratio": 0.506,
+            "total_rows": 2000,
+            "threshold_used": 0.4,
+            "affected_columns": [
+              "phone",
+              "notes"
+            ],
+            "column_name": "phone"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT customer_id, phone, notes FROM customers WHERE phone IS NULL OR notes IS NULL;"
+          ],
+          "explanation": "Multiple columns in the `customers` table (`phone`, `notes`) have a high ratio of NULL values. This suggests potential data completeness issues that require investigation to determine if these columns should be mandatory or if data ingestion processes need adjustment. The provided SQL identifies records with NULLs in these columns.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_032_products_created_at",
+          "fix_id": "advisory-products-created-at-constant-timestamp",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "products"
+          ],
+          "depends_on": [],
+          "table": "products",
+          "target_table": "products",
+          "problem": "Advisory: Constant Timestamp in products.created_at",
+          "fix": "The `products.created_at` column has a constant timestamp value across all non-null rows. This could indicate a batch-insert bug or that the column is not being updated as expected. Investigation is recommended to verify if this behavior is intentional. The provided SQL checks for distinct values.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "temporal",
+          "interaction_model": "advisory",
+          "source_rule": "constant_timestamp",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "constant_value": "2026-05-13 14:11:07.967531",
+            "total_non_null": 1000
+          },
+          "evidence_payload": {
+            "constant_value": "2026-05-13 14:11:07.967531",
+            "total_non_null": 1000,
+            "column_name": "created_at"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'products.created_at' AS column_name, COUNT(DISTINCT created_at) AS distinct_count FROM products;"
+          ],
+          "explanation": "The `products.created_at` column has a constant timestamp value across all non-null rows. This could indicate a batch-insert bug or that the column is not being updated as expected. Investigation is recommended to verify if this behavior is intentional. The provided SQL checks for distinct values.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_033_customers_created_at",
+          "fix_id": "advisory-customers-created-at-constant-timestamp",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "customers"
+          ],
+          "depends_on": [],
+          "table": "customers",
+          "target_table": "customers",
+          "problem": "Advisory: Constant Timestamp in customers.created_at",
+          "fix": "The `customers.created_at` column has a constant timestamp value across all non-null rows. This could indicate a batch-insert bug or that the column is not being updated as expected. Investigation is recommended to verify if this behavior is intentional. The provided SQL checks for distinct values.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "temporal",
+          "interaction_model": "advisory",
+          "source_rule": "constant_timestamp",
+          "source_type": "deterministic",
+          "validator": null,
+          "evidence": {},
+          "evidence_payload": {
+            "constant_value": "2026-05-13 14:11:07.910253",
+            "total_non_null": 2000,
+            "columns_with_high_nulls": [
+              "created_at",
+              "notes"
+            ],
+            "column_name": "created_at"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'customers.created_at' AS column_name, COUNT(DISTINCT created_at) AS distinct_count FROM customers;"
+          ],
+          "explanation": "The `customers.created_at` column has a constant timestamp value across all non-null rows. This could indicate a batch-insert bug or that the column is not being updated as expected. Investigation is recommended to verify if this behavior is intentional. The provided SQL checks for distinct values.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_034_addresses_created_at",
+          "fix_id": "advisory-addresses-created-at-constant-timestamp",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "addresses"
+          ],
+          "depends_on": [],
+          "table": "addresses",
+          "target_table": "addresses",
+          "problem": "Advisory: Constant Timestamp in addresses.created_at",
+          "fix": "The `addresses.created_at` column has a constant timestamp value across all non-null rows. This could indicate a batch-insert bug or that the column is not being updated as expected. Investigation is recommended to verify if this behavior is intentional. The provided SQL checks for distinct values.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "temporal",
+          "interaction_model": "advisory",
+          "source_rule": "constant_timestamp",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "constant_value": "2026-05-13 14:11:07.950759",
+            "total_non_null": 2500
+          },
+          "evidence_payload": {
+            "constant_value": "2026-05-13 14:11:07.950759",
+            "total_non_null": 2500,
+            "column_name": "created_at"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'addresses.created_at' AS column_name, COUNT(DISTINCT created_at) AS distinct_count FROM addresses;"
+          ],
+          "explanation": "The `addresses.created_at` column has a constant timestamp value across all non-null rows. This could indicate a batch-insert bug or that the column is not being updated as expected. Investigation is recommended to verify if this behavior is intentional. The provided SQL checks for distinct values.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_035_orders_status",
+          "fix_id": "advisory-orders-status-constant-value",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "orders"
+          ],
+          "depends_on": [],
+          "table": "orders",
+          "target_table": "orders",
+          "problem": "Advisory: Constant Value in orders.status",
+          "fix": "The `orders.status` column has a constant value ('COMPLETED') across all non-null rows. This suggests that the column might not be capturing diverse states or that there's an issue with data population. Verification is recommended to ensure this is intentional. The provided SQL checks for distinct values.",
+          "severity": "low",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "source_rule": "constant_value",
+          "source_type": "deterministic",
+          "validator": null,
+          "evidence": {},
+          "evidence_payload": {
+            "constant_value": "COMPLETED",
+            "total_non_null": 2271,
+            "columns_with_high_nulls": [
+              "status",
+              "notes"
+            ],
+            "column_name": "status"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'orders.status' AS column_name, COUNT(DISTINCT status) AS distinct_count FROM orders;"
+          ],
+          "explanation": "The `orders.status` column has a constant value ('COMPLETED') across all non-null rows. This suggests that the column might not be capturing diverse states or that there's an issue with data population. Verification is recommended to ensure this is intentional. The provided SQL checks for distinct values.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_036_shipments_carrier",
+          "fix_id": "advisory-shipments-carrier-constant-value",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "shipments"
+          ],
+          "depends_on": [],
+          "table": "shipments",
+          "target_table": "shipments",
+          "problem": "Advisory: Constant Value in shipments.carrier",
+          "fix": "The `shipments.carrier` column has a constant value ('DHL') across all non-null rows. This suggests that the column might not be capturing diverse carriers or that there's an issue with data population. Verification is recommended to ensure this is intentional. The provided SQL checks for distinct values.",
+          "severity": "low",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "source_rule": "constant_value",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "constant_value": "DHL",
+            "total_non_null": 1995
+          },
+          "evidence_payload": {
+            "constant_value": "DHL",
+            "total_non_null": 1995,
+            "column_name": "carrier"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'shipments.carrier' AS column_name, COUNT(DISTINCT carrier) AS distinct_count FROM shipments;"
+          ],
+          "explanation": "The `shipments.carrier` column has a constant value ('DHL') across all non-null rows. This suggests that the column might not be capturing diverse carriers or that there's an issue with data population. Verification is recommended to ensure this is intentional. The provided SQL checks for distinct values.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_037_support_tickets_issue_type",
+          "fix_id": "advisory-support-tickets-issue-type-constant-value",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "support_tickets"
+          ],
+          "depends_on": [],
+          "table": "support_tickets",
+          "target_table": "support_tickets",
+          "problem": "Advisory: Constant Value in support_tickets.issue_type",
+          "fix": "The `support_tickets.issue_type` column has a constant value ('PAYMENT') across all non-null rows. This suggests that the column might not be capturing diverse issue types or that there's an issue with data population. Verification is recommended to ensure this is intentional. The provided SQL checks for distinct values.",
+          "severity": "low",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "source_rule": "constant_value",
+          "source_type": "deterministic",
+          "validator": null,
+          "evidence": {},
+          "evidence_payload": {
+            "constant_value": "PAYMENT",
+            "total_non_null": 1000,
+            "columns_with_high_nulls": [
+              "issue_type",
+              "priority",
+              "status"
+            ],
+            "column_name": "issue_type"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'support_tickets.issue_type' AS column_name, COUNT(DISTINCT issue_type) AS distinct_count FROM support_tickets;"
+          ],
+          "explanation": "The `support_tickets.issue_type` column has a constant value ('PAYMENT') across all non-null rows. This suggests that the column might not be capturing diverse issue types or that there's an issue with data population. Verification is recommended to ensure this is intentional. The provided SQL checks for distinct values.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_038_payments_payment_method",
+          "fix_id": "advisory-payments-payment-method-constant-value",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "payments"
+          ],
+          "depends_on": [],
+          "table": "payments",
+          "target_table": "payments",
+          "problem": "Advisory: Constant Value in payments.payment_method",
+          "fix": "The `payments.payment_method` column has a constant value ('CARD') across all non-null rows. This suggests that the column might not be capturing diverse payment methods or that there's an issue with data population. Verification is recommended to ensure this is intentional. The provided SQL checks for distinct values.",
+          "severity": "low",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "source_rule": "constant_value",
+          "source_type": "deterministic",
+          "validator": null,
+          "evidence": {},
+          "evidence_payload": {
+            "constant_value": "CARD",
+            "total_non_null": 2387,
+            "columns_with_high_nulls": [
+              "payment_method",
+              "status"
+            ],
+            "column_name": "payment_method"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'payments.payment_method' AS column_name, COUNT(DISTINCT payment_method) AS distinct_count FROM payments;"
+          ],
+          "explanation": "The `payments.payment_method` column has a constant value ('CARD') across all non-null rows. This suggests that the column might not be capturing diverse payment methods or that there's an issue with data population. Verification is recommended to ensure this is intentional. The provided SQL checks for distinct values.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_039_reviews_review_text",
+          "fix_id": "advisory-reviews-review-text-constant-value",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "reviews"
+          ],
+          "depends_on": [],
+          "table": "reviews",
+          "target_table": "reviews",
+          "problem": "Advisory: Constant Value in reviews.review_text",
+          "fix": "The `reviews.review_text` column has a constant value ('Good product') across all non-null rows. This suggests that the column might not be capturing diverse review texts or that there's an issue with data population. Verification is recommended to ensure this is intentional. The provided SQL checks for distinct values.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "source_rule": "constant_value",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "null_ratio": 0.4947,
+            "total_rows": 1500,
+            "threshold_used": 0.4
+          },
+          "evidence_payload": {
+            "constant_value": "Good product",
+            "total_non_null": 758,
+            "column_name": "review_text"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'reviews.review_text' AS column_name, COUNT(DISTINCT review_text) AS distinct_count FROM reviews;"
+          ],
+          "explanation": "The `reviews.review_text` column has a constant value ('Good product') across all non-null rows. This suggests that the column might not be capturing diverse review texts or that there's an issue with data population. Verification is recommended to ensure this is intentional. The provided SQL checks for distinct values.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_040_audit_logs_table_name",
+          "fix_id": "advisory-audit-logs-table-name-constant-value",
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "audit_logs"
+          ],
+          "depends_on": [],
+          "table": "audit_logs",
+          "target_table": "audit_logs",
+          "problem": "Advisory: Constant Value in audit_logs.table_name",
+          "fix": "The `audit_logs.table_name` column has a constant value ('orders') across all non-null rows. This suggests that the column might not be capturing diverse table names or that there's an issue with data population. Verification is recommended to ensure this is intentional. The provided SQL checks for distinct values.",
+          "severity": "low",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "source_rule": "constant_value",
+          "source_type": "deterministic",
+          "validator": null,
+          "evidence": {},
+          "evidence_payload": {
+            "constant_value": "orders",
+            "total_non_null": 2000,
+            "columns_with_high_nulls": [
+              "table_name",
+              "details"
+            ],
+            "column_name": "table_name"
+          },
+          "estimated_rows_affected": 0,
+          "queries": [
+            "SELECT 'audit_logs.table_name' AS column_name, COUNT(DISTINCT table_name) AS distinct_count FROM audit_logs;"
+          ],
+          "explanation": "The `audit_logs.table_name` column has a constant value ('orders') across all non-null rows. This suggests that the column might not be capturing diverse table names or that there's an issue with data population. Verification is recommended to ensure this is intentional. The provided SQL checks for distinct values.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        }
+      ],
+      "cards": [
+        {
+          "fix_id": "investigate-products-negative-stock-quantity",
+          "title": "Investigate Negative Stock Quantity in products.stock_quantity",
+          "target": "products.stock_quantity",
+          "rationale": "Negative stock quantities were detected in the `products` table. This indicates a data integrity issue that requires investigation to determine the root cause and appropriate corrective action. The provided SQL identifies the affected records.",
+          "risk_level": "low",
+          "sql": "SELECT product_id, stock_quantity FROM products WHERE stock_quantity < 0;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "products"
+          ],
+          "depends_on": [],
+          "card_family": "structural",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "min_value": -50,
+            "null_rate": 0.0,
+            "total_rows": 1000,
+            "column_name": "stock_quantity"
+          },
+          "source_rule": "negative_stock_quantity",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "critical"
+        },
+        {
+          "fix_id": "investigate-shipments-date-ordering",
+          "title": "Investigate Inconsistent Shipped and Delivered Dates in Shipments",
+          "target": "shipments",
+          "rationale": "The `shipments` table contains records where the `delivered_date` is earlier than the `shipped_date`, indicating a temporal ordering inconsistency. This suggests a data quality issue that requires investigation into data ingestion or application logic. The provided SQL identifies the inconsistent records.",
+          "risk_level": "low",
+          "sql": "SELECT shipment_id, shipped_date, delivered_date FROM shipments WHERE delivered_date < shipped_date;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "shipments"
+          ],
+          "depends_on": [],
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "violation_count": 874,
+            "total_rows": 2500,
+            "violation_pct": 0.3496,
+            "affected_columns": [
+              "shipped_date",
+              "delivered_date"
+            ],
+            "column_a": "shipped_date",
+            "column_b": "delivered_date",
+            "a_after_b": 874,
+            "a_before_b": 1620,
+            "both_populated": 2500,
+            "minority_pct": 0.3496,
+            "column_name": "shipped_date"
+          },
+          "source_rule": "temporal_ordering_inconsistency",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "critical"
+        },
+        {
+          "fix_id": "investigate-orders-order-date-temporal-inconsistency",
+          "title": "Investigate Temporal Inconsistency in orders.order_date",
+          "target": "orders.order_date",
+          "rationale": "Orders exist with an order_date earlier than the associated customer's created_at date. This temporal inconsistency suggests a data quality issue that requires investigation. The provided SQL identifies the inconsistent records.",
+          "risk_level": "low",
+          "sql": "SELECT o.order_id, o.order_date, c.created_at AS customer_created_at FROM orders o JOIN customers c ON o.customer_id = c.customer_id WHERE o.order_date < c.created_at;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "orders",
+            "customers"
+          ],
+          "depends_on": [],
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "description": "Orders exist with an order_date earlier than the associated customer's created_at date.",
+            "count_of_inconsistent_records": 2788,
+            "parent_table": "customers",
+            "child_table": "orders",
+            "column_name": "order_date"
+          },
+          "source_rule": "temporal_inconsistency",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "critical"
+        },
+        {
+          "fix_id": "investigate-inventory-last-updated-temporal-inconsistency",
+          "title": "Investigate Temporal Inconsistency in inventory.last_updated",
+          "target": "inventory.last_updated",
+          "rationale": "Inventory records exist with a last_updated date earlier than the associated product's created_at date. This temporal inconsistency suggests a data quality issue that requires investigation. The provided SQL identifies the inconsistent records.",
+          "risk_level": "low",
+          "sql": "SELECT i.inventory_id, i.last_updated, p.created_at AS product_created_at FROM inventory i JOIN products p ON i.product_id = p.product_id WHERE i.last_updated < p.created_at;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "inventory",
+            "products"
+          ],
+          "depends_on": [],
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "description": "Inventory records exist with a last_updated date earlier than the associated product's created_at date.",
+            "count_of_inconsistent_records": 1995,
+            "parent_table": "products",
+            "child_table": "inventory",
+            "column_name": "last_updated"
+          },
+          "source_rule": "temporal_inconsistency",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "critical"
+        },
+        {
+          "fix_id": "investigate-reviews-created-at-temporal-inconsistency",
+          "title": "Investigate Temporal Inconsistency in reviews.created_at",
+          "target": "reviews.created_at",
+          "rationale": "Reviews exist with a created_at date earlier than the associated customer's created_at date. This temporal inconsistency suggests a data quality issue that requires investigation. The provided SQL identifies the inconsistent records.",
+          "risk_level": "low",
+          "sql": "SELECT r.review_id, r.created_at, c.created_at AS customer_created_at FROM reviews r JOIN customers c ON r.customer_id = c.customer_id WHERE r.created_at < c.created_at;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "reviews",
+            "customers"
+          ],
+          "depends_on": [],
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "description": "Reviews exist with a created_at date earlier than the associated customer's created_at date.",
+            "count_of_inconsistent_records": 1498,
+            "parent_table": "customers",
+            "child_table": "reviews",
+            "column_name": "created_at"
+          },
+          "source_rule": "temporal_inconsistency",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "critical"
+        },
+        {
+          "fix_id": "investigate-payments-payment-date-temporal-inconsistency",
+          "title": "Investigate Temporal Inconsistency in payments.payment_date",
+          "target": "payments.payment_date",
+          "rationale": "Payments exist with a payment_date earlier than the associated order's order_date. This temporal inconsistency suggests a data quality issue that requires investigation. The provided SQL identifies the inconsistent records.",
+          "risk_level": "low",
+          "sql": "SELECT p.payment_id, p.payment_date, o.order_date FROM payments p JOIN orders o ON p.order_id = o.order_id WHERE p.payment_date < o.order_date;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "payments",
+            "orders"
+          ],
+          "depends_on": [],
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "description": "Payments exist with a payment_date earlier than the associated order's order_date.",
+            "count_of_inconsistent_records": 1480,
+            "parent_table": "orders",
+            "child_table": "payments",
+            "column_name": "payment_date"
+          },
+          "source_rule": "temporal_inconsistency",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "critical"
+        },
+        {
+          "fix_id": "investigate-shipments-shipped-date-temporal-inconsistency",
+          "title": "Investigate Temporal Inconsistency in shipments.shipped_date",
+          "target": "shipments.shipped_date",
+          "rationale": "Shipments exist with a shipped_date earlier than the associated order's order_date. This temporal inconsistency suggests a data quality issue that requires investigation. The provided SQL identifies the inconsistent records.",
+          "risk_level": "low",
+          "sql": "SELECT s.shipment_id, s.shipped_date, o.order_date FROM shipments s JOIN orders o ON s.order_id = o.order_id WHERE s.shipped_date < o.order_date;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "shipments",
+            "orders"
+          ],
+          "depends_on": [],
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "description": "Shipments exist with a shipped_date earlier than the associated order's order_date.",
+            "count_of_inconsistent_records": 1086,
+            "parent_table": "orders",
+            "child_table": "shipments",
+            "column_name": "shipped_date"
+          },
+          "source_rule": "temporal_inconsistency",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "critical"
+        },
+        {
+          "fix_id": "add-index-categories-parent-category-id",
+          "title": "Add Index on categories.parent_category_id (FK to categories.category_id)",
+          "target": "categories.parent_category_id",
+          "rationale": "Adding an index on `categories.parent_category_id` will improve the performance of queries involving foreign key lookups and orphan checks, as this column is a foreign key referencing `categories.category_id`.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS idx_categories_parent_category_id ON categories (parent_category_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'categories' AND indexname = 'idx_categories_parent_category_id';"
+          ],
+          "verification_results": {
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'categories' AND indexname = 'idx_categories_parent_category_id';": [
+              {
+                "count": 0
+              }
+            ]
+          },
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_categories_parent_category_id;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "categories"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "evidence": {},
+          "evidence_payload": {
+            "foreign_table": "categories",
+            "foreign_column": "category_id",
+            "column_name": "parent_category_id"
+          },
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "add-index-employees-manager-id",
+          "title": "Add Index on employees.manager_id (FK to employees.employee_id)",
+          "target": "employees.manager_id",
+          "rationale": "Adding an index on `employees.manager_id` will improve the performance of queries involving foreign key lookups and orphan checks, as this column is a foreign key referencing `employees.employee_id`.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS idx_employees_manager_id ON employees (manager_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'employees' AND indexname = 'idx_employees_manager_id';"
+          ],
+          "verification_results": {
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'employees' AND indexname = 'idx_employees_manager_id';": [
+              {
+                "count": 0
+              }
+            ]
+          },
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_employees_manager_id;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "employees"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "evidence": {},
+          "evidence_payload": {
+            "foreign_table": "employees",
+            "foreign_column": "employee_id",
+            "column_name": "manager_id"
+          },
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "add-index-orders-customer-id",
+          "title": "Add Index on orders.customer_id (FK to customers.customer_id)",
+          "target": "orders.customer_id",
+          "rationale": "Adding an index on `orders.customer_id` will improve the performance of queries involving foreign key lookups and orphan checks, as this column is a foreign key referencing `customers.customer_id`.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders (customer_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'orders' AND indexname = 'idx_orders_customer_id';"
+          ],
+          "verification_results": {
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'orders' AND indexname = 'idx_orders_customer_id';": [
+              {
+                "count": 0
+              }
+            ]
+          },
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_orders_customer_id;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "orders"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "evidence": {},
+          "evidence_payload": {
+            "foreign_table": "customers",
+            "foreign_column": "customer_id",
+            "column_name": "customer_id"
+          },
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "add-index-support-tickets-customer-id",
+          "title": "Add Index on support_tickets.customer_id (FK to customers.customer_id)",
+          "target": "support_tickets.customer_id",
+          "rationale": "Adding an index on `support_tickets.customer_id` will improve the performance of queries involving foreign key lookups and orphan checks, as this column is a foreign key referencing `customers.customer_id`.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS idx_support_tickets_customer_id ON support_tickets (customer_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'support_tickets' AND indexname = 'idx_support_tickets_customer_id';"
+          ],
+          "verification_results": {
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'support_tickets' AND indexname = 'idx_support_tickets_customer_id';": [
+              {
+                "count": 0
+              }
+            ]
+          },
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_support_tickets_customer_id;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "support_tickets"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "evidence": {},
+          "evidence_payload": {
+            "foreign_table": "customers",
+            "foreign_column": "customer_id",
+            "columns_with_high_nulls": [
+              "customer_id",
+              "order_id"
+            ],
+            "column_name": "customer_id"
+          },
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "add-index-payments-order-id",
+          "title": "Add Index on payments.order_id (FK to orders.order_id)",
+          "target": "payments.order_id",
+          "rationale": "Adding an index on `payments.order_id` will improve the performance of queries involving foreign key lookups and orphan checks, as this column is a foreign key referencing `orders.order_id`.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS idx_payments_order_id ON payments (order_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'payments' AND indexname = 'idx_payments_order_id';"
+          ],
+          "verification_results": {
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'payments' AND indexname = 'idx_payments_order_id';": [
+              {
+                "count": 0
+              }
+            ]
+          },
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_payments_order_id;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "payments"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "evidence": {},
+          "evidence_payload": {
+            "foreign_table": "orders",
+            "foreign_column": "order_id",
+            "column_name": "order_id"
+          },
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "add-index-reviews-product-id",
+          "title": "Add Index on reviews.product_id (FK to products.product_id)",
+          "target": "reviews.product_id",
+          "rationale": "Adding an index on `reviews.product_id` will improve the performance of queries involving foreign key lookups and orphan checks, as this column is a foreign key referencing `products.product_id`.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS idx_reviews_product_id ON reviews (product_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'reviews' AND indexname = 'idx_reviews_product_id';"
+          ],
+          "verification_results": {
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'reviews' AND indexname = 'idx_reviews_product_id';": [
+              {
+                "count": 0
+              }
+            ]
+          },
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_reviews_product_id;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "reviews"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "evidence": {},
+          "evidence_payload": {
+            "foreign_table": "products",
+            "foreign_column": "product_id",
+            "column_name": "product_id"
+          },
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "add-index-addresses-customer-id",
+          "title": "Add Index on addresses.customer_id (FK to customers.customer_id)",
+          "target": "addresses.customer_id",
+          "rationale": "Adding an index on `addresses.customer_id` will improve the performance of queries involving foreign key lookups and orphan checks, as this column is a foreign key referencing `customers.customer_id`.",
+          "risk_level": "medium",
+          "sql": "CREATE INDEX IF NOT EXISTS idx_addresses_customer_id ON addresses (customer_id);",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'addresses' AND indexname = 'idx_addresses_customer_id';"
+          ],
+          "verification_results": {
+            "SELECT COUNT(*) FROM pg_indexes WHERE tablename = 'addresses' AND indexname = 'idx_addresses_customer_id';": [
+              {
+                "count": 0
+              }
+            ]
+          },
+          "rollback_queries": [
+            "DROP INDEX IF EXISTS idx_addresses_customer_id;"
+          ],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "addresses"
+          ],
+          "depends_on": [],
+          "card_family": "schema_design",
+          "interaction_model": "execute_ddl",
+          "evidence": {},
+          "evidence_payload": {
+            "foreign_table": "customers",
+            "foreign_column": "customer_id",
+            "column_name": "customer_id"
+          },
+          "source_rule": "missing_index_fk_column",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "investigate-support-tickets-high-nulls",
+          "title": "Investigate High Null Ratio in Multiple Columns of support_tickets",
+          "target": "support_tickets",
+          "rationale": "Multiple columns in the `support_tickets` table (`resolved_at`, `customer_id`, `assigned_employee_id`, `order_id`) have a high ratio of NULL values. This suggests potential data completeness issues that require investigation to determine if these columns should be mandatory or if data ingestion processes need adjustment. The provided SQL identifies records with NULLs in these columns.",
+          "risk_level": "low",
+          "sql": "SELECT ticket_id, resolved_at, customer_id, assigned_employee_id, order_id FROM support_tickets WHERE resolved_at IS NULL OR customer_id IS NULL OR assigned_employee_id IS NULL OR order_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "support_tickets"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "null_ratio": 1.0,
+            "total_rows": 1000,
+            "threshold_used": 0.4,
+            "affected_columns": [
+              "resolved_at",
+              "customer_id",
+              "assigned_employee_id",
+              "order_id"
+            ],
+            "column_name": "resolved_at"
+          },
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "investigate-audit-logs-high-nulls",
+          "title": "Investigate High Null Ratio in Multiple Columns of audit_logs",
+          "target": "audit_logs",
+          "rationale": "Multiple columns in the `audit_logs` table (`details`, `performed_by`) have a high ratio of NULL values. This suggests potential data completeness issues that require investigation to determine if these columns should be mandatory or if data ingestion processes need adjustment. The provided SQL identifies records with NULLs in these columns.",
+          "risk_level": "low",
+          "sql": "SELECT log_id, details, performed_by FROM audit_logs WHERE details IS NULL OR performed_by IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "audit_logs"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "null_ratio": 0.8495,
+            "total_rows": 2000,
+            "threshold_used": 0.4,
+            "affected_columns": [
+              "details",
+              "performed_by"
+            ],
+            "column_name": "details"
+          },
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "investigate-products-discontinued-stock-quantity",
+          "title": "Investigate Inconsistent Discontinued Status and Stock Quantity in products",
+          "target": "products",
+          "rationale": "The `products` table contains records where `discontinued` is TRUE but `stock_quantity` is greater than 0. This cross-field consistency violation suggests an issue with inventory management for discontinued products. Investigation is needed to ensure `stock_quantity` is correctly updated or reclassified. The provided SQL identifies the inconsistent records.",
+          "risk_level": "low",
+          "sql": "SELECT product_id, discontinued, stock_quantity FROM products WHERE discontinued IS TRUE AND stock_quantity > 0;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "products"
+          ],
+          "depends_on": [],
+          "card_family": "structural",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "violation_count": 86,
+            "total_rows": 1000,
+            "violation_pct": 0.086,
+            "affected_columns": [
+              "discontinued",
+              "stock_quantity"
+            ],
+            "column_name": "discontinued"
+          },
+          "source_rule": "cross_field_consistency_violation",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "advisory-categories-parent-category-id-nullable-fk",
+          "title": "Advisory: Nullable Foreign Key categories.parent_category_id",
+          "target": "categories.parent_category_id",
+          "rationale": "The `categories.parent_category_id` column has a foreign key constraint but is nullable. This means a category can exist without a parent. If every category is intended to have a parent, consider enforcing a `NOT NULL` constraint after addressing existing NULL values. The provided SQL counts nulls.",
+          "risk_level": "low",
+          "sql": "SELECT 'categories.parent_category_id' AS column_name, COUNT(*) AS null_count FROM categories WHERE parent_category_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "categories"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "is_nullable": true,
+            "has_fk_constraint": true,
+            "column_name": "parent_category_id"
+          },
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "advisory-employees-manager-id-nullable-fk",
+          "title": "Advisory: Nullable Foreign Key employees.manager_id",
+          "target": "employees.manager_id",
+          "rationale": "The `employees.manager_id` column has a foreign key constraint but is nullable. This means an employee can exist without a manager. If every employee is intended to have a manager, consider enforcing a `NOT NULL` constraint after addressing existing NULL values. The provided SQL counts nulls.",
+          "risk_level": "low",
+          "sql": "SELECT 'employees.manager_id' AS column_name, COUNT(*) AS null_count FROM employees WHERE manager_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "employees"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "is_nullable": true,
+            "has_fk_constraint": true,
+            "column_name": "manager_id"
+          },
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "advisory-orders-customer-id-nullable-fk",
+          "title": "Advisory: Nullable Foreign Key orders.customer_id",
+          "target": "orders.customer_id",
+          "rationale": "The `orders.customer_id` column has a foreign key constraint but is nullable. This means an order can exist without an associated customer. If every order is intended to have a customer, consider enforcing a `NOT NULL` constraint after addressing existing NULL values. The provided SQL counts nulls.",
+          "risk_level": "low",
+          "sql": "SELECT 'orders.customer_id' AS column_name, COUNT(*) AS null_count FROM orders WHERE customer_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "orders"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "is_nullable": true,
+            "has_fk_constraint": true,
+            "column_name": "customer_id"
+          },
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "advisory-support-tickets-customer-id-nullable-fk",
+          "title": "Advisory: Nullable Foreign Key support_tickets.customer_id",
+          "target": "support_tickets.customer_id",
+          "rationale": "The `support_tickets.customer_id` column has a foreign key constraint but is nullable. This means a support ticket can exist without an associated customer. If every support ticket is intended to have a customer, consider enforcing a `NOT NULL` constraint after addressing existing NULL values. The provided SQL counts nulls.",
+          "risk_level": "low",
+          "sql": "SELECT 'support_tickets.customer_id' AS column_name, COUNT(*) AS null_count FROM support_tickets WHERE customer_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "support_tickets"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "is_nullable": true,
+            "has_fk_constraint": true,
+            "columns_with_high_nulls": [
+              "customer_id",
+              "order_id"
+            ],
+            "column_name": "customer_id"
+          },
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "advisory-payments-order-id-nullable-fk",
+          "title": "Advisory: Nullable Foreign Key payments.order_id",
+          "target": "payments.order_id",
+          "rationale": "The `payments.order_id` column has a foreign key constraint but is nullable. This means a payment can exist without an associated order. If every payment is intended to have an order, consider enforcing a `NOT NULL` constraint after addressing existing NULL values. The provided SQL counts nulls.",
+          "risk_level": "low",
+          "sql": "SELECT 'payments.order_id' AS column_name, COUNT(*) AS null_count FROM payments WHERE order_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "payments"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "is_nullable": true,
+            "has_fk_constraint": true,
+            "column_name": "order_id"
+          },
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "advisory-reviews-product-id-nullable-fk",
+          "title": "Advisory: Nullable Foreign Key reviews.product_id",
+          "target": "reviews.product_id",
+          "rationale": "The `reviews.product_id` column has a foreign key constraint but is nullable. This means a review can exist without an associated product. If every review is intended to have a product, consider enforcing a `NOT NULL` constraint after addressing existing NULL values. The provided SQL counts nulls.",
+          "risk_level": "low",
+          "sql": "SELECT 'reviews.product_id' AS column_name, COUNT(*) AS null_count FROM reviews WHERE product_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "reviews"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "is_nullable": true,
+            "has_fk_constraint": true,
+            "column_name": "product_id"
+          },
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "advisory-addresses-customer-id-nullable-fk",
+          "title": "Advisory: Nullable Foreign Key addresses.customer_id",
+          "target": "addresses.customer_id",
+          "rationale": "The `addresses.customer_id` column has a foreign key constraint but is nullable. This means an address can exist without an associated customer. If every address is intended to have a customer, consider enforcing a `NOT NULL` constraint after addressing existing NULL values. The provided SQL counts nulls.",
+          "risk_level": "low",
+          "sql": "SELECT 'addresses.customer_id' AS column_name, COUNT(*) AS null_count FROM addresses WHERE customer_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "addresses"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "is_nullable": true,
+            "has_fk_constraint": true,
+            "column_name": "customer_id"
+          },
+          "source_rule": "nullable_fk",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "advisory-categories-parent-category-id-high-null-ratio",
+          "title": "Advisory: High Null Ratio in categories.parent_category_id",
+          "target": "categories.parent_category_id",
+          "rationale": "The `categories.parent_category_id` column has a high ratio of NULL values (20%). This suggests potential data completeness issues that require investigation to determine if this column should be mandatory or if data ingestion processes need adjustment. The provided SQL counts nulls.",
+          "risk_level": "low",
+          "sql": "SELECT 'categories.parent_category_id' AS column_name, COUNT(*) AS null_count FROM categories WHERE parent_category_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "categories"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "null_ratio": 0.2,
+            "total_rows": 20,
+            "threshold_used": 0.1,
+            "column_name": "parent_category_id"
+          },
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "advisory-warehouses-manager-name-high-null-ratio",
+          "title": "Advisory: High Null Ratio in warehouses.manager_name",
+          "target": "warehouses.manager_name",
+          "rationale": "The `warehouses.manager_name` column has a high ratio of NULL values (53%). This suggests potential data completeness issues that require investigation to determine if this column should be mandatory or if data ingestion processes need adjustment. The provided SQL counts nulls.",
+          "risk_level": "low",
+          "sql": "SELECT 'warehouses.manager_name' AS column_name, COUNT(*) AS null_count FROM warehouses WHERE manager_name IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "warehouses"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "null_ratio": 0.5333,
+            "total_rows": 15,
+            "threshold_used": 0.4,
+            "column_name": "manager_name"
+          },
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "investigate-orders-high-nulls",
+          "title": "Investigate High Null Ratio in Multiple Columns of orders",
+          "target": "orders",
+          "rationale": "Multiple columns in the `orders` table (`shipping_address_id`, `employee_id`, `notes`) have a high ratio of NULL values. This suggests potential data completeness issues that require investigation to determine if these columns should be mandatory or if data ingestion processes need adjustment. The provided SQL identifies records with NULLs in these columns.",
+          "risk_level": "low",
+          "sql": "SELECT order_id, shipping_address_id, employee_id, notes FROM orders WHERE shipping_address_id IS NULL OR employee_id IS NULL OR notes IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "orders"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "null_ratio": 0.207,
+            "total_rows": 3000,
+            "threshold_used": 0.1,
+            "affected_columns": [
+              "shipping_address_id",
+              "employee_id",
+              "notes"
+            ],
+            "column_name": "shipping_address_id"
+          },
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "advisory-reviews-review-text-high-null-ratio",
+          "title": "Advisory: High Null Ratio in reviews.review_text",
+          "target": "reviews.review_text",
+          "rationale": "The `reviews.review_text` column has a high ratio of NULL values (49%). This suggests potential data completeness issues that require investigation to determine if this column should be mandatory or if data ingestion processes need adjustment. The provided SQL counts nulls.",
+          "risk_level": "low",
+          "sql": "SELECT 'reviews.review_text' AS column_name, COUNT(*) AS null_count FROM reviews WHERE review_text IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "reviews"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "null_ratio": 0.4947,
+            "total_rows": 1500,
+            "threshold_used": 0.4,
+            "column_name": "review_text"
+          },
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "advisory-shipments-warehouse-id-high-null-ratio",
+          "title": "Advisory: High Null Ratio in shipments.warehouse_id",
+          "target": "shipments.warehouse_id",
+          "rationale": "The `shipments.warehouse_id` column has a high ratio of NULL values (14%). This suggests potential data completeness issues that require investigation to determine if this column should be mandatory or if data ingestion processes need adjustment. The provided SQL counts nulls.",
+          "risk_level": "low",
+          "sql": "SELECT 'shipments.warehouse_id' AS column_name, COUNT(*) AS null_count FROM shipments WHERE warehouse_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "shipments"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "null_ratio": 0.1432,
+            "total_rows": 2500,
+            "threshold_used": 0.1,
+            "column_name": "warehouse_id"
+          },
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "advisory-payments-transaction-reference-high-null-ratio",
+          "title": "Advisory: High Null Ratio in payments.transaction_reference",
+          "target": "payments.transaction_reference",
+          "rationale": "The `payments.transaction_reference` column has a high ratio of NULL values (40%). This suggests potential data completeness issues that require investigation to determine if this column should be mandatory or if data ingestion processes need adjustment. The provided SQL counts nulls.",
+          "risk_level": "low",
+          "sql": "SELECT 'payments.transaction_reference' AS column_name, COUNT(*) AS null_count FROM payments WHERE transaction_reference IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "payments"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "null_ratio": 0.4023,
+            "total_rows": 3000,
+            "threshold_used": 0.4,
+            "column_name": "transaction_reference"
+          },
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "investigate-customers-high-nulls",
+          "title": "Investigate High Null Ratio in Multiple Columns of customers",
+          "target": "customers",
+          "rationale": "Multiple columns in the `customers` table (`phone`, `notes`) have a high ratio of NULL values. This suggests potential data completeness issues that require investigation to determine if these columns should be mandatory or if data ingestion processes need adjustment. The provided SQL identifies records with NULLs in these columns.",
+          "risk_level": "low",
+          "sql": "SELECT customer_id, phone, notes FROM customers WHERE phone IS NULL OR notes IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "customers"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "null_ratio": 0.506,
+            "total_rows": 2000,
+            "threshold_used": 0.4,
+            "affected_columns": [
+              "phone",
+              "notes"
+            ],
+            "column_name": "phone"
+          },
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "advisory-products-created-at-constant-timestamp",
+          "title": "Advisory: Constant Timestamp in products.created_at",
+          "target": "products.created_at",
+          "rationale": "The `products.created_at` column has a constant timestamp value across all non-null rows. This could indicate a batch-insert bug or that the column is not being updated as expected. Investigation is recommended to verify if this behavior is intentional. The provided SQL checks for distinct values.",
+          "risk_level": "low",
+          "sql": "SELECT 'products.created_at' AS column_name, COUNT(DISTINCT created_at) AS distinct_count FROM products;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "products"
+          ],
+          "depends_on": [],
+          "card_family": "temporal",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "constant_value": "2026-05-13 14:11:07.967531",
+            "total_non_null": 1000,
+            "column_name": "created_at"
+          },
+          "source_rule": "constant_timestamp",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "advisory-customers-created-at-constant-timestamp",
+          "title": "Advisory: Constant Timestamp in customers.created_at",
+          "target": "customers.created_at",
+          "rationale": "The `customers.created_at` column has a constant timestamp value across all non-null rows. This could indicate a batch-insert bug or that the column is not being updated as expected. Investigation is recommended to verify if this behavior is intentional. The provided SQL checks for distinct values.",
+          "risk_level": "low",
+          "sql": "SELECT 'customers.created_at' AS column_name, COUNT(DISTINCT created_at) AS distinct_count FROM customers;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "customers"
+          ],
+          "depends_on": [],
+          "card_family": "temporal",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "constant_value": "2026-05-13 14:11:07.910253",
+            "total_non_null": 2000,
+            "columns_with_high_nulls": [
+              "created_at",
+              "notes"
+            ],
+            "column_name": "created_at"
+          },
+          "source_rule": "constant_timestamp",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "advisory-addresses-created-at-constant-timestamp",
+          "title": "Advisory: Constant Timestamp in addresses.created_at",
+          "target": "addresses.created_at",
+          "rationale": "The `addresses.created_at` column has a constant timestamp value across all non-null rows. This could indicate a batch-insert bug or that the column is not being updated as expected. Investigation is recommended to verify if this behavior is intentional. The provided SQL checks for distinct values.",
+          "risk_level": "low",
+          "sql": "SELECT 'addresses.created_at' AS column_name, COUNT(DISTINCT created_at) AS distinct_count FROM addresses;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "addresses"
+          ],
+          "depends_on": [],
+          "card_family": "temporal",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "constant_value": "2026-05-13 14:11:07.950759",
+            "total_non_null": 2500,
+            "column_name": "created_at"
+          },
+          "source_rule": "constant_timestamp",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "advisory-orders-status-constant-value",
+          "title": "Advisory: Constant Value in orders.status",
+          "target": "orders.status",
+          "rationale": "The `orders.status` column has a constant value ('COMPLETED') across all non-null rows. This suggests that the column might not be capturing diverse states or that there's an issue with data population. Verification is recommended to ensure this is intentional. The provided SQL checks for distinct values.",
+          "risk_level": "low",
+          "sql": "SELECT 'orders.status' AS column_name, COUNT(DISTINCT status) AS distinct_count FROM orders;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "orders"
+          ],
+          "depends_on": [],
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "constant_value": "COMPLETED",
+            "total_non_null": 2271,
+            "columns_with_high_nulls": [
+              "status",
+              "notes"
+            ],
+            "column_name": "status"
+          },
+          "source_rule": "constant_value",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advisory-shipments-carrier-constant-value",
+          "title": "Advisory: Constant Value in shipments.carrier",
+          "target": "shipments.carrier",
+          "rationale": "The `shipments.carrier` column has a constant value ('DHL') across all non-null rows. This suggests that the column might not be capturing diverse carriers or that there's an issue with data population. Verification is recommended to ensure this is intentional. The provided SQL checks for distinct values.",
+          "risk_level": "low",
+          "sql": "SELECT 'shipments.carrier' AS column_name, COUNT(DISTINCT carrier) AS distinct_count FROM shipments;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "shipments"
+          ],
+          "depends_on": [],
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "constant_value": "DHL",
+            "total_non_null": 1995,
+            "column_name": "carrier"
+          },
+          "source_rule": "constant_value",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advisory-support-tickets-issue-type-constant-value",
+          "title": "Advisory: Constant Value in support_tickets.issue_type",
+          "target": "support_tickets.issue_type",
+          "rationale": "The `support_tickets.issue_type` column has a constant value ('PAYMENT') across all non-null rows. This suggests that the column might not be capturing diverse issue types or that there's an issue with data population. Verification is recommended to ensure this is intentional. The provided SQL checks for distinct values.",
+          "risk_level": "low",
+          "sql": "SELECT 'support_tickets.issue_type' AS column_name, COUNT(DISTINCT issue_type) AS distinct_count FROM support_tickets;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "support_tickets"
+          ],
+          "depends_on": [],
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "constant_value": "PAYMENT",
+            "total_non_null": 1000,
+            "columns_with_high_nulls": [
+              "issue_type",
+              "priority",
+              "status"
+            ],
+            "column_name": "issue_type"
+          },
+          "source_rule": "constant_value",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advisory-payments-payment-method-constant-value",
+          "title": "Advisory: Constant Value in payments.payment_method",
+          "target": "payments.payment_method",
+          "rationale": "The `payments.payment_method` column has a constant value ('CARD') across all non-null rows. This suggests that the column might not be capturing diverse payment methods or that there's an issue with data population. Verification is recommended to ensure this is intentional. The provided SQL checks for distinct values.",
+          "risk_level": "low",
+          "sql": "SELECT 'payments.payment_method' AS column_name, COUNT(DISTINCT payment_method) AS distinct_count FROM payments;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "payments"
+          ],
+          "depends_on": [],
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "constant_value": "CARD",
+            "total_non_null": 2387,
+            "columns_with_high_nulls": [
+              "payment_method",
+              "status"
+            ],
+            "column_name": "payment_method"
+          },
+          "source_rule": "constant_value",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advisory-reviews-review-text-constant-value",
+          "title": "Advisory: Constant Value in reviews.review_text",
+          "target": "reviews.review_text",
+          "rationale": "The `reviews.review_text` column has a constant value ('Good product') across all non-null rows. This suggests that the column might not be capturing diverse review texts or that there's an issue with data population. Verification is recommended to ensure this is intentional. The provided SQL checks for distinct values.",
+          "risk_level": "low",
+          "sql": "SELECT 'reviews.review_text' AS column_name, COUNT(DISTINCT review_text) AS distinct_count FROM reviews;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "reviews"
+          ],
+          "depends_on": [],
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "constant_value": "Good product",
+            "total_non_null": 758,
+            "column_name": "review_text"
+          },
+          "source_rule": "constant_value",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "low"
+        },
+        {
+          "fix_id": "advisory-audit-logs-table-name-constant-value",
+          "title": "Advisory: Constant Value in audit_logs.table_name",
+          "target": "audit_logs.table_name",
+          "rationale": "The `audit_logs.table_name` column has a constant value ('orders') across all non-null rows. This suggests that the column might not be capturing diverse table names or that there's an issue with data population. Verification is recommended to ensure this is intentional. The provided SQL checks for distinct values.",
+          "risk_level": "low",
+          "sql": "SELECT 'audit_logs.table_name' AS column_name, COUNT(DISTINCT table_name) AS distinct_count FROM audit_logs;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": null,
+          "tables_touched": [
+            "audit_logs"
+          ],
+          "depends_on": [],
+          "card_family": "statistical",
+          "interaction_model": "advisory",
+          "evidence": {},
+          "evidence_payload": {
+            "constant_value": "orders",
+            "total_non_null": 2000,
+            "columns_with_high_nulls": [
+              "table_name",
+              "details"
+            ],
+            "column_name": "table_name"
+          },
+          "source_rule": "constant_value",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "low"
+        }
+      ]
+    }
+  }
+}

@@ -51,7 +51,6 @@ from api.db import (
     update_job_connection_string,
     update_job_status,
     update_job_celery_task_id,
-    get_job_guidelines,
 )
 from api.permissions import find_owned_job
 from api.serializers import (
@@ -216,15 +215,6 @@ def _is_active_job_status(status_value: str | None) -> bool:
         return False
 
     return normalized.startswith('running_')
-
-
-_GUIDELINE_KEYS = [
-    'schema_integrity_validator',
-    'statistical_validator',
-    'structural_validator',
-    'relational_validator',
-    'data_fix_planner',
-]
 
 
 def _default_column_validator_analysis() -> dict:
@@ -2138,6 +2128,41 @@ class AdminUserDetailView(APIView):
         updates.append('is_active')
         return None
 
+    def delete(self, request, user_id):
+        admin_error = _require_admin_staff(request)
+        if admin_error:
+            return admin_error
+
+        target_user = User.objects.filter(id=user_id).first()
+        if not target_user:
+            return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if str(target_user.id) == str(request.user.id):
+            return Response(
+                {'error': 'You cannot delete your own account.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        deleted_email = target_user.email
+        deleted_id = str(target_user.id)
+        target_user.delete()
+
+        audit_log(
+            '',
+            'ADMIN_USER_DELETED',
+            {
+                'target_user_id': deleted_id,
+                'target_user_email': deleted_email,
+                'status_code': 204,
+            },
+            user_id=str(request.user.id),
+        )
+
+        return Response(
+            {'message': f'User {deleted_email} deleted.', 'user_id': deleted_id},
+            status=status.HTTP_200_OK,
+        )
+
 class AdminStatsView(APIView):
     """GET /api/admin/stats/ — aggregate KPI cards and active-jobs snapshot."""
 
@@ -2687,66 +2712,12 @@ class AdminTestEmailView(APIView):
 
 
 # ──────────────────────────────────────────────
-# AI-Generated Guidelines
-# ──────────────────────────────────────────────
-
-class GuidelinesView(APIView):
-    """
-    GET /api/guidelines/<jobId>
-
-    Returns the AI-generated guideline text produced by the GuidelineGenerator
-    for each pipeline phase, stored during the analysis run.
-
-        Lookup order:
-            1. Per-run DB entries from `job.guidelines`
-
-        Returns a partial map when analysis is still running instead of 404,
-        so the frontend can progressively reveal available guideline stages.
-
-        Response shape:
-            {
-                "schema_integrity_validator": "...",
-                "column_validator":           "...",
-                "cross_row_validator":        "...",
-                "row_level_validator":        "...",
-                "data_fix_planner":           "..."
-            }
-    """
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, jobId):
-        job = find_owned_job(jobId, request.user)
-        if not job:
-            return Response(
-                {'detail': 'Job not found or access denied.'},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        # ── 1. Primary: per-run DB entry ───────────────────────────────
-        persisted = dict(get_job_guidelines(jobId) or {})
-
-        merged = persisted
-
-        ordered = {}
-        for key in _GUIDELINE_KEYS:
-            text = (merged.get(key) or '').strip()
-            if text:
-                ordered[key] = text
-
-        # Preserve any additional non-empty keys without dropping them.
-        for key, value in merged.items():
-            if key in ordered:
-                continue
-            if isinstance(value, str) and value.strip():
-                ordered[key] = value
-
-        return Response(ordered)
-
-
 class LangfuseProxyView(APIView):
     """
     GET /api/admin/langfuse/status/  → {enabled, host}
-    GET /api/admin/langfuse/traces/  → proxied /api/public/traces filtered to qualitylab-pipeline
+    GET /api/admin/langfuse/traces/  → proxied /api/public/traces filtered to agent traces
+                                           ?tags=agent:fix-planner → filter by specific agent
+                                           ?session_id=<pipeline_run_id> → all agents in a run
     """
 
     permission_classes = [IsAuthenticated]
@@ -2775,15 +2746,66 @@ class LangfuseProxyView(APIView):
             page = _coerce_int(request.query_params.get('page', 1), default=1, minimum=1)
             limit = _coerce_int(request.query_params.get('limit', 10), default=10, minimum=1, maximum=50)
 
+            params: dict[str, Any] = {'page': page, 'limit': limit}
+            # Support filtering by agent tag (e.g. ?tags=agent:schema-validator)
+            tags_filter = request.query_params.get('tags')
+            if tags_filter:
+                params['tags'] = [tags_filter]
+            # Support grouping by pipeline run (e.g. ?session_id=<uuid>)
+            session_filter = request.query_params.get('session_id')
+            if session_filter:
+                params['session_id'] = session_filter
+
             try:
                 resp = http_requests.get(
                     f'{host}/api/public/traces',
                     auth=(public_key, secret_key),
-                    params={'page': page, 'limit': limit, 'name': 'qualitylab-pipeline'},
+                    params=params,
                     timeout=self._LANGFUSE_TIMEOUT,
                 )
                 resp.raise_for_status()
-                return Response(resp.json())
+                payload = resp.json()
+                traces: list[dict[str, Any]] = payload.get('data', [])
+
+                # ── Merge scores into trace output ────────────────────────
+                # Pipeline-level scores (data_quality_score, confidence_score)
+                # are stored as separate score entities in Langfuse. Fetch them
+                # and merge into trace output so the frontend can display them.
+                trace_ids = [
+                    t.get('id') for t in traces
+                    if t.get('id') and t.get('type') == 'SPAN'
+                ]
+                if trace_ids:
+                    score_params: dict[str, Any] = {'traceId': ','.join(trace_ids)}
+                    try:
+                        scores_resp = http_requests.get(
+                            f'{host}/api/public/scores',
+                            auth=(public_key, secret_key),
+                            params=score_params,
+                            timeout=self._LANGFUSE_TIMEOUT,
+                        )
+                        if scores_resp.status_code == 200:
+                            scores_data = scores_resp.json().get('data', [])
+                            # Index scores by trace_id
+                            scores_by_trace: dict[str, dict[str, float]] = {}
+                            for s in scores_data:
+                                tid = s.get('traceId', '')
+                                if tid not in scores_by_trace:
+                                    scores_by_trace[tid] = {}
+                                scores_by_trace[tid][s.get('name', '')] = s.get('value', 0)
+
+                            for t in traces:
+                                tid = t.get('id', '')
+                                merged_scores = scores_by_trace.get(tid, {})
+                                if merged_scores:
+                                    out = t.get('output') or {}
+                                    if isinstance(out, dict):
+                                        out.update(merged_scores)
+                                        t['output'] = out
+                    except Exception as _scores_exc:
+                        logger.debug('LangfuseProxyView: scores fetch skipped: %s', _scores_exc)
+
+                return Response(payload)
             except http_requests.exceptions.Timeout:
                 return Response({'error': 'Langfuse request timed out.'}, status=status.HTTP_504_GATEWAY_TIMEOUT)
             except http_requests.exceptions.RequestException as exc:

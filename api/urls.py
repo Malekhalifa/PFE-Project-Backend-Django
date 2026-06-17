@@ -8,7 +8,6 @@ PostgreSQL-only endpoints:
   - History:  GET /api/jobs, DELETE /api/jobs
   - Fixes:    GET /api/fixes/<id>/, POST /api/execute-fix/<id>/
   - Chat:     POST /api/agent-chat, GET /api/chat-history/<jobId>
-  - Guidelines: GET /api/guidelines/<jobId>
   - Admin:    /api/admin/*
 """
 from django.urls import path
@@ -49,7 +48,4 @@ urlpatterns = [
     path('admin/users/', views.AdminUsersView.as_view(), name='admin-users'),
     path('admin/users/<str:user_id>/', views.AdminUserDetailView.as_view(), name='admin-user-detail'),
     path('admin/langfuse/<str:endpoint>/', views.LangfuseProxyView.as_view(), name='admin-langfuse'),
-
-    # AI-Generated Guidelines
-    path('guidelines/<str:jobId>', views.GuidelinesView.as_view(), name='guidelines'),
 ]

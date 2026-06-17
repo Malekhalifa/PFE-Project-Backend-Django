@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import logging
 import math
+import os
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
@@ -45,8 +46,8 @@ _TEMPORAL_TYPES: frozenset[str] = frozenset({
     "interval",
 })
 
-_MAX_WORKERS = 8
-_STATEMENT_TIMEOUT_MS = 30_000
+_MAX_WORKERS = int(os.environ.get("PROFILER_MAX_WORKERS", "8"))
+_STATEMENT_TIMEOUT_MS = int(os.environ.get("PROFILER_STATEMENT_TIMEOUT_MS", "90000"))
 
 # ── Semantic-type validation patterns ──────────────────────────────────────
 # Column-name → PostgreSQL regex mapping. Substring-matched against column

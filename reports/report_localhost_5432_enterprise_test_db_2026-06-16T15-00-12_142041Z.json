@@ -1,0 +1,2766 @@
+{
+  "pipeline_run_id": "f871f8a9-4268-4d30-92cc-ccdfe9af5727",
+  "database_id": "localhost_5432_enterprise_test_db",
+  "llm_model": "gemini-2.5-flash",
+  "run_timestamp": "2026-06-16T15:00:12.142041Z",
+  "executive_summary": {
+    "verdict": "medium_risk",
+    "top_issues": [
+      "[CRITICAL] temporal inconsistency on order_audit_log",
+      "[CRITICAL] temporal inconsistency on price_history",
+      "[CRITICAL] negative or zero base price on products.base_price"
+    ],
+    "tables_scanned": 35,
+    "tables_profiled": 35,
+    "fixes_recommended": 23,
+    "critical_fix_count": 3,
+    "migration_risk": {
+      "score": 20,
+      "high_risk_cards": 2,
+      "blocked_cards": 0,
+      "destructive_cards": 0
+    }
+  },
+  "summary": {
+    "confidence_score": 99,
+    "data_quality_score": 82,
+    "final_fix_count": 23,
+    "confidence_explanation": {
+      "total_findings": 32,
+      "high_confidence_count": 28,
+      "medium_confidence_count": 4,
+      "low_confidence_count": 0,
+      "summary": "88% of findings have confidence ≥ 0.9 (28/32 high, 4 medium, 0 low). Deterministic (py_profiler) findings are 0.92–1.0; LLM findings vary."
+    },
+    "timing": {
+      "started_at": "2026-06-16T15:00:12.142041Z",
+      "ended_at": "2026-06-16T15:07:44.198765Z",
+      "total_duration_ms": 452054,
+      "total_duration_human": "452.1s",
+      "phases_ms": {
+        "schema_priming": 4657,
+        "Python Profiler": 175721,
+        "Statistical Validator": 63154,
+        "Reducer": 1075,
+        "Data Fix Planner": 108197,
+        "Schema Integrity Validator": 38109,
+        "Structural Validator": 45735,
+        "Relational Validator": 55159
+      },
+      "bottleneck": "Python Profiler"
+    },
+    "entity_hallucinations": {
+      "total_stripped": 0,
+      "breakdown": {
+        "non_existent_entities": 0,
+        "inferred_fk_rules": 0,
+        "outside_profiler_coverage": 0,
+        "fix_cards": 0
+      }
+    }
+  },
+  "reports": {
+    "schema_integrity_validator": {
+      "pipeline_run_id": "f871f8a9-4268-4d30-92cc-ccdfe9af5727",
+      "database_id": "localhost_5432_enterprise_test_db",
+      "run_timestamp": "2026-06-16T15:00:12.142041Z",
+      "agent": "Schema Integrity Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 35,
+        "items_passed": 35,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "schema",
+        "findings_count": 0,
+        "deduped_finding_count": 0,
+        "grouped_finding_count": 0
+      },
+      "findings": []
+    },
+    "statistical_validator": {
+      "pipeline_run_id": "f871f8a9-4268-4d30-92cc-ccdfe9af5727",
+      "database_id": "localhost_5432_enterprise_test_db",
+      "run_timestamp": "2026-06-16T15:00:12.142041Z",
+      "agent": "Statistical Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 35,
+        "items_passed": 8,
+        "items_flagged": 27,
+        "critical_issues": 2,
+        "high_issues": 19,
+        "medium_issues": 10,
+        "low_issues": 4,
+        "overall_quality_score": 73.7,
+        "overall_confidence": 0.9786,
+        "flagged_tables": [
+          "customers",
+          "departments",
+          "discount_codes",
+          "email_notifications",
+          "employee_role_assignments",
+          "employees",
+          "inventory",
+          "order_audit_log",
+          "orders",
+          "payments",
+          "price_history",
+          "product_categories",
+          "products",
+          "return_items",
+          "returns",
+          "shipments",
+          "suppliers",
+          "tax_rates",
+          "warehouses"
+        ]
+      },
+      "metrics": {
+        "validator": "statistical",
+        "findings_count": 35,
+        "deduped_finding_count": 35,
+        "grouped_finding_count": 27
+      },
+      "findings": [
+        {
+          "table": "products",
+          "column": "base_price",
+          "entity": "products.base_price",
+          "rule": "negative_or_zero_base_price",
+          "severity": "critical",
+          "confidence": 0.95,
+          "evidence": {
+            "violation_count": 50,
+            "total_rows": 15285,
+            "min_value": "-1902.61",
+            "columns_with_high_nulls": [
+              "base_price",
+              "stock_quantity"
+            ]
+          },
+          "remediation_hint": "Investigate the data source and ETL processes to identify why negative or zero base prices are being introduced. Implement data validation to ensure all base prices are greater than 0."
+        },
+        {
+          "table": "products",
+          "column": "stock_quantity",
+          "entity": "products.stock_quantity",
+          "rule": "negative_or_zero_stock_quantity",
+          "severity": "critical",
+          "confidence": 0.95,
+          "evidence": {
+            "violation_count": 809,
+            "total_rows": 15285,
+            "min_value": "-491"
+          },
+          "remediation_hint": "Immediately investigate the inventory management system and data entry processes. Implement strict validation to prevent negative stock quantities from being recorded."
+        },
+        {
+          "table": "suppliers",
+          "column": "rating",
+          "entity": "suppliers.rating",
+          "rule": "invalid_supplier_rating",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "violation_count": 2,
+            "total_rows": 200,
+            "min_value": "-1.0"
+          },
+          "remediation_hint": "Review the rating calculation or data entry process for suppliers. Ensure that ratings are always positive values."
+        },
+        {
+          "table": "departments",
+          "column": null,
+          "entity": "departments",
+          "rule": "inconsistent_active_headcount",
+          "severity": "high",
+          "confidence": 0.85,
+          "evidence": {
+            "headcount_cardinality": 1,
+            "headcount_value": "0",
+            "is_active_cardinality": 1
+          },
+          "remediation_hint": "Verify the business logic for 'headcount' and 'is_active' columns. If active departments are expected to have employees, investigate why 'headcount' is consistently zero. This might indicate missing data or an incorrect data population process."
+        },
+        {
+          "table": "products",
+          "column": null,
+          "entity": "products",
+          "rule": "redundant_or_inconsistent_weight_columns",
+          "severity": "medium",
+          "confidence": 0.75,
+          "evidence": {
+            "weight_grams_null_rate": 0.0578,
+            "productweight_null_rate": 0.9043
+          },
+          "remediation_hint": "Evaluate the purpose of both 'weight_grams' and 'productweight'. Consolidate the data into a single, well-maintained column, or clarify the distinct purpose of each column and ensure consistent data population."
+        },
+        {
+          "table": "departments",
+          "column": "parent_department_id",
+          "entity": "departments.parent_department_id",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 0.6111,
+            "total_rows": 18,
+            "threshold_used": 0.1
+          },
+          "remediation_hint": "Investigate why 'departments.parent_department_id' has 61% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "employees",
+          "column": "preferences",
+          "entity": "employees.preferences",
+          "rule": "suspected_duplicates",
+          "severity": "high",
+          "confidence": 0.85,
+          "evidence": {
+            "cardinality_ratio": 0.005,
+            "estimated_duplicates": 199,
+            "total_rows": 200
+          },
+          "remediation_hint": "'employees.preferences' has an estimated 199 duplicate value(s) (cardinality ratio 0.50%). Run find_duplicate_rows() to confirm and generate dedup SQL."
+        },
+        {
+          "table": "warehouses",
+          "column": null,
+          "entity": "warehouses.address_line1",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 8,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "address_line1",
+              "postal_code"
+            ]
+          },
+          "remediation_hint": "Investigate why 'warehouses.address_line1' has 100% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "address_line1",
+            "postal_code"
+          ],
+          "count": 2
+        },
+        {
+          "table": "product_categories",
+          "column": null,
+          "entity": "product_categories.image_url",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 24,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "image_url",
+              "parent_category_id"
+            ]
+          },
+          "remediation_hint": "Investigate why 'product_categories.image_url' has 100% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "parent_category_id",
+            "image_url"
+          ],
+          "count": 2
+        },
+        {
+          "table": "tax_rates",
+          "column": null,
+          "entity": "tax_rates.effective_from",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 10,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "effective_from",
+              "effective_until"
+            ]
+          },
+          "remediation_hint": "Investigate why 'tax_rates.effective_from' has 100% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "effective_from",
+            "effective_until"
+          ],
+          "count": 2
+        },
+        {
+          "table": "suppliers",
+          "column": "deleted_at",
+          "entity": "suppliers.deleted_at",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 0.985,
+            "total_rows": 200,
+            "threshold_used": 0.4
+          },
+          "remediation_hint": "Investigate why 'suppliers.deleted_at' has 98% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "employees",
+          "column": null,
+          "entity": "employees.termination_date",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 200,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "termination_date",
+              "phone",
+              "deleted_at",
+              "hiredate"
+            ]
+          },
+          "remediation_hint": "Investigate why 'employees.termination_date' has 100% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "phone",
+            "termination_date",
+            "deleted_at",
+            "hiredate"
+          ],
+          "count": 4
+        },
+        {
+          "table": "products",
+          "column": null,
+          "entity": "products.deleted_at",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 0.982,
+            "total_rows": 15285,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "deleted_at",
+              "productweight"
+            ]
+          },
+          "remediation_hint": "Investigate why 'products.deleted_at' has 98% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "deleted_at",
+            "productweight"
+          ],
+          "count": 2
+        },
+        {
+          "table": "order_audit_log",
+          "column": "change_reason",
+          "entity": "order_audit_log.change_reason",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 0.4955,
+            "total_rows": 50000,
+            "threshold_used": 0.4
+          },
+          "remediation_hint": "Investigate why 'order_audit_log.change_reason' has 50% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "return_items",
+          "column": "reason_detail",
+          "entity": "return_items.reason_detail",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 0.5042,
+            "total_rows": 8000,
+            "threshold_used": 0.4
+          },
+          "remediation_hint": "Investigate why 'return_items.reason_detail' has 50% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "employee_role_assignments",
+          "column": "expires_at",
+          "entity": "employee_role_assignments.expires_at",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 200,
+            "threshold_used": 0.4
+          },
+          "remediation_hint": "Investigate why 'employee_role_assignments.expires_at' has 100% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "discount_codes",
+          "column": null,
+          "entity": "discount_codes.min_order_amount",
+          "rule": "null_rate_high",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 0.484,
+            "total_rows": 500,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "min_order_amount",
+              "max_discount_amount"
+            ]
+          },
+          "remediation_hint": "Investigate why 'discount_codes.min_order_amount' has 48% null values. Consider enforcing NOT NULL if this column is required.",
+          "affected_columns": [
+            "min_order_amount",
+            "max_discount_amount"
+          ],
+          "count": 2
+        },
+        {
+          "table": "price_history",
+          "column": "effective_until",
+          "entity": "price_history.effective_until",
+          "rule": "null_rate_high",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 30000,
+            "threshold_used": 0.4
+          },
+          "remediation_hint": "Investigate why 'price_history.effective_until' has 100% null values. Consider enforcing NOT NULL if this column is required."
+        },
+        {
+          "table": "customers",
+          "column": null,
+          "entity": "customers",
+          "rule": "temporal_ordering_inconsistency",
+          "severity": "low",
+          "confidence": 1.0,
+          "evidence": {
+            "column_a": "date_of_birth",
+            "column_b": "deleted_at",
+            "a_after_b": 3,
+            "a_before_b": 1402,
+            "both_populated": 1405,
+            "minority_pct": 0.0021
+          },
+          "remediation_hint": "'customers' has 3 row(s) (0.21%) where 'date_of_birth' and 'deleted_at' ordering is inconsistent with the majority. Investigate whether these are data entry errors."
+        },
+        {
+          "table": "inventory",
+          "column": null,
+          "entity": "inventory",
+          "rule": "temporal_ordering_inconsistency",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "column_a": "last_restock_date",
+            "column_b": "last_count_date",
+            "a_after_b": 62756,
+            "a_before_b": 20729,
+            "both_populated": 83949,
+            "minority_pct": 0.2469
+          },
+          "remediation_hint": "'inventory' has 20729 row(s) (24.69%) where 'last_restock_date' and 'last_count_date' ordering is inconsistent with the majority. Investigate whether these are data entry errors."
+        },
+        {
+          "table": "employees",
+          "column": null,
+          "entity": "employees",
+          "rule": "temporal_ordering_inconsistency",
+          "severity": "low",
+          "confidence": 1.0,
+          "evidence": {
+            "column_a": "hire_date",
+            "column_b": "created_at",
+            "a_after_b": 1,
+            "a_before_b": 198,
+            "both_populated": 199,
+            "minority_pct": 0.005
+          },
+          "remediation_hint": "'employees' has 1 row(s) (0.50%) where 'hire_date' and 'created_at' ordering is inconsistent with the majority. Investigate whether these are data entry errors."
+        },
+        {
+          "table": "products",
+          "column": null,
+          "entity": "products",
+          "rule": "temporal_ordering_inconsistency",
+          "severity": "low",
+          "confidence": 1.0,
+          "evidence": {
+            "column_a": "deleted_at",
+            "column_b": "updated_at",
+            "a_after_b": 2,
+            "a_before_b": 273,
+            "both_populated": 275,
+            "minority_pct": 0.0073
+          },
+          "remediation_hint": "'products' has 2 row(s) (0.73%) where 'deleted_at' and 'updated_at' ordering is inconsistent with the majority. Investigate whether these are data entry errors."
+        },
+        {
+          "table": "orders",
+          "column": null,
+          "entity": "orders",
+          "rule": "temporal_ordering_inconsistency",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "column_a": "created_at",
+            "column_b": "updated_at",
+            "a_after_b": 2346,
+            "a_before_b": 98421,
+            "both_populated": 100907,
+            "minority_pct": 0.0232
+          },
+          "remediation_hint": "'orders' has 2346 row(s) (2.32%) where 'created_at' and 'updated_at' ordering is inconsistent with the majority. Investigate whether these are data entry errors."
+        },
+        {
+          "table": "payments",
+          "column": null,
+          "entity": "payments",
+          "rule": "temporal_ordering_inconsistency",
+          "severity": "low",
+          "confidence": 1.0,
+          "evidence": {
+            "column_a": "paid_at",
+            "column_b": "created_at",
+            "a_after_b": 89548,
+            "a_before_b": 82,
+            "both_populated": 89646,
+            "minority_pct": 0.0009
+          },
+          "remediation_hint": "'payments' has 82 row(s) (0.09%) where 'paid_at' and 'created_at' ordering is inconsistent with the majority. Investigate whether these are data entry errors."
+        },
+        {
+          "table": "shipments",
+          "column": null,
+          "entity": "shipments",
+          "rule": "temporal_ordering_inconsistency",
+          "severity": "medium",
+          "confidence": 1.0,
+          "evidence": {
+            "column_a": "shipped_at",
+            "column_b": "delivered_at",
+            "a_after_b": 209,
+            "a_before_b": 11808,
+            "both_populated": 12026,
+            "minority_pct": 0.0174
+          },
+          "remediation_hint": "'shipments' has 209 row(s) (1.74%) where 'shipped_at' and 'delivered_at' ordering is inconsistent with the majority. Investigate whether these are data entry errors."
+        },
+        {
+          "table": "returns",
+          "column": null,
+          "entity": "returns",
+          "rule": "temporal_ordering_inconsistency",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "column_a": "requested_at",
+            "column_b": "processed_at",
+            "a_after_b": 2267,
+            "a_before_b": 2582,
+            "both_populated": 4862,
+            "minority_pct": 0.4663
+          },
+          "remediation_hint": "'returns' has 2267 row(s) (46.63%) where 'requested_at' and 'processed_at' ordering is inconsistent with the majority. Investigate whether these are data entry errors."
+        },
+        {
+          "table": "email_notifications",
+          "column": null,
+          "entity": "email_notifications",
+          "rule": "temporal_ordering_inconsistency",
+          "severity": "high",
+          "confidence": 1.0,
+          "evidence": {
+            "column_a": "sent_at",
+            "column_b": "created_at",
+            "a_after_b": 34849,
+            "a_before_b": 24871,
+            "both_populated": 60173,
+            "minority_pct": 0.4133
+          },
+          "remediation_hint": "'email_notifications' has 24871 row(s) (41.33%) where 'sent_at' and 'created_at' ordering is inconsistent with the majority. Investigate whether these are data entry errors."
+        }
+      ]
+    },
+    "structural_validator": {
+      "pipeline_run_id": "f871f8a9-4268-4d30-92cc-ccdfe9af5727",
+      "database_id": "localhost_5432_enterprise_test_db",
+      "run_timestamp": "2026-06-16T15:00:12.142041Z",
+      "agent": "Structural Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 35,
+        "items_passed": 35,
+        "items_flagged": 0,
+        "critical_issues": 0,
+        "high_issues": 0,
+        "medium_issues": 0,
+        "low_issues": 0,
+        "overall_quality_score": 100.0,
+        "overall_confidence": 1.0,
+        "flagged_tables": []
+      },
+      "metrics": {
+        "validator": "structural",
+        "findings_count": 0,
+        "deduped_finding_count": 0,
+        "grouped_finding_count": 0
+      },
+      "findings": []
+    },
+    "relational_validator": {
+      "pipeline_run_id": "f871f8a9-4268-4d30-92cc-ccdfe9af5727",
+      "database_id": "localhost_5432_enterprise_test_db",
+      "run_timestamp": "2026-06-16T15:00:12.142041Z",
+      "agent": "Relational Validator",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 35,
+        "items_passed": 30,
+        "items_flagged": 5,
+        "critical_issues": 2,
+        "high_issues": 2,
+        "medium_issues": 1,
+        "low_issues": 0,
+        "overall_quality_score": 92.6,
+        "overall_confidence": 0.92,
+        "flagged_tables": [
+          "customer_segment_members",
+          "discount_codes",
+          "order_audit_log",
+          "price_history",
+          "products"
+        ]
+      },
+      "metrics": {
+        "validator": "relational",
+        "findings_count": 5,
+        "deduped_finding_count": 5,
+        "grouped_finding_count": 5
+      },
+      "findings": [
+        {
+          "table": "order_audit_log",
+          "column": null,
+          "entity": "order_audit_log",
+          "rule": "temporal_inconsistency",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "count_violations": 20531
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "price_history",
+          "column": null,
+          "entity": "price_history",
+          "rule": "temporal_inconsistency",
+          "severity": "critical",
+          "confidence": 1.0,
+          "evidence": {
+            "count_violations": 29951
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "products",
+          "column": "sku",
+          "entity": "products.sku",
+          "rule": "functional_dependency_violation",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "violating_skus_sample": "SKU-00000249, SKU-00000276, SKU-00000295, SKU-00000331, SKU-00000394"
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "discount_codes",
+          "column": "code",
+          "entity": "discount_codes.code",
+          "rule": "functional_dependency_violation",
+          "severity": "high",
+          "confidence": 0.9,
+          "evidence": {
+            "violating_codes_sample": "BONUS10, BONUS100, BONUS200, BONUS25, BONUS30"
+          },
+          "remediation_hint": null
+        },
+        {
+          "table": "customer_segment_members",
+          "column": "segment_id",
+          "entity": "customer_segment_members.segment_id",
+          "rule": "cardinality_ratio_anomaly",
+          "severity": "medium",
+          "confidence": 0.8,
+          "evidence": {
+            "segment_id_6_customer_count": 7117,
+            "segment_id_1_customer_count": 1793,
+            "average_customers_per_segment": 2896.7
+          },
+          "remediation_hint": null
+        }
+      ]
+    },
+    "data_fix_planner": {
+      "pipeline_run_id": "f871f8a9-4268-4d30-92cc-ccdfe9af5727",
+      "database_id": "localhost_5432_enterprise_test_db",
+      "run_timestamp": "2026-06-16T15:00:12.142041Z",
+      "agent": "Data Fix Planner",
+      "status": "completed",
+      "summary": {
+        "total_items_analyzed": 23,
+        "items_passed": 0,
+        "items_flagged": 23,
+        "critical_issues": 3,
+        "high_issues": 12,
+        "medium_issues": 6,
+        "low_issues": 2,
+        "overall_quality_score": 94.9,
+        "overall_confidence": 1.0,
+        "flagged_tables": [
+          "customers",
+          "departments",
+          "discount_codes",
+          "email_notifications",
+          "employee_role_assignments",
+          "employees",
+          "inventory",
+          "order_audit_log",
+          "orders",
+          "payments",
+          "price_history",
+          "product_categories",
+          "products",
+          "return_items",
+          "returns",
+          "shipments",
+          "suppliers",
+          "tax_rates",
+          "warehouses"
+        ]
+      },
+      "metrics": {
+        "total_issues_received": 23,
+        "fixes_generated": 23
+      },
+      "findings": [
+        {
+          "id": "fix_001_products",
+          "fix_id": "update-products-base-price",
+          "rows_affected_estimate": 50,
+          "tables_touched": [
+            "products"
+          ],
+          "depends_on": [],
+          "table": "products",
+          "target_table": "products",
+          "problem": "Set negative or zero product base prices to 0.01",
+          "fix": "The 'products.base_price' column contains values that are negative or zero, which is invalid for a product's base price. This fix updates these invalid entries to a default positive value of 0.01. Note: Direct rollback to original values is not possible without prior state capture.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "risk_level": "high",
+          "card_family": "structural",
+          "interaction_model": "human_decision",
+          "source_rule": "negative_or_zero_base_price",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "violation_count": 50,
+            "total_rows": 15285,
+            "min_value": "-1902.61",
+            "columns_with_high_nulls": [
+              "base_price",
+              "stock_quantity"
+            ]
+          },
+          "evidence_payload": {
+            "violation_count": 50,
+            "total_rows": 15285,
+            "min_value": "-1902.61",
+            "columns_with_high_nulls": [
+              "base_price",
+              "stock_quantity"
+            ],
+            "column_name": "base_price",
+            "affected_columns": [
+              "base_price"
+            ]
+          },
+          "estimated_rows_affected": 50,
+          "queries": [
+            "UPDATE products SET base_price = 0.01 WHERE base_price <= 0;"
+          ],
+          "explanation": "The 'products.base_price' column contains values that are negative or zero, which is invalid for a product's base price. This fix updates these invalid entries to a default positive value of 0.01. Note: Direct rollback to original values is not possible without prior state capture.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM products WHERE base_price <= 0;"
+          ],
+          "rollback_queries": [
+            "UPDATE products SET base_price = 1.00 WHERE product_id IN (SELECT product_id FROM products WHERE base_price = 0.01);"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_002_warehouses",
+          "fix_id": "investigate-warehouses-address-line1-postal-code-nulls",
+          "rows_affected_estimate": 8,
+          "tables_touched": [
+            "warehouses"
+          ],
+          "depends_on": [],
+          "table": "warehouses",
+          "target_table": "warehouses",
+          "problem": "Investigate high null ratio in warehouses.address_line1 and warehouses.postal_code",
+          "fix": "The columns 'address_line1' and 'postal_code' in the 'warehouses' table have a 100% null ratio. This indicates that these fields are either not being populated or are not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if they are essential, or understanding why they are consistently empty.\n\n[SYSTEM OVERRIDE — fix_verifier] py_profiler measured null_ratio=1.00 (100% of rows). The rationale above may contain an inaccurate verification claim (LLM did not execute a real query). Real verification count: not available. Inspect manually before acting.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 8,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "address_line1",
+              "postal_code"
+            ]
+          },
+          "evidence_payload": {
+            "null_ratio": 1.0,
+            "total_rows": 8,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "address_line1",
+              "postal_code"
+            ],
+            "column_name": "address_line1",
+            "affected_columns": [
+              "address_line1",
+              "postal_code"
+            ]
+          },
+          "estimated_rows_affected": 8,
+          "queries": [
+            "SELECT address_line1, postal_code FROM warehouses WHERE address_line1 IS NULL AND postal_code IS NULL;"
+          ],
+          "explanation": "The columns 'address_line1' and 'postal_code' in the 'warehouses' table have a 100% null ratio. This indicates that these fields are either not being populated or are not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if they are essential, or understanding why they are consistently empty.\n\n[SYSTEM OVERRIDE — fix_verifier] py_profiler measured null_ratio=1.00 (100% of rows). The rationale above may contain an inaccurate verification claim (LLM did not execute a real query). Real verification count: not available. Inspect manually before acting.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_003_product_categories",
+          "fix_id": "investigate-product-categories-image-url-parent-category-id-nulls",
+          "rows_affected_estimate": 24,
+          "tables_touched": [
+            "product_categories"
+          ],
+          "depends_on": [],
+          "table": "product_categories",
+          "target_table": "product_categories",
+          "problem": "Investigate high null ratio in product_categories.image_url and product_categories.parent_category_id",
+          "fix": "The columns 'image_url' and 'parent_category_id' in the 'product_categories' table have a 100% null ratio. This indicates that these fields are either not being populated or are not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if they are essential, or understanding why they are consistently empty.\n\n[SYSTEM OVERRIDE — fix_verifier] py_profiler measured null_ratio=1.00 (100% of rows). The rationale above may contain an inaccurate verification claim (LLM did not execute a real query). Real verification count: not available. Inspect manually before acting.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 24,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "image_url",
+              "parent_category_id"
+            ]
+          },
+          "evidence_payload": {
+            "null_ratio": 1.0,
+            "total_rows": 24,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "image_url",
+              "parent_category_id"
+            ],
+            "column_name": "image_url",
+            "affected_columns": [
+              "image_url",
+              "parent_category_id"
+            ]
+          },
+          "estimated_rows_affected": 24,
+          "queries": [
+            "SELECT image_url, parent_category_id FROM product_categories WHERE image_url IS NULL AND parent_category_id IS NULL;"
+          ],
+          "explanation": "The columns 'image_url' and 'parent_category_id' in the 'product_categories' table have a 100% null ratio. This indicates that these fields are either not being populated or are not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if they are essential, or understanding why they are consistently empty.\n\n[SYSTEM OVERRIDE — fix_verifier] py_profiler measured null_ratio=1.00 (100% of rows). The rationale above may contain an inaccurate verification claim (LLM did not execute a real query). Real verification count: not available. Inspect manually before acting.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_004_tax_rates",
+          "fix_id": "investigate-tax-rates-effective-from-effective-until-nulls",
+          "rows_affected_estimate": 10,
+          "tables_touched": [
+            "tax_rates"
+          ],
+          "depends_on": [],
+          "table": "tax_rates",
+          "target_table": "tax_rates",
+          "problem": "Investigate high null ratio in tax_rates.effective_from and tax_rates.effective_until",
+          "fix": "The columns 'effective_from' and 'effective_until' in the 'tax_rates' table have a 100% null ratio. This indicates that these fields are either not being populated or are not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if they are essential, or understanding why they are consistently empty.\n\n[SYSTEM OVERRIDE — fix_verifier] py_profiler measured null_ratio=1.00 (100% of rows). The rationale above may contain an inaccurate verification claim (LLM did not execute a real query). Real verification count: not available. Inspect manually before acting.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 10,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "effective_from",
+              "effective_until"
+            ]
+          },
+          "evidence_payload": {
+            "null_ratio": 1.0,
+            "total_rows": 10,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "effective_from",
+              "effective_until"
+            ],
+            "column_name": "effective_from",
+            "affected_columns": [
+              "effective_from",
+              "effective_until"
+            ]
+          },
+          "estimated_rows_affected": 10,
+          "queries": [
+            "SELECT effective_from, effective_until FROM tax_rates WHERE effective_from IS NULL AND effective_until IS NULL;"
+          ],
+          "explanation": "The columns 'effective_from' and 'effective_until' in the 'tax_rates' table have a 100% null ratio. This indicates that these fields are either not being populated or are not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if they are essential, or understanding why they are consistently empty.\n\n[SYSTEM OVERRIDE — fix_verifier] py_profiler measured null_ratio=1.00 (100% of rows). The rationale above may contain an inaccurate verification claim (LLM did not execute a real query). Real verification count: not available. Inspect manually before acting.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_005_suppliers",
+          "fix_id": "investigate-suppliers-deleted-at-nulls",
+          "rows_affected_estimate": 200,
+          "tables_touched": [
+            "suppliers"
+          ],
+          "depends_on": [],
+          "table": "suppliers",
+          "target_table": "suppliers",
+          "problem": "Investigate high null ratio in suppliers.deleted_at",
+          "fix": "The 'deleted_at' column in the 'suppliers' table has a 98.5% null ratio. This indicates that this field is either not being populated or is not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if it is essential, or understanding why it is consistently empty.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "null_ratio": 0.985,
+            "total_rows": 200,
+            "threshold_used": 0.4
+          },
+          "evidence_payload": {
+            "null_ratio": 0.985,
+            "total_rows": 200,
+            "threshold_used": 0.4,
+            "column_name": "deleted_at"
+          },
+          "estimated_rows_affected": 200,
+          "queries": [
+            "SELECT deleted_at FROM suppliers WHERE deleted_at IS NULL;"
+          ],
+          "explanation": "The 'deleted_at' column in the 'suppliers' table has a 98.5% null ratio. This indicates that this field is either not being populated or is not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if it is essential, or understanding why it is consistently empty.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_006_employees",
+          "fix_id": "investigate-employees-termination-date-phone-deleted-at-hiredate-nulls",
+          "rows_affected_estimate": 200,
+          "tables_touched": [
+            "employees"
+          ],
+          "depends_on": [],
+          "table": "employees",
+          "target_table": "employees",
+          "problem": "Investigate high null ratio in employees.termination_date, phone, deleted_at, hiredate",
+          "fix": "Multiple columns ('termination_date', 'phone', 'deleted_at', 'hiredate') in the 'employees' table have a 100% null ratio. This indicates that these fields are either not being populated or are not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if they are essential, or understanding why they are consistently empty.\n\n[SYSTEM OVERRIDE — fix_verifier] py_profiler measured null_ratio=1.00 (100% of rows). The rationale above may contain an inaccurate verification claim (LLM did not execute a real query). Real verification count: not available. Inspect manually before acting.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 200,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "termination_date",
+              "phone",
+              "deleted_at",
+              "hiredate"
+            ]
+          },
+          "evidence_payload": {
+            "null_ratio": 1.0,
+            "total_rows": 200,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "termination_date",
+              "phone",
+              "deleted_at",
+              "hiredate"
+            ],
+            "column_name": "termination_date",
+            "affected_columns": [
+              "termination_date",
+              "phone",
+              "deleted_at",
+              "hiredate"
+            ]
+          },
+          "estimated_rows_affected": 200,
+          "queries": [
+            "SELECT termination_date, phone, deleted_at, hiredate FROM employees WHERE termination_date IS NULL AND phone IS NULL AND deleted_at IS NULL AND hiredate IS NULL;"
+          ],
+          "explanation": "Multiple columns ('termination_date', 'phone', 'deleted_at', 'hiredate') in the 'employees' table have a 100% null ratio. This indicates that these fields are either not being populated or are not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if they are essential, or understanding why they are consistently empty.\n\n[SYSTEM OVERRIDE — fix_verifier] py_profiler measured null_ratio=1.00 (100% of rows). The rationale above may contain an inaccurate verification claim (LLM did not execute a real query). Real verification count: not available. Inspect manually before acting.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_007_products",
+          "fix_id": "investigate-products-deleted-at-productweight-nulls",
+          "rows_affected_estimate": 15285,
+          "tables_touched": [
+            "products"
+          ],
+          "depends_on": [],
+          "table": "products",
+          "target_table": "products",
+          "problem": "Investigate high null ratio in products.deleted_at and products.productweight",
+          "fix": "The columns 'deleted_at' and 'productweight' in the 'products' table have a high null ratio (98.2%). This indicates that these fields are either not being populated or are not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if they are essential, or understanding why they are consistently empty.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "violation_count": 50,
+            "total_rows": 15285,
+            "min_value": "-1902.61",
+            "columns_with_high_nulls": [
+              "base_price",
+              "stock_quantity"
+            ]
+          },
+          "evidence_payload": {
+            "null_ratio": 0.982,
+            "total_rows": 15285,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "deleted_at",
+              "productweight"
+            ],
+            "column_name": "deleted_at",
+            "affected_columns": [
+              "deleted_at",
+              "productweight"
+            ]
+          },
+          "estimated_rows_affected": 15285,
+          "queries": [
+            "SELECT deleted_at, productweight FROM products WHERE deleted_at IS NULL AND productweight IS NULL;"
+          ],
+          "explanation": "The columns 'deleted_at' and 'productweight' in the 'products' table have a high null ratio (98.2%). This indicates that these fields are either not being populated or are not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if they are essential, or understanding why they are consistently empty.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_008_employee_role_assignments",
+          "fix_id": "investigate-employee-role-assignments-expires-at-nulls",
+          "rows_affected_estimate": 200,
+          "tables_touched": [
+            "employee_role_assignments"
+          ],
+          "depends_on": [],
+          "table": "employee_role_assignments",
+          "target_table": "employee_role_assignments",
+          "problem": "Investigate high null ratio in employee_role_assignments.expires_at",
+          "fix": "The 'expires_at' column in the 'employee_role_assignments' table has a 100% null ratio. This indicates that this field is either not being populated or is not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if it is essential, or understanding why it is consistently empty.\n\n[SYSTEM OVERRIDE — fix_verifier] py_profiler measured null_ratio=1.00 (100% of rows). The rationale above may contain an inaccurate verification claim (LLM did not execute a real query). Real verification count: not available. Inspect manually before acting.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 200,
+            "threshold_used": 0.4
+          },
+          "evidence_payload": {
+            "null_ratio": 1.0,
+            "total_rows": 200,
+            "threshold_used": 0.4,
+            "column_name": "expires_at"
+          },
+          "estimated_rows_affected": 200,
+          "queries": [
+            "SELECT expires_at FROM employee_role_assignments WHERE expires_at IS NULL;"
+          ],
+          "explanation": "The 'expires_at' column in the 'employee_role_assignments' table has a 100% null ratio. This indicates that this field is either not being populated or is not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if it is essential, or understanding why it is consistently empty.\n\n[SYSTEM OVERRIDE — fix_verifier] py_profiler measured null_ratio=1.00 (100% of rows). The rationale above may contain an inaccurate verification claim (LLM did not execute a real query). Real verification count: not available. Inspect manually before acting.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_009_price_history",
+          "fix_id": "investigate-price-history-effective-until-nulls",
+          "rows_affected_estimate": 30000,
+          "tables_touched": [
+            "price_history"
+          ],
+          "depends_on": [],
+          "table": "price_history",
+          "target_table": "price_history",
+          "problem": "Investigate high null ratio in price_history.effective_until",
+          "fix": "The 'effective_until' column in the 'price_history' table has a 100% null ratio. This indicates that this field is either not being populated or is not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if it is essential, or understanding why it is consistently empty.\n\n[SYSTEM OVERRIDE — fix_verifier] py_profiler measured null_ratio=1.00 (100% of rows). The rationale above may contain an inaccurate verification claim (LLM did not execute a real query). Real verification count: not available. Inspect manually before acting.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 30000,
+            "threshold_used": 0.4
+          },
+          "evidence_payload": {
+            "null_ratio": 1.0,
+            "total_rows": 30000,
+            "threshold_used": 0.4,
+            "column_name": "effective_until"
+          },
+          "estimated_rows_affected": 30000,
+          "queries": [
+            "SELECT effective_until FROM price_history WHERE effective_until IS NULL;"
+          ],
+          "explanation": "The 'effective_until' column in the 'price_history' table has a 100% null ratio. This indicates that this field is either not being populated or is not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if it is essential, or understanding why it is consistently empty.\n\n[SYSTEM OVERRIDE — fix_verifier] py_profiler measured null_ratio=1.00 (100% of rows). The rationale above may contain an inaccurate verification claim (LLM did not execute a real query). Real verification count: not available. Inspect manually before acting.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_010_inventory",
+          "fix_id": "investigate-inventory-temporal-ordering",
+          "rows_affected_estimate": 20729,
+          "tables_touched": [
+            "inventory"
+          ],
+          "depends_on": [],
+          "table": "inventory",
+          "target_table": "inventory",
+          "problem": "Investigate temporal ordering inconsistency in inventory (last_restock_date vs last_count_date)",
+          "fix": "The 'inventory' table has 20729 rows where 'last_restock_date' is earlier than 'last_count_date', which is inconsistent with the expected temporal order. This suggests potential data entry errors or logical inconsistencies in the data. Manual investigation is required to understand the root cause and determine the appropriate corrective action.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "source_rule": "temporal_ordering_inconsistency",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "column_a": "last_restock_date",
+            "column_b": "last_count_date",
+            "a_after_b": 62756,
+            "a_before_b": 20729,
+            "both_populated": 83949,
+            "minority_pct": 0.2469
+          },
+          "evidence_payload": {
+            "column_a": "last_restock_date",
+            "column_b": "last_count_date",
+            "a_after_b": 62756,
+            "a_before_b": 20729,
+            "both_populated": 83949,
+            "minority_pct": 0.2469,
+            "column_name": "last_restock_date",
+            "affected_columns": [
+              "last_restock_date",
+              "last_count_date"
+            ]
+          },
+          "estimated_rows_affected": 20729,
+          "queries": [
+            "SELECT inventory_id, last_restock_date, last_count_date FROM inventory WHERE last_restock_date < last_count_date;"
+          ],
+          "explanation": "The 'inventory' table has 20729 rows where 'last_restock_date' is earlier than 'last_count_date', which is inconsistent with the expected temporal order. This suggests potential data entry errors or logical inconsistencies in the data. Manual investigation is required to understand the root cause and determine the appropriate corrective action.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_011_returns",
+          "fix_id": "investigate-returns-temporal-ordering",
+          "rows_affected_estimate": 2267,
+          "tables_touched": [
+            "returns"
+          ],
+          "depends_on": [],
+          "table": "returns",
+          "target_table": "returns",
+          "problem": "Investigate temporal ordering inconsistency in returns (requested_at vs processed_at)",
+          "fix": "The 'returns' table has 2267 rows where 'requested_at' is later than 'processed_at', which is inconsistent with the expected temporal order. This suggests potential data entry errors or logical inconsistencies in the data. Manual investigation is required to understand the root cause and determine the appropriate corrective action.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "source_rule": "temporal_ordering_inconsistency",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "column_a": "requested_at",
+            "column_b": "processed_at",
+            "a_after_b": 2267,
+            "a_before_b": 2582,
+            "both_populated": 4862,
+            "minority_pct": 0.4663
+          },
+          "evidence_payload": {
+            "column_a": "requested_at",
+            "column_b": "processed_at",
+            "a_after_b": 2267,
+            "a_before_b": 2582,
+            "both_populated": 4862,
+            "minority_pct": 0.4663,
+            "column_name": "requested_at",
+            "affected_columns": [
+              "requested_at",
+              "processed_at"
+            ]
+          },
+          "estimated_rows_affected": 2267,
+          "queries": [
+            "SELECT return_id, requested_at, processed_at FROM returns WHERE requested_at > processed_at;"
+          ],
+          "explanation": "The 'returns' table has 2267 rows where 'requested_at' is later than 'processed_at', which is inconsistent with the expected temporal order. This suggests potential data entry errors or logical inconsistencies in the data. Manual investigation is required to understand the root cause and determine the appropriate corrective action.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_012_email_notifications",
+          "fix_id": "investigate-email-notifications-temporal-ordering",
+          "rows_affected_estimate": 24871,
+          "tables_touched": [
+            "email_notifications"
+          ],
+          "depends_on": [],
+          "table": "email_notifications",
+          "target_table": "email_notifications",
+          "problem": "Investigate temporal ordering inconsistency in email_notifications (sent_at vs created_at)",
+          "fix": "The 'email_notifications' table has 24871 rows where 'sent_at' is earlier than 'created_at', which is inconsistent with the expected temporal order. This suggests potential data entry errors or logical inconsistencies in the data. Manual investigation is required to understand the root cause and determine the appropriate corrective action.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "source_rule": "temporal_ordering_inconsistency",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "column_a": "sent_at",
+            "column_b": "created_at",
+            "a_after_b": 34849,
+            "a_before_b": 24871,
+            "both_populated": 60173,
+            "minority_pct": 0.4133
+          },
+          "evidence_payload": {
+            "column_a": "sent_at",
+            "column_b": "created_at",
+            "a_after_b": 34849,
+            "a_before_b": 24871,
+            "both_populated": 60173,
+            "minority_pct": 0.4133,
+            "column_name": "sent_at",
+            "affected_columns": [
+              "sent_at",
+              "created_at"
+            ]
+          },
+          "estimated_rows_affected": 24871,
+          "queries": [
+            "SELECT notification_id, sent_at, created_at FROM email_notifications WHERE sent_at < created_at;"
+          ],
+          "explanation": "The 'email_notifications' table has 24871 rows where 'sent_at' is earlier than 'created_at', which is inconsistent with the expected temporal order. This suggests potential data entry errors or logical inconsistencies in the data. Manual investigation is required to understand the root cause and determine the appropriate corrective action.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_013_suppliers",
+          "fix_id": "update-suppliers-rating",
+          "rows_affected_estimate": 2,
+          "tables_touched": [
+            "suppliers"
+          ],
+          "depends_on": [],
+          "table": "suppliers",
+          "target_table": "suppliers",
+          "problem": "Set negative supplier ratings to 0",
+          "fix": "The 'suppliers.rating' column contains negative values, which is invalid for a supplier rating. This fix updates these invalid entries to 0. Note: Direct rollback to original values is not possible without prior state capture.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "high",
+          "card_family": "structural",
+          "interaction_model": "human_decision",
+          "source_rule": "invalid_supplier_rating",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "null_ratio": 0.985,
+            "total_rows": 200,
+            "threshold_used": 0.4
+          },
+          "evidence_payload": {
+            "violation_count": 2,
+            "total_rows": 200,
+            "min_value": "-1.0",
+            "column_name": "rating",
+            "affected_columns": [
+              "rating"
+            ]
+          },
+          "estimated_rows_affected": 2,
+          "queries": [
+            "UPDATE suppliers SET rating = 0 WHERE rating < 0;"
+          ],
+          "explanation": "The 'suppliers.rating' column contains negative values, which is invalid for a supplier rating. This fix updates these invalid entries to 0. Note: Direct rollback to original values is not possible without prior state capture.",
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM suppliers WHERE rating < 0;"
+          ],
+          "rollback_queries": [
+            "UPDATE suppliers SET rating = NULL WHERE supplier_id IN (SELECT supplier_id FROM suppliers WHERE rating = 0);"
+          ],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_014_departments",
+          "fix_id": "investigate-departments-parent-department-id-nulls",
+          "rows_affected_estimate": 18,
+          "tables_touched": [
+            "departments"
+          ],
+          "depends_on": [],
+          "table": "departments",
+          "target_table": "departments",
+          "problem": "Investigate high null ratio in departments.parent_department_id",
+          "fix": "The 'parent_department_id' column in the 'departments' table has a 61.11% null ratio. This indicates that this field is either not being populated or is not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if it is essential, or understanding why it is consistently empty.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "null_ratio": 0.6111,
+            "total_rows": 18,
+            "threshold_used": 0.1
+          },
+          "evidence_payload": {
+            "null_ratio": 0.6111,
+            "total_rows": 18,
+            "threshold_used": 0.1,
+            "column_name": "parent_department_id"
+          },
+          "estimated_rows_affected": 18,
+          "queries": [
+            "SELECT parent_department_id FROM departments WHERE parent_department_id IS NULL;"
+          ],
+          "explanation": "The 'parent_department_id' column in the 'departments' table has a 61.11% null ratio. This indicates that this field is either not being populated or is not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if it is essential, or understanding why it is consistently empty.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_015_order_audit_log",
+          "fix_id": "investigate-order-audit-log-change-reason-nulls",
+          "rows_affected_estimate": 50000,
+          "tables_touched": [
+            "order_audit_log"
+          ],
+          "depends_on": [],
+          "table": "order_audit_log",
+          "target_table": "order_audit_log",
+          "problem": "Investigate high null ratio in order_audit_log.change_reason",
+          "fix": "The 'change_reason' column in the 'order_audit_log' table has a 49.55% null ratio. This indicates that this field is either not being populated or is not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if it is essential, or understanding why it is consistently empty.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "null_ratio": 0.4955,
+            "total_rows": 50000,
+            "threshold_used": 0.4
+          },
+          "evidence_payload": {
+            "null_ratio": 0.4955,
+            "total_rows": 50000,
+            "threshold_used": 0.4,
+            "column_name": "change_reason"
+          },
+          "estimated_rows_affected": 50000,
+          "queries": [
+            "SELECT change_reason FROM order_audit_log WHERE change_reason IS NULL;"
+          ],
+          "explanation": "The 'change_reason' column in the 'order_audit_log' table has a 49.55% null ratio. This indicates that this field is either not being populated or is not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if it is essential, or understanding why it is consistently empty.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_016_return_items",
+          "fix_id": "investigate-return-items-reason-detail-nulls",
+          "rows_affected_estimate": 8000,
+          "tables_touched": [
+            "return_items"
+          ],
+          "depends_on": [],
+          "table": "return_items",
+          "target_table": "return_items",
+          "problem": "Investigate high null ratio in return_items.reason_detail",
+          "fix": "The 'reason_detail' column in the 'return_items' table has a 50.42% null ratio. This indicates that this field is either not being populated or is not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if it is essential, or understanding why it is consistently empty.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "null_ratio": 0.5042,
+            "total_rows": 8000,
+            "threshold_used": 0.4
+          },
+          "evidence_payload": {
+            "null_ratio": 0.5042,
+            "total_rows": 8000,
+            "threshold_used": 0.4,
+            "column_name": "reason_detail"
+          },
+          "estimated_rows_affected": 8000,
+          "queries": [
+            "SELECT reason_detail FROM return_items WHERE reason_detail IS NULL;"
+          ],
+          "explanation": "The 'reason_detail' column in the 'return_items' table has a 50.42% null ratio. This indicates that this field is either not being populated or is not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if it is essential, or understanding why it is consistently empty.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_017_discount_codes",
+          "fix_id": "investigate-discount-codes-min-order-amount-max-discount-amount-nulls",
+          "rows_affected_estimate": 500,
+          "tables_touched": [
+            "discount_codes"
+          ],
+          "depends_on": [],
+          "table": "discount_codes",
+          "target_table": "discount_codes",
+          "problem": "Investigate high null ratio in discount_codes.min_order_amount and discount_codes.max_discount_amount",
+          "fix": "The columns 'min_order_amount' and 'max_discount_amount' in the 'discount_codes' table have a high null ratio (48.4%). This indicates that these fields are either not being populated or are not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if they are essential, or understanding why they are consistently empty.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "null_ratio": 0.484,
+            "total_rows": 500,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "min_order_amount",
+              "max_discount_amount"
+            ]
+          },
+          "evidence_payload": {
+            "null_ratio": 0.484,
+            "total_rows": 500,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "min_order_amount",
+              "max_discount_amount"
+            ],
+            "column_name": "min_order_amount",
+            "affected_columns": [
+              "min_order_amount",
+              "max_discount_amount"
+            ]
+          },
+          "estimated_rows_affected": 500,
+          "queries": [
+            "SELECT min_order_amount, max_discount_amount FROM discount_codes WHERE min_order_amount IS NULL AND max_discount_amount IS NULL;"
+          ],
+          "explanation": "The columns 'min_order_amount' and 'max_discount_amount' in the 'discount_codes' table have a high null ratio (48.4%). This indicates that these fields are either not being populated or are not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if they are essential, or understanding why they are consistently empty.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_018_orders",
+          "fix_id": "investigate-orders-temporal-ordering",
+          "rows_affected_estimate": 2346,
+          "tables_touched": [
+            "orders"
+          ],
+          "depends_on": [],
+          "table": "orders",
+          "target_table": "orders",
+          "problem": "Investigate temporal ordering inconsistency in orders (created_at vs updated_at)",
+          "fix": "The 'orders' table has 2346 rows where 'created_at' is later than 'updated_at', which is inconsistent with the expected temporal order. This suggests potential data entry errors or logical inconsistencies in the data. Manual investigation is required to understand the root cause and determine the appropriate corrective action.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "source_rule": "temporal_ordering_inconsistency",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "column_a": "created_at",
+            "column_b": "updated_at",
+            "a_after_b": 2346,
+            "a_before_b": 98421,
+            "both_populated": 100907,
+            "minority_pct": 0.0232
+          },
+          "evidence_payload": {
+            "column_a": "created_at",
+            "column_b": "updated_at",
+            "a_after_b": 2346,
+            "a_before_b": 98421,
+            "both_populated": 100907,
+            "minority_pct": 0.0232,
+            "column_name": "created_at",
+            "affected_columns": [
+              "created_at",
+              "updated_at"
+            ]
+          },
+          "estimated_rows_affected": 2346,
+          "queries": [
+            "SELECT order_id, created_at, updated_at FROM orders WHERE created_at > updated_at;"
+          ],
+          "explanation": "The 'orders' table has 2346 rows where 'created_at' is later than 'updated_at', which is inconsistent with the expected temporal order. This suggests potential data entry errors or logical inconsistencies in the data. Manual investigation is required to understand the root cause and determine the appropriate corrective action.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_019_shipments",
+          "fix_id": "investigate-shipments-temporal-ordering",
+          "rows_affected_estimate": 209,
+          "tables_touched": [
+            "shipments"
+          ],
+          "depends_on": [],
+          "table": "shipments",
+          "target_table": "shipments",
+          "problem": "Investigate temporal ordering inconsistency in shipments (shipped_at vs delivered_at)",
+          "fix": "The 'shipments' table has 209 rows where 'shipped_at' is later than 'delivered_at', which is inconsistent with the expected temporal order. This suggests potential data entry errors or logical inconsistencies in the data. Manual investigation is required to understand the root cause and determine the appropriate corrective action.",
+          "severity": "medium",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "source_rule": "temporal_ordering_inconsistency",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "column_a": "shipped_at",
+            "column_b": "delivered_at",
+            "a_after_b": 209,
+            "a_before_b": 11808,
+            "both_populated": 12026,
+            "minority_pct": 0.0174
+          },
+          "evidence_payload": {
+            "column_a": "shipped_at",
+            "column_b": "delivered_at",
+            "a_after_b": 209,
+            "a_before_b": 11808,
+            "both_populated": 12026,
+            "minority_pct": 0.0174,
+            "column_name": "shipped_at",
+            "affected_columns": [
+              "shipped_at",
+              "delivered_at"
+            ]
+          },
+          "estimated_rows_affected": 209,
+          "queries": [
+            "SELECT shipment_id, shipped_at, delivered_at FROM shipments WHERE shipped_at > delivered_at;"
+          ],
+          "explanation": "The 'shipments' table has 209 rows where 'shipped_at' is later than 'delivered_at', which is inconsistent with the expected temporal order. This suggests potential data entry errors or logical inconsistencies in the data. Manual investigation is required to understand the root cause and determine the appropriate corrective action.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_020_customers",
+          "fix_id": "investigate-customers-temporal-ordering",
+          "rows_affected_estimate": 3,
+          "tables_touched": [
+            "customers"
+          ],
+          "depends_on": [],
+          "table": "customers",
+          "target_table": "customers",
+          "problem": "Investigate temporal ordering inconsistency in customers (date_of_birth vs deleted_at)",
+          "fix": "The 'customers' table has 3 rows where 'date_of_birth' is later than 'deleted_at', which is inconsistent with the expected temporal order. This suggests potential data entry errors or logical inconsistencies in the data. Manual investigation is required to understand the root cause and determine the appropriate corrective action.",
+          "severity": "low",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "source_rule": "temporal_ordering_inconsistency",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "column_a": "date_of_birth",
+            "column_b": "deleted_at",
+            "a_after_b": 3,
+            "a_before_b": 1402,
+            "both_populated": 1405,
+            "minority_pct": 0.0021
+          },
+          "evidence_payload": {
+            "column_a": "date_of_birth",
+            "column_b": "deleted_at",
+            "a_after_b": 3,
+            "a_before_b": 1402,
+            "both_populated": 1405,
+            "minority_pct": 0.0021,
+            "column_name": "date_of_birth",
+            "affected_columns": [
+              "date_of_birth",
+              "deleted_at"
+            ]
+          },
+          "estimated_rows_affected": 3,
+          "queries": [
+            "SELECT customer_id, date_of_birth, deleted_at FROM customers WHERE date_of_birth > deleted_at;"
+          ],
+          "explanation": "The 'customers' table has 3 rows where 'date_of_birth' is later than 'deleted_at', which is inconsistent with the expected temporal order. This suggests potential data entry errors or logical inconsistencies in the data. Manual investigation is required to understand the root cause and determine the appropriate corrective action.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_021_employees",
+          "fix_id": "investigate-employees-temporal-ordering",
+          "rows_affected_estimate": 1,
+          "tables_touched": [
+            "employees"
+          ],
+          "depends_on": [],
+          "table": "employees",
+          "target_table": "employees",
+          "problem": "Investigate temporal ordering inconsistency in employees (hire_date vs created_at)",
+          "fix": "The 'employees' table has 1 row where 'hire_date' is later than 'created_at', which is inconsistent with the expected temporal order. This suggests potential data entry errors or logical inconsistencies in the data. Manual investigation is required to understand the root cause and determine the appropriate corrective action.",
+          "severity": "high",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "source_rule": "temporal_ordering_inconsistency",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "null_ratio": 1.0,
+            "total_rows": 200,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "termination_date",
+              "phone",
+              "deleted_at",
+              "hiredate"
+            ]
+          },
+          "evidence_payload": {
+            "column_a": "hire_date",
+            "column_b": "created_at",
+            "a_after_b": 1,
+            "a_before_b": 198,
+            "both_populated": 199,
+            "minority_pct": 0.005,
+            "column_name": "hire_date",
+            "affected_columns": [
+              "hire_date",
+              "created_at"
+            ]
+          },
+          "estimated_rows_affected": 1,
+          "queries": [
+            "SELECT employee_id, hire_date, created_at FROM employees WHERE hire_date > created_at;"
+          ],
+          "explanation": "The 'employees' table has 1 row where 'hire_date' is later than 'created_at', which is inconsistent with the expected temporal order. This suggests potential data entry errors or logical inconsistencies in the data. Manual investigation is required to understand the root cause and determine the appropriate corrective action.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_022_products",
+          "fix_id": "investigate-products-temporal-ordering",
+          "rows_affected_estimate": 2,
+          "tables_touched": [
+            "products"
+          ],
+          "depends_on": [],
+          "table": "products",
+          "target_table": "products",
+          "problem": "Investigate temporal ordering inconsistency in products (deleted_at vs updated_at)",
+          "fix": "The 'products' table has 2 rows where 'deleted_at' is later than 'updated_at', which is inconsistent with the expected temporal order. This suggests potential data entry errors or logical inconsistencies in the data. Manual investigation is required to understand the root cause and determine the appropriate corrective action.",
+          "severity": "critical",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "source_rule": "temporal_ordering_inconsistency",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "violation_count": 50,
+            "total_rows": 15285,
+            "min_value": "-1902.61",
+            "columns_with_high_nulls": [
+              "base_price",
+              "stock_quantity"
+            ]
+          },
+          "evidence_payload": {
+            "column_a": "deleted_at",
+            "column_b": "updated_at",
+            "a_after_b": 2,
+            "a_before_b": 273,
+            "both_populated": 275,
+            "minority_pct": 0.0073,
+            "column_name": "deleted_at",
+            "affected_columns": [
+              "deleted_at",
+              "updated_at"
+            ]
+          },
+          "estimated_rows_affected": 2,
+          "queries": [
+            "SELECT product_id, deleted_at, updated_at FROM products WHERE deleted_at > updated_at;"
+          ],
+          "explanation": "The 'products' table has 2 rows where 'deleted_at' is later than 'updated_at', which is inconsistent with the expected temporal order. This suggests potential data entry errors or logical inconsistencies in the data. Manual investigation is required to understand the root cause and determine the appropriate corrective action.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        },
+        {
+          "id": "fix_023_payments",
+          "fix_id": "investigate-payments-temporal-ordering",
+          "rows_affected_estimate": 82,
+          "tables_touched": [
+            "payments"
+          ],
+          "depends_on": [],
+          "table": "payments",
+          "target_table": "payments",
+          "problem": "Investigate temporal ordering inconsistency in payments (paid_at vs created_at)",
+          "fix": "The 'payments' table has 82 rows where 'paid_at' is earlier than 'created_at', which is inconsistent with the expected temporal order. This suggests potential data entry errors or logical inconsistencies in the data. Manual investigation is required to understand the root cause and determine the appropriate corrective action.",
+          "severity": "low",
+          "confidence": 1.0,
+          "risk_level": "low",
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "source_rule": "temporal_ordering_inconsistency",
+          "source_type": "deterministic",
+          "validator": "statistical",
+          "evidence": {
+            "column_a": "paid_at",
+            "column_b": "created_at",
+            "a_after_b": 89548,
+            "a_before_b": 82,
+            "both_populated": 89646,
+            "minority_pct": 0.0009
+          },
+          "evidence_payload": {
+            "column_a": "paid_at",
+            "column_b": "created_at",
+            "a_after_b": 89548,
+            "a_before_b": 82,
+            "both_populated": 89646,
+            "minority_pct": 0.0009,
+            "column_name": "paid_at",
+            "affected_columns": [
+              "paid_at",
+              "created_at"
+            ]
+          },
+          "estimated_rows_affected": 82,
+          "queries": [
+            "SELECT payment_id, paid_at, created_at FROM payments WHERE paid_at < created_at;"
+          ],
+          "explanation": "The 'payments' table has 82 rows where 'paid_at' is earlier than 'created_at', which is inconsistent with the expected temporal order. This suggests potential data entry errors or logical inconsistencies in the data. Manual investigation is required to understand the root cause and determine the appropriate corrective action.",
+          "preconditions": [],
+          "verification_queries": [],
+          "rollback_queries": [],
+          "explain_summary": null
+        }
+      ],
+      "cards": [
+        {
+          "fix_id": "update-products-base-price",
+          "title": "Set negative or zero product base prices to 0.01",
+          "target": "products",
+          "rationale": "The 'products.base_price' column contains values that are negative or zero, which is invalid for a product's base price. This fix updates these invalid entries to a default positive value of 0.01. Note: Direct rollback to original values is not possible without prior state capture.",
+          "risk_level": "high",
+          "sql": "UPDATE products SET base_price = 0.01 WHERE base_price <= 0;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM products WHERE base_price <= 0;"
+          ],
+          "verification_results": {
+            "SELECT COUNT(*) FROM products WHERE base_price <= 0;": [
+              {
+                "count": 50
+              }
+            ]
+          },
+          "rollback_queries": [
+            "UPDATE products SET base_price = 1.00 WHERE product_id IN (SELECT product_id FROM products WHERE base_price = 0.01);"
+          ],
+          "rows_affected_estimate": 50,
+          "tables_touched": [
+            "products"
+          ],
+          "depends_on": [],
+          "card_family": "structural",
+          "interaction_model": "human_decision",
+          "evidence": {},
+          "evidence_payload": {
+            "violation_count": 50,
+            "total_rows": 15285,
+            "min_value": "-1902.61",
+            "columns_with_high_nulls": [
+              "base_price",
+              "stock_quantity"
+            ],
+            "column_name": "base_price",
+            "affected_columns": [
+              "base_price"
+            ]
+          },
+          "source_rule": "negative_or_zero_base_price",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "critical"
+        },
+        {
+          "fix_id": "investigate-warehouses-address-line1-postal-code-nulls",
+          "title": "Investigate high null ratio in warehouses.address_line1 and warehouses.postal_code",
+          "target": "warehouses",
+          "rationale": "The columns 'address_line1' and 'postal_code' in the 'warehouses' table have a 100% null ratio. This indicates that these fields are either not being populated or are not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if they are essential, or understanding why they are consistently empty.\n\n[SYSTEM OVERRIDE — fix_verifier] py_profiler measured null_ratio=1.00 (100% of rows). The rationale above may contain an inaccurate verification claim (LLM did not execute a real query). Real verification count: not available. Inspect manually before acting.",
+          "risk_level": "low",
+          "sql": "SELECT address_line1, postal_code FROM warehouses WHERE address_line1 IS NULL AND postal_code IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 8,
+          "tables_touched": [
+            "warehouses"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "null_ratio": 1.0,
+            "total_rows": 8,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "address_line1",
+              "postal_code"
+            ],
+            "column_name": "address_line1",
+            "affected_columns": [
+              "address_line1",
+              "postal_code"
+            ]
+          },
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "investigate-product-categories-image-url-parent-category-id-nulls",
+          "title": "Investigate high null ratio in product_categories.image_url and product_categories.parent_category_id",
+          "target": "product_categories",
+          "rationale": "The columns 'image_url' and 'parent_category_id' in the 'product_categories' table have a 100% null ratio. This indicates that these fields are either not being populated or are not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if they are essential, or understanding why they are consistently empty.\n\n[SYSTEM OVERRIDE — fix_verifier] py_profiler measured null_ratio=1.00 (100% of rows). The rationale above may contain an inaccurate verification claim (LLM did not execute a real query). Real verification count: not available. Inspect manually before acting.",
+          "risk_level": "low",
+          "sql": "SELECT image_url, parent_category_id FROM product_categories WHERE image_url IS NULL AND parent_category_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 24,
+          "tables_touched": [
+            "product_categories"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "null_ratio": 1.0,
+            "total_rows": 24,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "image_url",
+              "parent_category_id"
+            ],
+            "column_name": "image_url",
+            "affected_columns": [
+              "image_url",
+              "parent_category_id"
+            ]
+          },
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "investigate-tax-rates-effective-from-effective-until-nulls",
+          "title": "Investigate high null ratio in tax_rates.effective_from and tax_rates.effective_until",
+          "target": "tax_rates",
+          "rationale": "The columns 'effective_from' and 'effective_until' in the 'tax_rates' table have a 100% null ratio. This indicates that these fields are either not being populated or are not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if they are essential, or understanding why they are consistently empty.\n\n[SYSTEM OVERRIDE — fix_verifier] py_profiler measured null_ratio=1.00 (100% of rows). The rationale above may contain an inaccurate verification claim (LLM did not execute a real query). Real verification count: not available. Inspect manually before acting.",
+          "risk_level": "low",
+          "sql": "SELECT effective_from, effective_until FROM tax_rates WHERE effective_from IS NULL AND effective_until IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 10,
+          "tables_touched": [
+            "tax_rates"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "null_ratio": 1.0,
+            "total_rows": 10,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "effective_from",
+              "effective_until"
+            ],
+            "column_name": "effective_from",
+            "affected_columns": [
+              "effective_from",
+              "effective_until"
+            ]
+          },
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "investigate-suppliers-deleted-at-nulls",
+          "title": "Investigate high null ratio in suppliers.deleted_at",
+          "target": "suppliers",
+          "rationale": "The 'deleted_at' column in the 'suppliers' table has a 98.5% null ratio. This indicates that this field is either not being populated or is not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if it is essential, or understanding why it is consistently empty.",
+          "risk_level": "low",
+          "sql": "SELECT deleted_at FROM suppliers WHERE deleted_at IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 200,
+          "tables_touched": [
+            "suppliers"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "null_ratio": 0.985,
+            "total_rows": 200,
+            "threshold_used": 0.4,
+            "column_name": "deleted_at"
+          },
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "investigate-employees-termination-date-phone-deleted-at-hiredate-nulls",
+          "title": "Investigate high null ratio in employees.termination_date, phone, deleted_at, hiredate",
+          "target": "employees",
+          "rationale": "Multiple columns ('termination_date', 'phone', 'deleted_at', 'hiredate') in the 'employees' table have a 100% null ratio. This indicates that these fields are either not being populated or are not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if they are essential, or understanding why they are consistently empty.\n\n[SYSTEM OVERRIDE — fix_verifier] py_profiler measured null_ratio=1.00 (100% of rows). The rationale above may contain an inaccurate verification claim (LLM did not execute a real query). Real verification count: not available. Inspect manually before acting.",
+          "risk_level": "low",
+          "sql": "SELECT termination_date, phone, deleted_at, hiredate FROM employees WHERE termination_date IS NULL AND phone IS NULL AND deleted_at IS NULL AND hiredate IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 200,
+          "tables_touched": [
+            "employees"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "null_ratio": 1.0,
+            "total_rows": 200,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "termination_date",
+              "phone",
+              "deleted_at",
+              "hiredate"
+            ],
+            "column_name": "termination_date",
+            "affected_columns": [
+              "termination_date",
+              "phone",
+              "deleted_at",
+              "hiredate"
+            ]
+          },
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "investigate-products-deleted-at-productweight-nulls",
+          "title": "Investigate high null ratio in products.deleted_at and products.productweight",
+          "target": "products",
+          "rationale": "The columns 'deleted_at' and 'productweight' in the 'products' table have a high null ratio (98.2%). This indicates that these fields are either not being populated or are not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if they are essential, or understanding why they are consistently empty.",
+          "risk_level": "low",
+          "sql": "SELECT deleted_at, productweight FROM products WHERE deleted_at IS NULL AND productweight IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 15285,
+          "tables_touched": [
+            "products"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "null_ratio": 0.982,
+            "total_rows": 15285,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "deleted_at",
+              "productweight"
+            ],
+            "column_name": "deleted_at",
+            "affected_columns": [
+              "deleted_at",
+              "productweight"
+            ]
+          },
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "investigate-employee-role-assignments-expires-at-nulls",
+          "title": "Investigate high null ratio in employee_role_assignments.expires_at",
+          "target": "employee_role_assignments",
+          "rationale": "The 'expires_at' column in the 'employee_role_assignments' table has a 100% null ratio. This indicates that this field is either not being populated or is not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if it is essential, or understanding why it is consistently empty.\n\n[SYSTEM OVERRIDE — fix_verifier] py_profiler measured null_ratio=1.00 (100% of rows). The rationale above may contain an inaccurate verification claim (LLM did not execute a real query). Real verification count: not available. Inspect manually before acting.",
+          "risk_level": "low",
+          "sql": "SELECT expires_at FROM employee_role_assignments WHERE expires_at IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 200,
+          "tables_touched": [
+            "employee_role_assignments"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "null_ratio": 1.0,
+            "total_rows": 200,
+            "threshold_used": 0.4,
+            "column_name": "expires_at"
+          },
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "investigate-price-history-effective-until-nulls",
+          "title": "Investigate high null ratio in price_history.effective_until",
+          "target": "price_history",
+          "rationale": "The 'effective_until' column in the 'price_history' table has a 100% null ratio. This indicates that this field is either not being populated or is not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if it is essential, or understanding why it is consistently empty.\n\n[SYSTEM OVERRIDE — fix_verifier] py_profiler measured null_ratio=1.00 (100% of rows). The rationale above may contain an inaccurate verification claim (LLM did not execute a real query). Real verification count: not available. Inspect manually before acting.",
+          "risk_level": "low",
+          "sql": "SELECT effective_until FROM price_history WHERE effective_until IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 30000,
+          "tables_touched": [
+            "price_history"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "null_ratio": 1.0,
+            "total_rows": 30000,
+            "threshold_used": 0.4,
+            "column_name": "effective_until"
+          },
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "investigate-inventory-temporal-ordering",
+          "title": "Investigate temporal ordering inconsistency in inventory (last_restock_date vs last_count_date)",
+          "target": "inventory",
+          "rationale": "The 'inventory' table has 20729 rows where 'last_restock_date' is earlier than 'last_count_date', which is inconsistent with the expected temporal order. This suggests potential data entry errors or logical inconsistencies in the data. Manual investigation is required to understand the root cause and determine the appropriate corrective action.",
+          "risk_level": "low",
+          "sql": "SELECT inventory_id, last_restock_date, last_count_date FROM inventory WHERE last_restock_date < last_count_date;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 20729,
+          "tables_touched": [
+            "inventory"
+          ],
+          "depends_on": [],
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "column_a": "last_restock_date",
+            "column_b": "last_count_date",
+            "a_after_b": 62756,
+            "a_before_b": 20729,
+            "both_populated": 83949,
+            "minority_pct": 0.2469,
+            "column_name": "last_restock_date",
+            "affected_columns": [
+              "last_restock_date",
+              "last_count_date"
+            ]
+          },
+          "source_rule": "temporal_ordering_inconsistency",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "investigate-returns-temporal-ordering",
+          "title": "Investigate temporal ordering inconsistency in returns (requested_at vs processed_at)",
+          "target": "returns",
+          "rationale": "The 'returns' table has 2267 rows where 'requested_at' is later than 'processed_at', which is inconsistent with the expected temporal order. This suggests potential data entry errors or logical inconsistencies in the data. Manual investigation is required to understand the root cause and determine the appropriate corrective action.",
+          "risk_level": "low",
+          "sql": "SELECT return_id, requested_at, processed_at FROM returns WHERE requested_at > processed_at;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 2267,
+          "tables_touched": [
+            "returns"
+          ],
+          "depends_on": [],
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "column_a": "requested_at",
+            "column_b": "processed_at",
+            "a_after_b": 2267,
+            "a_before_b": 2582,
+            "both_populated": 4862,
+            "minority_pct": 0.4663,
+            "column_name": "requested_at",
+            "affected_columns": [
+              "requested_at",
+              "processed_at"
+            ]
+          },
+          "source_rule": "temporal_ordering_inconsistency",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "investigate-email-notifications-temporal-ordering",
+          "title": "Investigate temporal ordering inconsistency in email_notifications (sent_at vs created_at)",
+          "target": "email_notifications",
+          "rationale": "The 'email_notifications' table has 24871 rows where 'sent_at' is earlier than 'created_at', which is inconsistent with the expected temporal order. This suggests potential data entry errors or logical inconsistencies in the data. Manual investigation is required to understand the root cause and determine the appropriate corrective action.",
+          "risk_level": "low",
+          "sql": "SELECT notification_id, sent_at, created_at FROM email_notifications WHERE sent_at < created_at;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 24871,
+          "tables_touched": [
+            "email_notifications"
+          ],
+          "depends_on": [],
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "column_a": "sent_at",
+            "column_b": "created_at",
+            "a_after_b": 34849,
+            "a_before_b": 24871,
+            "both_populated": 60173,
+            "minority_pct": 0.4133,
+            "column_name": "sent_at",
+            "affected_columns": [
+              "sent_at",
+              "created_at"
+            ]
+          },
+          "source_rule": "temporal_ordering_inconsistency",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "update-suppliers-rating",
+          "title": "Set negative supplier ratings to 0",
+          "target": "suppliers",
+          "rationale": "The 'suppliers.rating' column contains negative values, which is invalid for a supplier rating. This fix updates these invalid entries to 0. Note: Direct rollback to original values is not possible without prior state capture.",
+          "risk_level": "high",
+          "sql": "UPDATE suppliers SET rating = 0 WHERE rating < 0;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [
+            "SELECT COUNT(*) FROM suppliers WHERE rating < 0;"
+          ],
+          "verification_results": {
+            "SELECT COUNT(*) FROM suppliers WHERE rating < 0;": [
+              {
+                "count": 2
+              }
+            ]
+          },
+          "rollback_queries": [
+            "UPDATE suppliers SET rating = NULL WHERE supplier_id IN (SELECT supplier_id FROM suppliers WHERE rating = 0);"
+          ],
+          "rows_affected_estimate": 2,
+          "tables_touched": [
+            "suppliers"
+          ],
+          "depends_on": [],
+          "card_family": "structural",
+          "interaction_model": "human_decision",
+          "evidence": {},
+          "evidence_payload": {
+            "violation_count": 2,
+            "total_rows": 200,
+            "min_value": "-1.0",
+            "column_name": "rating",
+            "affected_columns": [
+              "rating"
+            ]
+          },
+          "source_rule": "invalid_supplier_rating",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "high"
+        },
+        {
+          "fix_id": "investigate-departments-parent-department-id-nulls",
+          "title": "Investigate high null ratio in departments.parent_department_id",
+          "target": "departments",
+          "rationale": "The 'parent_department_id' column in the 'departments' table has a 61.11% null ratio. This indicates that this field is either not being populated or is not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if it is essential, or understanding why it is consistently empty.",
+          "risk_level": "low",
+          "sql": "SELECT parent_department_id FROM departments WHERE parent_department_id IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 18,
+          "tables_touched": [
+            "departments"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "null_ratio": 0.6111,
+            "total_rows": 18,
+            "threshold_used": 0.1,
+            "column_name": "parent_department_id"
+          },
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "investigate-order-audit-log-change-reason-nulls",
+          "title": "Investigate high null ratio in order_audit_log.change_reason",
+          "target": "order_audit_log",
+          "rationale": "The 'change_reason' column in the 'order_audit_log' table has a 49.55% null ratio. This indicates that this field is either not being populated or is not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if it is essential, or understanding why it is consistently empty.",
+          "risk_level": "low",
+          "sql": "SELECT change_reason FROM order_audit_log WHERE change_reason IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 50000,
+          "tables_touched": [
+            "order_audit_log"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "null_ratio": 0.4955,
+            "total_rows": 50000,
+            "threshold_used": 0.4,
+            "column_name": "change_reason"
+          },
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "investigate-return-items-reason-detail-nulls",
+          "title": "Investigate high null ratio in return_items.reason_detail",
+          "target": "return_items",
+          "rationale": "The 'reason_detail' column in the 'return_items' table has a 50.42% null ratio. This indicates that this field is either not being populated or is not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if it is essential, or understanding why it is consistently empty.",
+          "risk_level": "low",
+          "sql": "SELECT reason_detail FROM return_items WHERE reason_detail IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 8000,
+          "tables_touched": [
+            "return_items"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "null_ratio": 0.5042,
+            "total_rows": 8000,
+            "threshold_used": 0.4,
+            "column_name": "reason_detail"
+          },
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "investigate-discount-codes-min-order-amount-max-discount-amount-nulls",
+          "title": "Investigate high null ratio in discount_codes.min_order_amount and discount_codes.max_discount_amount",
+          "target": "discount_codes",
+          "rationale": "The columns 'min_order_amount' and 'max_discount_amount' in the 'discount_codes' table have a high null ratio (48.4%). This indicates that these fields are either not being populated or are not required. Manual investigation is needed to determine the correct course of action, such as enforcing NOT NULL constraints if they are essential, or understanding why they are consistently empty.",
+          "risk_level": "low",
+          "sql": "SELECT min_order_amount, max_discount_amount FROM discount_codes WHERE min_order_amount IS NULL AND max_discount_amount IS NULL;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 500,
+          "tables_touched": [
+            "discount_codes"
+          ],
+          "depends_on": [],
+          "card_family": "nullability",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "null_ratio": 0.484,
+            "total_rows": 500,
+            "threshold_used": 0.4,
+            "columns_with_high_nulls": [
+              "min_order_amount",
+              "max_discount_amount"
+            ],
+            "column_name": "min_order_amount",
+            "affected_columns": [
+              "min_order_amount",
+              "max_discount_amount"
+            ]
+          },
+          "source_rule": "high_null_ratio",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "investigate-orders-temporal-ordering",
+          "title": "Investigate temporal ordering inconsistency in orders (created_at vs updated_at)",
+          "target": "orders",
+          "rationale": "The 'orders' table has 2346 rows where 'created_at' is later than 'updated_at', which is inconsistent with the expected temporal order. This suggests potential data entry errors or logical inconsistencies in the data. Manual investigation is required to understand the root cause and determine the appropriate corrective action.",
+          "risk_level": "low",
+          "sql": "SELECT order_id, created_at, updated_at FROM orders WHERE created_at > updated_at;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 2346,
+          "tables_touched": [
+            "orders"
+          ],
+          "depends_on": [],
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "column_a": "created_at",
+            "column_b": "updated_at",
+            "a_after_b": 2346,
+            "a_before_b": 98421,
+            "both_populated": 100907,
+            "minority_pct": 0.0232,
+            "column_name": "created_at",
+            "affected_columns": [
+              "created_at",
+              "updated_at"
+            ]
+          },
+          "source_rule": "temporal_ordering_inconsistency",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "investigate-shipments-temporal-ordering",
+          "title": "Investigate temporal ordering inconsistency in shipments (shipped_at vs delivered_at)",
+          "target": "shipments",
+          "rationale": "The 'shipments' table has 209 rows where 'shipped_at' is later than 'delivered_at', which is inconsistent with the expected temporal order. This suggests potential data entry errors or logical inconsistencies in the data. Manual investigation is required to understand the root cause and determine the appropriate corrective action.",
+          "risk_level": "low",
+          "sql": "SELECT shipment_id, shipped_at, delivered_at FROM shipments WHERE shipped_at > delivered_at;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 209,
+          "tables_touched": [
+            "shipments"
+          ],
+          "depends_on": [],
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "column_a": "shipped_at",
+            "column_b": "delivered_at",
+            "a_after_b": 209,
+            "a_before_b": 11808,
+            "both_populated": 12026,
+            "minority_pct": 0.0174,
+            "column_name": "shipped_at",
+            "affected_columns": [
+              "shipped_at",
+              "delivered_at"
+            ]
+          },
+          "source_rule": "temporal_ordering_inconsistency",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "medium"
+        },
+        {
+          "fix_id": "investigate-customers-temporal-ordering",
+          "title": "Investigate temporal ordering inconsistency in customers (date_of_birth vs deleted_at)",
+          "target": "customers",
+          "rationale": "The 'customers' table has 3 rows where 'date_of_birth' is later than 'deleted_at', which is inconsistent with the expected temporal order. This suggests potential data entry errors or logical inconsistencies in the data. Manual investigation is required to understand the root cause and determine the appropriate corrective action.",
+          "risk_level": "low",
+          "sql": "SELECT customer_id, date_of_birth, deleted_at FROM customers WHERE date_of_birth > deleted_at;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 3,
+          "tables_touched": [
+            "customers"
+          ],
+          "depends_on": [],
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "column_a": "date_of_birth",
+            "column_b": "deleted_at",
+            "a_after_b": 3,
+            "a_before_b": 1402,
+            "both_populated": 1405,
+            "minority_pct": 0.0021,
+            "column_name": "date_of_birth",
+            "affected_columns": [
+              "date_of_birth",
+              "deleted_at"
+            ]
+          },
+          "source_rule": "temporal_ordering_inconsistency",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "low"
+        },
+        {
+          "fix_id": "investigate-employees-temporal-ordering",
+          "title": "Investigate temporal ordering inconsistency in employees (hire_date vs created_at)",
+          "target": "employees",
+          "rationale": "The 'employees' table has 1 row where 'hire_date' is later than 'created_at', which is inconsistent with the expected temporal order. This suggests potential data entry errors or logical inconsistencies in the data. Manual investigation is required to understand the root cause and determine the appropriate corrective action.",
+          "risk_level": "low",
+          "sql": "SELECT employee_id, hire_date, created_at FROM employees WHERE hire_date > created_at;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 1,
+          "tables_touched": [
+            "employees"
+          ],
+          "depends_on": [],
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "column_a": "hire_date",
+            "column_b": "created_at",
+            "a_after_b": 1,
+            "a_before_b": 198,
+            "both_populated": 199,
+            "minority_pct": 0.005,
+            "column_name": "hire_date",
+            "affected_columns": [
+              "hire_date",
+              "created_at"
+            ]
+          },
+          "source_rule": "temporal_ordering_inconsistency",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "low"
+        },
+        {
+          "fix_id": "investigate-products-temporal-ordering",
+          "title": "Investigate temporal ordering inconsistency in products (deleted_at vs updated_at)",
+          "target": "products",
+          "rationale": "The 'products' table has 2 rows where 'deleted_at' is later than 'updated_at', which is inconsistent with the expected temporal order. This suggests potential data entry errors or logical inconsistencies in the data. Manual investigation is required to understand the root cause and determine the appropriate corrective action.",
+          "risk_level": "low",
+          "sql": "SELECT product_id, deleted_at, updated_at FROM products WHERE deleted_at > updated_at;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 2,
+          "tables_touched": [
+            "products"
+          ],
+          "depends_on": [],
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "column_a": "deleted_at",
+            "column_b": "updated_at",
+            "a_after_b": 2,
+            "a_before_b": 273,
+            "both_populated": 275,
+            "minority_pct": 0.0073,
+            "column_name": "deleted_at",
+            "affected_columns": [
+              "deleted_at",
+              "updated_at"
+            ]
+          },
+          "source_rule": "temporal_ordering_inconsistency",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "low"
+        },
+        {
+          "fix_id": "investigate-payments-temporal-ordering",
+          "title": "Investigate temporal ordering inconsistency in payments (paid_at vs created_at)",
+          "target": "payments",
+          "rationale": "The 'payments' table has 82 rows where 'paid_at' is earlier than 'created_at', which is inconsistent with the expected temporal order. This suggests potential data entry errors or logical inconsistencies in the data. Manual investigation is required to understand the root cause and determine the appropriate corrective action.",
+          "risk_level": "low",
+          "sql": "SELECT payment_id, paid_at, created_at FROM payments WHERE paid_at < created_at;",
+          "explain_summary": null,
+          "preconditions": [],
+          "verification_queries": [],
+          "verification_results": null,
+          "rollback_queries": [],
+          "rows_affected_estimate": 82,
+          "tables_touched": [
+            "payments"
+          ],
+          "depends_on": [],
+          "card_family": "temporal",
+          "interaction_model": "investigate",
+          "evidence": {},
+          "evidence_payload": {
+            "column_a": "paid_at",
+            "column_b": "created_at",
+            "a_after_b": 89548,
+            "a_before_b": 82,
+            "both_populated": 89646,
+            "minority_pct": 0.0009,
+            "column_name": "paid_at",
+            "affected_columns": [
+              "paid_at",
+              "created_at"
+            ]
+          },
+          "source_rule": "temporal_ordering_inconsistency",
+          "source_type": "deterministic",
+          "confidence": 1.0,
+          "severity": "low"
+        }
+      ]
+    }
+  }
+}
